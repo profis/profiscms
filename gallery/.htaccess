@@ -1,0 +1,7 @@
+Options -Indexes
+RewriteEngine On
+# Uncomment these if you don`t want each image to be put through php file.
+RewriteCond %{REQUEST_URI} !^(.+)/admin/(thumbnail|small|large)(/[^/]+)$
+RewriteRule ^(.+)/admin/(thumbnail|small|large)(/[^/]+)$ $1/thumb-$2$3
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.+)$ index.php?r=$1 [QSA]

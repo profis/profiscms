@@ -1,0 +1,9 @@
+fined property: stdClass::$status in script E:\home\filipborcov\www\profis\ggbanskohotel\admin\plugins\nt\apartaments.dialog.tpl.php on line 268
+included from script E:\home\filipborcov\www\profis\ggbanskohotel\admin\plugins\nt\nt.class.php on line 168
+in PC_NT->processAdmin() called from script E:\home\filipborcov\www\profis\ggbanskohotel\admin\plugins\nt\dialog.php on line 20
+
+2011-10-03 10:39:13 - NOTICE: Undefined property: stdClass::$status in script E:\home\filipborcov\www\profis\ggbanskohotel\admin\plugins\nt\apartaments.dialog.tpl.php on line 271
+included from script E:\home\filipborcov\www\profis\ggbanskohotel\admin\plugins\nt\nt.class.php on line 168
+in PC_NT->processAdmin() called from script E:\home\filipborcov\www\profis\ggbanskohotel\admin\plugins\nt\dialog.php on line 20
+
+2011-10-03 10:39:13 - NOTICE: Undefined property: stdClass::$status in script E:\home\filip

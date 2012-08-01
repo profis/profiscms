@@ -1,0 +1,178 @@
+img.ico { vertical-align: -3px; }
+.gallery_files_view {
+padding: 5px 10px;
+font: 11px Arial, Helvetica, sans-serif;
+}
+.gallery_files_view div.thumb {
+background: #ddd;
+}
+.gallery_files_view div.file {
+border: 3px solid #ddd;
+}
+.gallery_files_view div.thumb-wrap {
+position: relative;
+}
+/* Template: icons (default) */
+.gallery_files_view div.template-icons {
+float: left;
+width: 83px;
+margin: 5px 8px 5px 7px;
+}
+.gallery_files_view div.template-icons div.thumb {
+margin: 0 auto; padding: 3px;
+width: 77px; height: 57px;
+overflow: hidden;
+}
+.gallery_files_view div.template-icons div.thumb img {
+width: 75px; height: 55px;
+border: 1px solid #fff;
+}
+.gallery_files_view div.template-icons div.file {
+padding: 4px 0 5px 0;
+overflow: hidden;
+text-align: center;
+}
+.gallery_files_view div.template-icons div.file img {
+
+}
+.gallery_files_view div.template-icons span {
+display: block;
+overflow: hidden;
+text-align: center;
+}
+/* Template: detailed */
+.gallery_files_view div.template-detailed {
+float: left;
+width: 400px;
+padding: 5px 2px;
+}
+.gallery_files_view div.template-detailed div.thumb {
+float: left;
+margin-right: 5px;
+padding: 3px;
+width: 42px; height: 32px;
+overflow: hidden;
+}
+.gallery_files_view div.template-detailed div.thumb img {
+width: 40px; height: 30px;
+border: 1px solid #fff;
+}
+.gallery_files_view div.template-detailed div.file {
+float: left;
+margin-right: 5px;
+padding: 3px;
+overflow: hidden;
+}
+.gallery_files_view div.template-detailed div.file img {
+width: 24px; height: 24px;
+}
+.gallery_files_view div.template-detailed span {
+display: block;
+word-wrap: break-word;
+overflow: hidden;
+}
+.gallery_files_view div.template-detailed span.filedata {
+font: bold 7pt verdana;
+color: #bbb;
+}
+.gallery_files_view div.template-detailed .gallery-file-over {
+position: absolute;
+top: 9px; left: 6px;
+}
+/* Unused images wrapper */
+.gallery_files_view div.gallery_unused_file {
+opacity: 0.3;
+filter: alpha(opacity=3);
+}
+/* Marking of the selected items */
+.gallery_files_view .x-view-selected .thumb {
+background: #8db2e3;
+}
+.gallery_files_view .x-view-selected .file {
+border: 3px solid #8db2e3;
+}
+/* Search header */
+.gallery_files_view div.ga_search {
+padding: 3px 5px;
+font-size: 11pt;
+color: #888;
+border-bottom: 1px solid #888;
+}
+div.gallery_search {
+margin: 5px 0 5px 5px;
+font: bold 11pt Tahoma, sans-serif;
+color: #333;
+}
+div.gallery-category {
+clear: both;
+padding: 10px 0 6px 10px;
+font: bold 10pt Tahoma, sans-serif;
+color: #666;
+}
+/* drag&drop proxy interface */
+.x-dd-drag-proxy .multi-proxy .drag-img {
+width: 32px;
+height: 32px;
+}
+.x-dd-drag-proxy .drag-img {
+width: 40px;
+height: 30px;
+}
+.x-dd-drag-proxy .file .drag-img {
+width: 80px;
+height: 80px;
+}
+/* Icons for the toolbars etc. */
+.gallery_image {
+background: url('../images/image.png') no-repeat !important;
+}
+.gallery_upload {
+background: url('../images/add.gif') no-repeat !important;
+}
+.gallery_edit {
+background: url('../images/edit.gif') no-repeat !important;
+}
+.gallery_paste {
+background: url('../images/Paste.png') no-repeat !important;
+}
+.gallery_undo {
+background: url('../images/arrow_undo.png') no-repeat !important;
+}
+.gallery_open {
+background: url('../images/folder_open.png') no-repeat !important;
+}
+.gallery_folder {
+background: url('../images/folder.png') no-repeat !important;
+}
+.gallery_bin {
+background: url('../images/trashe.png') no-repeat !important;
+}
+.gallery_delete {
+background: url('../images/delete.png') no-repeat !important;
+}
+.gallery_cut {
+background: url('../images/cut.png') no-repeat !important;
+}
+.gallery_panel_settings {
+background: url('../images/Compile.png') 0 4px no-repeat !important;
+}
+.gallery_panel_trash {
+background: url('../images/bin.png') 0 4px no-repeat !important;
+}
+.gallery_panel_image {
+background: url('../images/image.png') 0 4px no-repeat !important;
+}
+.gallery-drive-icon {
+background: url('../images/drive.png') no-repeat !important;
+}
+.gallery-disk-icon {
+background: url('../images/disk.png') no-repeat !important;
+}
+.gallery-eye-icon {
+background: url('../images/eye.png') no-repeat !important;
+}
+/* File over menu in filelist */
+.gallery-file-over {
+position: absolute;
+top: 4px; left: 4px;
+}

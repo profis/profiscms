@@ -1,0 +1,21 @@
+Options All -Indexes
+php_flag register_globals off
+RewriteEngine on
+
+# api
+RewriteCond %{REQUEST_URI} admin/api/(.*)
+RewriteRule ^(.+)$ api/admin/$1
+RewriteCond %{REQUEST_URI} api/(.*)
+RewriteRule ^(.+)$ api.php?$1 [L]
+
+# public page
+RewriteCond %{REQUEST_URI} !admin/(.*)
+RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d [OR]
+#RewriteCond %{REQUEST_URI} /$
+RewriteRule ^(.*)$ site.php [L]
+
+<Files PC_errors.txt>
+  order allow,deny
+  deny from all
+</Files>

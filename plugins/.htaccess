@@ -1,0 +1,4 @@
+<Files ~ "^PC_(api|plugin|controller)\.php$">
+  order allow,deny
+  deny from all
+</Files>

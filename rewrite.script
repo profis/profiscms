@@ -1,0 +1,74 @@
+RULE_0_START:  
+# get the document root  
+map path into SCRATCH:DOCROOT from /  
+# initialize our variables  
+set SCRATCH:ORIG_URL = %{URL}  
+set SCRATCH:REQUEST_URI = %{URL}  
+# see if theres any queries in our URL  
+match URL into $ with ^(.*)\?(.*)$
+if matched then
+	set SCRATCH:REQUEST_URI = $1
+	set SCRATCH:QUERY_STRING = $2
+endif
+RULE_0_END:
+# api
+RULE_1_START:
+# Uncomment these if you don`t want each image to be put through php file.
+##RewriteCond %{REQUEST_URI} !^(.+)/admin/(thumbnail|small|large)(/[^/]+)$
+##RewriteRule ^(.+)/admin/(thumbnail|small|large)(/[^/]+)$ $1/thumb-$2$3
+##RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteRule ^(.+)$ index.php?r=$1 [QSA]
+match URL into $ with gallery/(.*)
+if matched then
+	set URL = /gallery/index.php?r=$1
+	goto QSA_RULE_START
+endif
+match URL into $ with admin/locale/(.*)
+if matched then
+	set URL = /admin/locale/index.php?q=%{SCRATCH:REQUEST_URI}
+	goto QSA_RULE_START
+endif
+#RewriteCond %{REQUEST_URI} api/(.*)
+#RewriteRule ^(.+)$ admin/api.php?$1 [L]
+match URL into $ with api/(.*)
+if matched then
+	set URL = /admin/api.php?q=%{SCRATCH:REQUEST_URI}
+	goto QSA_RULE_START
+endif
+RULE_1_END:
+# public page
+RULE_2_START:
+#RewriteCond %{REQUEST_URI} !admin/(.*)
+match URL into $ with admin/(.*)
+if matched then
+	goto END
+endif
+#RewriteCond %{REQUEST_FILENAME} !-f
+##RewriteCond %{REQUEST_FILENAME} !-d [OR]
+#RewriteCond %{REQUEST_URI} /$
+#RewriteRule ^(.*)$ site.php [L] 
+# prepare to search for file, rewrite if its not found  
+set SCRATCH:REQUEST_FILENAME = %{SCRATCH:DOCROOT}
+set SCRATCH:REQUEST_FILENAME . %{SCRATCH:REQUEST_URI}
+# check to see if the file requested is an actual file or  
+# a directory with possibly an index.  don't rewrite if so
+look for file at %{SCRATCH:REQUEST_FILENAME}  
+if not exists then  
+	#look for dir at %{SCRATCH:REQUEST_FILENAME}  
+	#if not exists then
+		set URL = /site.php?q=%{SCRATCH:REQUEST_URI}
+		goto QSA_RULE_START
+	#endif
+endif  
+# if we made it here then its a file or dir and no rewrite  
+goto END
+RULE_2_END:
+QSA_RULE_START:
+# append the query string if there was one originally  
+# the same as [QSA,L] for apache  
+match SCRATCH:ORIG_URL into % with \?(.*)$  
+if matched then  
+	set URL = %{URL}&%{SCRATCH:QUERY_STRING}  
+endif  
+goto END
+QSA_RULE_END:

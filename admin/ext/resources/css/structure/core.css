@@ -1,0 +1,157 @@
+dbc_exec($conn_id, "SELECT z.*, s.name AS smile_name, s.smile AS force_smile FROM zmones z LEFT JOIN zmogaus_busenos s ON s.id=z.zmogaus_busena");
+	while($f=@cached_odbc_fetch_array($r)) {
+		$f["ak"]=substr($f["ak"], 0, 11);
+		$grupes[$f["darbo_id"]][] = $f["ak"];
+		if ($f["dirba"]) {
+			$f["ak"]=substr($f["ak"], 0, 11);
+			$zmones_rokas[$f["vardas_pavarde"]]	=  new zmones($f["ak"], $f["vardas_pavarde"], $f["tipas"], $f["ip"], $f["pc_nr"], $f["last"], $f["nebus_nuo"], $f["nebus_iki"], $f["darbo_id"], $f["telefonas"], $f["kitas_telefonas"], $f["koof"], $f["email"], $f["sk_vadovas"], $f["kalba"], $f["planuoja_uzdirbti"], $f["force_smile"]);
+			$ak[$f["vardas_pavarde"]] = $zmogus_pagal_ip[$f["ip"]] = $f["ak"];
+			if ($f["darbo_id"] == 8) $projektu_vadovai[] = $f["ak"];
+			//if ($f["sk_vadovas"]) $sk_vadovas[$f["darbo_id"]] = $f["ak"];
+			//if ($REMOTE_ADDR == $f["ip"]) $current_user = $zmones_rokas[$f["vardas_pavarde"]];
+			$zmogus_pagal_ip[$f["ip"]] = $f["ak"];
+			$darbo_id[$f["ip"]] = $f["darbo_id"];
+			$dirbantys[$f["darbo_id"]][] = $f["ak"];
+			$gimtad_darb[$f["ak"]] = substr($f["ak"], 3, 2)."-".substr($f["ak"], 5, 2);
+			if ($f["darbo_id"] == "8") $zmones_projektams[$f["ak"]] = $f["vardas_pavarde"];
+		} elseif ($f["darbo_id"] == "11") {
+			$zmones_projektams[$f["ak"]] = $f["vardas_pavarde"];
+		} else {
+			$kiti[$f["ak"]] = new zmones($f["ak"], $f["vardas_pavarde"], $f["tipas"], $f["ip"], $f["pc_nr"], $f["last"], $f["nebus_nuo"], $f["nebus_iki"], $f["darbo_id"], $f["telefonas"], $f["kitas_telefonas"], $f["koof"], $f["email"], $f["kalba"], $f["planuoja_uzdirbti"], $f["force_smile"]);
+		}
+	}
+	@ksort($zmones_rokas);
+	@ksort($zmones_projektams);
+	@ksort($ak);
+	@ksort($darbo_id);
+	@ksort($grupes);
+	@asort($gimtad_darb);
+	unset($zmones);
+	foreach ($zmones_rokas as $k=>$v) $zmones[$ak[$k]]=$v;
+	end_calc("inc.sites.php:select-people");
+}
+
+if( $needed_tables & 0x0080 ) {
+	start_calc("inc.sites.php:select-descriptions");
+	$r = cached_odbc_exec($conn_id, "SELECT * FROM aprasymai");
+	while($f=cached_odbc_fetch_array($r)) {
+		$aprasymas_tmp[$f["projekto_id"]][$f["darbo_id"]] = $f["tekstas"];
+	}
+	ksort($aprasymas_tmp);
+	unset($aprasymas);
+	$aprasymas=$aprasymas_tmp;
+	end_calc("inc.sites.php:select-descriptions");
+}
+
+if( $needed_tables & 0x0100 ) {
+	start_calc("inc.sites.php:select-works");
+	$r = cached_odbc_exec($conn_id, "SELECT * FROM darbai");
+	while($f=cached_odbc_fetch_array($r)) {
+		if ($f["idp"] == 0) {
+			$skyrius[$f["id"]] = $f["title"];
+		} elseif ($f["idp"] > 0) {
+			$skyriaus_darbai[$f["idp"]][] = $f["id"];
+		}
+		$darbai_tmp[$f["id"]] = $f["darbai"];
+		$alias[$f["id"]] = $f["title"];
+	}
+
+	ksort($darbai_tmp);
+	unset($darbai);
+	$darbai=$darbai_tmp;
+	end_calc("inc.sites.php:select-works");
+}
+
+if( $needed_tables & 0x0200 ) {
+	start_calc("inc.sites.php:select-birthdays");
+	$r = cached_odbc_exec($conn_id, "SELECT * FROM gimtadieniai");
+	while($f=cached_odbc_fetch_array($r)) {
+		$g_tmp[$f["id"]] = new gimtadieniai($f["project_id"], $f["name"], $f["data"]);
+		//echo "<li>$f[project_id]";
+	}
+	ksort($g_tmp);
+	unset($gimtad_kl);
+	$gimtad_kl=$g_tmp;
+	end_calc("inc.sites.php:select-birthdays");
+}
+
+if( $needed_tables & 0x0400 ) {
+	start_calc("inc.sites.php:select-company-projects");
+	$r = cached_odbc_exec($conn_id, "SELECT * FROM imones_projektai");
+	while($f=cached_odbc_fetch_array($r)) {
+		$ip_tmp[$f["imones_projekto_id"]] = new imones_projektai($f["imones_projekto_id"], $f["project_id"],  $f["imones_id"]);
+		$projekto_imones[$f["project_id"]] = $f["imones_id"];
+		if ($imones[$f["imones_id"]]->kaina_men) {
+			$menesinis[$f["project_id"]] = $imones[$f["imones_id"]]->kaina_men;
+		} if ($imones[$f["imones_id"]]->kaina_pastabos) {
+			$pastabos[$f["project_id"]] = $imones[$f["imones_id"]]->kaina_pastabos;
+		}
+	}
+	ksort($ip_tmp);
+	unset($imones_projektai);
+	$imones_projektai=$ip_tmp;
+	end_calc("inc.sites.php:select-company-projects");
+}
+
+if( $needed_tables & 0x0800 ) {
+	start_calc("inc.sites.php:select-sanaudos");
+	$r = cached_odbc_exec($conn_id, "SELECT * FROM sanaudos");
+	while($f=cached_odbc_fetch_array($r)) {
+		$id = substr($f["zmones_id"], 0, 11);
+		$sanaudos_tmp[$f["projekto_id"]][$id] = new sanaudos ($f["kaina_numatyta"], $f["kaina_reali"]);
+	}
+	ksort($sanaudos_tmp);
+	unset($sanaudos);
+	$sanaudos=$sanaudos_tmp;
+	end_calc("inc.sites.php:select-sanaudos");
+}
+
+if( !isset($in_refreshing) && !isset($_GET["in_refreshing"]) && !isset($_POST["in_refreshing"]) ) {
+	//Login
+	$local = substr($_SERVER['REMOTE_ADDR'], 0, 10) == "192.168.1."; //ar lokalus
+	function showLogin($var) { die('<script type="text/javascript" language="JavaScript"> alert("Neteisingas prisijungimas: '.$var.'"); document.location.href="http://www.login.profis.lt/"; </script>'); }
+
+	//start=online
+	if (strtolower(getcwd())!=strtolower("E:\\home\\filipborcov\\www")) { //dumponline
+		if ($_POST["ip"] || $_SESSION["userIp"]) {
+			if( $_POST["ip"] ) {
+				foreach( $zmones as $zak => $zmogus )
+					if( strtolower($zmogus->nick) == strtolower(iconv("utf-8","windows-1257",$_POST["ip"])) ) {
+						$user_ak = $zak;
+						break;
+					}
+				if( !$user_ak || iconv("utf-8","windows-1257",$_POST["passw"]) != "siforp".strtolower($zmogus->nick))
+					showLogin('wrong user');
+				$_SESSION["userIp"] = $zmones[$user_ak]->ip;
+				session_register("userIp");
+			}
+			$userIp = $_SESSION["userIp"];
+		} else
+		// UGLY HARDCODE HACK
+		if (isset($_GET['user'])) {
+			// HACK HACK
+			if (isset($_SERVER['LOGON_USER'])) {
+				switch ($_SERVER['LOGON_USER']) {
+				case 'PROFIS\\\\filip':
+					$userIp = '192.168.1.15';
+					$opener = 38107040357;
+					break;
+				// add more?
+				}
+			}
+		} else
+		{
+			if ($local) //Local
+				$userIp = $_SESSION["userIp"] = $REMOTE_ADDR;
+			else
+				showLogin('bad post or session');
+		}
+	}
+
+	$user_ak = $zmogus_pagal_ip[$userIp];
+	$user    = $zmones[$user_ak]->nick;
+	$ln      = $zmones[$user_ak]->kalba;
+	$vadovas = ($darbo_id[$userIp]=="8");
+}
+
+// UNCOMMENTING IS
