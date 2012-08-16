@@ -163,10 +163,10 @@ final class PC_site extends PC_base {
 			$this->core->Do_action(v($route['action']), v($route['data']));
 		}
 		//dont open page if page language != current language
-		elseif ($route['ln'] != $this->ln) {
+		/*elseif ($route['ln'] != $this->ln) {
 			$this->core->Do_action('show_error', 404);
 			return false;
-		}
+		}*/
 		else return $this->Load_page($route); //ar neuztenka return $route?
 	}
 	/**
@@ -248,7 +248,7 @@ final class PC_site extends PC_base {
 			return false;
 		}
 		//add default scripts & styles to queue
-		$this->Add_script('media/jquery-1.7.2.min.js', 100);
+		$this->Add_script('media/jquery-1.8.0.min.js', 100);
 		$this->Add_script('media/swfobject.js', 80);
 		$this->Add_script('media/jquery.prettyPhoto.js');
 		$this->Add_script('media/cms.js', -1);

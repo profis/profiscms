@@ -1,6 +1,6 @@
 <?php
 class PC_params_errors {
-	private $_list = array();
+	public $_list = array();
 	public function Parse($errors) {
 		if (!is_array($errors)) return false;
 		if (count($errors)) {
@@ -40,7 +40,7 @@ class PC_params_errors {
 class PC_params {
 	public function __construct($params) {
 		$this->errors = new PC_params_errors;
-		foreach ($params as $p=>&$v) {
+		if (is_array($params)) foreach ($params as $p=>&$v) {
 			switch ($p) {
 				case 'errors':
 					$this->errors->Parse($params['errors']);

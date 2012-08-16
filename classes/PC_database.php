@@ -32,7 +32,7 @@ class PC_database_fields {
 		}
 		array_unshift($args, null);
 		//replace that null element by reference to value
-		$args[1] =& $value;
+		$args[0] =& $value;
 		$r = call_user_func_array($params['validator']['callback'], $args);
 		return $r;
 	}

@@ -609,6 +609,10 @@ function Sanitize($type, $input, $extra=null) {
 			$cyrillic = array('а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я','А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я');
 			$latin = array('a','b','v','g','d','e','yo','zh','z','i','j','k','l','m','n','o','p','r','s','t','u','f','h','c','ch','sh','shсh','','y','','eh','yu','ya','A','B','V','G','D','E','Yo','Zh','Z','I','J','K','L','M','N','O','P','R','S','T','U','F','H','C','Ch','Sh','Shсh','','Y','','Eh','Yu','Ya');
 			$input = str_replace($cyrillic, $latin, $input);
+			//translit lithuanian chars
+			$lithuanian = array('č', 'Č', 'ę','Ę','ė','Ė','į','Į','š','Š','ų','Ų','ū','Ū','ž','Ž');
+			$latin = array('c','C','e','E','e','E','i','I','s','S','u','U','u','U','z','Z');
+			$input = str_replace($lithuanian, $latin, $input);
 			//transliteration
 			$input = strtolower(iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', $input));
 			//normalize structure
@@ -818,5 +822,34 @@ function Hex_encode($str, $ent = false) {
 	for ($i = 0; $i < $length; $i++)
 		$encoded .= $ch.wordwrap(bin2hex($substr($str, $i, 1)), 2, $ch, true).($ent ? ';' : '');
 	return $encoded;
+}
+
+/** Implodes an array containing values for multiple languages into a single string.
+* 
+* Array keys pose as language codes and must be 2 latin characters exactly for
+* the returned string to be parsable correctly.
+* Array values pose as strings for the language code, contained in the key.
+* @param array $data An associative array, containing all the values
+* @return string Returns an imploded string
+* @see Multilang_explode()
+*/
+function Multilang_implode($data) {
+	$str = '';
+	foreach( $data as $lng => $dstr )
+		$str .= (empty($str) ? '' : '█') . substr($lng, 0, 2) . $dstr;
+	return $str;
+}
+
+/** Explodes a string having values for several languages into an array.
+* @param string $str The string to explode.
+* @return array Returns an associative array containing language code as key and string for that language as value.
+* @see Multilang_implode()
+*/
+function Multilang_explode($str) {
+	$data = preg_split('#█#u', $str);
+	$arr = Array();
+	foreach( $data as $dstr )
+		$arr[substr($dstr, 0, 2)] = substr($dstr, 2);
+	return $arr;
 }
 ?>

@@ -29,7 +29,7 @@ final class PC_page extends PC_base {
 		$r = $this->prepare("SELECT p.date,p.front,p.id pid,p.idp,c.*,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,"
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.route'), array('separator'=>'▓'))." routes"
 		.(is_null($route)?
-			" FROM {$this->db_prefix}pages p JOIN {$this->db_prefix}content c ON pid=p.id"
+			" FROM {$this->db_prefix}pages p LEFT JOIN {$this->db_prefix}content c ON pid=p.id and c.ln=?"
 			:" FROM {$this->db_prefix}content c JOIN {$this->db_prefix}pages p ON p.id=pid"
 		)
 		/*." FROM {$this->db_prefix}content c"
@@ -39,10 +39,12 @@ final class PC_page extends PC_base {
 		." LEFT JOIN {$this->db_prefix}content routes ON routes.pid=p.id"
 		." WHERE ".(is_null($route)?"p.front>0":($route_is_page_id?"p.id":"c.route")."=? ")
 		." and p.site=? and p.deleted=0 and p.published=1 and (p.date_from is null or p.date_from<=?) and (p.date_to is null or p.date_to>=?)"
-		." and c.ln=?"
+		.(!is_null($route)?" and c.ln=?":"")
 		." GROUP BY ".$this->sql_parser->group_by('p.id,p.front,p.idp,p.controller,p.redirect,redirect_from_home,p.nr,c.id,c.pid,c.ln,c.name,c.info,c.info2,c.info3,c.title,c.keywords,c.description,c.route,c.text,c.last_update,c.update_by,p.date')
 		." LIMIT 1");
-		$params = array($this->site->data['id'], $now, $now, $this->site->ln);
+		$params = array($this->site->data['id'], $now, $now);
+		if (is_null($route)) array_unshift($params, $this->site->ln);
+		else $params[] = $this->site->ln;
 		if (!is_null($route)) array_unshift($params, $route);
 		$success = $r->execute($params);
 		if (!$success) {
@@ -162,33 +164,6 @@ final class PC_page extends PC_base {
 		$link = (substr($match[0], 0, 7) == 'mailto:');
 		return ($link?'mailto:':'').Hex_encode(($link?substr($match[0], 7):$match[0]), !$link);
 	}
-	public function Parse_gallery_files_requests_old(&$text) {
-		if (!empty($text)) {
-			preg_match_all('#(url\("?|")((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+)"\)?)#i', $text, $matches);
-			if (count($matches[5])) {
-				$r = $this->query("SELECT f.id,filename,"
-				.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true,'separator'=>'/'))." path
-				FROM {$this->db_prefix}gallery_files f
-				LEFT JOIN {$this->db_prefix}gallery_categories category ON category.id = category_id
-				LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft between path.lft and path.rgt
-				WHERE f.id in(".implode(',', $matches[5]).")
-				GROUP BY f.id,f.filename");
-				if ($r) {
-					while ($data = $r->fetch()) {
-						$this->gallery->Sort_path($data['path']);
-						$data['path'] = !empty($data['path'])?$data['path'].'/':'';
-						$files[$data['id']] = $data;
-					}
-					for ($a=0; isset($matches[0][$a]); $a++) {
-						$to = '"gallery/'.$files[$matches[5][$a]]['path'].$matches[3][$a].$matches[4][$a].$files[$matches[5][$a]]['filename'].'"';
-						$this->gallery_request_map[$files[$matches[5][$a]]['path'].$files[$matches[5][$a]]['filename']] = $matches[5][$a];
-						$text = str_replace($matches[0][$a], $to, $text);
-					}
-				}
-			}
-		}
-		return true;
-	}
 	public function Parse_gallery_files_requests(&$text) {
 		if (!empty($text)) {
 			//preg_match_all('#"((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+)")#i', $text, $matches);
@@ -210,7 +185,7 @@ final class PC_page extends PC_base {
 					}
 					//print_pre($files);
 					for ($a=0; isset($matches[0][$a]); $a++) {
-						$to = 'gallery/'.$files[$matches[6][$a]]['path'].$matches[4][$a].$matches[5][$a].$files[$matches[6][$a]]['filename'].'';
+						$to = ''.$this->cfg['directories']['gallery'].'/'.$files[$matches[6][$a]]['path'].$matches[4][$a].$matches[5][$a].$files[$matches[6][$a]]['filename'].'';
 						$this->gallery_request_map[$files[$matches[6][$a]]['path'].$files[$matches[6][$a]]['filename']] = $matches[6][$a];
 						//echo $to.'<br />';
 						$text = preg_replace("#".$matches[2][$a]."([^0-9])#", $to."$1", $text, -1, $count);

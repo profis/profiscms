@@ -63,7 +63,7 @@ $cfg['patterns'] = array(
 
 //don't change following settings if you're not sure what you're doing!
 $cfg['core_plugins'] = array('core','page', 'backup', 'domains', 'sites', 'variables', 'auth');
-$cfg['salt'] = '~cms~4.2.3/34@4552m,as2%!((';
+$cfg['salt'] = '#%4#%F3456fsg34%#13as97$^g1';
 
 $cfg['valid_page_fields'] = array(
 	'name', 'info', 'info2', 'info3', 'title', 'keywords', 'description', 'route', 'text',

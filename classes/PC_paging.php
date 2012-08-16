@@ -1,6 +1,6 @@
-<?php
+ <?php
 class PC_paging {
-	protected $page, $total, $perPage, $limit, $offset, $initialOffset;
+	protected $page, $total, $perPage, $limit, $offset, $initialOffset, $cutout;
 	const PP_DEFAULT = 30;
 	public function __construct($page, $perPage=null) {
 		$this->page = (int)$page;
@@ -14,13 +14,18 @@ class PC_paging {
 		$this->total = (int)$total;
 		$this->totalPages = ceil($this->total / $this->perPage);
 	}
+	public function Get_total() {
+		return (int)$this->total;
+	}
 	public function Get_offset() {
 		$offset = $this->offset;
 		if ($this->initialOffset > 0) $offset += $this->initialOffset;
 		return $offset;
 	}
 	public function Get_limit() {
-		return $this->limit;
+		$limit = $this->limit;
+		if ($this->cutout > 0) $limit = $limit - $this->cutout;
+		return $limit;
 	}
 	public function Set() {}
 	public function Get() {}
@@ -33,7 +38,10 @@ class PC_paging {
 		$this->page--;
 		return true;
 	}
-	public function Set_initial_offset($offset=0) {
-		$this->initialOffset = (int)$offset;
+	public function Set_initial_offset($count=0) {
+		$this->initialOffset = (int)$count;
+	}
+	public function Set_cutout($count=0) {
+		$this->cutout = (int)$count;
 	}
 }

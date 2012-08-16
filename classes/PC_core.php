@@ -252,12 +252,13 @@ final class PC_core extends PC_base {
 	*/
 	public function Parse_data_str(&$data, $separator=',', $subseparator=':') {
 		if (!is_string($data)) return false;
-		$data = explode($separator, $data);
-		$list = array();
-		if (count($data) && strpos($data[0], $subseparator)) {
-			for ($a=0; isset($data[$a]); $a++) {
-				$temp = explode($subseparator, $data[$a]);
-				$list[$temp[0]] = $temp[1];
+		$_data = $data;
+		$_data = explode($separator, $_data);
+		$data = array();
+		if (count($_data) && strpos($_data[0], $subseparator)) {
+			for ($a=0; isset($_data[$a]); $a++) {
+				$temp = explode($subseparator, $_data[$a]);
+				$data[$temp[0]] = $temp[1];
 			}
 		}
 		return true;

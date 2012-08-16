@@ -124,7 +124,7 @@ PC.ux.TinyMCE = function(config) {
 			content_css: PC.global.BASE_URL+'themes/'+ Get_site()[2] +'/custom.css?'+new Date().getTime(),
 			//custom editor css by theme: PC.global.BASE_URL+'media/editor.css, '+ 
 			save_onsavecallback: 'PC.editors.Save',
-			file_browser_callback: null,
+			file_browser_callback: false,
 			accessibility_warnings: false,
 			entity_encoding: 'raw',
 			document_base_url: PC.global.BASE_URL,

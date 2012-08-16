@@ -1,3 +1,27 @@
+PC_errors.txt
 # OS generated files
 .DS_Store
 Thumbs.db
+_dev/
+config/
+# Gallery
+gallery/*
+!gallery/.htaccess
+!gallery/index.php
+# Plugins
+plugins/*
+!plugins/auth/
+!plugins/backup/
+!plugins/domains/
+!plugins/dummy/
+!plugins/sites/
+!plugins/variables/
+!plugins/.htaccess
+!plugins/index.php
+themes/
+!themes/default/
+!themes/index.php
+admin/backups/*
+!admin/backups/.htaccess
+!admin/backups/index.php
+config.php

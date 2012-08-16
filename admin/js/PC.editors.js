@@ -88,6 +88,7 @@ PC.editors = {
 		return true;
 	},
 	Load: function(data, freshLoad, callback) {
+		if (data == undefined) return false;
 		var id = PC.pages.ParseID(data.id);
 		var ctrl = 'page';
 		if (id.controller != undefined/* || data.controller != ''*/) {
@@ -123,13 +124,13 @@ PC.editors = {
 	},
 	Unload: function(newData) {
 		var params = {
-			data: this.Data,
+			data: PC.editors.Data,
 			newData: newData
 		};
 		PC.hooks.Init('core/editors/unload', params);
 	},
 	Fill: function(data, ln, freshLoad, callback) {
-		if (ln == null) var ln = PC.global.ln;
+		if (ln == undefined || ln == null) var ln = PC.global.ln;
 		if (data != undefined || data != null) this.Data = data;
 		else if (this.Data == undefined) return false;
 		var editor = this.Get();

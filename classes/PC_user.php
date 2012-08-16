@@ -81,7 +81,8 @@ final class PC_user extends PC_base {
 			$this->Logged_in = true;
 			$this->Get_data();
 			return true;
-		} else {
+		}
+		else {
 			$using_cookie = false;
 			$cookie_code = $this->GetCookie();
 			if( $cookie_code !== null ) {
@@ -198,12 +199,11 @@ final class PC_user extends PC_base {
 		}
 		return true;
 	}
-	
 	public function Get_meta_data($keys=null, $user_id=0) {
 		if (!is_null($keys) && !is_array($keys)) $keys = Array($keys);
 		if ($user_id == 0) $user_id = $this->ID;
 		if( !is_numeric($user_id) ) return false;
-		$r = $this->prepare("SELECT mkey, mvalue FROM {$this->db_prefix}site_users_meta WHERE id=?" . (is_array($keys) ? (" AND mkey IN ('" . implode("','", array_map(Array($this->db, "quote"), $keys)) . "')") : ""));
+		$r = $this->prepare("SELECT mkey, mvalue FROM {$this->db_prefix}site_users_meta WHERE id=?" . (is_array($keys) ? (" AND mkey IN (" . implode(",", array_map(Array($this->db, "quote"), $keys)) . ")") : ""));
 		if (!$r->execute(array($user_id))) return false;
 		$data = Array();
 		while ($f = $r->fetch())

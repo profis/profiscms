@@ -87,7 +87,6 @@ require_once 'admin.php';
 	PC.version = '<?php echo PC_VERSION; ?>';
 	</script>
 	<script type="text/javascript" src="tiny_mce/tiny_mce_src.js"></script>
-	<script type="text/javascript" src="tiny_mce/plugins/tinybrowser/tb_tinymce.js.php"></script>
 	<script type="text/javascript" src="js/pack.scripts.php"></script>
 </body>
 </html>

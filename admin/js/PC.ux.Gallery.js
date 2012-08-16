@@ -198,11 +198,7 @@ PC.ux.gallery.files.actions = {
 				this.view.el.frame();
 				if (!this.view) this.setView(PC.dialog.gallery.files_view);
 				var selected_files = this.view.getSelectedIndexes();
-				console.log(selected_files);
 				var record = this.view.store.getAt(selected_files[0]);
-				console.log(record);
-				console.log(record.data);
-				console.log(record.data.filetype);
 				if (record.data.filetype == 'image')
 				  PC.dialog.gallery.preview_image(selected_files[0]);
 				else

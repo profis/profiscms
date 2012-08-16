@@ -53,6 +53,7 @@ PC.tree.Append = function(where, what, callback) {
 			return newNode;
 		};
 		var newNode = where.appendChild(what);
+		PC.tree.component.localizeNode(newNode);
 		callback(newNode);
 		return newNode;
 	}

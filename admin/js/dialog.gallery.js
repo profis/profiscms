@@ -264,7 +264,10 @@ PC.dialog.gallery = {
 				trashed: 0
 			}
 		});
-		this.categories_treeloader.on('beforeload', function(loader, node){
+		this.categories_treeloader.on('beforeload', function(loader, node, callback){
+			/*callback = function() {
+				alert('callback veikia!');
+			}*/
 			this.categories_treeloader.baseParams.trashed = (this.is_category_trashed(node.attributes.id)?1:0);
 		}, this);
 		
@@ -1217,7 +1220,7 @@ PC.dialog.gallery = {
 			var selected_files = new Array();
 			selected_files[0] = files;
 		}
-		console.log(selected_files);
+		//console.log(selected_files);
 		var record;
 		if (dialog.image_preview) {
 			if (!dialog.image_preview.hidden) {
@@ -1297,7 +1300,7 @@ PC.dialog.gallery = {
 		for (var a=0; selected_files[a] != undefined; a=a+1) {
 			//record = dialog.files_view.store.getAt(selected_files[a]);
 			record = selected_files[a];
-			console.log(record.data.filename);
+			//console.log(record.data.filename);
 			_insert_file(record);
 		}
 		if (!PC.ux.gallery.CloseAfterInsert) {
