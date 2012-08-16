@@ -39,3 +39,7 @@ PHP Extensions
 MySQL Configuration
 
 	Query buffering must not be disabled.
+
+Troubleshooting
+==========
+1. If you get ".htaccess: order not allowed here" error, try to comment "order allow,deny" inside "<Files PC_errors.txt>" directive.

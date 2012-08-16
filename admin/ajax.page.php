@@ -487,7 +487,7 @@ elseif ($action == 'empty_trash') {
 		$s = $r->execute();
 		if ($s) {
 			$cids = $r->fetchColumn();
-			$r = $db->query("DELETE FROM {$cfg['db']['prefix']}gallery_files_in_use WHERE content_id in(".$cids.")");
+			if (!empty($cids)) $r = $db->query("DELETE FROM {$cfg['db']['prefix']}gallery_files_in_use WHERE content_id in(".$cids.")");
 		}
 		$r = $db->query("DELETE FROM {$cfg['db']['prefix']}content WHERE pid in(".implode(',', $pids).")");
 		$r = $db->query("DELETE FROM {$cfg['db']['prefix']}content_archive WHERE tree_id in(".implode(',', $pids).")");
