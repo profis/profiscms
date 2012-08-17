@@ -112,6 +112,10 @@ PC.dialog.plugins = {
 										setTimeout(function(){
 											Reload_page_controller_list();
 										}, 100);
+										Ext.iterate(r.deactivated, function(plugin){
+											delete PC.plugin[plugin];
+											Ext.getCmp('PluginsMenuItem-'+ plugin).destroy();
+										});
 									}
 									if (r.success) {
 										dialog.grid.getStore().commitChanges();

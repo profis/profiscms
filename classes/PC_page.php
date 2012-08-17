@@ -248,12 +248,20 @@ final class PC_page extends PC_base {
 					."new swfobject.embedSWF('".$base.$src."','".$id."', ".$w.", ".$h.",'9.0.115');</script>";
 				}
 				else {
-					//jwplayer: '<script type="text/javascript">jwplayer("'.$id.'").setup({flashplayer:"media/jwplayer/player.swf",file:"'.$this->cfg['url']['base'].$src.'",height:'.$h.',width:'.$w.'});</script>'
+					//jwplayer:
+					$this->site->Add_script('media/jwplayer/jwplayer.js');
+					$media_frame .= '<script type="text/javascript">jwplayer("'.$id.'").setup({'
+						.'flashplayer:"media/jwplayer/player.swf",'
+						.'file:"'.$this->cfg['url']['base'].$src.'",'
+						.'height:'.$h.',width:'.$w
+						.(!empty($poster)?",image:'".$base.$poster."'":"")
+					.'});</script>';
 					//uppod:
-					$media_frame .= "<script type=\"text/javascript\">var flashvars={m:'video',uid:'".$id."',file:'".$base.$src."'".(!empty($poster)?",poster:'".$base.$poster."'":"")
+					/*$media_frame .= "<script type=\"text/javascript\">var flashvars={m:'video',uid:'".$id."',file:'".$base.$src."'".(!empty($poster)?",poster:'".$base.$poster."'":"")
 					.(!empty($skin)?',st:\''.$base.$skin."'":'')."};"
 					."var params={id:'".$id."',wmode:'transparent',allowFullScreen:true,allowScriptAccess:'always'};"
 					."new swfobject.embedSWF('".$base."media/uppod/uppod.swf', '".$id."', ".$w.", ".$h.", '9.0.115', false, flashvars, params);</script>";
+					*/
 				}
 				$media_frame .= '</div></div>';
 				$text = preg_replace('#'.preg_quote($media[0][$a], '#').'#m', $media_frame, $text, 1);

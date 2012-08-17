@@ -949,7 +949,7 @@ Ext.onReady(function(){
 							Flag_editors_as_clean();
 							//reload file list in the gallery (update 'files in use' marking)
 							if (PC.dialog.gallery.window) {
-								PC.ux.gallery.files.Store.load();
+								PC.dialog.gallery.filesStore.load();
 							}
 							var node = PC.tree.component.getNodeById(PC.global.pid);
 							var parentNode = node.parentNode;
@@ -1168,6 +1168,7 @@ Ext.onReady(function(){
 			Ext.iterate(PC.plugin, function(plugin, config, o) {
 				if (typeof config.onclick == 'function') {
 					PC.admin._modz.menu.add({
+						id: 'PluginsMenuItem-'+ plugin,
 						text: config.name,
 						icon: config.icon,
 						//scale: 'large',

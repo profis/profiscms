@@ -31,12 +31,14 @@ if ($action == 'update') {
 	}
 	else {
 		$errs = false;
+		$out['activated'] = $out['deactivated'] = array();
 		foreach ($_plugins as $plugin_data) {
 			if ($plugins->Exists($plugin_data[0])) {
 				$is_activated = $plugins->Is_active($plugin_data[0]);
 				if ($plugin_data[1] != $is_activated) {
 					if ($plugin_data[1]) {
 						if ($plugins->Activate($plugin_data[0])) {
+							$out['activated'][] = $plugin_data[0];
 							$plugin_setup_file = $cfg['path']['plugins'].$plugin_data[0].'/PC_setup.php';
 							if (file_exists($plugin_setup_file)) {
 								require($plugin_setup_file);
@@ -52,6 +54,7 @@ if ($action == 'update') {
 					}
 					else {
 						if ($plugins->Deactivate($plugin_data[0])) {
+							$out['deactivated'][] = $plugin_data[0];
 							$plugin_setup_file = $cfg['path']['plugins'].$plugin_data[0].'/PC_setup.php';
 							if (file_exists($plugin_setup_file)) {
 								require($plugin_setup_file);

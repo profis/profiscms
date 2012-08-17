@@ -125,7 +125,7 @@
 			}
 
 			text = r.toString();
-			matches = text.match(/^((https?:\/\/|ssh:\/\/|ftp:\/\/|mms:\/\/|rtsp:\/\/|file:\/|www\.)(.+)|.+?(@)[^.]+?\.[a-z0-9]{2,6})$/i);
+			matches = text.match(/^((https?:\/\/|ssh:\/\/|ftp:\/\/|mms:\/\/|rtsp:\/\/|file:\/|www\.)(.+)|.+?(@)([^.]+?\.)+[a-z0-9]{2,6})$/i);
 
 			if (matches) {
 				//url

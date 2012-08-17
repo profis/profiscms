@@ -1,6 +1,6 @@
 <?php
 
-if (!ini_get('zlib.output_compression')) @ob_start('ob_gzhandler');
+if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) if (!ini_get('zlib.output_compression')) @ob_start('ob_gzhandler');
 
 // vvvvvvvvvv FILES LIST vvvvvvvvvv
 

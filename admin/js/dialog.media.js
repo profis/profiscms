@@ -83,7 +83,7 @@ PC.dialog.media = {
 					emptyText: this.ln.put_poster_here
 				},
 				// PLAYER SKIN
-				{	fieldLabel: this.ln.skin,
+				/*{	fieldLabel: this.ln.skin,
 					xtype:'trigger', ref: '../../_skin',
 					triggerClass: 'x-form-search-trigger',
 					disabled: true,
@@ -113,7 +113,7 @@ PC.dialog.media = {
 						}
 					},
 					emptyText: this.ln.put_poster_here
-				},
+				},*/
 				{	xtype: 'fieldset',
 					labelWidth: 120,
 					style: {
@@ -438,7 +438,7 @@ PC.dialog.media = {
 			var id = properties.id;
 			var url = properties.src;
 			var poster = properties.poster;
-			var skin = properties.skin;
+			//var skin = properties.skin;
 			var style = media.getAttribute('_mce_style');
 			if (style) {
 				//parse margin
@@ -520,7 +520,7 @@ PC.dialog.media = {
 			this.window._id.setValue(id);
 			this.window._url.setValue(url);
 			this.window._poster.setValue(poster);
-			this.window._skin.setValue(skin);
+			//this.window._skin.setValue(skin);
 			this.window._url.fireEvent('change', this.window._url, url, this.window._url.getValue());
 			this.window._style.setValue((style?style.replace(/^\s+/,"").replace(/\s+$/,""):''));
 		}
@@ -604,9 +604,9 @@ PC.dialog.media = {
 	post_identify: function(normal_src, src, preview_mode, from_gallery){
 		var dialog = this;
 		var poster = dialog.window._poster;
-		var skin = dialog.window._skin;
+		//var skin = dialog.window._skin;
 		poster.disable();
-		skin.disable();
+		//skin.disable();
 		if (!dialog.current_media) {
 			dialog.current_default_width = dialog.current_default_height = undefined;
 			if (dialog.counter > 1) {
@@ -637,12 +637,12 @@ PC.dialog.media = {
 		
 		if (/^(avi|mpg|mpeg|mp4|wmv|mkv|flv)$/.test(extension)) {
 			poster.enable();
-			skin.enable();
+			//skin.enable();
 			if (!preview_mode) {
 				var source = '<object '+(id!=undefined?'id="'+ id +'" ':'')+(styles.length >0?'style="'+ styles +'" ':'')+'width="'+ w +'" height="'+ h +'">'
 					+'<param name="src" value="'+ full_src +'" />'
 					+(poster.getValue().length?'<param name="poster" value="'+ poster.getValue() +'" />':'')
-					+(skin.getValue().length?'<param name="skin" value="'+ skin.getValue() +'" />':'')
+					//+(skin.getValue().length?'<param name="skin" value="'+ skin.getValue() +'" />':'')
 					+'<embed src="'+ full_src +'" width="'+ w +'" height="'+ h +'"></embed>'
 				+'</object>';
 			}
@@ -653,6 +653,7 @@ PC.dialog.media = {
 			}
 			dialog.update_code(source, preview_mode);
 			if (preview_mode) {
+				/*  Uppod  *//*
 				var flashvars = {
 					m: 'video',
 					uid: id,
@@ -660,15 +661,24 @@ PC.dialog.media = {
 				};
 				if (poster.getValue().length) flashvars.poster = PC.global.BASE_URL + poster.getValue();
 				if (skin.getValue().length) flashvars.st = PC.global.BASE_URL + skin.getValue();
+				//var params = {id:id, wmode:"transparent", allowFullScreen:"true", allowScriptAccess:"always"};
+				//new swfobject.embedSWF(PC.global.BASE_URL + "media/uppod/uppod.swf", id, w, h, "9.0.115", false, flashvars, params);
 				
-				var params = {id:id, wmode:"transparent", allowFullScreen:"true", allowScriptAccess:"always"};
-				new swfobject.embedSWF(PC.global.BASE_URL + "media/uppod/uppod.swf", id, w, h, "9.0.115", false, flashvars, params);
-				/*jwplayer(id).setup({
-					flashplayer: PC.global.BASE_URL +"media/jwplayer/player.swf",
-					file: PC.global.BASE_URL + src,
-					height: h,
-					width: w
-				});*/
+				/*  JWPLAYER  */
+				var loadJwplayer = function() {
+					var jwconfig = {
+						flashplayer: PC.global.BASE_URL +"media/jwplayer/player.swf",
+						file: PC.global.BASE_URL + PC.global.directories.gallery +'/'+ normal_src,
+						height: h,
+						width: w
+					};
+					if (poster.getValue().length) jwconfig.image = PC.global.BASE_URL + poster.getValue();
+					//if (skin.getValue().length) jwconfig.skin = PC.global.BASE_URL + skin.getValue();
+					
+					jwplayer(id).setup(jwconfig);
+				}
+				if (typeof jwplayer != 'function') PC.utils.loadScript(PC.global.BASE_URL +'media/jwplayer/jwplayer.js', loadJwplayer);
+				else loadJwplayer();
 			}
 		}
 		else if (/youtube.com/.test(src)) {
@@ -699,11 +709,20 @@ PC.dialog.media = {
 			return source;
 		}
 		else if (extension == 'swf') {
+			console.log(full_src);
 			var generate_source = function() {
 				var source = '<object';
-				var attributes = Ext.util.JSON.decode('{'+ dialog.media.title +'}');
 				var attributesStr = '';
 				var paramEls = '';
+				if (dialog.media != undefined && dialog.counter <= 1) {
+					var attributes = Ext.util.JSON.decode('{'+ dialog.media.title +'}');
+					if (attributes.src != undefined) if (preview_mode) attributes.src = full_src;
+				}
+				else {
+					var attributes = {
+						src: (preview_mode?full_src:src)
+					};
+				}
 				Ext.iterate(attributes, function(name, value){
 					attributesStr += ' '+ name +'="'+ value +'"';
 					paramEls += '<param name="'+name+'" value="'+value+'" />';

@@ -170,6 +170,21 @@ PC.utils.deleteCookie = function(name, path, domain) {
 			';expires=Thu, 01-Jan-1970 00:00:01 GMT';
 }
 
+PC.utils.loadScript = function(src, callback){
+	var body = document.getElementsByTagName('body')[0];
+	var s = document.createElement('script');
+	s.setAttribute('type', 'text/javascript');
+	s.setAttribute('src', src);
+	if (typeof callback == 'function') s.onload = callback;
+	return body.appendChild(s);
+}
+
+PC.utils.escape = function(text) {
+  return text.replace(/\W/g, function (chr) {
+    return '&#' + chr.charCodeAt(0) + ';';
+  });
+}
+
 /**
  * Clone Function
  * @param {Object/Array} o Object or array to clone

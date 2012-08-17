@@ -728,20 +728,15 @@ function mod_sites_langs_click() {
 		items: [
 			site_grid,
 			lang_grid
-		]/*,
+		],
 		buttons: [
 			{
-				text: Ext.Msg.buttonText.ok,
-				handler: function() {
-					
-				}
-			},{
-				text: Ext.Msg.buttonText.cancel,
+				text: PC.i18n.close,
 				handler: function() {
 					w.close();
 				}
 			}
-		]*/
+		]
 	});
 	w.show();
 }

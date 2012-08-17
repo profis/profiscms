@@ -2,6 +2,9 @@ Options All -Indexes
 php_flag register_globals off
 RewriteEngine on
 
+RewriteCond %{REQUEST_URI} ^/admin$
+RewriteRule ^(.*)$ $1/ [R=301,L]
+
 # api
 RewriteCond %{REQUEST_URI} admin/api/(.*)
 RewriteRule ^(.+)$ api/admin/$1

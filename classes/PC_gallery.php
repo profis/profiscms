@@ -58,6 +58,8 @@ final class PC_gallery extends PC_base {
 		// filetype: image
 		$this->filetypes['jpg'] = $this->filetypes['jpeg'] = $this->filetypes['gif'] = $this->filetypes['png']
 		= $this->filetypes['bmp'] = 'image';
+		// filetype: executable
+		$this->filetypes['exe'] = 'executable';
 		
 		// root directory for the categories and files to store
 		$this->config['gallery_directory'] = $this->cfg['directories']['gallery'];

@@ -24,15 +24,14 @@ if ((isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && $_SERVER['HTTP_IF_MODIFIED_SIN
     exit();
 }
 // Output file for admin
-$r = $_GET['r'];
-if (substr($r, 0, 6) == 'admin/') {
+$galleryRequest = (isset($_GET['r'])?$_GET['r']:'');
+if (substr($galleryRequest, 0, 6) == 'admin/') {
 	$cfg['core']['no_login_form'] = true;//don't output login form if there's no active session
 	require_once('../admin/admin.php'); //ensure the user is authorized, otherwise stop executing this script
-	$r = $_GET['r'];
-	$r = substr($r, 6);
-	if (substr($r, 0, 3) == 'id/') {
-		$r = substr($r, 3);
-		$request_items = explode('/', $r);
+	$galleryRequest = substr($galleryRequest, 6);
+	if (substr($galleryRequest, 0, 3) == 'id/') {
+		$galleryRequest = substr($galleryRequest, 3);
+		$request_items = explode('/', $galleryRequest);
 		$total_items = count($request_items);
 		if (preg_match("/^(thumbnail|small|large|(thumb-(".$gallery->patterns['thumbnail_type'].")))$/", $request_items[0], $matches)
 			&& !preg_match("/^thumb-(thumbnail|small|large)$/", $request_items[0])) {
@@ -53,9 +52,9 @@ if (substr($r, 0, 6) == 'admin/') {
 		}
 		
 	} else {
-		if (substr($r, 0, 7) == 'cropper') { //show image for cropping
-			$r = substr($r, 8);
-			$parsing_result = $gallery->Parse_file_request($r);
+		if (substr($galleryRequest, 0, 7) == 'cropper') { //show image for cropping
+			$galleryRequest = substr($galleryRequest, 8);
+			$parsing_result = $gallery->Parse_file_request($galleryRequest);
 			if (!v($parsing_result['success'])) { //invalid request
 				header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found"); return;
 			}
@@ -78,7 +77,7 @@ if (substr($r, 0, 6) == 'admin/') {
 			}
 		}
 		else { //just get the file even if it's trashed or private
-			$parsing_result = $gallery->Parse_file_request($r);
+			$parsing_result = $gallery->Parse_file_request($galleryRequest);
 			//print_pre($parsing_result); die();
 			if (!v($parsing_result['success'])) { //invalid request
 				header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found"); return;
@@ -100,11 +99,10 @@ if (substr($r, 0, 6) == 'admin/') {
 }
 else {
 	require_once '../base.php';
-	$r = $_GET['r'];
-	if ($r == 'index.php') {
+	if ($galleryRequest == 'index.php') {
 		header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found"); return;
 	}
-	$parsing_result = $gallery->Parse_file_request($r);
+	$parsing_result = $gallery->Parse_file_request($galleryRequest);
 	if (!v($parsing_result['success'])) { //invalid request
 		header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found"); return;
 	}

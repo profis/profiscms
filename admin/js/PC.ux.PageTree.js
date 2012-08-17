@@ -135,21 +135,26 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 			}
 			else n.ui.removeClass('cms-tree-node-menu');
 		}*/
+		var setText = function(text, greyOut) {
+			var text = PC.utils.escape(text);
+			if (greyOut) text = '<span style="color: #666"><i>'+ text +'</i></span>';
+			return n.setText(text);
+		}
 		if (n.attributes.id == 'create') {
-			n.setText(PC.i18n.create_new_page);
+			setText(PC.i18n.create_new_page);
 		}
 		else if (n.attributes.id == -1) {
-			n.setText(PC.i18n.bin);
+			setText(PC.i18n.bin);
 		}
 		else if (n.attributes._front > 0) {
-			n.setText(PC.i18n.home);
+			setText(PC.i18n.home);
 		}
 		else if (ctrl == 'search') {
-			n.setText(PC.i18n.search);
+			setText(PC.i18n.search);
 		}
 		else if (n.attributes._names) {
 			if (n.attributes._names[this._ln]) {
-				n.setText(n.attributes._names[this._ln]);
+				setText(n.attributes._names[this._ln]);
 			} else {
 				var name_mock = '';
 				Ext.iterate(n.attributes._names, function(language, name) {
@@ -159,7 +164,7 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 					}
 				});
 				if (name_mock == '') name_mock = '...'; //PC.i18n.no_title;
-				n.setText('<span style="color: #666"><i>'+name_mock+'</i></span>');
+				setText(name_mock, true);
 			}
 		}
 	},

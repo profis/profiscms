@@ -56,11 +56,11 @@
 
 .login_header {
 	text-align: center;
-	font: bold 14px Tahoma;
-	margin: 6px 0;
+	font: bold 14px Arial;
+	margin: 6px 0 6px 32px;
 	padding-left: 64px;
 	line-height: 32px;
-	background: url("../images/profis32.png") no-repeat 32px 0;
+	background: url("../images/profis32.png") no-repeat 32px -2px;
 }
 
 .x-form-field-wrap .x-form-folder-trigger {

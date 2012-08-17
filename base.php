@@ -40,7 +40,7 @@ require_once('functions.php');
 date_default_timezone_set('UTC');
 
 //enable gzip, if not specified differently
-if (!core_get('no_gzip')) if (!ini_get('zlib.output_compression')) @ob_start('ob_gzhandler');
+if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) if (!core_get('no_gzip')) if (!ini_get('zlib.output_compression')) @ob_start('ob_gzhandler');
 
 //magic quotes handling
 ini_set('magic_quotes_runtime', 0);
