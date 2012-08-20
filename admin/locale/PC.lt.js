@@ -142,14 +142,15 @@ PC.langs.lt = {
 			saving: 'Saugojama...',
 			save: 'Jūs turite neišsaugotų duomenų!'
 		},
-		confirm_delete: 'Ar tikrai norite ištrinti?',
+		confirm_delete: 'Ar tikrai norite ištrinti {0}?',
 		loading: 'Kraunama, prašome palaukti...',
 		saving: 'Saugojama, prašome palaukti...',
 		save: 'Norite išsaugoti pakeitimus?',
 		perm_del: 'Ar tikrai norite visiškai ištrinti {0}?',
 		del_prev_ver: 'Ar tikrai norite ištrinti {0} ankstesnes versijas?',
 		empty_trash: 'Ar tikrai norite ištrinti visus šiukšlinėje esančius puslapius be galimybės juos atstatyti?',
-		logout: 'Ar tikrai norite atsijungti?'
+		logout: 'Ar tikrai norite atsijungti?',
+		move_menu_warning: 'Perkeldami meniu jus galite pakeisti meniu issidestyma puslapyje. Testi?'
 	},
 	align: {
 		left: 'Kairėje',

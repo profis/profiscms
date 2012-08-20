@@ -2393,10 +2393,11 @@ final class PC_gallery extends PC_base {
 		if (!is_null($return_thumbnail_types)) {
 			if (!is_array($return_thumbnail_types)) $return_thumbnail_types = array((string)$return_thumbnail_types);
 			if (count($return_thumbnail_types)) {
-				$this->Replace_thumbnail_types($text, $return_thumbnail_types);
+				//$this->Replace_thumbnail_types($text, $return_thumbnail_types);
 				$files = array();
 				foreach ($m[1] as $src) {
 					$r = $this->Parse_file_request($src);
+					if (isset($r['errors'])) if (count($r['errors'])) continue;
 					$file = array();
 					foreach ($return_thumbnail_types as $type) {
 						$file[$type] = $r['category_path'].'/'.$type.'/'.$r['filename'];

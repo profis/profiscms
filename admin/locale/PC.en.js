@@ -144,14 +144,15 @@ PC.langs.en = {
 			saving: 'Saving...',
 			save: 'You have unsaved data!'
 		},
-		confirm_delete: 'Are you sure you want to delete this?',
+		confirm_delete: 'Are you sure you want to delete {0}?',
 		loading: 'Loading, please wait...',
 		saving: 'Saving, please wait...',
 		save: 'Would you like to save your changes?',
 		perm_del: 'Are you sure you want to permanently delete {0}?',
 		del_prev_ver: 'Are you sure you want to delete {0} previous version(s)?',
 		empty_trash: 'Are you sure you want to delete all pages in trash permanently?',
-		logout: 'Are you sure you want to logout?'
+		logout: 'Are you sure you want to logout?',
+		move_menu_warning: 'Moving menu in the page tree impacts the menu arrangement on the site. Do you wish to continue?'
 	},
 	align: {
 		left: 'Left',

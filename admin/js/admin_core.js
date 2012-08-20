@@ -8,38 +8,51 @@ Ext.onReady(function(){
 	//PC.utils.localize();
 	//if (PC.global.permissions.admin) {
 		PC.trash_page = function(n) {
-			// move to recycle bin
-			Ext.Ajax.request({
-				url: 'ajax.page.php?action=delete',
-				params: {
-					id: n.id,
-					old_idp: n.parentNode.id
-				},
-				method: 'POST',
-				callback: function(opts, success, rspns) {
-					if (success && rspns.responseText) {
-						try {
-							var data = Ext.decode(rspns.responseText);
-							if (data.success) {
-								var trash = PC.tree.component.getNodeById(-1);
-								if (trash) {
-									if (!trash.childNodes.length)
-										trash.collapse();
-									trash.insertBefore(n, trash.firstChild);
-									return; // OK
+			Ext.MessageBox.show({
+				title: PC.i18n.msg.title.confirm,
+				msg: String.format(PC.i18n.msg.confirm_delete, '"'+n.text+'"'),
+				buttons: Ext.MessageBox.YESNO,
+				icon: Ext.MessageBox.WARNING,
+				fn: function(rslt) {
+					switch (rslt) {
+						case 'yes':
+							// move to recycle bin
+							Ext.Ajax.request({
+								url: 'ajax.page.php?action=delete',
+								params: {
+									id: n.id,
+									old_idp: n.parentNode.id
+								},
+								method: 'POST',
+								callback: function(opts, success, rspns) {
+									if (success && rspns.responseText) {
+										try {
+											var data = Ext.decode(rspns.responseText);
+											if (data.success) {
+												var trash = PC.tree.component.getNodeById(-1);
+												if (trash) {
+													if (!trash.childNodes.length)
+														trash.collapse();
+													trash.insertBefore(n, trash.firstChild);
+													return; // OK
+												}
+												n.remove();
+												if (PC.global.pid == n.id) Load_home_page();
+												return; // OK
+											}
+										} catch(e) {};
+									}
+									Ext.MessageBox.show({
+										title: PC.i18n.error,
+										msg: String.format(PC.i18n.msg.error.page.del, ''),
+										buttons: Ext.MessageBox.OK,
+										icon: Ext.MessageBox.ERROR
+									});
 								}
-								n.remove();
-								if (PC.global.pid == n.id) Load_home_page();
-								return; // OK
-							}
-						} catch(e) {};
+							});
+							break;
+						default: // case 'no':
 					}
-					Ext.MessageBox.show({
-						title: PC.i18n.error,
-						msg: String.format(PC.i18n.msg.error.page.del, ''),
-						buttons: Ext.MessageBox.OK,
-						icon: Ext.MessageBox.ERROR
-					});
 				}
 			});
 		}

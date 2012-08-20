@@ -49,12 +49,12 @@ PC.tree.Append = function(where, what, callback) {
 			while (n.previousSibling && n.previousSibling.id<0)
 				n = n.previousSibling;
 			var newNode = where.insertBefore(what, n);
-			callback(newNode);
+			if (typeof callback == 'function') callback(newNode);
 			return newNode;
 		};
 		var newNode = where.appendChild(what);
 		PC.tree.component.localizeNode(newNode);
-		callback(newNode);
+		if (typeof callback == 'function') callback(newNode);
 		return newNode;
 	}
 	if (where.expanded) return append();
@@ -471,7 +471,7 @@ PC.tree.component = new PC.ux.PageTree({
 		},
 		beforenodedrop: function(drp) {
 			if (drp.dropNode.attributes.controller == 'menu') {
-				var r = confirm("Perkeldami meniu jus galite pakeisti meniu issidestyma puslapyje. Testi?")
+				var r = confirm(PC.i18n.msg.move_menu_warning);
 				if (!r) return false;
 			}
 			/*var nodrop = false;
