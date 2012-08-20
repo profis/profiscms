@@ -8,6 +8,7 @@
 	echo $site->Get_seo_html();
 	echo $site->Get_stylesheets_html();
 	echo $site->Get_scripts_html();
+	echo $site->Get_favicon();
 	?>
 	<script type="text/javascript">
 	</script>

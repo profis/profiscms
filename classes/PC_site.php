@@ -561,6 +561,20 @@ final class PC_site extends PC_base {
 		return implode('', $list);
 	}
 	/**
+	* Method used to get favicon HTML markup
+	* @return string HTML markup if theme has one, FALSE otherwise.
+	*/
+	public function Get_favicon($theme=null) {
+		$path = $this->Get_theme_path($theme, false);
+		if (!$path) return false;
+		if (is_file($path."favicon.ico")) {
+			$publicPath = $this->Get_theme_path($theme)."favicon.ico";
+			return '<link rel="icon" href="'.$publicPath.'" type="image/vnd.microsoft.icon" />'
+			.'<link rel="shortcut icon" href="'.$publicPath.'" type="image/vnd.microsoft.icon" />';
+		}
+		return false;
+	}
+	/**
 	* Method used check if page is open.
 	* @return bool TRUE if page is open, FALSE otherwise.
 	*/
