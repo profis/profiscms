@@ -289,7 +289,7 @@ CREATE TABLE `pc_gallery_thumbnail_types` (
 -- Dumping data for table `pc_gallery_thumbnail_types`
 -- 
 
-INSERT INTO `pc_gallery_thumbnail_types` (`thumbnail_type`, `thumbnail_max_w`, `thumbnail_max_h`, `thumbnail_quality`) VALUES 
+INSERT INTO `pc_gallery_thumbnail_types` (`thumbnail_type`, `thumbnail_max_w`, `thumbnail_max_h`, `thumbnail_quality`, `use_adaptive_resize`) VALUES 
 ('thumbnail', 75, 55, 76, 1),
 ('small', 160, 120, 76, 0),
 ('large', 640, 480, 76, 1);
