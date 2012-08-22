@@ -2106,26 +2106,41 @@ function node_rename_menu(node, create_mode) {
 							try {
 								var data = Ext.decode(rspns.responseText);
 								if (data.success) {
-									var current_page = (data.pid == PC.global.pid);
-									Ext.iterate(data.content, function(lng,vars){
-										opts._node.attributes._names[lng] = vars.name;
-										if (current_page) {
-											var content_store = PC.global.page.content[lng];
-											content_store.name.value = content_store.name.originalValue = vars.name;
-											content_store.route.value = content_store.route.originalValue = vars.route;
-											if (lng == PC.global.ln) {
-												// Update name field
-												var fld = Ext.getCmp('db_fld_name');
-												fld.setValue(vars.name);
-												fld.originalValue = vars.name;
-												// Update i18n field
-												var fld = Ext.getCmp('db_fld_route');
-												fld.setValue(vars.route);
-												fld.originalValue = vars.route;
-											}
-										}
+									if (typeof data.names == 'object') Ext.iterate(data.names, function(ln, name){
+										opts._node.attributes._names[ln] = name;
 									});
 									PC.tree.component.localizeNode(opts._node);
+									var currentPage = (data.id == PC.global.pid);
+									if (currentPage) {
+										PC.editors.Load(data, true);
+										/*Ext.iterate(data.content, function(lng,vars){
+											if (currentPage) {
+												var content_store = PC.global.page.content[lng];
+												content_store.name.value = content_store.name.originalValue = vars.name;
+												content_store.route.value = content_store.route.originalValue = vars.route;
+												if (lng == PC.global.ln) {
+													// Update name field
+													var fld = Ext.getCmp('db_fld_name');
+													fld.setValue(vars.name);
+													fld.originalValue = vars.name;
+													// Update i18n field
+													var fld = Ext.getCmp('db_fld_route');
+													fld.setValue(vars.route);
+													fld.originalValue = vars.route;
+												}
+											}
+										});*/
+									}
+									/*var pl = PC.getPluginFromID(vals.id);
+									if (pl) {
+										PC.hooks.Init('core/tree/rename/'+ pl, {
+											tree: PC.tree.component,
+											node: opts._node,
+											data: data,
+											currentPage: currentPage,
+											createMode: create_mode
+										});
+									}*/
 									PC.hooks.Init('page.save', {
 										tree: PC.tree.component,
 										params: vals,

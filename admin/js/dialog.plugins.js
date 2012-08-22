@@ -114,7 +114,8 @@ PC.dialog.plugins = {
 										}, 100);
 										Ext.iterate(r.deactivated, function(plugin){
 											delete PC.plugin[plugin];
-											Ext.getCmp('PluginsMenuItem-'+ plugin).destroy();
+											var cmp = Ext.getCmp('PluginsMenuItem-'+ plugin);
+											if (cmp) cmp.destroy();
 										});
 									}
 									if (r.success) {

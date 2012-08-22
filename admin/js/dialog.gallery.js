@@ -771,7 +771,7 @@ PC.dialog.gallery = {
 					'thumbnail_type',
 					{name: 'type', mapping: 'thumbnail_type', convert: this.translate_thumbnail_type},
 					{name: 'group', mapping: 'thumbnail_type', convert: this.is_default_thumbnail_type},
-					'thumbnail_max_w', 'thumbnail_max_h', 'thumbnail_quality'
+					'thumbnail_max_w', 'thumbnail_max_h', 'thumbnail_quality', 'use_adaptive_resize'
 				]
 			}),
 			autoLoad: true,
@@ -810,7 +810,13 @@ PC.dialog.gallery = {
 					}
 					if (record.data.group && changes['type']) {
 						PC.dialog.gallery.thumbnail_types_store.rejectChanges();
-						Ext.Msg.alert('Klaida', 'Negalite keisti pagrindinio tipo pavadinimo, pakeitimai atšaukti');
+						Ext.Msg.alert(PC.i18n.error, PC.i18n.dialog.gallery.error.change_default_type_name);
+						PC.dialog.gallery.thumbnail_types_store.rejectChanges();
+						return false;
+					}
+					if (record.data.group && changes['use_adaptive_resize'] != undefined) {
+						Ext.Msg.alert(PC.i18n.error, PC.i18n.dialog.gallery.error.change_default_type_resize);
+						PC.dialog.gallery.thumbnail_types_store.rejectChanges();
 						return false;
 					}
 					if (changes.thumbnail_quality == undefined) {
@@ -937,6 +943,34 @@ PC.dialog.gallery = {
 						},
 						width: 40
 					},
+					{	header: PC.i18n.dialog.gallery.resize,
+						dataIndex: 'use_adaptive_resize',
+						editor: {
+							xtype: 'combo',
+							mode: 'local',
+							store: {
+								xtype: 'arraystore',
+								fields: ['status', 'name'],
+								idIndex: 0,
+								data: [
+									[0, PC.i18n.dialog.gallery.normal],
+									[1, PC.i18n.dialog.gallery.adaptive]
+								]
+							},
+							displayField: 'name',
+							valueField: 'status',
+							value: 1,
+							editable: false,
+							forceSelection: true,
+							triggerAction: 'all',
+							preventMark: true
+						},
+						renderer: function(value, metaData, record, rowIndex, colIndex, store) {
+							if (value == '1') return PC.i18n.dialog.gallery.adaptive;
+							else return PC.i18n.dialog.gallery.normal;
+						},
+						width: 40
+					},
 					{	header: '#default group#',
 						dataIndex: 'group',
 						hidden: true
@@ -986,7 +1020,7 @@ PC.dialog.gallery = {
 			title: PC.i18n.dialog.gallery.title.settings,
 			iconCls: 'gallery_panelparams',
 			closeAction: 'hide',
-			width: 500,
+			width: 600,
 			items: [this.thumbnailparams]/*,
 			listeners: {
 				deactivate: function() {

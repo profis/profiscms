@@ -1292,6 +1292,7 @@ final class PC_gallery extends PC_base {
 						$response['errors'][] = "thumbnail_not_found";
 						return $response;
 					}
+					$type =& $thumbnail_types[$thumbnail_type];
 					if (!is_dir($thumbnail_path)) if (!mkdir($thumbnail_path)) {
 						$response['errors'][] = "create_thumbnail_directory";
 						return $response;
@@ -1301,26 +1302,36 @@ final class PC_gallery extends PC_base {
 						if (!empty($category_path) && $category_path != '/')
 							$file_path .= $category_path.'/';
 						$file_path .= $filename;
-						$thumb = PhpThumbFactory::create($file_path, array('jpegQuality'=>$thumbnail_types[$thumbnail_type]['thumbnail_quality']));
-						if ($thumbnail_type == "thumbnail" || $thumbnail_type == "large") {
-							if ($thumbnail_type == "large") {
-								$thumb->resize($thumbnail_types[$thumbnail_type]['thumbnail_max_w'], $thumbnail_types[$thumbnail_type]['thumbnail_max_h']);
+						$thumb = PhpThumbFactory::create($file_path, array('jpegQuality'=>$type['thumbnail_quality']));
+						if ($thumbnail_type == "thumbnail" || $type['use_adaptive_resize']) {
+							$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
+						}
+						else $thumb->resize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
+						$crop_data['x'] = ($thumb->originalImageInfo[0]/2)-($thumb->currentDimensions['width']/2);
+						$crop_data['y'] = ($thumb->originalImageInfo[1]/2)-($thumb->currentDimensions['height']/2);
+						$crop_data['w'] = $thumb->currentDimensions['width'];
+						$crop_data['h'] = $thumb->currentDimensions['height'];
+						/*if ($thumbnail_type == "thumbnail" || $thumbnail_type == "large") {
+							if ($type['use_adaptive_resize']) {
+								$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
 							}
-							else $thumb->adaptiveResize($thumbnail_types[$thumbnail_type]['thumbnail_max_w'], $thumbnail_types[$thumbnail_type]['thumbnail_max_h']);
+							else $thumb->resize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
 							//$crop_data['x'] = $thumb->originalImageInfo[0]/$thumb->currentDimensions['width'];
 							$crop_data['x'] = ($thumb->originalImageInfo[0]/2)-($thumb->currentDimensions['width']/2);
 							//$crop_data['y'] = $thumb->originalImageInfo[1]/$thumb->currentDimensions['height'];
 							$crop_data['y'] = ($thumb->originalImageInfo[1]/2)-($thumb->currentDimensions['height']/2);
 							$crop_data['w'] = $thumb->currentDimensions['width'];
 							$crop_data['h'] = $thumb->currentDimensions['height'];
+						
 						}
 						else {
-							$thumb->adaptiveResize($thumbnail_types[$thumbnail_type]['thumbnail_max_w'], $thumbnail_types[$thumbnail_type]['thumbnail_max_h']);
+							$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
 							$crop_data['x'] = 0;
 							$crop_data['y'] = 0;
 							$crop_data['w'] = $thumb->originalImageInfo[0];
 							$crop_data['h'] = $thumb->originalImageInfo[1];
 						}
+						*/
 						/*print_pre($crop_data);
 						print_pre($thumb->originalImageInfo);
 						print_pre($thumb->currentDimensions);
@@ -2229,7 +2240,7 @@ final class PC_gallery extends PC_base {
 	* @param int $quality given new quality of this thumbnail type.
 	* @return mixed array with keys "success" and "type" on success, or array with key "errors" otherwise.
 	*/
-	public function Edit_thumbnail_type($type, $new_type='', $max_w='', $max_h='', $quality='') {
+	public function Edit_thumbnail_type($type, $new_type='', $max_w='', $max_h='', $quality='', $use_adaptive_resize=null) {
 		$type = strtolower($type);
 		if (!preg_match('/^'.$this->patterns['thumbnail_type'].'$/', $type))
 			$response['errors'][] = "thumbnail_type";
@@ -2254,14 +2265,19 @@ final class PC_gallery extends PC_base {
 			if ($quality < 5 || $quality > 100)
 				$response['errors'][] = "quality";
 		}
-		if (empty($max_w) && empty($max_h) && empty($quality) && $type == $new_type) {
+		if (isset($use_adaptive_resize)) {
+			$use_adaptive_resize = (int)$use_adaptive_resize;
+			if ($use_adaptive_resize != 0 && $use_adaptive_resize != 1)
+				$response['errors'][] = "use_adaptive_resize";
+		}
+		if (empty($max_w) && empty($max_h) && empty($quality) && $type == $new_type && is_null($use_adaptive_resize)) {
 			$response['errors'][] = "no_changes";
 		}
 		if (count(v($response['errors']))) return $response;
 		global $db;
 		$r = $db->prepare("SELECT count(*) FROM {$this->db_prefix}gallery_thumbnail_types WHERE thumbnail_type=?");
-		$success = $r->execute(array($type));
-		if (!$success) {
+		$s = $r->execute(array($type));
+		if (!$s) {
 			$response['errors'][] = "database";
 			return $response;
 		}
@@ -2279,6 +2295,8 @@ final class PC_gallery extends PC_base {
 			$set .= "thumbnail_max_h=$max_h, ";
 		if (isset($quality))
 			$set .= "thumbnail_quality=$quality, ";
+		if (!is_null($use_adaptive_resize))
+			$set .= "use_adaptive_resize=$use_adaptive_resize, ";
 		$set = substr($set, 0, -2);
 		$query .= $set;
 		/*if (!empty($where)) {

@@ -511,8 +511,13 @@ PC.langs.en = {
 				no_changes: 'No changes found',
 				filename: 'Įvestame failo pavadinime rasti neleistini simboliai',
 				rename_file: 'Nepavyko pervadinti failo',
-				file_already_exists: 'Failas tokiu pavadinimu jau yra sukurtas'
-			}
+				file_already_exists: 'Failas tokiu pavadinimu jau yra sukurtas',
+				change_default_type_name: 'You cannot change the name of the default thumbnail type',
+				change_default_type_resize: 'You cannot change resize type of the default thumbnail type'
+			},
+			resize: 'Resize',
+			normal: 'Normal',
+			adaptive: 'Adaptive'
 		},
 		gmaps: {
 			title: 'Google Maps',

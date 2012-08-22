@@ -44,8 +44,8 @@ PC.langs.lt = {
 	plugins: 'Moduliai',
 	site: 'Svetainė',
 	language: 'Kalba',
-	default_language: 'Pagrindinė kalba',
-	show_menu_in: 'Sąrašo rodymo kalba',
+	default_language: 'Numatytoji kalba',
+	show_menu_in: 'Meniu rodymo kalba',
 	edit_styles: 'Redaguoti stilius',
 	apply: 'Taikyti[LT]',
 	create_new_page: 'Sukurti naują puslapį',
@@ -509,8 +509,13 @@ PC.langs.lt = {
 				no_changes: 'Pakeitimų nėra',
 				filename: 'Įvestame failo pavadinime rasti neleistini simboliai',
 				rename_file: 'Nepavyko pervadinti failo',
-				file_already_exists: 'Failas tokiu pavadinimu jau yra sukurtas'
-			}
+				file_already_exists: 'Failas tokiu pavadinimu jau yra sukurtas',
+				change_default_type_name: 'Negalite keisti pagrindinio tipo pavadinimo',
+				change_default_type_resize: 'Negalite keisti pagrindinio tipo apkarpymo būdo'
+			},
+			resize: 'Apkarpymas',
+			normal: 'Normalus',
+			adaptive: 'Prisitaikantis'
 		},
 		gmaps: {
 			title: 'Google žemėlapiai',

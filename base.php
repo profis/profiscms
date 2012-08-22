@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
  
 if (phpversion() < 5.2) die('ProfisCMS requires at least PHP 5.2 version.');
-define('PC_VERSION', '4.2.3');
+define('PC_VERSION', '4.3.0');
 
 //error handling
 require('error_handling.php');

@@ -105,43 +105,80 @@ elseif ($action == "update") {
 	$data = json_decode($_POST['data'], true);
 	//print_pre($data);return;
 	if (!$data) $out['errors'][] = 'json';
+	else if (!(ctype_digit($data['id']) || is_int($data['id'])) || $data['id'] < 1) {
+		$id =& $data['id'];
+		$pos = strpos($id, '/');
+		if ($pos) {
+			$ctrl = substr($id, 0, $pos);
+			$customId = substr($id, $pos+1);
+			if ($plugins->Is_active($ctrl)) {
+				//plugin is active
+				$out['id'] = $id;
+				$out['data'] = false;
+				$out['success'] = false;
+				$core->Init_hooks('core/editor/save-page/'.$ctrl, array(
+					'id'=> $customId,
+					'changes'=> $data,
+					'data'=> &$out['data'],
+					'success'=> &$out['success'],
+					'out'=> &$out
+				));
+			}
+			else $out['errors'][] = 'controller_is_inactive';
+		}
+		else $out['errors'][] = 'id';
+	}
+	//if (!ctype_digit($data['id'])) $out['errors'][] = 'id';
 	else {
-		if (!(ctype_digit($data['id']) || is_int($data['id'])) || $data['id'] < 1) $out['errors'][] = 'id';
-		//if (!ctype_digit($data['id'])) $out['errors'][] = 'id';
+		$r = $db->prepare("SELECT * FROM {$cfg['db']['prefix']}pages WHERE id=?");
+		$success = $r->execute(array($data['id']));
+		if (!$success) $out['errors'][] = 'database';
 		else {
-			$r = $db->prepare("SELECT * FROM {$cfg['db']['prefix']}pages WHERE id=?");
-			$success = $r->execute(array($data['id']));
-			if (!$success) $out['errors'][] = 'database';
+			if ($r->rowCount() != 1) $out['errors'][] = 'id';
 			else {
-				if ($r->rowCount() != 1) $out['errors'][] = 'id';
-				else {
-					$_page = $r->fetch();
-					$shared_sets = '';
-					$shared_queryParams = array();
-					$errs_occurred = false;
-					$core->Init_hooks('before_page_save', array(
-						'changes'=> &$data
-					));
-					foreach ($data as $key=>&$value) {
-						if ($key == 'id') continue;
-						if ($key == 'content') {
-							//saves pages in all languages
-							if (!is_array($value) || !count($value)) {
-								unset($data[$key]);
+				$_page = $r->fetch();
+				$shared_sets = '';
+				$shared_queryParams = array();
+				$errs_occurred = false;
+				$core->Init_hooks('before_page_save', array(
+					'changes'=> &$data
+				));
+				foreach ($data as $key=>&$value) {
+					if ($key == 'id') continue;
+					if ($key == 'content') {
+						//saves pages in all languages
+						if (!is_array($value) || !count($value)) {
+							unset($data[$key]);
+							continue;
+						}
+						foreach ($value as $language=>&$content) {
+							//check if language exists in this site
+							$site_data = $site->Get($_page['site'], true, true);
+							if (!$site_data) {
+								unset($value[$language]);
 								continue;
 							}
-							foreach ($value as $language=>&$content) {
-								//check if language exists in this site
-								$site_data = $site->Get($_page['site'], true, true);
-								if (!$site_data) {
+							if (!isset($site_data['langs'][$language])) {
+								unset($value[$language]);
+								continue;
+							}
+							//get current content data
+							$r = $db->prepare("SELECT * FROM {$cfg['db']['prefix']}content WHERE pid=:id AND ln=:ln");
+							$r->bindParam('id', $_page['id']);
+							$r->bindParam('ln', $language);
+							$success = $r->execute();
+							if (!$success) {
+								unset($value[$language]);
+								continue;
+							}
+							if ($r->rowCount() != 1) {
+								//create new for the first time
+								$r = $db->prepare("INSERT INTO {$cfg['db']['prefix']}content (pid,ln,name,info,info2,info3,title,keywords,description,route,text,last_update,update_by) values(?,?,'','','','','','','','','',?,0)");
+								$success = $r->execute(array($_page['id'], $language, date('Y-m-d H:i:s')));
+								if (!$success) {
 									unset($value[$language]);
 									continue;
 								}
-								if (!isset($site_data['langs'][$language])) {
-									unset($value[$language]);
-									continue;
-								}
-								//get current content data
 								$r = $db->prepare("SELECT * FROM {$cfg['db']['prefix']}content WHERE pid=:id AND ln=:ln");
 								$r->bindParam('id', $_page['id']);
 								$r->bindParam('ln', $language);
@@ -151,226 +188,211 @@ elseif ($action == "update") {
 									continue;
 								}
 								if ($r->rowCount() != 1) {
-									//create new for the first time
-									$r = $db->prepare("INSERT INTO {$cfg['db']['prefix']}content (pid,ln,name,info,info2,info3,title,keywords,description,route,text,last_update,update_by) values(?,?,'','','','','','','','','',?,0)");
-									$success = $r->execute(array($_page['id'], $language, date('Y-m-d H:i:s')));
-									if (!$success) {
-										unset($value[$language]);
-										continue;
-									}
-									$r = $db->prepare("SELECT * FROM {$cfg['db']['prefix']}content WHERE pid=:id AND ln=:ln");
-									$r->bindParam('id', $_page['id']);
-									$r->bindParam('ln', $language);
-									$success = $r->execute();
-									if (!$success) {
-										unset($value[$language]);
-										continue;
-									}
-									if ($r->rowCount() != 1) {
-										unset($value[$language]);
-										continue;
-									}
-								}
-								$current_content = $r->fetch();
-								//check if the last update was more than 10 minutes ago, if true, then create a backup
-								//if (strtotime($current_content['last_update'])+600 < time()) {
-								if (true) {
-									$r = $db->prepare("INSERT INTO {$cfg['db']['prefix']}content_archive (tree_id,ln,idp,site,user_id,time,data) VALUES(:id,:ln,:idp,:site,:user_id,:now,:data)");
-									$r->execute(array(
-										'id'=> $_page['id'],
-										'ln'=> $language,
-										'idp'=> $_page['idp'],
-										'site'=> $_page['site'],
-										'user_id'=> $_SESSION['auth_data']['id'],
-										'now'=> date('Y-m-d H:i:s', time()-1),
-										'data'=> base64_encode(gzcompress(json_encode($current_content), 9))
-									));
-									//keep only latest 15 backups
-									//$r = $db->query("SELECT id FROM content_archive WHERE pid={$_page['id']} AND ln='$language' ORDER BY time DESC LIMIT 20,18446744073709551615");
-									$r = $db->prepare("SELECT count(id) FROM {$cfg['db']['prefix']}content_archive WHERE tree_id=? AND ln=? GROUP BY time ORDER BY time DESC");
-									$success = $r->execute(array($_page['id'], $language));
-									if ($success) {
-										$count = $r->fetchColumn()-15;
-										if ($count > 0) {
-											$r = $db->prepare("DELETE FROM {$cfg['db']['prefix']}content_archive WHERE tree_id=? AND ln=? ORDER BY time ASC LIMIT ".(int)$count);
-											$r->execute(array($_page['id'], $language));
-										}
-									}
-								}
-								//update
-								$sets = "last_update='".date('Y-m-d H:i:s')."'";
-								$queryParams = array();
-								//if route is locked
-								$set_route_type = '';
-								
-								
-								//check if route should automatically update from page name
-								$autoRouteUpdate = true;
-								if (isset($data['route_lock'])) {
-									if ($data['route_lock']) $autoRouteUpdate = false;
-								}
-								elseif ($_page['route_lock']) $autoRouteUpdate = false;
-								//set user specified route
-								$routeUpdated = false;
-								if (isset($content['route'])) {
-									if (empty($content['route']) || $content['route'] == $current_content['route']) {
-										unset($content['route']);
-										//$out['errors'][] = 'update_route_202';
-										//$errs_occurred = true;
-									}
-									else {
-										$generated_route = Get_unique_route(Sanitize('route', $content['route']), $language, $current_content['id']);
-										if ($generated_route) {
-											$content['route'] = $generated_route;
-											$routeUpdated = true;
-										}
-										else {
-											unset($content['route']);
-											$out['errors'][] = 'update_route_213';
-											$errs_occurred = true;
-										}
-									}
-								}
-								//automatically update route
-								if (!$routeUpdated && $autoRouteUpdate) {
-									if (isset($content['name'])) {
-										$generated_route = Get_unique_route(Sanitize('route', $content['name']), $language, $current_content['id']);
-										if ($generated_route) {
-											$content['route'] = $generated_route;
-											$routeUpdated = true;
-										}
-										else {
-											unset($content['route']);
-											$out['errors'][] = 'update_route_228';
-											$errs_occurred = true;
-										}
-									}
-								}
-								
-								//all properties
-								foreach ($content as $field=>$content_value) {
-									if (!in_array($field, $cfg['valid_page_fields'])) {
-										unset($content[$field]);
-										continue;
-									}
-									if (in_array($field, array('info','info2','info3','text'))) {
-										//match all gallery images in text
-										//match example: ="gallery/admin/id/medium/39"
-										if (preg_match_all("/=\"".$gallery->config['gallery_directory']."\/".$cfg['directories']['admin']."\/id\/(".$gallery->patterns['thumbnail_type']."\/)?([0-9]+)\"/i", urldecode($content_value), $matches)) {
-											$gallery->Update_files_in_use($matches[2], $current_content['id'], $field);
-										}
-										//force images to append alt="" attributes
-										preg_match_all("#<img [^>]+>#ui", $content_value, $m);
-										foreach ($m[0] as $src) {
-											if (!strpos($src, 'alt=')) {
-												$new_src = preg_replace("#(/?>)$#", 'alt="" $1', $src);
-												$content_value = str_replace($src, $new_src, $content_value);
-											}
-										}
-									}
-									$sets .= ",$field=?";
-									//$queryParams[] = $field;
-									$queryParams[] = $content_value;
-								}
-								$sets .= ",update_by=?";
-								$queryParams[] = $_SESSION['auth_data']['id'];
-								$query = "UPDATE {$cfg['db']['prefix']}content SET $sets WHERE id=".$current_content['id'];
-								$r = $db->prepare($query);
-								$success = $r->execute($queryParams);
-								if (!$success) {
 									unset($value[$language]);
-									$out['errors'][] = 'update_content_query_266';
-									$out['error_data'][] = json_encode($db->errorInfo());
-									$out['error_data2'][] = json_encode($r->errorInfo());
-									$errs_occurred = true;
+									continue;
 								}
 							}
-							unset($content);
-						}
-						else {
-							if (!in_array($key, $cfg['valid_page_fields'])) {
-								unset($data[$key]);
-								continue;
-							}
-							if ($key == 'redirect') if (!preg_match("#^(([0-9]+)?(\#.+?)?(\?)?.+?|http://.+)$#", $value)) $value = null;
-							if (!empty($shared_sets)) $shared_sets .= ',';
-							if ($key == 'date_from' || $key == 'date_to' || $key == 'date') {
-								if (empty($value)) {
-									$shared_sets .= "$key=null";
-									//$shared_queryParams[] = $key;
-								} else {
-									if (preg_match("#^[0-9]{4}-[0-9]{2}-[0-9]{2}$#", $value)) $value = strtotime($value);
-									if ($value > 2147483647) $value = 2147483647;
-									$shared_sets .= "$key=?";
-									//$shared_queryParams[] = $key;
-									$shared_queryParams[] = $value;
-								}
-							}
-							else {
-								$set = true;
-								if ($key == 'redirect') {
-									if ($value == $_page['id']) {
-										unset($data[$key]);
-										$out['errors'][] = 'update_redirect_295';
-										$errs_occurred = true;
-										$set = false;
+							$current_content = $r->fetch();
+							//check if the last update was more than 10 minutes ago, if true, then create a backup
+							//if (strtotime($current_content['last_update'])+600 < time()) {
+							if (true) {
+								$r = $db->prepare("INSERT INTO {$cfg['db']['prefix']}content_archive (tree_id,ln,idp,site,user_id,time,data) VALUES(:id,:ln,:idp,:site,:user_id,:now,:data)");
+								$r->execute(array(
+									'id'=> $_page['id'],
+									'ln'=> $language,
+									'idp'=> $_page['idp'],
+									'site'=> $_page['site'],
+									'user_id'=> $_SESSION['auth_data']['id'],
+									'now'=> date('Y-m-d H:i:s', time()-1),
+									'data'=> base64_encode(gzcompress(json_encode($current_content), 9))
+								));
+								//keep only latest 15 backups
+								//$r = $db->query("SELECT id FROM content_archive WHERE pid={$_page['id']} AND ln='$language' ORDER BY time DESC LIMIT 20,18446744073709551615");
+								$r = $db->prepare("SELECT count(id) FROM {$cfg['db']['prefix']}content_archive WHERE tree_id=? AND ln=? GROUP BY time ORDER BY time DESC");
+								$success = $r->execute(array($_page['id'], $language));
+								if ($success) {
+									$count = $r->fetchColumn()-15;
+									if ($count > 0) {
+										$r = $db->prepare("DELETE FROM {$cfg['db']['prefix']}content_archive WHERE tree_id=? AND ln=? ORDER BY time ASC LIMIT ".(int)$count);
+										$r->execute(array($_page['id'], $language));
 									}
 								}
-								elseif ($key == 'front') {
-									if ($value > 0) {
-										$db->query("UPDATE {$cfg['db']['prefix']}pages SET front=0");
+							}
+							//update
+							$sets = "last_update='".date('Y-m-d H:i:s')."'";
+							$queryParams = array();
+							//if route is locked
+							$set_route_type = '';
+							
+							
+							//check if route should automatically update from page name
+							$autoRouteUpdate = true;
+							if (isset($data['route_lock'])) {
+								if ($data['route_lock']) $autoRouteUpdate = false;
+							}
+							elseif ($_page['route_lock']) $autoRouteUpdate = false;
+							//set user specified route
+							$routeUpdated = false;
+							if (isset($content['route'])) {
+								if (empty($content['route']) || $content['route'] == $current_content['route']) {
+									unset($content['route']);
+									//$out['errors'][] = 'update_route_202';
+									//$errs_occurred = true;
+								}
+								else {
+									$generated_route = Get_unique_route(Sanitize('route', $content['route']), $language, $current_content['id']);
+									if ($generated_route) {
+										$content['route'] = $generated_route;
+										$routeUpdated = true;
 									}
 									else {
-										unset($data[$key]);
-										$out['errors'][] = 'update_front_306';
+										unset($content['route']);
+										$out['errors'][] = 'update_route_213';
 										$errs_occurred = true;
-										$set = false;
 									}
 								}
-								if ($set) {
-									$shared_sets .= "$key=?";
-									//$shared_queryParams[] = $key;
-									$shared_queryParams[] = $value;
+							}
+							//automatically update route
+							if (!$routeUpdated && $autoRouteUpdate) {
+								if (isset($content['name'])) {
+									$generated_route = Get_unique_route(Sanitize('route', $content['name']), $language, $current_content['id']);
+									if ($generated_route) {
+										$content['route'] = $generated_route;
+										$routeUpdated = true;
+									}
+									else {
+										unset($content['route']);
+										$out['errors'][] = 'update_route_228';
+										$errs_occurred = true;
+									}
 								}
 							}
+							
+							//all properties
+							foreach ($content as $field=>$content_value) {
+								if (!in_array($field, $cfg['valid_page_fields'])) {
+									unset($content[$field]);
+									continue;
+								}
+								if (in_array($field, array('info','info2','info3','text'))) {
+									//match all gallery images in text
+									//match example: ="gallery/admin/id/medium/39"
+									if (preg_match_all("/=\"".$gallery->config['gallery_directory']."\/".$cfg['directories']['admin']."\/id\/(".$gallery->patterns['thumbnail_type']."\/)?([0-9]+)\"/i", urldecode($content_value), $matches)) {
+										$gallery->Update_files_in_use($matches[2], $current_content['id'], $field);
+									}
+									//force images to append alt="" attributes
+									preg_match_all("#<img [^>]+>#ui", $content_value, $m);
+									foreach ($m[0] as $src) {
+										if (!strpos($src, 'alt=')) {
+											$new_src = preg_replace("#(/?>)$#", 'alt="" $1', $src);
+											$content_value = str_replace($src, $new_src, $content_value);
+										}
+									}
+								}
+								$sets .= ",$field=?";
+								//$queryParams[] = $field;
+								$queryParams[] = $content_value;
+							}
+							$sets .= ",update_by=?";
+							$queryParams[] = $_SESSION['auth_data']['id'];
+							$query = "UPDATE {$cfg['db']['prefix']}content SET $sets WHERE id=".$current_content['id'];
+							$r = $db->prepare($query);
+							$success = $r->execute($queryParams);
+							if (!$success) {
+								unset($value[$language]);
+								$out['errors'][] = 'update_content_query_266';
+								$out['error_data'][] = json_encode($db->errorInfo());
+								$out['error_data2'][] = json_encode($r->errorInfo());
+								$errs_occurred = true;
+							}
 						}
-					}
-					unset($value);
-					if (!empty($shared_sets)) {
-						$shared_queryParams[] = $_page['id'];
-						$r = $db->prepare("UPDATE {$cfg['db']['prefix']}pages SET $shared_sets WHERE id=?");
-						$success = $r->execute($shared_queryParams);
-						if (!$success) {
-							foreach ($data as $key=>&$value) if ($key != 'content') unset($data[$key]);
-							$out['errors'][] = 'update_page_settings_326';
-							$out['error_data'][] = json_encode($db->errorInfo());
-							$out['error_data2'][] = json_encode($r->errorInfo());
-							$errs_occurred = true;
-						}
-					}
-					$core->Init_hooks('after_page_save', array(
-						'success'=> !$errs_occurred,
-						'changes'=> $data
-					));
-					if ($errs_occurred) {
-						$out['errors'][] = 'update';
+						unset($content);
 					}
 					else {
-						if (v($_POST['return_page'])) {
-							$r = $db->prepare("SELECT *,id pid FROM {$cfg['db']['prefix']}pages WHERE id=?");
-							$s = $r->execute(array($data['id']));
-							if ($s) $out = $r->fetch();
-							$r = $db->prepare("SELECT * FROM {$cfg['db']['prefix']}content WHERE pid=?");
-							$s = $r->execute(array($data['id']));
-							if ($s) {
-								while ($c = $r->fetch()) {
-									$out['content'][$c['ln']] = $c;
+						if (!in_array($key, $cfg['valid_page_fields'])) {
+							unset($data[$key]);
+							continue;
+						}
+						if ($key == 'redirect') if (!preg_match("#^(([0-9]+)?(\#.+?)?(\?)?.+?|http://.+)$#", $value)) $value = null;
+						if (!empty($shared_sets)) $shared_sets .= ',';
+						if ($key == 'date_from' || $key == 'date_to' || $key == 'date') {
+							if (empty($value)) {
+								$shared_sets .= "$key=null";
+								//$shared_queryParams[] = $key;
+							} else {
+								if (preg_match("#^[0-9]{4}-[0-9]{2}-[0-9]{2}$#", $value)) $value = strtotime($value);
+								if ($value > 2147483647) $value = 2147483647;
+								$shared_sets .= "$key=?";
+								//$shared_queryParams[] = $key;
+								$shared_queryParams[] = $value;
+							}
+						}
+						else {
+							$set = true;
+							if ($key == 'redirect') {
+								if ($value == $_page['id']) {
+									unset($data[$key]);
+									$out['errors'][] = 'update_redirect_295';
+									$errs_occurred = true;
+									$set = false;
 								}
 							}
-							$out['success'] = true;
+							elseif ($key == 'front') {
+								if ($value > 0) {
+									$db->query("UPDATE {$cfg['db']['prefix']}pages SET front=0");
+								}
+								else {
+									unset($data[$key]);
+									$out['errors'][] = 'update_front_306';
+									$errs_occurred = true;
+									$set = false;
+								}
+							}
+							if ($set) {
+								$shared_sets .= "$key=?";
+								//$shared_queryParams[] = $key;
+								$shared_queryParams[] = $value;
+							}
 						}
-						else $out['success'] = true;
 					}
+				}
+				unset($value);
+				if (!empty($shared_sets)) {
+					$shared_queryParams[] = $_page['id'];
+					$r = $db->prepare("UPDATE {$cfg['db']['prefix']}pages SET $shared_sets WHERE id=?");
+					$success = $r->execute($shared_queryParams);
+					if (!$success) {
+						foreach ($data as $key=>&$value) if ($key != 'content') unset($data[$key]);
+						$out['errors'][] = 'update_page_settings_326';
+						$out['error_data'][] = json_encode($db->errorInfo());
+						$out['error_data2'][] = json_encode($r->errorInfo());
+						$errs_occurred = true;
+					}
+				}
+				$core->Init_hooks('after_page_save', array(
+					'success'=> !$errs_occurred,
+					'changes'=> $data
+				));
+				if ($errs_occurred) {
+					$out['errors'][] = 'update';
+				}
+				else {
+					if (v($_POST['return_page'])) {
+						$out['names'] = array();
+						$r = $db->prepare("SELECT *,id pid FROM {$cfg['db']['prefix']}pages WHERE id=?");
+						$s = $r->execute(array($data['id']));
+						if ($s) $out = $r->fetch();
+						$r = $db->prepare("SELECT * FROM {$cfg['db']['prefix']}content WHERE pid=?");
+						$s = $r->execute(array($data['id']));
+						if ($s) {
+							while ($c = $r->fetch()) {
+								$out['content'][$c['ln']] = $c;
+								if (isset($c['name'])) $out['names'][$c['ln']] = $c['name'];
+							}
+						}
+						$out['success'] = true;
+					}
+					else $out['success'] = true;
 				}
 			}
 		}

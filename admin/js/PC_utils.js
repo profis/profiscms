@@ -2,6 +2,12 @@ if (typeof console == 'undefined') console = {log: function(){}};
 
 Ext.namespace('PC.utils');
 
+PC.getPluginFromID = function(id) {
+	if (!/^[a-z0-9\-_]+\//.test(id)) return false;
+	var pl = id.substring(0, id.indexOf('/'));
+	return pl;
+}
+
 PC.utils.getFlagOffsets = function(lang) {
 	var result = [0, 0];
 	if (lang.match(/^[a-z]{2}$/)) {
