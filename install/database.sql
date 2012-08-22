@@ -281,6 +281,7 @@ CREATE TABLE `pc_gallery_thumbnail_types` (
   `thumbnail_max_w` smallint(5) unsigned NOT NULL,
   `thumbnail_max_h` smallint(5) unsigned NOT NULL,
   `thumbnail_quality` tinyint(3) unsigned NOT NULL,
+  `use_adaptive_resize` tinyint(1) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`thumbnail_type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -289,9 +290,9 @@ CREATE TABLE `pc_gallery_thumbnail_types` (
 -- 
 
 INSERT INTO `pc_gallery_thumbnail_types` (`thumbnail_type`, `thumbnail_max_w`, `thumbnail_max_h`, `thumbnail_quality`) VALUES 
-('thumbnail', 75, 55, 76),
-('small', 160, 120, 76),
-('large', 640, 480, 76);
+('thumbnail', 75, 55, 76, 1),
+('small', 160, 120, 76, 0),
+('large', 640, 480, 76, 1);
 
 -- --------------------------------------------------------
 
