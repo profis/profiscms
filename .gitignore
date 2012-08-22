@@ -25,4 +25,4 @@ admin/backups/*
 !admin/backups/.htaccess
 !admin/backups/index.php
 config.php
-media/jwplayer/
+media/uppod/
