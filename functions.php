@@ -346,7 +346,7 @@ if (!function_exists('hex2bin')) {
 
 /**
 * Function used to replace special characters in given string to make given string SQL compatible.
-* @param string $mask given string to be modified.
+* @param string $sqlmask given string to be modified.
 * @return string modified string.
 */
 function sqlmask2mask($sqlmask) {
@@ -690,7 +690,7 @@ function download_file($path) {
 
 /**
 * Function used to get available languages in "PC_core". Runtime variable "core" used.
-* @param string $key given comma-separated values to be used as variables when calling "PC_core".
+* @param string $keys given comma-separated values to be used as variables when calling "PC_core".
 * @return string JSON encoded array of available languages.
 * @see PC_core::Get_variable().
 * @see json_encode().
@@ -778,6 +778,7 @@ echo call_user_func_array("qlang", $args);
 * Function used to get part of of given string to given lenght. This function performs some special chars replacement as well.
 * @param string $text given string to be shortened.
 * @param int $max_length given lenght of returned string.
+* @param bool $append_dots indication whether to append dots to the end of text.
 * @param string $delimiter given replaced by shorter notation.
 * @return string part of given string.
 */
