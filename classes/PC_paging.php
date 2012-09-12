@@ -2,11 +2,21 @@
 class PC_paging {
 	protected $page, $total, $perPage, $limit, $offset, $initialOffset, $cutout;
 	const PP_DEFAULT = 30;
-	public function __construct($page, $perPage=null) {
-		$this->page = (int)$page;
-		if ($this->page < 1) $this->page = 1;
+	public function __construct($page=null, $perPage=null, $start=null) {
+		//items per page
 		$this->perPage = (int)$perPage;
 		if ($this->perPage < 1) $this->perPage = self::PP_DEFAULT;
+		//page to show
+		if (!is_null($page)) {
+			$this->page = (int)$page;
+		}
+		else {
+			if (is_null($start)) $this->page = 1;
+			else {
+				$this->page = $start / $perPage + 1;
+			}
+		}
+		//config
 		$this->limit = $this->perPage;
 		$this->offset = $this->page * $this->perPage - $this->perPage;
 	}

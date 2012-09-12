@@ -48,7 +48,7 @@ class PC_params {
 				case 'paging':
 					if ($params['paging'] instanceof PC_paging) $this->paging =& $params['paging'];
 					else {
-						$params['paging'] = new PC_paging(v($params['paging']['page'], 1), v($params['paging']['perPage'], 20));
+						$params['paging'] = new PC_paging(v($params['paging']['page'], null), v($params['paging']['perPage'], 20), v($params['paging']['start'], null));
 						$this->paging =& $params['paging'];
 					}
 					break;

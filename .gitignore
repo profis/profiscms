@@ -26,3 +26,4 @@ admin/backups/*
 !admin/backups/index.php
 config.php
 media/uppod/
+/nbproject/private/

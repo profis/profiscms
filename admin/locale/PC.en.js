@@ -3,6 +3,8 @@ Ext.namespace('PC.langs');
 PC = {};
 PC.langs = {};
 PC.langs.en = {
+	yes: 'Yes',
+	no: 'No',
 	all: 'All',
 	date: 'Date',
 	time: 'Time',
@@ -23,6 +25,7 @@ PC.langs.en = {
 	quotes: 'Quotes',
 	load: 'Load',
 	save: 'Save',
+	cancel: 'Cancel',
 	add: 'Add',
 	edit: 'Edit',
 	copy: 'Copy',
@@ -637,6 +640,9 @@ PC.langs.en = {
 		source: {
 			title: 'HTML Source Editor',
 			wrap: 'Word wrap'
+		},
+                mergetablecells: {
+			title: 'Merge table cells',
 		},
 		tables: {
 			title: 'Insert table',

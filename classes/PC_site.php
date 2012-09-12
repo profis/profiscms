@@ -501,9 +501,13 @@ final class PC_site extends PC_base {
 	* @return bool TRUE.
 	*/
 	public function Path_append() {
+		//first value = plugin for whom this path item belongs
 		$args = func_get_args();
+		$pluginName = array_shift($args);
 		foreach ($args as $item) {
-			$this->loaded_page['path'][] = $item;
+			if (!is_array($this->loaded_page['subpath'])) $this->loaded_page['subpath'] = array();
+			$item['_correspondingPlugin'] = $pluginName;
+			$this->loaded_page['subpath'][] = $item;
 		}
 		return true;
 	}
@@ -582,14 +586,25 @@ final class PC_site extends PC_base {
 	* Method used check if page is open.
 	* @return bool TRUE if page is open, FALSE otherwise.
 	*/
-	public function Is_opened($pid) {
-		//print_pre($this->loaded_page['route_path']);
-		if (!isset($this->loaded_page['route_path'])) return false;
-		foreach ($this->loaded_page['route_path'] as $item) {
-			if (v($item['pid']) == $pid) {
-				return true;
+	public function Is_opened($id, $idKey='pid', $pluginName=null) {
+		if (is_null($pluginName)) {
+			if (!is_array(v($this->loaded_page['route_path']))) return false;
+			foreach ($this->loaded_page['route_path'] as $i) {
+				if (v($i['pid']) == $id) {
+					return true;
+				}
 			}
 		}
+		else {
+			if (!is_array(v($this->loaded_page['subpath']))) return false;
+			foreach ($this->loaded_page['subpath'] as $i) {
+				if (v($i['_correspondingPlugin']) != $pluginName) continue;
+				if (v($i[$idKey]) == $id) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	/**
 	* Method used get page path. Inside method is called method PC_page::Get_path()
@@ -602,12 +617,15 @@ final class PC_site extends PC_base {
 		//null value of $page means that we should return currently loaded page path
 		if (is_null($page)) {
 			if ($this->Page_is_loaded()) {
-				return $this->loaded_page['path'];
-				//$page = $this->site->loaded_page;
+				$path = $this->loaded_page['path'];
 			}
 			else return false;
 		}
-		return $this->page->Get_path($page, $cache);
+		else $path = $this->page->Get_path($page, $cache);
+		if (is_array(v($this->loaded_page['subpath']))) {
+			$path = array_merge($path, $this->loaded_page['subpath']);
+		}
+		return $path;
 	}
 	/**
 	* Method used to check if loaded page is "front" or home page.

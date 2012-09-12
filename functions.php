@@ -587,6 +587,19 @@ function Validate($type, $input, $extra=false, $options=array()) {
 }
 //Parse input by type and return parsed value, if input is invalid function returns nothing (NULL)
 
+function PC_translit($input) {
+	//translit cyrillic chars
+	$cyrillic = array('а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я','А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я');
+	$latin = array('a','b','v','g','d','e','yo','zh','z','i','j','k','l','m','n','o','p','r','s','t','u','f','h','c','ch','sh','shсh','','y','','eh','yu','ya','A','B','V','G','D','E','Yo','Zh','Z','I','J','K','L','M','N','O','P','R','S','T','U','F','H','C','Ch','Sh','Shсh','','Y','','Eh','Yu','Ya');
+	$input = str_replace($cyrillic, $latin, $input);
+	//translit lithuanian chars
+	$lithuanian = array('č', 'Č', 'ę','Ę','ė','Ė','į','Į','š','Š','ų','Ų','ū','Ū','ž','Ž');
+	$latin = array('c','C','e','E','e','E','i','I','s','S','u','U','u','U','z','Z');
+	$input = str_replace($lithuanian, $latin, $input);
+	$input = iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', $input);
+	return $input;
+}
+
 /**
 * Function used to make given input safe for further operation.
 * @param string $type given type of the input.
@@ -605,16 +618,8 @@ function Sanitize($type, $input, $extra=null) {
 		case 'filename': $extra = true;
 		case 'route':
 			//extra - allow filenames or not
-			//translit cyrillic chars
-			$cyrillic = array('а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я','А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я');
-			$latin = array('a','b','v','g','d','e','yo','zh','z','i','j','k','l','m','n','o','p','r','s','t','u','f','h','c','ch','sh','shсh','','y','','eh','yu','ya','A','B','V','G','D','E','Yo','Zh','Z','I','J','K','L','M','N','O','P','R','S','T','U','F','H','C','Ch','Sh','Shсh','','Y','','Eh','Yu','Ya');
-			$input = str_replace($cyrillic, $latin, $input);
-			//translit lithuanian chars
-			$lithuanian = array('č', 'Č', 'ę','Ę','ė','Ė','į','Į','š','Š','ų','Ų','ū','Ū','ž','Ž');
-			$latin = array('c','C','e','E','e','E','i','I','s','S','u','U','u','U','z','Z');
-			$input = str_replace($lithuanian, $latin, $input);
 			//transliteration
-			$input = strtolower(iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', $input));
+			$input = strtolower(PC_translit($input));
 			//normalize structure
 			$patterns[] = '/[^a-z0-9'.($extra?'\\.\\s':'').']/'; $replacements[] = '-';
 			$patterns[] = '/--+/'; $replacements[] = '-';

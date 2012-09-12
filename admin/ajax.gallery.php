@@ -375,7 +375,7 @@ elseif ($action == "get_thumbnail_types") {
 }
 elseif ($action == "create_thumbnail_type") {
 	$changes = json_decode($_POST['changes']);
-	$result = $gallery->Create_thumbnail_type(v($changes->type), v($changes->thumbnail_max_w), v($changes->thumbnail_max_h), v($changes->thumbnail_quality));
+	$result = $gallery->Create_thumbnail_type(v($changes->type), v($changes->thumbnail_max_w), v($changes->thumbnail_max_h), v($changes->thumbnail_quality), v($changes->use_adaptive_resize));
 	$output = $result;
 }
 elseif ($action == "edit_thumbnail_type") {

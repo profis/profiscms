@@ -102,7 +102,6 @@ $mod['priority'] = 40;
 	background-image: url("http://www.google.com/favicon.ico") !important;
 }
 </style>
-<script type="text/javascript" src="http://www.google.com/jsapi"></script>
 <script type="text/javascript">
 Ext.namespace('PC.plugins');
 
@@ -219,9 +218,9 @@ function mod_variables_click() {
 						//listeners: { specialkey: ed_sk }
 						listeners: {
 							afterrender: function(ed) {
-								//ed.gridEditor.on('startedit', function(be, val) {
-								//	this.field.selectText();
-								//});
+								/*ed.gridEditor.on('startedit', function(be, val) {
+									this.field.selectText();
+								});*/
 							}
 						}
 					}

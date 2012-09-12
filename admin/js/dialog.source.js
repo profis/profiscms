@@ -1,13 +1,13 @@
 Ext.ns('PC.dialog');
 PC.dialog.source = {
-	_init_wrapping: true,
+	_init_wrapping: false,
 	show: function() {
 		this.ln = PC.i18n.dialog.source;
 		var dialog = this;
 		this.window = new Ext.Window({
 			title: this.ln.title,
 			modal: true, layout: 'border',
-			width: 600, height: 500,
+			width: 900, height: 500,
 			resizable: true,
 			maximizable: true,
 			border: false,

@@ -190,9 +190,9 @@ Ext.ux.grid.RowEditor = Ext.extend(Ext.Panel, {
             return;
         }
         if(saveChanges === false || !this.isValid()){
-            this.hide();
             //this.fireEvent('canceledit', this, saveChanges === false); edit by ProfisCMS:
             this.fireEvent('canceledit', this, saveChanges === false, this.record);
+            this.hide();
             return;
         }
         var changes = {},

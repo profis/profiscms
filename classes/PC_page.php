@@ -294,18 +294,25 @@ final class PC_page extends PC_base {
 		}
 		return $this->cache->Cache(array('page_pathes', $pid), $path);
 	}
-	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false) {
+	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false, $includeParents=false) {
 		$where = array();
 		$params = array(v($this->site->ln));
 		if (!is_null($id)) {
 			if (!$use_reference_id) {
-				$where[] = "p.id=?";
+				if (is_array($id)) {
+					$where[] = "p.id ".$this->sql_parser->in($id);
+					$params = array_merge($params, $id);
+				}
+				else {
+					$where[] = "p.id=?";
+					$params[] = $id;
+				}
 				$where[] = "p.controller!='menu'";
 			}
 			else {
 				$where[] = "reference_id=?";
+				$params[] = $id;
 			}
-			$params[] = $id;
 		}
 		$r = $this->prepare("SELECT *"
 		." FROM {$this->db_prefix}pages p"
@@ -319,18 +326,28 @@ final class PC_page extends PC_base {
 			if ($parseLinks) $this->Parse_html_output($d['text'], $d['info'], $d['info2'], $d['info3']);
 			$list[] = $d;
 		}
-		return (is_null($id)?$list:$list[0]);
+		if ($includeParents) {
+			$idsList = array();
+			foreach ($list as $p) $idsList[] = $p['idp'];
+			$parentsList = $this->Get_page($idsList, $parseLinks);
+			$parentsListKeyed = array();
+			foreach ($parentsList as $pItem) $parentsListKeyed[$pItem['pid']] = $pItem;
+			unset($parentsList);
+			foreach ($list as &$p) $p['parent'] = $parentsListKeyed[$p['idp']];
+		}
+		return (is_null($id)||is_array($id)?$list:$list[0]);
 	}
 	public function Load_menu() {
 		$now = time();
-		$r = $this->prepare("SELECT mp.id idp,c.pid,c.id cid,c.name,c.route,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id FROM {$this->db_prefix}pages mp"
+		$r = $this->prepare("SELECT mp.id idp,p.id pid,c.id cid,c.name,c.route,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
 		." AND p.controller!='menu' AND p.nomenu<1"
-		." JOIN {$this->db_prefix}content c ON pid=p.id AND ln='{$this->site->ln}'"
+		." LEFT JOIN {$this->db_prefix}content c ON pid=p.id AND ln='{$this->site->ln}'"
 		//check if home page rediects to this page
 		." LEFT JOIN {$this->db_prefix}pages h ON h.front=1 and h.redirect=".$this->sql_parser->cast('p.id', 'text')
 		." WHERE mp.controller='menu' and p.site=? and p.published=1 and p.deleted=0"
 		." and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')"
+		." GROUP BY p.id"
 		." ORDER BY mp.nr,p.nr");
 		$s = $r->execute(array($this->site->data['id']));
 		if (!$s) return false;

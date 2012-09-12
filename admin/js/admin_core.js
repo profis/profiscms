@@ -1151,8 +1151,16 @@ Ext.onReady(function(){
 					try {
 						if (window.execScript)
 							window.execScript(m[2]); // IE
-						else
-							window.eval(m[2]); // the world
+						else {
+                                                    /*
+                                                    //Making js code debuggable:
+                                                    var e = document.createElement('script');
+                                                    e.type = 'text/javascript';
+                                                    e.text = m[2];
+                                                    document.body.appendChild(e);
+                                                   */
+                                                   window.eval(m[2]); // the world
+                                                }
 					} catch(e) {
 						debug_alert(e);
 					};
@@ -2089,15 +2097,20 @@ function node_rename_menu(node, create_mode) {
 		create_mode: create_mode,
 		values: node.attributes._names,
 		title: (create_mode?PC.i18n.menu.new_page:PC.i18n.menu.rename),
-		callback: function(vals, w) {
+		Save: function(vals, w, d) {
 			if (vals) {
-				vals['id'] = node.id;
+				var data = vals.other;
+				data.id = node.id;
+				data.content = {};
+				Ext.iterate(vals.names, function(ln, name){
+					data.content[ln] = {name: name};
+				});
 				Ext.Ajax.request({
 					url: 'ajax.page.php?action=update',
 					_node: node,
 					_window: w,
 					params: {
-						data: Ext.encode(vals),
+						data: Ext.encode(data),
 						return_page: true
 					},
 					method: 'POST',

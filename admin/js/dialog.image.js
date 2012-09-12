@@ -363,7 +363,7 @@ PC.dialog.image = {
 			layoutConfig: {
 				align: 'stretch'
 			},
-			width: 400,
+			width: 500,
 			height: 300,
 			resizable: false,
 			border: false,

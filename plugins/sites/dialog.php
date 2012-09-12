@@ -33,7 +33,6 @@ if (isset($_POST['ajax'])) {
 	if (isset($_POST['add']) && is_array($_POST['add'])) {
 		$r_site = $db->prepare("INSERT INTO {$cfg['db']['prefix']}sites (name,theme,editor_width,editor_background) VALUES(?,?,?,?)");
 		$r_front_page = $db->prepare("INSERT INTO {$cfg['db']['prefix']}pages (site,front,published,controller) VALUES(?,1,1,'')");
-		$r_search_page = $db->prepare("INSERT INTO {$cfg['db']['prefix']}pages (site,controller,published,controller) VALUES(?,'search',1,'')");
 		$r_langs = $db->prepare("INSERT INTO {$cfg['db']['prefix']}languages (site,ln,name,nr) VALUES (?,?,?,?)");
 		foreach ($_POST['add'] as $v)
 			if (isset($v['n']) && isset($v['d']) && isset($v['l']) && isset($v['width']) && isset($v['background']) && is_array($v['l'])) {
@@ -46,7 +45,6 @@ if (isset($_POST['ajax'])) {
 				$k = $db->lastInsertId($sql_parser->Get_sequence('sites'));
 				$i = 0;
 				$r_front_page->execute(array($k));
-				$r_search_page->execute(array($k));
 				foreach ($v['l'] as $ln_id=>$ln_name) {
 					if (preg_match('/^[a-z]{2}$/', $ln_id)) {
 						$r_langs->execute(array($k, $ln_id, substr($ln_name, 0, 255), $i++));
@@ -90,8 +88,8 @@ if (isset($_POST['ajax'])) {
 		$r_del_pages = $db->prepare("DELETE FROM {$cfg['db']['prefix']}pages WHERE site=?");
 		$r_del_site = $db->prepare("DELETE FROM {$cfg['db']['prefix']}sites WHERE id=?");
 		$r_del_langs = $db->prepare("DELETE FROM {$cfg['db']['prefix']}languages WHERE site=?");
-		foreach ($_POST['del'] as $v)
-			$sites = $site->Get_all();
+		foreach ($_POST['del'] as $v) {
+                    $sites = $site->Get_all();
 			if (isset($sites[$v]) && !isset($_POST['s'][$v])) {
 				$r_pages->execute(array($v));
 				$ids = array();
@@ -104,8 +102,9 @@ if (isset($_POST['ajax'])) {
 				$r_del_site->execute(array($v));
 				$r_del_langs->execute(array($v));
 			}
+                }
 	}
-	
+        
 	// return
 	// copy-paste from "inc.PC.php"
 	//$r = $db->query("SELECT * FROM {$cfg['db']['prefix']}sites ORDER BY id");

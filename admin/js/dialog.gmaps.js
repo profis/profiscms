@@ -1,7 +1,23 @@
 Ext.ns('PC.dialog');
 PC.dialog.gmaps = {
 	edit_mode: false,
-	show: function() {
+        show: function() {
+            if (typeof google != 'object' || typeof google.maps != 'object' || typeof google.maps.LatLng != 'function') {
+                var dialog = this;
+                var callback_for_google = function() {
+                    var callback_for_maps = function() {
+                        dialog.show_when_js_loaded();
+                    }
+                    google.load("maps", "3", {"callback" : callback_for_maps, "other_params": "sensor=false"});
+          
+                };
+                PC.utils.loadScript('https://www.google.com/jsapi/?sensor=false', callback_for_google);
+            }
+            else {
+                this.show_when_js_loaded();
+            }
+	},
+	show_when_js_loaded: function() {
 		this.ln = PC.i18n.dialog.gmaps;
 		var dialog = this;
 		//if gmaps window is already created, just show it and return
@@ -13,7 +29,7 @@ PC.dialog.gmaps = {
 			}
 			return;
 		}
-		this.default_options = {
+                this.default_options = {
 			center: new google.maps.LatLng(55.17804878976065, 23.910986328124977),
 			zoom: 7,
 			mapTypeId: google.maps.MapTypeId.ROADMAP,

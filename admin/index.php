@@ -37,7 +37,6 @@ require_once 'admin.php';
 	<script type="text/javascript" src="ext/adapter/ext/ext-base.js"></script>
 	<script type="text/javascript" src="ext/ext-all.js"></script>
 	<script type="text/javascript" src="locale/<?php echo $admin_ln; ?>/"></script>
-	<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
 	<?php
 	$settings = array();
 	$settings['BASE_URL'] = $cfg['url']['base'];

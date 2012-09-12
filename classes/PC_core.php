@@ -435,6 +435,7 @@ final class PC_core extends PC_base {
 		if (!$path) return false;
 		return $this->cfg['url']['base'].substr($path, strlen($this->cfg['path']['system']));
 	}
+	//public function Get_api($action=array(), $admin=false, $plugin=null) {}
 	#hooks
 	/**
 	* Method used to retrieve all registered hooks or only hooks by given $event name from instance variable _hooks.

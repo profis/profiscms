@@ -1,6 +1,8 @@
 Ext.namespace('PC.langs');
 
 PC.langs.lt = {
+	yes: 'Taip',
+	no: 'Ne',
 	all: 'Visos',
 	date: 'Data',
 	time: 'Laikas',
@@ -21,6 +23,7 @@ PC.langs.lt = {
 	quotes: 'Kabutės',
 	load: 'Įkrauti',
 	save: 'Išsaugoti',
+	cancel: 'Atšaukti',
 	add: 'Pridėti',
 	edit: 'Redaguoti',
 	copy: 'Kopijuoti',
@@ -635,6 +638,9 @@ PC.langs.lt = {
 		source: {
 			title: 'HTML kodo redaktorius',
 			wrap: 'Žodžių laužymas'
+		},
+                mergetablecells: {
+			title: 'Sujungti lentelės langelius',
 		},
 		tables: {
 			title: 'Įterpti lentelę',

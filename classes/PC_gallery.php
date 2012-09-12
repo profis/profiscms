@@ -298,7 +298,7 @@ final class PC_gallery extends PC_base {
 			return $response;
 		}
 		$directory = $r['directory'];
-		if (!mkdir($full_path.$directory)) {
+		if (!mkdir($full_path.$directory, 0777)) {
 			$response['errors'][] = "create_directory";
 			return $response;
 		}
@@ -1293,7 +1293,7 @@ final class PC_gallery extends PC_base {
 						return $response;
 					}
 					$type =& $thumbnail_types[$thumbnail_type];
-					if (!is_dir($thumbnail_path)) if (!mkdir($thumbnail_path)) {
+					if (!is_dir($thumbnail_path)) if (!mkdir($thumbnail_path, 0777)) {
 						$response['errors'][] = "create_thumbnail_directory";
 						return $response;
 					}
@@ -1950,7 +1950,7 @@ final class PC_gallery extends PC_base {
 			if (is_file($thumbnail_path.'/'.$filename)) {
 				$base_thumb_path = basename($thumbnail_path);
 				if (!is_dir($new_path.$base_thumb_path)) {
-					mkdir($new_path.$base_thumb_path);
+					mkdir($new_path.$base_thumb_path, 0777);
 				}
 				if (copy($thumbnail_path.'/'.$filename, $new_path.$base_thumb_path.'/'.$filename)) {
 					$created[] = $new_path.$base_thumb_path.'/'.$filename;
@@ -2068,7 +2068,8 @@ final class PC_gallery extends PC_base {
 	* @param int $quality given quality for  new thumbnail type.
 	* @return mixed array with keys "success" and "type" on success, or array with key "errors" otherwise.
 	*/
-	public function Create_thumbnail_type($thumbnail_type, $max_w, $max_h, $quality=76) {
+	public function Create_thumbnail_type($thumbnail_type, $max_w, $max_h, $quality=76, $use_adaptive_resize) {
+		$use_adaptive_resize = (bool)$use_adaptive_resize;
 		$thumbnail_type = strtolower($thumbnail_type);
 		if (!preg_match('/^'.$this->patterns['thumbnail_type'].'$/', $thumbnail_type))
 			$response['errors'][] = "thumbnail_type"; 
@@ -2083,8 +2084,8 @@ final class PC_gallery extends PC_base {
 			$response['errors'][] = "thumbnail_type_exists";
 			return $response;
 		}
-		$r = $db->prepare("INSERT INTO {$this->db_prefix}gallery_thumbnail_types VALUES(?,?,?,?)");
-		$success = $r->execute(array($thumbnail_type, $max_w, $max_h, $quality));
+		$r = $db->prepare("INSERT INTO {$this->db_prefix}gallery_thumbnail_types VALUES(?,?,?,?,?)");
+		$success = $r->execute(array($thumbnail_type, $max_w, $max_h, $quality, $use_adaptive_resize));
 		if (!$success) {
 			$response['errors'][] = "database";
 			return $response;
@@ -2188,7 +2189,7 @@ final class PC_gallery extends PC_base {
 			$thumb->crop($x_start, $y_start, $width, $height);
 			$thumb->resize($thumbnail_types[$thumbnail_type]['thumbnail_max_w'], $thumbnail_types[$thumbnail_type]['thumbnail_max_h']);
 			if (!is_dir($full_path.'thumb-'.$thumbnail_type)) {
-				if (!mkdir($full_path.'thumb-'.$thumbnail_type)) {
+				if (!mkdir($full_path.'thumb-'.$thumbnail_type, 0777)) {
 					$response['errors'][] = "create_thumbnail_dir";
 					return $response;
 				}
@@ -2202,7 +2203,7 @@ final class PC_gallery extends PC_base {
 				$small_thumb->resize($thumbnail_types['thumbnail']['thumbnail_max_w'], $thumbnail_types['thumbnail']['thumbnail_max_h']);
 				$stop_save = false;
 				if (!is_dir($full_path.'thumb-thumbnail')) {
-					if (!mkdir($full_path.'thumb-thumbnail')) {
+					if (!mkdir($full_path.'thumb-thumbnail', 0777)) {
 						$stop_save = true;
 					}
 				}

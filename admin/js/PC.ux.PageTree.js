@@ -189,10 +189,12 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 		beforeload: function(n) {
 			var loader = this.loader;
 			//base
-			loader.baseParams = {};
-			Ext.iterate(this.initialParams, function(param, value){
+                        var site = loader.baseParams.site;
+                        loader.baseParams = {};
+                        Ext.iterate(this.initialParams, function(param, value){
 				loader.baseParams[param] = value;
 			});
+                        loader.baseParams.site = site;
 			var ctrl = n.attributes.controller;
 			if (ctrl != undefined) if (ctrl != '') loader.baseParams.controller = n.attributes.controller;
 			//beforeload hook

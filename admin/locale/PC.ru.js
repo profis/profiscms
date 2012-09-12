@@ -1,6 +1,8 @@
 Ext.namespace('PC.langs');
 
 PC.langs.ru = {
+	yes: 'Yes',
+	no: 'No',
 	all: 'Bсе',
 	date: 'Дата',
 	time: 'Время',
@@ -21,6 +23,7 @@ PC.langs.ru = {
 	quotes: 'Кавычки',
 	load: 'Загрузить',
 	save: 'Сохранить',
+	cancel: 'Отменить',
 	add: 'Добавить',
 	edit: 'Изменить',
 	copy: 'Копировать',
@@ -635,6 +638,9 @@ PC.langs.ru = {
 		source: {
 			title: 'Редактор кода HTML',
 			wrap: 'Перенос слов'
+		},
+                mergetablecells: {
+			title: 'Объединить ячейки',
 		},
 		tables: {
 			title: 'Вставить таблицу',

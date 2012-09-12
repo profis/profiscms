@@ -42,23 +42,26 @@ PC.tree.IsNodeDeleted = function(n) {
 	} while (n);
 	return false;
 }
-PC.tree.Append = function(where, what, callback) {
+PC.tree.Append = function(parentNode, newNodeData, callback) {
 	var append = function() {
-		var n = where.lastChild;
-		if (n && n.id<0) {
-			while (n.previousSibling && n.previousSibling.id<0)
-				n = n.previousSibling;
-			var newNode = where.insertBefore(what, n);
-			if (typeof callback == 'function') callback(newNode);
-			return newNode;
-		};
-		var newNode = where.appendChild(what);
-		PC.tree.component.localizeNode(newNode);
+		var newNode = PC.tree.component.getNodeById(newNodeData.id);
+		if (newNode == undefined) {
+			var n = parentNode.lastChild;
+			if (n && n.id<0) {
+				while (n.previousSibling && n.previousSibling.id<0)
+					n = n.previousSibling;
+				var newNode = parentNode.insertBefore(newNodeData, n);
+				if (typeof callback == 'function') callback(newNode);
+				return newNode;
+			};
+			var newNode = parentNode.appendChild(newNodeData);
+			PC.tree.component.localizeNode(newNode);
+		}
 		if (typeof callback == 'function') callback(newNode);
 		return newNode;
 	}
-	if (where.expanded) return append();
-	return where.expand(false, true, append);
+	if (parentNode.expanded) return append();
+	return parentNode.expand(false, true, append);
 }
 PC.tree.actions = {
 	Preview: new Ext.Action({

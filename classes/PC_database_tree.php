@@ -172,7 +172,7 @@ final class PC_database_tree extends PC_base {
 			}
 			echo str_repeat(".......\t", $level);
 			echo ' <span class="id">'.$d[$cols['id']].' ('.$d[$cols['parent']].')</span> '
-				.(isset($d[$cols['name']])?iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $d[$cols['name']]):'no name')
+				.(isset($d[$cols['name']])?PC_translit($d[$cols['name']]):'no name')
 				.' <span>'.$d[$cols['left']].','.$d[$cols['right']].'</span>'
 				."\n";
 			$previous = $d;

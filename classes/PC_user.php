@@ -61,7 +61,7 @@ final class PC_user extends PC_base {
 			$this->Session_password =  Sanitize('md5', v($_SESSION['user_password']));
 		}
 		return true;
-	}	
+	}
 	public function Login() {
 		if (isset($this->Session_login, $this->Session_password) && $this->Session_secure == $this->Current_secure) {
 			//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}

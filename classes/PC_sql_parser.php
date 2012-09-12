@@ -189,7 +189,9 @@ final class PC_sql_parser extends PC_base {
 	* @todo implement or remove.
 	*/
 	public function in($array) {
-		return 'in('.implode(',', array_fill(0, count($array), '?')).')';
+		$c = count($array);
+		if (!$c) return false;
+		return 'in('.implode(',', array_fill(0, $c, '?')).')';
 	}
 	
 	/**

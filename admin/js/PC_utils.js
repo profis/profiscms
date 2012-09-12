@@ -93,6 +93,29 @@ PC.utils.localize = function(path, langs) {
 		PC.utils.applyProps(eval('PC.i18n'+p), eval('PC.langs.'+PC.global.admin_ln+p));
 	}
 }
+PC.utils.extractName = function(names, callback) {
+	var name = '', greyOut = false;
+	if (typeof names != 'object') {
+		name = '...';
+		greyOut = true;
+	}
+	else if (names[PC.global.admin_ln] != undefined && names[PC.global.admin_ln] != '') {
+		name = names[PC.global.admin_ln];
+	}
+	else {
+		greyOut = true;
+		Ext.iterate(names, function(ln, nameMock) {
+			if (nameMock != '') {
+				name = nameMock;
+				return false;
+			}
+		});
+		if (name == '') name = '...';
+	}
+	if (greyOut) name = '<span style="color: #666"><i>'+ name +'</i></span>';
+	if (typeof callback == 'function') callback(name);
+	return name;
+}
 
 PC.utils.htmlspecialchars = function(str) {
 	return str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#039;').replace(/"/g, '&quot;');
@@ -195,7 +218,7 @@ PC.utils.escape = function(text) {
  * Clone Function
  * @param {Object/Array} o Object or array to clone
  * @return {Object/Array} Deep clone of an object or an array
- * @author Ing. Jozef Sak?loð
+ * @author Ing. Jozef Sak?loï¿½
  */
 Ext.ns('Ext.ux.util');
 Ext.ux.util.clone = function(o) {
