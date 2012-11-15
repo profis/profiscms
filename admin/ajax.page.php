@@ -22,7 +22,7 @@ new saving system (future):
 error_reporting(0); //ensure PHP won't output any error data and won't destroy JSON structure
 $cfg['core']['no_login_form'] = true; //don't output login form if there's no active session
 require_once('admin.php'); //ensure the user is authorized, otherwise stop executing this script
-if (!$auth->Authorize('core', 'admin')) die('No access');
+if (!$auth->Authorize_access_to_pages()) die('No access');
 //header('Content-Type: application/json');
 header('Cache-Control: no-cache');
 $out = array();
@@ -30,8 +30,30 @@ $out = array();
 $action = isset($_GET['action'])? $_GET['action'] : v($_POST['action']);
 $out = array(); //otherwise, if no response data for request found, JSON will return nothing
 //get page in all languages
+
+$logger = new PC_debug();
+$logger->debug = true;
+
+$logger->debug("Action: " . $action);
+
+require_once 'classes/Page_manager.php';
+$page_manager = new Page_manager();
+
+$page_id = v($_POST['id']);
+
+
 if ($action == "get") {
+	$page_id = v($_POST['id']);
+	if (!$page_manager->is_node_accessible($page_id)) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		exit;
+	}
+	$logger->debug('get');
 	if (isset($_POST['id'])) if (is_numeric($_POST['id'])) {
+		$logger->debug('id is numeric - load page');
 		$r = $db->prepare("SELECT p.*,"
 		.$sql_parser->group_concat($sql_parser->concat_ws("░", 'rc.pid', 'rc.ln', 'rc.name'), array('distinct'=>true, 'separator'=>'▓'))." redirects_from"
 		." FROM {$cfg['db']['prefix']}pages p"
@@ -83,6 +105,7 @@ if ($action == "get") {
 		}
 	}
 	else {
+		$logger->debug('id is not numeric - load plugin page');
 		$id =& $_POST['id'];
 		$pos = strpos($_POST['id'], '/');
 		if ($pos) {
@@ -102,8 +125,19 @@ if ($action == "get") {
 }
 //update page (in every language)
 elseif ($action == "update") {
+	$logger->debug('Update action');
 	$data = json_decode($_POST['data'], true);
+	$rename_only = v($_POST['rename_only'], false);
 	//print_pre($data);return;
+	
+	if ($data and !$page_manager->is_node_accessible(v($data['id']))) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		exit;
+	}
+	
 	if (!$data) $out['errors'][] = 'json';
 	else if (!(ctype_digit($data['id']) || is_int($data['id'])) || $data['id'] < 1) {
 		$id =& $data['id'];
@@ -120,6 +154,7 @@ elseif ($action == "update") {
 					'id'=> $customId,
 					'changes'=> $data,
 					'data'=> &$out['data'],
+					'rename_only' => $rename_only,
 					'success'=> &$out['success'],
 					'out'=> &$out
 				));
@@ -233,6 +268,10 @@ elseif ($action == "update") {
 							elseif ($_page['route_lock']) $autoRouteUpdate = false;
 							//set user specified route
 							$routeUpdated = false;
+				
+							if (empty($content['route'])) {
+								unset($content['route']);
+							}
 							if (isset($content['route'])) {
 								if (empty($content['route']) || $content['route'] == $current_content['route']) {
 									unset($content['route']);
@@ -252,10 +291,18 @@ elseif ($action == "update") {
 									}
 								}
 							}
+
 							//automatically update route
 							if (!$routeUpdated && $autoRouteUpdate) {
+								$name_for_route = '';
 								if (isset($content['name'])) {
-									$generated_route = Get_unique_route(Sanitize('route', $content['name']), $language, $current_content['id']);
+									$name_for_route = $content['name'];
+								}
+								if (empty($name_for_route)) {
+									$name_for_route = $current_content['name'];
+								}
+								if (!empty($name_for_route)) {
+									$generated_route = Get_unique_route(Sanitize('route', $name_for_route), $language, $current_content['id']);
 									if ($generated_route) {
 										$content['route'] = $generated_route;
 										$routeUpdated = true;
@@ -274,9 +321,25 @@ elseif ($action == "update") {
 									unset($content[$field]);
 									continue;
 								}
+								if (in_array($field, array('name'))) {
+									$content_value = trim($content_value);
+								}
 								if (in_array($field, array('info','info2','info3','text'))) {
 									//match all gallery images in text
 									//match example: ="gallery/admin/id/medium/39"
+									
+
+									//Remove empty <a></a> tags (except anchors):
+									$patterns = array(
+										 '/(<(a)(?![^>]*name\s*=)[^>]*>)(\s*)(<\/a>)/ui',
+										'/<script[^>]*?>[\s\S]*?<\/script>/ui',
+										'/<style[^>]*?>[\s\S]*?<\/style>/ui'
+									);
+
+									$replacement = '';
+									$content_value = preg_replace($patterns, $replacement, $content_value);
+
+									
 									if (preg_match_all("/=\"".$gallery->config['gallery_directory']."\/".$cfg['directories']['admin']."\/id\/(".$gallery->patterns['thumbnail_type']."\/)?([0-9]+)\"/i", urldecode($content_value), $matches)) {
 										$gallery->Update_files_in_use($matches[2], $current_content['id'], $field);
 									}
@@ -320,7 +383,9 @@ elseif ($action == "update") {
 								$shared_sets .= "$key=null";
 								//$shared_queryParams[] = $key;
 							} else {
+								$logger->debug('string date: ' . $value, 4);
 								if (preg_match("#^[0-9]{4}-[0-9]{2}-[0-9]{2}$#", $value)) $value = strtotime($value);
+								$logger->debug('strtotime: ' . $value, 4);
 								if ($value > 2147483647) $value = 2147483647;
 								$shared_sets .= "$key=?";
 								//$shared_queryParams[] = $key;
@@ -401,6 +466,15 @@ elseif ($action == "update") {
 //get content archive
 elseif ($action == "get_archive") {
 	$pid = v($_POST['pid']);
+	
+	if (!$page_manager->is_node_accessible($pid)) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		exit;
+	}
+	
 	$language = $_POST['language'];
 	if (!isset($pid) || !is_numeric($pid)) {
 		$out['errors'][] = 'pid';
@@ -421,6 +495,7 @@ elseif ($action == "get_archive") {
 	}
 }
 //get path of the tree node
+//No need to check permissions here
 elseif ($action == "get_path") {
 	$id = $_POST['id'];
 	$path = ''; //change to  '/'.$id  to show this node in the path
@@ -445,7 +520,25 @@ elseif ($action == "get_path") {
 }
 elseif ($action == 'move') {
 	$id = $_POST['id'];
+	
+	if (!$page_manager->is_node_accessible($id)) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		exit;
+	}
+	
 	$idp = $_POST['idp'];
+	
+	if (!$page_manager->is_node_accessible($idp)) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		exit;
+	}
+	
 	$from_idp = $_POST['old_idp'];
 	// new nodes order (`nr` mass update)
 	if (isset($_POST['new_order']) && is_array($_POST['new_order'])) {
@@ -475,9 +568,20 @@ elseif ($action == 'move') {
 	}
 }
 elseif ($action == 'delete') {
-	$id = $_POST['id'];
-	$from_idp = $_POST['old_idp'];
+	$site_id = v($_POST['site']);
+	$id = v($_POST['id']);
+	
+	if (!$page_manager->is_node_accessible($id)) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		exit;
+	}
+	
+	$from_idp = v($_POST['old_idp']);
 	$success = false;
+	
 	/*recycle bin `nr` update (last deleted on top)
 	$r = $db->prepare("SELECT max(pp.nr) FROM {$cfg['db']['prefix']}pages p LEFT JOIN {$cfg['db']['prefix']}pages pp ON pp.site=p.site WHERE p.id=? AND pp.deleted=1");
 	$s = $r->execute(array($id));
@@ -497,10 +601,22 @@ elseif ($action == 'delete') {
 			'to_idp'=> '-1'
 		));
 	}
+
+	if (!$auth->Authorize_access_to_site_page($site_id, $id)) {
+		$auth->Make_site_page_accessible($site_id, $id);
+		$out['message'] = 'Direct permission added for the page';
+	}
+	
 	$out['success'] = $success;
 }
 elseif ($action == 'empty_trash') {
-	$pids = $page->Get_trashed();
+	$site_id = v($_POST['site_id']);
+	$pids = $page->Get_trashed($site_id);
+	foreach ($pids as $key => $pid) {
+		if (!$auth->Authorize_access_to_site_page($site_id, $pid)) {
+			unset($pids[$key]);
+		}
+	}
 	$pids = $page->Get_subpages_list($pids);
 	if (count($pids)) {
 		$r = $db->query("SELECT "
@@ -522,3 +638,8 @@ elseif ($action == 'empty_trash') {
 else $out['errors'][] = 'unknown_action';
 //echo '<pre>'.htmlspecialchars(print_r($out, true)).'</pre>';
 echo json_encode($out);
+
+$logger->debug('Ajax output:');
+$logger->debug($out);
+$logger->file_put_debug($cfg['path']['base'] . 'logs/ajax/page.html');
+//echo $logger->get_debug_string();

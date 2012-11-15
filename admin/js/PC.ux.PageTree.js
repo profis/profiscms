@@ -16,6 +16,13 @@ PC.ux.PageTree = function(config) {
 				beforeload: function(loader, node, callback){
 					loader.baseParams.deleted = /^\/0\/-1\//.test(node.getPath());
 					loader.baseParams.site = PC.global.site;
+					if (node.getOwnerTree().additionalBaseParams) {
+						Ext.apply(loader.baseParams.additional, node.getOwnerTree().additionalBaseParams);
+					}
+					loader.baseParams.additional = Ext.util.JSON.encode(loader.baseParams.additional);
+				},
+				load: function(loader, node, callback){
+					PC.tree.UpdateNodes();
 				}
 			}
 		}),
@@ -48,14 +55,15 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 		var attr = n.attributes;
 		var ctrl = attr.controller;
 		
-		if (!/^[0-9]+$/.test(attr.id)) return;
+		var nodeIcon = false;
+		var parseClasses = true;
+		var parseAttributes = true;
 		
+		//if (!/^[0-9]+$/.test(attr.id)) return; //prevent controller nodes from being parsed / edit: but now we need to parse them!
 		if (attr._empty) n.loaded = true;
 		
 		var all_classes = ['cms-tree-node-folder', 'cms-tree-node-menu', 'cms-tree-node-nomenu', 'cms-tree-node-hot', 'cms-tree-node-hot_nomenu', 'cms-tree-node-hidden'];
 		var _classes = ['cms-tree-node-folder'];
-		
-		//jei nera fiktyvus node'as
 		
 		if (attr.id == -1) {
 			_classes.push('cms-tree-node-trash');
@@ -66,42 +74,90 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 		else if (attr._front == 1) {
 			_classes.push('cms-tree-node-home');
 		}
-		else if (ctrl == 'search') {
-			_classes.push('cms-tree-node-search');
-		}
 		else if (ctrl == 'menu') {
 			_classes.push('cms-tree-node-menu');
 		}
-		else if (attr.id > 0) {
-			if (attr.published != 1) {
-				if (attr.published != undefined) _classes.push('cms-tree-node-hidden');
+		else if (!/^[1-9][0-9]*$/.test(attr.id)) {
+			var id = PC.pages.ParseID(attr.id);
+			if (id.controller != undefined) {
+				var hookName = 'core/tree/node/renderIcon/'+ id.controller;
+				if (PC.hooks.Count(hookName)) {
+					var params = {
+						id: n.id,
+						node: n,
+						parseClasses: true,
+						icon: false
+					};
+					PC.hooks.Init(hookName, params);
+					nodeIcon = params.icon;
+					var parseClasses = params.parseClasses;
+				}
 			}
-			else if (attr.hot == 1) {
-				if (attr.nomenu == 1) _classes.push('cms-tree-node-hot_nomenu');
-				else _classes.push('cms-tree-node-hot');
-			}
-			else if (attr.nomenu == 1) _classes.push('cms-tree-node-nomenu');
+		}
+		if (!nodeIcon) {
+			//n.setIcon(Ext.BLANK_IMAGE_URL);
 		}
 		
-		Ext.iterate(all_classes, function(cls){
-			n.ui.removeClass(cls)
-		});
-		Ext.iterate(_classes, function(cls){
-			n.ui.addClass(cls)
-		});
-		attr.cls = 'cms-tree-node-folder '+ _classes.join(' ');
-		
-		if (attr._redir) n.setIcon('images/shortcut.png');
-		else if (attr.controller != '' && attr.controller != 'menu' && attr.id > 0) n.setIcon('images/controller.png');
-		else n.setIcon('');
-		/*
-		if (update_el) {
-			var node_el = n.getUI().getEl();
-			//var icon_el = n.getUI().getIconEl();
-			node_el.className = 'x-tree-node cms-tree-node-folder '+ n.attributes.cls;
-			//icon_el.className = 'x-tree-node-icon '+ n.attributes.cls.substring('cms-tree-node-folder'.length+1);
+
+		if (nodeIcon) {
+			parseClasses = false;
+			n.setIcon(nodeIcon);
 		}
-		*/
+		//else {
+		//	n.setIcon(nodeIcon);
+		//}
+		else if (parseClasses) {
+			if (attr._front != undefined) if (attr._front < 1) parseAttributes = false;
+			if (parseAttributes) {
+				if (attr.published != 1) {
+					if (attr.published != undefined) _classes.push('cms-tree-node-hidden');
+				}
+				else if (attr.hot == 1 && attr._front != 1) {
+					if (attr.nomenu == 1) _classes.push('cms-tree-node-hot_nomenu');
+					else _classes.push('cms-tree-node-hot');
+				}
+				else if (attr.nomenu == 1 && attr._front != 1) _classes.push('cms-tree-node-nomenu');
+			}
+			Ext.iterate(all_classes, function(cls){
+				n.ui.removeClass(cls);
+			});
+			Ext.iterate(_classes, function(cls){
+				n.ui.addClass(cls);
+			});
+			attr.cls = 'cms-tree-node-folder '+ _classes.join(' ');
+			if (attr._redir) {
+				n.setIcon('images/shortcut.png');
+			}
+			else if (!nodeIcon) {
+				n.setIcon(Ext.BLANK_IMAGE_URL);
+			}
+			
+			
+			if (attr.controller != '' && attr.controller != 'menu' && attr.id > 0) {
+				if (PC.controller_page_icons && PC.controller_page_icons[attr.controller]) {
+					n.setIcon(PC.controller_page_icons[attr.controller]);
+				}
+				else {
+					n.setIcon('images/controller.png');
+				}
+			}
+			
+		}
+		else if (attr._redir) {
+			n.setIcon('images/shortcut.png');
+		}
+		else if (attr.controller != '' && attr.controller != 'menu' && attr.id > 0) {
+			if (PC.controller_page_icons && PC.controller_page_icons[attr.controller]) {
+				n.setIcon(PC.controller_page_icons[attr.controller]);
+			}
+			else {
+				n.setIcon('images/controller.png');
+			}
+		}
+		else {
+			//n.setIcon('');
+			n.setIcon(Ext.BLANK_IMAGE_URL);
+		}
 	},
 	setLn: function(ln) {
 		if (this._ln == ln) return;
@@ -137,7 +193,20 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 		}*/
 		var setText = function(text, greyOut) {
 			var text = PC.utils.escape(text);
-			if (greyOut) text = '<span style="color: #666"><i>'+ text +'</i></span>';
+			if (greyOut) {
+				//text = '<span style="color: #666"><i>'+ text +'</i></span>';
+				if (n.ui.rendered) {
+					n.ui.addClass('tree_node_grey_out');
+				}
+				n.pc_grey_out = true;
+				
+			}
+			else {
+				if (n.ui.rendered) {
+					n.ui.removeClass('tree_node_grey_out');
+				}
+				n.pc_grey_out = false;
+			}
 			return n.setText(text);
 		}
 		if (n.attributes.id == 'create') {
@@ -166,6 +235,9 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 				if (name_mock == '') name_mock = '...'; //PC.i18n.no_title;
 				setText(name_mock, true);
 			}
+			if (n.attributes._front > 0) {
+				setText(PC.i18n.home);
+			}
 		}
 	},
 	localizeAllNodes: function(n) {
@@ -189,12 +261,19 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 		beforeload: function(n) {
 			var loader = this.loader;
 			//base
-                        var site = loader.baseParams.site;
-                        loader.baseParams = {};
-                        Ext.iterate(this.initialParams, function(param, value){
+			var site = loader.baseParams.site;
+			var search_string = false;
+			if (loader.baseParams.searchString) {
+				search_string = loader.baseParams.searchString;
+			}
+			loader.baseParams = {};
+			Ext.iterate(this.initialParams, function(param, value){
 				loader.baseParams[param] = value;
 			});
-                        loader.baseParams.site = site;
+            loader.baseParams.site = site;
+			if (search_string) {
+				loader.baseParams.searchString = search_string;
+			}
 			var ctrl = n.attributes.controller;
 			if (ctrl != undefined) if (ctrl != '') loader.baseParams.controller = n.attributes.controller;
 			//beforeload hook
@@ -203,7 +282,7 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 				node: n
 			});
 			//additional
-			loader.baseParams.additional = Ext.encode(this.additionalParams);
+			loader.baseParams.additional = this.additionalParams;
 			
 			//custom tree renderers
 			/*var renderer = '';
@@ -223,8 +302,58 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 				node: n
 			});
 			this.additionalParams = {};
+		},
+		checkchange: function (node, checked) {
+			if (this.checked_nodes) {
+				var node_id = node.id;
+				
+				if (this.checked_nodes_id_string && node_id.indexOf(this.checked_nodes_id_string) == -1) {
+					return
+				}
+				if (checked) {
+					if (this.checked_nodes.indexOf(node_id) == -1) {
+						this.checked_nodes.push(node_id);
+					}
+				}
+				else {
+					this.checked_nodes.remove(node_id);
+				}
+			}
 		}
 	}
 });
 
+
 Ext.ComponentMgr.registerType('profis_pagetree', PC.ux.PageTree);
+
+(function() {
+  var originalRender = Ext.tree.AsyncTreeNode.prototype.render;
+
+  Ext.override(Ext.tree.AsyncTreeNode, {
+	  
+	render: function() {
+		var node_id = this.id;
+		var my_tree = this.getOwnerTree();
+		if (my_tree.checked_nodes) {
+			if (my_tree.checked_nodes_id_string && node_id.indexOf(my_tree.checked_nodes_id_string) == -1) {
+			}
+			else {
+				if (my_tree.checked_nodes.indexOf(node_id) != -1 && !this.ui.isChecked()) {
+					//this.ui.toggleCheck();
+					this.attributes.checked = true;
+				}
+				else {
+					this.attributes.checked = false;
+				}
+			}
+		}
+		originalRender.apply(this, arguments);
+		if (this.pc_grey_out) {
+			this.ui.addClass('tree_node_grey_out');
+		}
+			
+		
+	}
+	
+  });
+})();

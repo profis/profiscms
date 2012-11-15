@@ -230,7 +230,7 @@ PC.dialog.tablecell = {
 			items: [this.general, this.advanced],
 			border: false
 		};
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
 			layout: 'vbox',
 			layoutConfig: {
@@ -255,6 +255,7 @@ PC.dialog.tablecell = {
 						data: [
 							['cell', this.ln.target_cell],
 							['row', this.ln.target_row],
+							['col', this.ln.target_col],
 							['all', this.ln.target_all]
 						]
 					},
@@ -304,7 +305,9 @@ PC.dialog.tablecell = {
 		var st = ed.dom.parseStyle(ed.dom.getAttrib(this.cell, "style"));
 		st = ed.dom.serializeStyle(st);
 		//remove width/height from styles
-		st = st.replace(/[^\-](width|height):.+?;/gi, '');
+		//st = st.replace(/[^\-]?(width|height):.+?;/gi, '');
+		st = st.replace(/([\-])?(width|height):.+?;/gi, function($0,$1){return $1?$0:'';});
+		st = st.trim();
 		this.window._style.setValue(st);
 		this.window._bgimage.setValue(this.getStyle(this.cell, 'background', 'backgroundImage').replace(new RegExp("url\\(['\"]?([^'\"]*)['\"]?\\)", 'gi'), "$1"));
 		this.window._background.setValue(this.convertRGBToHex(this.getStyle(this.cell, 'bgcolor', 'backgroundColor')));
@@ -359,6 +362,48 @@ PC.dialog.tablecell = {
 					cell = this.update_cell(cell, true);
 				} while ((cell = this.next_cell(cell)) != null);
 				break;
+			case "col":
+				var prev_cell = this.prev_cell(this.cell);
+				var pre_col_spans = 0;
+				var this_col_spans = this.cell.colSpan;
+
+				while (prev_cell != null) {
+					if (prev_cell.nodeName != "TD" && prev_cell.nodeName != "TH") {
+						continue;
+					}
+					pre_col_spans += prev_cell.colSpan;
+					prev_cell = this.prev_cell(prev_cell);
+				}
+				var rows = this.table.getElementsByTagName("tr");
+				var col_spans_skip = pre_col_spans;
+				var col_spans = this_col_spans;
+				var cell_col_span;
+				for (var i=0; i<rows.length; i++) {
+					//console.log(' -- To be skiiped --');
+					var cell = rows[i].firstChild;
+					while (col_spans_skip > 0 && cell != null) {
+						if (!(cell.nodeName != "TD" && cell.nodeName != "TH")) {
+							cell_col_span = cell.colSpan;
+							if (cell_col_span > col_spans_skip) {
+								break;
+							}
+							col_spans_skip -=  cell_col_span;
+						}
+						cell = this.next_cell(cell);
+					};
+					//console.log(' -- To be updated --');
+					while (col_spans > 0 && cell != null) {
+						if (!(cell.nodeName != "TD" && cell.nodeName != "TH")) {
+							col_spans -=  cell.colSpan;
+							this.update_cell(cell, true);
+						}
+						cell = this.next_cell(cell);
+					};
+					
+					col_spans_skip = pre_col_spans;
+					col_spans = this_col_spans;
+				}
+				break;
 			case "all":
 				var rows = this.table.getElementsByTagName("tr");
 				for (var i=0; i<rows.length; i++) {
@@ -377,6 +422,13 @@ PC.dialog.tablecell = {
 	},
 	next_cell: function(elm) {
 		while ((elm = elm.nextSibling) != null) {
+			if (elm.nodeName == "TD" || elm.nodeName == "TH")
+				return elm;
+		}
+		return null;
+	},
+	prev_cell: function(elm) {
+		while ((elm = elm.previousSibling) != null) {
 			if (elm.nodeName == "TD" || elm.nodeName == "TH")
 				return elm;
 		}

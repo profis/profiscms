@@ -397,7 +397,7 @@ PC.dialog.media = {
 			items: [this.general, this.advanced],
 			border: false
 		};
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
 			layout: 'vbox',
 			layoutConfig: {

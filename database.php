@@ -35,8 +35,8 @@ try {
 			$db = new PC_database("mysql:host=".$cfg['db']['host'].";dbname=".$cfg['db']['name'], $cfg['db']['user'], $cfg['db']['pass'], array(
 				PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true
 			));
-			//$db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
 			$db->query("SET NAMES '".$cfg['db']['charset']."'");
+			$db->query("SET group_concat_max_len=10000");
 	}
 	//set database defaults
 	$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);

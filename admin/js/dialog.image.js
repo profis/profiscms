@@ -160,6 +160,9 @@ PC.dialog.image = {
 				{	fieldLabel: this.ln.style,
 					ref: '../../_style'
 				},
+				{	fieldLabel: this.ln.rel,
+					ref: '../../_rel'
+				},
 				{	ref: '../../_border',
 					fieldLabel: this.ln.border,
 					xtype: 'compositefield',
@@ -357,7 +360,7 @@ PC.dialog.image = {
 			items: [this.general, this.advanced],
 			border: false
 		};
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.image_properties,
 			layout: 'vbox',
 			layoutConfig: {
@@ -382,6 +385,12 @@ PC.dialog.image = {
 							var big_url = PC.dialog.gallery.get_large_url(url);
 							parent.setAttribute('href', big_url);
 							parent.setAttribute('_mce_href', big_url);
+							
+							var lightbox_group = dialog.window._rel.getValue();
+							if (lightbox_group && lightbox_group != '') {
+								parent.setAttribute('rel', lightbox_group);
+								parent.setAttribute('_mce_rel', lightbox_group);
+							}
 						}
 						//image src
 						dialog.image.setAttribute('src', url);
@@ -401,6 +410,13 @@ PC.dialog.image = {
 									//apgaubti su nauju linku i ligthboxa
 									var link = document.createElement('a');
 									link.setAttribute('href', PC.dialog.gallery.get_large_url(url));
+									
+									var lightbox_group = dialog.window._rel.getValue();
+									if (lightbox_group && lightbox_group != '') {
+										link.setAttribute('rel', lightbox_group);
+										link.setAttribute('_mce_rel', lightbox_group);
+									}
+									
 									parent.insertBefore(link, dialog.image);
 									link.appendChild(dialog.image);
 									//parent.removeChild(dialog.image);
@@ -461,6 +477,16 @@ PC.dialog.image = {
 					this.window._nopopup.disable();
 				}
 			}
+			else {
+				if (dialog.image.parentNode.nodeName == 'A') { 
+					var rel = dialog.image.parentNode.getAttribute('rel');
+					if (rel && rel != '') {
+						dialog.window._rel.setValue(rel);
+					}
+				}
+				
+			}
+			
 			dialog.window._title.setValue(dialog.getAttrib(dialog.image, 'title'));
 			dialog.window._alt.setValue(dialog.getAttrib(dialog.image, 'alt'));
 			dialog.window._dimensions.innerCt._width.setValue(dialog.image.width);

@@ -59,7 +59,7 @@ PC.dialog.tablerow = {
 					fieldLabel: this.ln._class,
 					xtype: 'combo', 
 					mode: 'local',
-					store: PC.utils.Get_classes_array('table'),
+					store: PC.utils.Get_classes_array('table').concat(PC.utils.Get_classes_array('tr')),
 					triggerAction: 'all'
 				},
 				{	ref: '../../_height',
@@ -154,7 +154,7 @@ PC.dialog.tablerow = {
 			items: [this.general, this.advanced],
 			border: false
 		};
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
 			layout: 'vbox',
 			layoutConfig: {

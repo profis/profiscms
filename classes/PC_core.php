@@ -92,7 +92,7 @@ final class PC_core extends PC_base {
 			$this->site->render = false;
 			#echo 'Error: <b>page not found</b>';
 			#header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
-			$this->Redirect($this->cfg['url']['base']);
+			$this->Redirect($this->cfg['url']['base'], 301);
 		}
 	}
 	/**
@@ -110,6 +110,26 @@ final class PC_core extends PC_base {
 		header("Location: ".$location);
 		exit;
 	}
+	
+	/**
+	 * Same as Redirect(), but base url is prepended if not preset
+	 * @param string $location
+	 */
+	public function Redirect_local($location, $type=null) {
+		if (strpos($location, $this->cfg['url']['base']) !== 0) {
+			$location = $this->cfg['url']['base'] . $location;
+		}
+		$this->Redirect($location, $type);
+	}
+	
+	
+	public function Absolute_url($url) {
+		if (strpos($url, $this->cfg['url']['base']) !== 0) {
+			$url = $this->cfg['url']['base'] . $url;
+		}
+		return $url;
+	}
+	
 	#instances - in development - not available yet
 	#example: $this->Get('PC_class_news', '%plugin_dir%/PC_class_news.php');
 	/*public function &Get($class, $path=null, $keyword=null, $reload=true) {
@@ -340,6 +360,7 @@ final class PC_core extends PC_base {
 		while ($d = $r->fetch()) {
 			#$d['summary'] = $this->Summarize_search_results($d['text'], $keyword);
 			$d['link'] = $this->site->Get_link($d['route'], $d['ln']);
+			//$this->page->current_page_id = $d['pid'];
 			if (isset($d['text'])) $this->page->Parse_html_output($d['text']);
 			if (isset($d['info'])) $this->page->Parse_html_output($d['info']);
 			if (isset($d['info2'])) $this->page->Parse_html_output($d['info2']);
@@ -491,7 +512,14 @@ final class PC_core extends PC_base {
 		if (!isset($this->_callbacks[(string)$event])) return false;
 		return call_user_func($this->_callbacks[(string)$event], $params);
 	}
-	//objects
+	
+	/**
+	 * objects
+	 * @param string $className
+	 * @param array $args
+	 * @param int $idIndex
+	 * @return type
+	 */
 	public function Get_object($className, $args=array(), $idIndex=0) {
 		if (!is_array($args)) $args = array($args);
 		$path = array('core', 'objects', $className);
@@ -509,7 +537,10 @@ final class PC_core extends PC_base {
 		$reflectionCls = new ReflectionClass($className);
 		return $this->cache->Cache($path, $reflectionCls->newInstanceArgs($args));
 	}
-	//params object
+	/**
+	 * Makes $params an object from array
+	 * @param array $params
+	 */
 	public function Init_params(&$params) {
 		if (!($params instanceof PC_params)) {
 			$params = new PC_params($params);

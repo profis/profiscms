@@ -43,7 +43,7 @@ if (isset($_POST['styles'])) {
 		$all = $style[3]; //style for all sites
 		$locked = v($style[4]); //locked style (substyles like tr, td)
 		//continue
-		if (in_array($tag , array('tr','td'))) {
+		if (in_array($tag , array('tr','td')) and $locked) {
 			$tag = 'table';
 		}
 		$key = (!empty($tag)?$tag:'').".$class";

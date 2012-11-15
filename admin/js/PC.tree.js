@@ -2,6 +2,7 @@ Ext.ns('PC.tree');
 PC.tree.Empty_trash = function(cb) {
 	Ext.Ajax.request({
 		url: 'ajax.page.php?action=empty_trash',
+		params: {'site_id':PC.global.site},
 		method: 'POST',
 		callback: function(opts, success, rspns) {
 			if (success && rspns.responseText) {
@@ -28,11 +29,26 @@ PC.tree.UpdateNodes = function() {
 	//add new page button
 	var childs = root.childNodes.length;
 	var create = tree.getNodeById('create');
+
+	var search_pages = false;
+	if (typeof this.loader == 'object') {
+		if (this.loader.baseParams.searchString != undefined) {
+			if (this.loader.baseParams.searchString.length > 0) {
+				search_pages = true;
+			}
+		}
+	}
+	
 	if (create) {
 		if (childs <= 2) {
-			create.ui.show();
+			if (!search_pages) {
+				create.ui.show();
+			}
+			
 		}
-		else create.ui.hide();
+		else {
+			create.ui.hide();
+		}
 	}
 };
 PC.tree.IsNodeDeleted = function(n) {
@@ -121,9 +137,11 @@ PC.tree.actions = {
 							var n = PC.tree.component.getNodeById(opts.params['new']);
 							n.expand();
 							var nn = PC.tree.Append(n, data);
-							nn.loaded = true;
-							nn.expand();
-							node_rename_menu(nn, true);
+							if (nn) {
+								nn.loaded = true;
+								nn.expand();
+								node_rename_menu(nn, true);
+							}
 							return; // OK
 						} catch(e) {};
 					}
@@ -287,6 +305,10 @@ PC.tree.component = new PC.ux.PageTree({
 		ddGroup: 'tree_pages',
 		expandDelay: 1000
 	},
+	additionalBaseParams: {
+		load_children: true
+	},
+	//dragConfig: {},
 	selModel: new Ext.tree.DefaultSelectionModel({
 		listeners: {
 			selectionchange: function(selModel, n){
@@ -318,7 +340,12 @@ PC.tree.component = new PC.ux.PageTree({
 									field.getEl().frame("999966", 1, { duration: 0.5});
 									if (tree.loader.baseParams.searchString == undefined) {
 										var selNode = tree.selModel.getSelectedNode();
-										if (selNode != undefined) tree.last_path = selNode.getPath();
+										if (selNode != undefined) {
+											if (!selNode.ownerTree) {
+												selNode.ownerTree = PC.tree.component;
+											}
+											tree.last_path = selNode.getPath();
+										}
 									}
 									tree.loader.baseParams.searchString = newSearchString;
 									tree.loader.load(tree.getRootNode());
@@ -402,6 +429,9 @@ PC.tree.component = new PC.ux.PageTree({
 			});
 		},
 		contextmenu: function(n, e) {
+			if (n.disabled) {
+				return false;
+			}
 			PC.tree.menus.current_node = n;
 			var attr = n.attributes;
 			//bin
@@ -449,75 +479,97 @@ PC.tree.component = new PC.ux.PageTree({
 				return true;
 			}
 		},
-		enddrag: function(tp, n, e) {
-			tp.getSelectionModel().select(tp.getNodeById(PC.global.pid));
-		},
-		nodedragover: function(drp) {
-			var newp = drp.point=='append' ? drp.target : drp.target.parentNode;
+		//startdrag: function(tree, node, ev) {},
+		nodedragover: function(ev) {
+			var plugin = PC.getPluginFromID(ev.dropNode.id);
+			var newParent = ev.point=='append' ? ev.target : ev.target.parentNode;
+			// DENY into disabled
+			if (newParent.disabled)
+				return false;
+			if (plugin) {
+				if (PC.hooks.Count('core/tree/nodedragover/'+ plugin)) {
+					ev.cancel = true;
+					var params = {
+						event: ev,
+						newParent: newParent
+					};
+					PC.hooks.Init('core/tree/nodedragover/'+ plugin, params);
+					return;
+				}
+			}
 			// DENY below recycle bin
-			if (drp.point=='below' && drp.target.id==-1)
+			if (ev.point=='below' && ev.target.id==-1)
 				return false;
 			// DENY into deleted
-			if (PC.tree.IsNodeDeleted(newp))
+			if (PC.tree.IsNodeDeleted(newParent))
 				return false;
 			// DENY deleted into recycle bin
-			if (PC.tree.IsNodeDeleted(drp.dropNode) && newp.id==-1)
+			if (PC.tree.IsNodeDeleted(ev.dropNode) && newParent.id==-1)
 				return false;
 			// DENY moving menu inside other leafs
-			if (drp.dropNode.attributes.controller == 'menu') {
-				if (drp.point == 'append')
+			if (ev.dropNode.attributes.controller == 'menu') {
+				if (ev.point == 'append')
 					return false;
-				if (drp.target.getDepth() > 1)
+				if (ev.target.getDepth() > 1)
 					return false;
 			}
 			if (!PC.tree.component.allowDD()) return false;
 		},
-		beforenodedrop: function(drp) {
-			if (drp.dropNode.attributes.controller == 'menu') {
+		beforenodedrop: function(ev) {
+			if (ev.dropNode.attributes.controller == 'menu') {
 				var r = confirm(PC.i18n.msg.move_menu_warning);
 				if (!r) return false;
 			}
-			/*var nodrop = false;
-			if (drp.dropNode.attributes.controller == 'menu') {
-				Ext.Msg.show({
-					title: 'Demesio',
-					msg: 'Ar tikrai norite perkelti meniu?',
-					buttons: Ext.MessageBox.YESNO,
-					icon: Ext.MessageBox.WARNING,
-					fn: function(r) {
-						if (r != 'yes') {
-							nodrop = true;
-						}
-					}
-				});
-			}*/
-			drp.dropNode._oldparent = drp.dropNode.parentNode;
-			drp.dropNode._oldnsib = drp.dropNode.nextSibling;
-			drp.dropNode.draggable = false;
-		},
-		nodedrop: function(drp) {
-			// dragged node: drp.dropNode or drp.data.node
-			// mode: drp.point (above / below / append)
-			// mode = above/below:
-			//     new parent node: drp.target.parentNode
-			//     new sibling: drp.target
-			// mode = append:
-			//     new parent node: drp.target
-			var newp = drp.point=='append' ? drp.target : drp.target.parentNode;
+			ev.dropNode._oldparent = ev.dropNode.parentNode;
+			ev.dropNode._oldnsib = ev.dropNode.nextSibling;
+			ev.dropNode.draggable = false;
 			
-			// move to recycle bin
-			if (newp.id == -1) {
-				if (newp.firstChild != drp.dropNode)
-					newp.insertBefore(drp.dropNode, newp.firstChild);
+			var plugin = PC.getPluginFromID(ev.dropNode.id);
+			if (plugin) {
+				var newParent = ev.point=='append' ? ev.target : ev.target.parentNode;
+				if (PC.hooks.Count('core/tree/beforenodedrop/'+ plugin)) {
+					var params = {
+						event: ev,
+						newParent: newParent
+					};
+					PC.hooks.Init('core/tree/beforenodedrop/'+ plugin, params);
+				}
+			}
+		},
+		nodedrop: function(ev) {
+			var newParent = ev.point=='append' ? ev.target : ev.target.parentNode;
+			
+			var plugin = PC.getPluginFromID(ev.dropNode.id);
+			/* PLUGIN NODE MOVE */
+			if (plugin) {
+				ev.cancel = true;
+				if (PC.hooks.Count('core/tree/nodedrop/'+ plugin)) {
+					var params = {
+						event: ev,
+						newParent: newParent,
+						moveBack: function() {
+							ev.dropNode._oldparent.insertBefore(ev.dropNode, ev.dropNode._oldnsib);
+						}
+					};
+					PC.hooks.Init('core/tree/nodedrop/'+ plugin, params);
+				}
+				ev.dropNode.draggable = true;
+				return;
+			}
+			/* MOVE TO RECYCLE BIN */
+			else if (newParent.id == -1) {
+				if (newParent.firstChild != ev.dropNode)
+					newParent.insertBefore(ev.dropNode, newParent.firstChild);
 				Ext.Ajax.request({
 					url: 'ajax.page.php?action=delete',
 					params: {
-						id: drp.dropNode.id,
-						old_idp: drp.dropNode.parentNode.id
+						site: PC.global.site,
+						id: ev.dropNode.id,
+						old_idp: ev.dropNode.parentNode.id
 					},
 					method: 'POST',
 					callback: function(opts, success, rspns) {
-						drp.dropNode.draggable = true;
+						ev.dropNode.draggable = true;
 						if (success && rspns.responseText) {
 							try {
 								var data = Ext.decode(rspns.responseText);
@@ -525,10 +577,10 @@ PC.tree.component = new PC.ux.PageTree({
 							} catch(e) {};
 						}
 						// move node back
-						drp.dropNode._oldparent.insertBefore(drp.dropNode, drp.dropNode._oldnsib);
+						ev.dropNode._oldparent.insertBefore(ev.dropNode, ev.dropNode._oldnsib);
 						Ext.MessageBox.show({
 							title: PC.i18n.error,
-							msg: String.format(PC.i18n.msg.error.page.del, '"'+drp.dropNode.text+'"'),
+							msg: String.format(PC.i18n.msg.error.page.del, '"'+ev.dropNode.text+'"'),
 							buttons: Ext.MessageBox.OK,
 							icon: Ext.MessageBox.ERROR
 						});
@@ -536,42 +588,42 @@ PC.tree.component = new PC.ux.PageTree({
 				});
 				return;
 			}
-			// normal move
-			//
-			/*console.log('node: '+ drp.dropNode.attributes._names[PC.global.ln]);
-			console.log('old parent: '+ drp.dropNode._oldparent.attributes._names[PC.global.ln]);
-			console.log('new parent: '+ newp.attributes._names[PC.global.ln]);
-			console.log(drp); return;*/
-			Ext.Ajax.request({
-				url: 'ajax.page.php?action=move',
-				params: {
-					id: drp.dropNode.id,
-					idp: newp.id,
-					old_idp: drp.dropNode._oldparent.id,
-					'new_order[]': Ext.pluck(Ext.partition(newp.childNodes, function(n){ return n.id>0; })[0], 'id')
-				},
-				method: 'POST',
-				callback: function(opts, success, rspns) {
-					drp.dropNode.draggable = true;
-					if (success && rspns.responseText) {
-						try {
-							var data = Ext.decode(rspns.responseText);
-							if (data.success) {
-								PC.hooks.Init('tree.drop', {dropEvent: drp});
-								return; // OK
-							}
-						} catch(e) {};
+			/* NORMAL MOVE */
+			else {
+				Ext.Ajax.request({
+					url: 'ajax.page.php?action=move',
+					params: {
+						id: ev.dropNode.id,
+						idp: newParent.id,
+						old_idp: ev.dropNode._oldparent.id,
+						'new_order[]': Ext.pluck(Ext.partition(newParent.childNodes, function(n){ return n.id>0; })[0], 'id')
+					},
+					method: 'POST',
+					callback: function(opts, success, rspns) {
+						ev.dropNode.draggable = true;
+						if (success && rspns.responseText) {
+							try {
+								var data = Ext.decode(rspns.responseText);
+								if (data.success) {
+									PC.hooks.Init('tree.drop', {dropEvent: ev});
+									return; // OK
+								}
+							} catch(e) {};
+						}
+						//move node back
+						ev.dropNode._oldparent.insertBefore(ev.dropNode, ev.dropNode._oldnsib);
+						Ext.MessageBox.show({
+							title: PC.i18n.error,
+							msg: String.format(PC.i18n.msg.error.page.move, '"'+ev.dropNode.text+'"'),
+							buttons: Ext.MessageBox.OK,
+							icon: Ext.MessageBox.ERROR
+						});
 					}
-					// move node back
-					drp.dropNode._oldparent.insertBefore(drp.dropNode, drp.dropNode._oldnsib);
-					Ext.MessageBox.show({
-						title: PC.i18n.error,
-						msg: String.format(PC.i18n.msg.error.page.move, '"'+drp.dropNode.text+'"'),
-						buttons: Ext.MessageBox.OK,
-						icon: Ext.MessageBox.ERROR
-					});
-				}
-			});
+				});
+			}
+		},
+		enddrag: function(tp, n, e) {
+			tp.getSelectionModel().select(tp.getNodeById(PC.global.pid));
 		},
 		containercontextmenu: function(tree,e) {
 			var defaults = {

@@ -18,8 +18,11 @@ $time = microtime(); $time = explode(" ", $time); $time = $time[1] + $time[0]; $
 
 require_once('base.php');
 
+header("Content-Type: text/html; charset=utf-8");
+
 //hooks
 $core->Init_hooks('site_init');
+
 
 if ($site->Identify(true) && $site->Render()) {
 	$core->Init_hooks('site_render');

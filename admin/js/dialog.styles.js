@@ -1314,7 +1314,7 @@ PC.dialog.styles = {
 				id: 'please_select_style_first',
 				html: dialog.ln.select_style_class
 			};
-			PC.dialog.styles.window = new Ext.Window({
+			PC.dialog.styles.window = new PC.ux.Window({
 				_site: PC.global.site,
 				//closeAction: 'hide',
 				modal: true,
@@ -1499,7 +1499,7 @@ PC.dialog.styles = {
 														if (clicked == 'yes') {
 															var grd = PC.dialog.styles.window._grid;
 															grd.getSelectionModel().each(function(rec) {
-																if (rec.data.tag == 'tr' || rec.data.tag == 'td') {
+																if ((rec.data.tag == 'tr' || rec.data.tag == 'td') && rec.data.locked) {
 																	var tag_class = rec.data._class.substr(0, rec.data._class.length-3);
 																	rec = grd.store.getAt(grd.store.findExact('_class', tag_class));
 																	grd.store.remove(rec);
@@ -1613,7 +1613,9 @@ PC.dialog.styles = {
 										grid._lastcol = ev.field;
 										//do not allow to edit locked records (substyles)
 										var tag = grid.store.getAt(ev.row).data.tag;
-										if (tag == 'td' || tag == 'tr') return false;
+										if (ev.record.data.locked) {
+											return false;
+										}
 									},
 									afteredit: function(ev) {
 										var grid = ev.grid;
@@ -1897,7 +1899,7 @@ PC.dialog.styles = {
 									+'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas eget dignissim ligula. Quisque elementum pretium quam a aliquam.';
 								}
 								else if (tag == 'table' || tag == 'tr' || tag == 'td') {
-									if (tag == 'tr' || tag == 'td') {
+									if ((tag == 'tr' || tag == 'td') && w._rec.data.locked) {
 										tag_class = tag_class.substr(0, tag_class.length-3);
 										styles = store.getAt(store.findExact('_class', tag_class));
 										if (styles) {
@@ -1905,28 +1907,30 @@ PC.dialog.styles = {
 										}
 										else styles = '';
 									}
-									var table_td = [];
-									var table_tr = [];
+									var table_td = false;
+									var table_tr = false;
 									Ext.each(store.data.items, function(r, i) {
 										if (r.data._class == tag_class + ' tr') table_tr = r;
 										else if (r.data._class == tag_class + ' td') table_td = r;
 									});
-									var tr_styles = PC.utils.htmlspecialchars(table_tr.get('style'));
-									var td_styles = PC.utils.htmlspecialchars(table_td.get('style'));
-									var update_str = ' <table style="'+styles+'">'
-									+'<tr style="'+tr_styles+'">'
-										+'<td style="'+td_styles+'">Lorem ipsum</td>'
-										+'<td style="'+td_styles+'">consectetur adipiscing elit.</td>'
-										+'<td style="'+td_styles+'">dolor sit amet</td>'
-										+'<td style="'+td_styles+'">Proin aliquet molestie tellus</td>'
-									+'</tr>'
-									+'<tr style="'+tr_styles+'">'
-										+'<td style="'+td_styles+'">dolor sit amet</td>'
-										+'<td style="'+td_styles+'">Lorem ipsum</td>'
-										+'<td style="'+td_styles+'">Proin aliquet molestie tellus</td>'
-										+'<td style="'+td_styles+'">consectetur adipiscing elit.</td>'
-									+'</tr>'
-									+'</table>';
+									if (table_td && table_tr) {
+										var tr_styles = PC.utils.htmlspecialchars(table_tr.get('style'));
+										var td_styles = PC.utils.htmlspecialchars(table_td.get('style'));
+										var update_str = ' <table style="'+styles+'">'
+										+'<tr style="'+tr_styles+'">'
+											+'<td style="'+td_styles+'">Lorem ipsum</td>'
+											+'<td style="'+td_styles+'">consectetur adipiscing elit.</td>'
+											+'<td style="'+td_styles+'">dolor sit amet</td>'
+											+'<td style="'+td_styles+'">Proin aliquet molestie tellus</td>'
+										+'</tr>'
+										+'<tr style="'+tr_styles+'">'
+											+'<td style="'+td_styles+'">dolor sit amet</td>'
+											+'<td style="'+td_styles+'">Lorem ipsum</td>'
+											+'<td style="'+td_styles+'">Proin aliquet molestie tellus</td>'
+											+'<td style="'+td_styles+'">consectetur adipiscing elit.</td>'
+										+'</tr>'
+										+'</table>';
+									}
 								}
 								else if (tag == 'p') {
 									var update_str = '<p style="'+styles+'">' +

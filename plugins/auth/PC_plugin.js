@@ -50,6 +50,59 @@ PC.auth.perms.editors.Register(module_name, 'groups', {
 		}
 	}
 });
+
+
+
+
+
+PC.hooks.Register('core/auth/get_perm_window/' + 'core', function(params) {
+	params.show_window_after_data_load = true;
+});
+
+
+PC.auth.perms.editors.Register('core', 'page_nodes', {
+	data: {
+		Load: function(window, data) {
+			PC.plugin.auth.core_page_access_permission_data = data;
+			var checked_nodes = [];
+			if (data && data.sites && data.sites[PC.global.site]) {
+				Ext.iterate(data.sites[PC.global.site], function(cat){
+					checked_nodes.push(cat);
+				});
+			}
+			//window._tree.checked_nodes_id_string = 'pc_shop/category/';
+			window._tree.checked_nodes = checked_nodes;
+		},
+		Get: function(window) {
+			if (!PC.plugin.auth.core_page_access_permission_data.sites) {
+				PC.plugin.auth.core_page_access_permission_data.sites = {};
+			}
+			if (!PC.plugin.auth.core_page_access_permission_data.sites[PC.global.site]) {
+				PC.plugin.auth.core_page_access_permission_data.sites[PC.global.site] = []
+			}
+			PC.plugin.auth.core_page_access_permission_data.sites[PC.global.site] = window._tree.checked_nodes;
+			return PC.plugin.auth.core_page_access_permission_data;
+		}
+	},
+	window: {
+		Get: function(perm_data) {
+			var window_params = {
+				additionalBaseParams: {
+					//plugin_only: 'pc_shop',
+					pc_shop: {
+						categories_only: true
+					}
+				}
+			};
+			window_params.return_only_window_config = true;
+			var window_config = Show_redirect_page_window(window_params);
+			return window_config;
+		}
+	}
+
+});
+
+
 /** Core permissions
  * Plugin access editor
  */

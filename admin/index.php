@@ -35,7 +35,18 @@ require_once 'admin.php';
 	<div id="loading-mask"></div>
 	<!-- Scripts -->
 	<script type="text/javascript" src="ext/adapter/ext/ext-base.js"></script>
-	<script type="text/javascript" src="ext/ext-all.js"></script>
+	<?php
+	//local ip testing instead of false:
+	if ($_SERVER['REMOTE_ADDR'] == '192.168.1.228') {
+	?>
+		<script type="text/javascript" src="ext/ext-all-debug.js"></script>
+	<?php
+	} else {
+	?>
+		<script type="text/javascript" src="ext/ext-all.js"></script>
+	<?php
+	}
+	?>
 	<script type="text/javascript" src="locale/<?php echo $admin_ln; ?>/"></script>
 	<?php
 	$settings = array();
@@ -43,14 +54,19 @@ require_once 'admin.php';
 	$settings['ADMIN_DIR'] = $cfg['directories']['admin'];
 	$settings['db_flds'] = $cfg['valid_page_fields'];
 	$settings['permissions']['admin'] = $auth->Authorize('core', 'admin');
+	$settings['permissions']['pages'] = $auth->Authorize('core', 'pages');
 	//if ($settings['permissions']['admin']) {
 		$settings['SITES'] = array();
 		$sites = $site->Get_all();
 		foreach ($sites as $k=>$v) {
 			$tmp = array();
 			if (isset($v['langs']))
-				foreach ($v['langs'] as $k1=>$v1)
-					$tmp[] = array($k1, $v1);
+				foreach ($v['langs'] as $k1=>$v1) {
+					array_unshift($v1, $k1);
+					$tmp[] = $v1;
+					//$tmp[] = array($k1, $v1);
+				}
+					
 			$settings['SITES'][] = array($k, $v['name'], $v['theme'], $tmp, null, $v['editor_width'], $v['editor_background'], $v['mask'], $v['active']);
 		}
 		$settings['site'] = $settings['SITES'][0][0];
@@ -79,6 +95,8 @@ require_once 'admin.php';
 		$settings['controllers'] = $plugins->Get_controllers_for_output();
 		$settings['editor'] = $core->Get_editor();
 	//}
+	$settings['session.gc_maxlifetime'] = ini_get('session.gc_maxlifetime');
+	$settings['session.name'] = session_name();
 	?>
 	<script type="text/javascript">
 	Ext.ns('PC');

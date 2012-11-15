@@ -54,6 +54,10 @@ function core_get() {
 	if (isset($args[1])) return $args[1];
 }
 
+function _debug($key) {
+	global $cfg;
+	return false;
+}
 
 /**
 * Function used to add class file and path to runtime variable $class_autoload.
@@ -100,14 +104,85 @@ function js_escape($str) {
 * @param bool $deleted given indication if also include marked as "deleted" pages.
 * @param mixed $search given search pattern.
 * @param mixed $date given date to include tree nodes from.
+* @param mixed $controller = false - only specified controller pages are being selected.
 * @return mixed FALSE if imposible to get tree structure, or tree structure otherwise.
 */
-function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=false) {
-	global $core, $cfg, $db, $plugins, $sql_parser;
+function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=false, $additional = array(), $page_tree_params = array(), Page_manager $page_manager = null) {
+	global $core, $cfg, $db, $plugins, $sql_parser, $auth;
+	
+	$logger = new PC_debug();
+	$logger->file = $cfg['path']['base'] . 'logs/tree/get_tree_childs.html';
+	$logger->debug = true;
+	
+	$logger->debug("Get_tree_childs($id, $site_id, $deleted, $search, $date)", 1);
+	$logger->debug($additional, 1);
+	$logger->debug($page_tree_params, 1);
+	
+	
+	$where = array();
+	$additional_where = '';
+	if (v($additional['plugin_only'])) {
+		$where['controller'] = $additional['plugin_only'];
+		$additional_where .= ' AND p.controller = ? ';
+	}
+	
+	$accessible_pages_concat_query_for_search_hook = false;
+	$accessible_pages_concat_query_params_for_search_hook = false;
+	
 	if (!empty($search)) {
-		$r = $db->prepare("SELECT ".$sql_parser->group_concat("pid", array('separator'=>',','distinct'=>true))." ids"
-		." FROM {$cfg['db']['prefix']}content c JOIN {$cfg['db']['prefix']}pages p ON p.id=pid WHERE p.site=? and c.name ".$sql_parser->like("?"));
-		$success = $r->execute(array($site_id, '%'.$search.'%'));
+		$access_conds = array();
+		$page_cond_id = '';
+		$page_cond_idp = '';
+		if (v($page_tree_params['accessible_page_sets'])) {
+			v($page_tree_params['accessible_page_sets']['id']);
+			v($page_tree_params['accessible_page_sets']['idp']);
+			if (is_array($page_tree_params['accessible_page_sets']['id'])) {
+				$id_set = "-1";
+				if (!empty($page_tree_params['accessible_page_sets']['id'])) {
+					$id_set = implode(',', $page_tree_params['accessible_page_sets']['id']);
+				}
+				$access_conds[] = 'p.id IN (' . $id_set . ')';
+			}
+			if (is_array($page_tree_params['accessible_page_sets']['idp'])) {
+				$idp_set = "-1";
+				if (!empty($page_tree_params['accessible_page_sets']['idp'])) {
+					$idp_set = implode(',', $page_tree_params['accessible_page_sets']['idp']);
+				}
+				$access_conds[] = 'p.idp IN (' . $idp_set . ')';
+			}
+		}
+		
+		$logger->debug($page_tree_params, 1);
+		
+		$access_cond = '';
+		if (!empty($access_conds)) {
+			$access_cond = implode (' OR ', $access_conds);
+			if (count($access_conds) > 1) {
+				$access_cond = '(' . $access_cond . ')';
+			}
+			$access_cond .= ' AND';
+		}
+		
+		$page_ids_select = "SELECT ".$sql_parser->group_concat("p.id", array('separator'=>',','distinct'=>true))." ids";
+		$page_ids_from = " FROM {$cfg['db']['prefix']}content c";
+		$page_ids_join = " JOIN {$cfg['db']['prefix']}pages p ON p.id=pid";
+		$page_ids_where = " WHERE $access_cond p.site=?";
+		$page_ids_query_params = array($site_id);
+		
+		$page_ids_query = $page_ids_select . $page_ids_from . $page_ids_join . $page_ids_where;
+		
+		//if (!empty($access_cond)) {
+			$accessible_pages_concat_query_for_search_hook = $page_ids_select . " FROM {$cfg['db']['prefix']}pages p" . $page_ids_where;
+			$accessible_pages_concat_query_params_for_search_hook = $page_ids_query_params;
+		//}
+							
+		$page_ids_query .= " and c.name ".$sql_parser->like("?");
+		$page_ids_query_params[] =  '%'.$search.'%';
+		
+		$r = $db->prepare($page_ids_query);
+		$logger->debug('Search page ids query:', 2);
+		$logger->debug_query($page_ids_query, $page_ids_query_params, 2);
+		$success = $r->execute($page_ids_query_params);
 		if ($success) {
 			$ids = $r->fetchColumn();
 			if (!empty($ids)) {
@@ -120,7 +195,10 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 				." GROUP BY p.id,p.site,p.idp,p.nr,p.controller,p.front,p.route_lock,p.published,p.hot,p.nomenu,p.deleted,p.date_from,p.date_to,p.redirect,p.date,p.reference_id"
 				." ORDER BY p.front desc,p.nr";
 				$r = $db->prepare($q);
-				$success = $r->execute(array($site_id));
+				$query_params = array($site_id);
+				$logger->debug('Search page query:', 2);
+				$logger->debug_query($q, $query_params, 2);
+				$success = $r->execute($query_params);
 			}
 		}
 	}
@@ -146,11 +224,14 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 			.$sql_parser->group_concat($sql_parser->concat_ws("░",'c.ln','c.route'), array('separator'=>'▓','distinct'=>true))." routes"
 			." FROM {$cfg['db']['prefix']}pages p"
 			." LEFT JOIN {$cfg['db']['prefix']}content c ON c.pid=p.id"
-			." WHERE p.idp=0 and p.deleted=".($deleted?1:0)." and p.site=?"
+			." WHERE p.idp=0 and p.deleted=".($deleted?1:0)." and p.site=? " . $additional_where
 			." GROUP BY p.id,p.site,p.idp,p.nr,p.controller,p.front,p.route_lock,p.published,p.hot,p.nomenu,p.deleted,p.date_from,p.date_to,p.redirect,p.date,p.reference_id"
 			." ORDER BY p.front desc,p.nr";
 			$r = $db->prepare($q);
-			$success = $r->execute(array($site_id));
+			$query_params = array_merge(array($site_id), array_values($where));
+			$logger->debug('Page tree query:', 2);
+			$logger->debug_query($q, $query_params, 2);
+			$success = $r->execute($query_params);
 		}
 		else {
 			$q = "SELECT p.*, max(route) route,"
@@ -159,7 +240,7 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 			." FROM {$cfg['db']['prefix']}pages pp"
 			." JOIN {$cfg['db']['prefix']}pages p ON p.idp=pp.id"
 			." LEFT JOIN {$cfg['db']['prefix']}content c ON c.pid=p.id"
-			." WHERE pp.id=:id and pp.deleted=".($deleted?1:0)." and p.deleted=".($deleted?1:0).($date!==false?' and p.date'.(!is_null($date)?'>=:date_from and p.date<:date_to':' is null'):'')
+			." WHERE pp.id=:id and pp.deleted=".($deleted?1:0)." and p.deleted=".($deleted?1:0).($date!==false?' and p.date'.(!is_null($date)?'>=:date_from and p.date<:date_to':' is null'):'') . $additional_where
 			." GROUP BY p.id,p.site,p.idp,p.nr,p.controller,p.front,p.route_lock,p.published,p.hot,p.nomenu,p.deleted,p.date_from,p.date_to,p.redirect,p.date,p.reference_id"
 			." ORDER BY p.front desc,p.nr";
 			$r = $db->prepare($q);
@@ -168,7 +249,10 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 				$params['date_from'] = strtotime(date('Y-m-d', strtotime($date)));
 				$params['date_to'] = $params['date_from']+86400;
 			}
-			$success = $r->execute($params);
+			$query_params = array_merge($params, array_values($where));
+			$logger->debug('Page tree query:', 2);
+			$logger->debug_query($q, $query_params, 2);
+			$success = $r->execute($query_params);
 		}
 	}
 	$nodes = array();
@@ -177,7 +261,13 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 	
 	if ($success) {
 		$list = $r->fetchAll();
+		if (false and $_SERVER['REMOTE_ADDR'] == '192.168.1.228') {
+			print_r($list);
+		}
 		foreach ($list as &$data) {
+			if (v($page_tree_params['check_page_children_access']) == true and !$auth->Authorize_access_to_site_page($site_id, $data['id'])) {
+				continue;
+			}
 			//get childs bool
 			$data['childs'] = 0;
 			$s = $r_childs->execute(array($data['id']));
@@ -215,7 +305,9 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 			$node['date'] = date('Y-m-d', $data['date']);
 			$node['reference_id'] = $data['reference_id'];
 			//empty node?
-			if (!$data['childs'] && empty($data['controller'])) $node['_empty'] = 1;
+			if (!$data['childs'] && (empty($data['controller']) || $core->Count_hooks('core/tree/get-childs/'.$data['controller']) < 1)) {
+				$node['_empty'] = 1;
+			}
 			//home page?
 			if ($data['front']) {
 				$node['_front'] = 1;
@@ -233,7 +325,22 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 				if (empty($search)) {
 					$node['expanded'] = true;
 					//expand menu node automatically
-					$node['children'] = Get_tree_childs($node['id'], $site_id);
+					//$node['children'] = Get_tree_childs($node['id'], $site_id, $deleted, $search, $date, $additional, $page_tree_params);
+
+					
+					if (!is_null($page_manager)) {
+						$page_manager->debug_level_offset += 4;
+						$node['children'] = $page_manager->get_accessible_children(
+							$site_id, 
+							$node['id'], 
+							array('search' => $search,
+								'plugin' => '',
+								'additional' => $additional,
+								'deleted' => $deleted
+							)
+						);
+					}
+					
 				}
 				$node['iconCls'] = 'cms-tree-node-menu';
 			}
@@ -250,7 +357,16 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 			}
 			elseif (!empty($data['controller'])) {
 				if ($data['controller'] != 'menu') {
-					$node['icon'] = 'images/controller.png';
+					$plugin_controller_tree_icon_path_from_plugins = $data['controller'] . '/images/PC_controller_tree_icon_default.png';
+					$plugin_controller_tree_icon = $cfg['path']['plugins'] . $plugin_controller_tree_icon_path_from_plugins;
+					
+					if (file_exists($plugin_controller_tree_icon)) {
+						$node['icon'] = $cfg['url']['base'] . $cfg['directories']['plugins'] . '/' . $plugin_controller_tree_icon_path_from_plugins;
+					}
+					else {
+						$node['icon'] = 'images/controller.png';
+					}
+					
 				}
 			}
 			//how much redirects from?
@@ -268,14 +384,93 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 		unset($data);
 	}
 	if (!empty($search)) {
+		$hook_object = false;
 		$core->Init_hooks('core/tree/search', array(
 			'search'=> $search,
-			'nodes'=> &$nodes
+			'nodes'=> &$nodes,
+			'accessible_page_sets' => v($page_tree_params['accessible_page_sets'], false),
+			'accessible_pages_concat_query' => $accessible_pages_concat_query_for_search_hook,
+			'accessible_pages_concat_query_params' => $accessible_pages_concat_query_params_for_search_hook,
+			'logger' => & $logger,
+			'hook_object' => &$hook_object
 		));
+		if ($hook_object) {
+			$logger->debug('Debug from hook object:', 1);
+			$logger->debug($hook_object->get_debug_string(), 2);
+		}
 	}
+	
+	$logger->file_put_debug();
 	
 	return $nodes;
 }
+
+/**
+ * 
+ * Function returns false if plugin was not detected or plugin has no appropriate hook.
+ * Otherwise function return children array, even empty array() if no children were found. 
+ * @global type $core
+ * @global type $cfg
+ * @global type $node_children
+ * @param type $plugin
+ * @param type $page_id
+ * @param type $additional
+ * @param type $level
+ * @return boolean
+ */
+function Get_plugin_page_children($plugin, $page_id, $additional, $level = 0) {
+	//pc_shop gov39_phone_directory pc_timeline core/inactive test pc_subscription
+	if ($plugin != 'test') {
+		//return false;
+	}
+	global $core, $cfg, $node_children;
+	//echo "\n Get_plugin_page_children($plugin, $page_id)" . $cfg['patterns']['plugin_name'];
+	
+	
+	if (preg_match("#^(".$cfg['patterns']['plugin_name'].")/(.+)$#i", $page_id, $m)) {
+		//given id is with plugin prefix, what means that we need to generate tree items using that plugin tree renderer
+		if (empty($plugin)) {
+			$plugin = $m[1];
+		}
+		$page_id = $m[2];
+		//echo "\n    After redefining plugin: $plugin, page_id: $page_id)";
+	}
+
+	$plugin_page_key = $plugin . '_' . $page_id;
+	if (isset($node_children[$plugin_page_key])) {
+		return $node_children[$plugin_page_key];
+	}
+
+	if (!empty($plugin)) {
+		if ($core->Count_hooks('core/tree/get-childs/'.$plugin) >= 1) {
+			//init renderer hooks to generate output results
+			
+			$core->Init_hooks('core/tree/get-childs/'.$plugin, array(
+				'id'=> $page_id,
+				'additional'=> &$additional,
+				'data'=> &$children
+			));
+			if (!empty($children)) {
+				$node_children[$plugin_page_key] = $children;
+				if (v($additional['load_children'])) {
+					foreach ($children as $key => $child) {
+						if (!isset($child['children']) and isset($child['id'])) {
+							$sub_children = Get_plugin_page_children($plugin, $child['id'], $additional, $level + 1);
+							if ($sub_children) {
+								$children[$key]['children'] = $sub_children;
+							}
+						}
+					}
+				}
+				return $children;
+			}
+			return array();
+		}
+	}
+	return false;
+}
+
+
 /**
 * Function checks if given array contains values wiht explicitly defined keys; AKA array associative.
 * @param mixed $arr given array to perform check for explicitly defined keys.
@@ -589,6 +784,7 @@ function Validate($type, $input, $extra=false, $options=array()) {
 
 function PC_translit($input) {
 	//translit cyrillic chars
+	$input = remove_utf8_accents($input);
 	$cyrillic = array('а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я','А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я');
 	$latin = array('a','b','v','g','d','e','yo','zh','z','i','j','k','l','m','n','o','p','r','s','t','u','f','h','c','ch','sh','shсh','','y','','eh','yu','ya','A','B','V','G','D','E','Yo','Zh','Z','I','J','K','L','M','N','O','P','R','S','T','U','F','H','C','Ch','Sh','Shсh','','Y','','Eh','Yu','Ya');
 	$input = str_replace($cyrillic, $latin, $input);
@@ -617,11 +813,16 @@ function Sanitize($type, $input, $extra=null) {
 			break;
 		case 'filename': $extra = true;
 		case 'route':
+		case 'permalink':
 			//extra - allow filenames or not
 			//transliteration
 			$input = strtolower(PC_translit($input));
 			//normalize structure
-			$patterns[] = '/[^a-z0-9'.($extra?'\\.\\s':'').']/'; $replacements[] = '-';
+			$allow = '';
+			if ($type == 'permalink') {
+				$allow .= '\/_';
+			}
+			$patterns[] = '/[^a-z0-9'.($extra?'\\.\\s':'').$allow.']/'; $replacements[] = '-';
 			$patterns[] = '/--+/'; $replacements[] = '-';
 			$patterns[] = '/^-*(.*?)-*$/'; $replacements[] = '$1';
 			$input = preg_replace($patterns, $replacements, $input);
@@ -640,9 +841,33 @@ function Sanitize($type, $input, $extra=null) {
 }
 
 /**
+ * ProfisCMS: function from Wordpress
+ * Sanitizes a filename replacing whitespace with dashes
+ *
+ * Removes special characters that are illegal in filenames on certain
+ * operating systems and special characters requiring special escaping
+ * to manipulate at the command line. Replaces spaces and consecutive
+ * dashes with a single dash. Trim period, dash and underscore from beginning
+ * and end of filename.
+ *
+ * @since 2.1.0
+ *
+ * @param string $filename The filename to be sanitized
+ * @return string The sanitized filename
+ */
+function sanitize_file_name( $filename ) {
+    $filename_raw = $filename;
+    $special_chars = array("?", "[", "]", "/", "\\", "=", "<", ">", ":", ";", ",", "'", "\"", "&", "$", "#", "*", "(", ")", "|", "~", "`", "!", "{", "}");
+    $filename = str_replace($special_chars, '', $filename);
+    $filename = preg_replace('/[\s-]+/', '-', $filename);
+    $filename = trim($filename, '.-_');
+    return $filename;
+}
+
+/**
 * Function used to format given object to HTML string.
 * @param mixed $var given variable to be applied with HTML markup for more human-readable look.
-* @param bool $echo given indication if formed HTML string should be printed out.
+* @param bool $echo = true given indication if formed HTML string should be printed out.
 * @return string formated HTML string representing given object.
 */
 function print_pre($var, $echo=true) {
@@ -858,4 +1083,102 @@ function Multilang_explode($str) {
 		$arr[substr($dstr, 0, 2)] = substr($dstr, 2);
 	return $arr;
 }
+
+function remove_utf8_accents($string) {
+	$accents = array(
+		'à' => 'a', 'ô' => 'o', 'ď' => 'd', 'ë' => 'e', 'š' => 's', 'ơ' => 'o',
+		'ß' => 'ss', 'ă' => 'a', 'ř' => 'r', 'ț' => 't', 'ň' => 'n', 'ā' => 'a', 'ķ' => 'k',
+		'ŝ' => 's', 'ỳ' => 'y', 'ņ' => 'n', 'ĺ' => 'l', 'ħ' => 'h', 'ó' => 'o',
+		'ú' => 'u', 'ě' => 'e', 'é' => 'e', 'ç' => 'c', 'ẁ' => 'w', 'ċ' => 'c', 'õ' => 'o',
+		'ø' => 'o', 'ģ' => 'g', 'ŧ' => 't', 'ș' => 's', 'ė' => 'e', 'ĉ' => 'c',
+		'ś' => 's', 'î' => 'i', 'ű' => 'u', 'ć' => 'c', 'ę' => 'e', 'ŵ' => 'w',
+		'ū' => 'u', 'č' => 'c', 'ö' => 'oe', 'è' => 'e', 'ŷ' => 'y', 'ą' => 'a', 'ł' => 'l',
+		'ų' => 'u', 'ů' => 'u', 'ş' => 's', 'ğ' => 'g', 'ļ' => 'l', 'ƒ' => 'f', 'ž' => 'z',
+		'ẃ' => 'w', 'å' => 'a', 'ì' => 'i', 'ï' => 'i', 'ť' => 't',
+		'ŗ' => 'r', 'ä' => 'ae', 'í' => 'i', 'ŕ' => 'r', 'ê' => 'e', 'ü' => 'ue', 'ò' => 'o',
+		'ē' => 'e', 'ñ' => 'n', 'ń' => 'n', 'ĥ' => 'h', 'ĝ' => 'g', 'đ' => 'd', 'ĵ' => 'j',
+		'ÿ' => 'y', 'ũ' => 'u', 'ŭ' => 'u', 'ư' => 'u', 'ţ' => 't', 'ý' => 'y', 'ő' => 'o',
+		'â' => 'a', 'ľ' => 'l', 'ẅ' => 'w', 'ż' => 'z', 'ī' => 'i', 'ã' => 'a', 'ġ' => 'g',
+		'ō' => 'o', 'ĩ' => 'i', 'ù' => 'u', 'į' => 'i', 'ź' => 'z', 'á' => 'a',
+		'û' => 'u', 'þ' => 'th', 'ð' => 'dh', 'æ' => 'ae', 'µ' => 'u', 'ĕ' => 'e',
+
+		'À' => 'a', 'Ô' => 'o', 'Ď' => 'd', 'Ë' => 'e', 'Š' => 's', 'Ơ' => 'o',
+		'ß' => 'ss','Ă' => 'a', 'Ř' => 'r', 'Ț' => 't', 'Ň' => 'n', 'Ā' => 'a', 'Ķ' => 'k',
+		'Ŝ' => 's', 'Ỳ' => 'y', 'Ņ' => 'n', 'Ĺ' => 'l', 'Ħ' => 'h', 'Ó' => 'o',
+		'Ú' => 'u', 'Ě' => 'e', 'É' => 'e', 'Ç' => 'c', 'Ẁ' => 'w', 'Ċ' => 'c', 'Õ' => 'o',
+		'Ø' => 'o', 'Ģ' => 'g', 'Ŧ' => 't', 'Ș' => 's', 'Ė' => 'e', 'Ĉ' => 'c',
+		'Ś' => 's', 'Î' => 'i', 'Ű' => 'u', 'Ć' => 'c', 'Ę' => 'e', 'Ŵ' => 'w',
+		'Ū' => 'u', 'Č' => 'c', 'Ö' => 'oe', 'Ŷ' => 'y', 'Ą' => 'a', 'Ł' => 'l',
+		'Ų' => 'u', 'Ů' => 'u', 'Ş' => 's', 'Ğ' => 'g', 'Ļ' => 'l', 'Ƒ' => 'f', 'Ž' => 'z',
+		'Ẃ' => 'w', 'Å' => 'a', 'Ì' => 'i', 'Ï' => 'i', 'Ť' => 't',
+		'Ŗ' => 'r', 'Ä' => 'ae','Í' => 'i', 'Ŕ' => 'r', 'Ê' => 'e', 'Ü' => 'ue', 'Ò' => 'o',
+		'Ē' => 'e', 'Ñ' => 'n', 'Ń' => 'n', 'Ĥ' => 'h', 'Ĝ' => 'g', 'Đ' => 'd', 'Ĵ' => 'j',
+		'Ÿ' => 'y', 'Ũ' => 'u', 'Ŭ' => 'u', 'Ư' => 'u', 'Ţ' => 't', 'Ý' => 'y', 'Ő' => 'o',
+		'Â' => 'a', 'Ľ' => 'l', 'Ẅ' => 'w', 'Ż' => 'z', 'Ī' => 'i', 'Ã' => 'a', 'Ġ' => 'g',
+		'Ō' => 'o', 'Ĩ' => 'i', 'Ù' => 'u', 'Į' => 'i', 'Ź' => 'z', 'Á' => 'a',
+		'Û' => 'u', 'Þ' => 'th','Ð' => 'dh', 'Æ' => 'ae',			 'Ĕ' => 'e'
+	);
+	return str_replace(array_keys($accents), array_values($accents), $string);
+}
+
+function pc_sanitize_value($filters=array(),$sanitized_value) {
+	if(!is_array($filters))	{
+		$filters = explode(',',$filters);
+	}	   
+	if (is_array($sanitized_value)) {
+		foreach ($sanitized_value as $key => $value) {
+			$sanitized_value[$key] = pc_sanitize_value($filters,$value);
+		}
+		return $sanitized_value;
+	}	    
+	if (!is_array($sanitized_value)){
+		foreach ($filters as $filter) {
+			switch ($filter) {
+				case 'htmlspecialchars':
+					if (!is_numeric($sanitized_value)) {
+						$sanitized_value = htmlspecialchars($sanitized_value, ENT_QUOTES);
+					}
+					if(get_magic_quotes_gpc()) {
+						$sanitized_value = stripslashes($sanitized_value);
+					}
+				break;
+				case 'htmlentities':
+					if (!is_numeric($sanitized_value)) {
+						$sanitized_value = htmlentities($sanitized_value, ENT_QUOTES);
+					}
+					if(get_magic_quotes_gpc()) {
+						$sanitized_value = stripslashes($sanitized_value);
+					}
+				break;
+				case 'stripslashes':
+				  $sanitized_value = stripslashes($sanitized_value);
+				break;
+				case 'magic_quotes_strip':
+					if(get_magic_quotes_gpc()) {
+						$sanitized_value = stripslashes($sanitized_value);
+					}
+				break;
+				case 'mysql':
+					if(get_magic_quotes_gpc()) {
+						$sanitized_value = stripslashes($sanitized_value);
+					}
+					$sanitized_value = pc_escape_mysql($sanitized_value);
+				break;
+				default:
+				break;
+			}
+		}     
+	}
+	return $sanitized_value;  	
+}
+
+/**
+ * Method for preparing html output from database
+ * @param type $value
+ * @return type
+ */
+function pc_e($value) {
+	return pc_sanitize_value(array('htmlspecialchars'), $value);
+}
+
 ?>

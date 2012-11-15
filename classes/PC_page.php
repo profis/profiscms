@@ -17,7 +17,8 @@
 final class PC_page extends PC_base {
 	public  $text,
 			$data,
-			$menus = array();
+			$menus = array(),
+			$decoded_links = array();
 	private $_menu_shift = 1,
 			$_gmap_counter = 0,
 			$_media_counter = 1;
@@ -25,9 +26,13 @@ final class PC_page extends PC_base {
 		//constructor
 	}
 	public function Get_route_data($route=null, $route_is_page_id=false, $path=array(), $internal_redirects=true) {
+		$this->debug = true;
+		$this->set_instant_debug_to_file($this->cfg['path']['base'] . 'logs/router/route.html', false, 25);
+		$this->debug("Get_route_data($route)");
 		$now = time();
 		$r = $this->prepare("SELECT p.date,p.front,p.id pid,p.idp,c.*,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,"
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.route'), array('separator'=>'▓'))." routes"
+		.', ' . $this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.permalink'), array('separator'=>'▓'))." permalinks"
 		.(is_null($route)?
 			" FROM {$this->db_prefix}pages p LEFT JOIN {$this->db_prefix}content c ON pid=p.id and c.ln=?"
 			:" FROM {$this->db_prefix}content c JOIN {$this->db_prefix}pages p ON p.id=pid"
@@ -53,8 +58,11 @@ final class PC_page extends PC_base {
 		if ($r->rowCount() != 1) {
 			return array('controller'=>'core','data'=>404);
 		}
-		$data = $r->fetch();
+		$this->page_data = $data = $r->fetch();
+		$this->debug('page_data', 5);
+		$this->debug($data, 6);
 		$this->core->Parse_data_str($data['routes'], '▓', '░');
+		$this->core->Parse_data_str($data['permalinks'], '▓', '░');
 		$this->Parse_html_output($data['text'], $data['info'], $data['info2'], $data['info3']);
 		$this->Parse_html_output($data['description'], $data['keywords'], $data['title']);
 		//save route path
@@ -68,6 +76,13 @@ final class PC_page extends PC_base {
 		if (!empty($route)) {
 			if ($data['front']) return array('controller'=>'core','data'=>404);
 		}
+		
+		if (!empty($data['permalink']) and strpos($_SERVER['REQUEST_URI'], $data['permalink'])=== false and !empty($data['route']) and $data['permalink'] != $data['route']) {
+			$redirect_link = $data['permalink'] . '/';
+			$this->debug("Redirecting to permalink {$data['permalink']}: $redirect_link", 5);
+			$this->core->Redirect_local($redirect_link, 301);
+		}
+	
 		if (!empty($data['redirect'])) {
 			if (preg_match("#^http://#", $data['redirect'])) {
 				$data = array(
@@ -81,34 +96,100 @@ final class PC_page extends PC_base {
 				return $data;
 			}
 			//parse redirect data
-			$d = $this->Parse_redirect_data($data['redirect']);
-			//shouldnt redirects be done internally?
-			if (!$internal_redirects && !$data['front']) {
-				//print_pre($d); exit();
-				$url = $this->cfg['url']['base'];
-				if (!empty($d['pid'])) {
-					$redirect_page = $this->Get_page($d['pid']);
-					$url .= $this->site->Get_link($redirect_page['route']);
-					$url .= $this->routes->Get_range(2); //all except first
-				}
-				else {
-					$url .= $this->routes->Get_request();
-				}
-				if (!empty($d['get'])) {
-					$url .= '?'.$d['get'];
-				}
-				else if (!empty($this->routes->get_request)) {
-					$url .= '?'.$this->routes->get_request;
-				}
-				//if ($d['get'] != $this->routes->get_request) {}
-				$this->core->Redirect($url, 301);
-			}
-			else return $this->Get_route_data($d['pid'], true);
+			
+			$route_data = $this->process_redirect($data, $internal_redirects);
+			return $route_data;
 		}
 		if (empty($data['controller']) || $data['controller'] == 'menu') $data['controller'] = 'page';
-		
 		return $data;
 	}
+	
+	/**
+	 * 
+	 * @param type $data
+	 * @param type $internal_redirects
+	 * @param type $append_range
+	 * @return boolean or array
+	 */
+	public function process_redirect(&$data, $internal_redirects = true, $append_range = true) {
+		v($data['redirect']);
+		if (empty($data['redirect'])) {
+			return false;
+		}
+		
+		if (preg_match("#^http://#", $data['redirect'])) {
+			$r_data = array(
+				'controller'=> 'core',
+				'action'=> 'http_redirect',
+				'data'=> array(
+					'url'=> $data['redirect'],
+					'page'=> $data
+				)
+			);
+			$this->core->Do_action($r_data['action'], $r_data['data']);
+			return $r_data;
+		}
+		
+		$controller_data = $this->get_controller_data_from_id($data['redirect']);
+			
+		$url = '';
+		if ($controller_data and $this->core->Count_hooks('core/page/parse-page-url/'.$controller_data['plugin'])) {
+			$this->core->Init_hooks('core/page/parse-page-url/'.$controller_data['plugin'], array(
+				'url'=> &$url,
+				'id' => $controller_data['id']
+			));
+			if (!empty($url)) {
+				$this->core->Redirect_local($url, 301);
+			}
+		}
+			
+		$d = $this->Parse_redirect_data($data['redirect']);
+		//shouldnt redirects be done internally?
+		if (!$internal_redirects && !v($data['front'])) {
+			//print_pre($d); exit();
+			$url = $this->cfg['url']['base'];
+			if (!empty($d['pid'])) {
+				$redirect_page = $this->Get_page($d['pid']);
+				$url .= $this->site->Get_link($redirect_page['route']);
+				if ($append_range) {
+					$url .= $this->routes->Get_range(2); //all except first
+				}
+				
+			}
+			else {
+				$url .= $this->routes->Get_request();
+			}
+			if (!empty($d['get'])) {
+				$url .= '?'.$d['get'];
+			}
+			else if (!empty($this->routes->get_request)) {
+				$url .= '?'.$this->routes->get_request;
+			}
+			//if ($d['get'] != $this->routes->get_request) {}
+			$this->core->Redirect($url, 301);
+		}
+		else return $this->Get_route_data($d['pid'], true);
+		
+	}
+	
+	/**
+	 * Returns array with keys <ul><li>plugin</li><li>id</li></ul>
+	 * @param type $node_id
+	 * @return array() | false
+	 */
+	public function get_controller_data_from_id($node_id) {
+		if (preg_match("#^(".$this->cfg['patterns']['plugin_name'].")/(.+)$#i", $node_id, $m)) {
+			//given id is with plugin prefix, what means that we need to generate tree items using that plugin tree renderer
+			$plugin = $m[1];
+			$node_id = $m[2];
+			return array(
+				'plugin' => $plugin,
+				'id' => $node_id
+			);
+		}
+		return false;
+	}
+	
 	public function Parse_redirect_data($redirect) {
 		if (strpos($redirect, '#') !== false) {
 			$d = explode('#', $redirect);
@@ -129,23 +210,29 @@ final class PC_page extends PC_base {
 	}
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
+		//$this->page_data['pid']
 		$tc = 1;
 		$var = 't'.$tc;
 		$text =& $$var;
 		while (isset($text)) {
 			#
+			$this->Replace_google_map_objects($text);
 			$this->Parse_gallery_files_requests($text);
 			$this->core->Init_hooks('parse_html_output', array(
 				'text'=> &$text
 			));
-			$this->Replace_google_map_objects($text);
+			
 			$this->Replace_media_objects($text);
 			//fix hash links
 			if (isset($this->route[1])) $text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1])."$1\"",  $text);
+			//remove default language code from links
+			
+			$text = preg_replace("/href=\"".$this->site->default_ln."\//", "href=\"",  $text);
+			$this->_decode_links($text);
+			
 			//append prefix to the links from editor
 			if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
-			//remove default language code from links
-			$text = preg_replace("/href=\"".$this->site->default_ln."\//", "href=\"",  $text);
+						
 			//page break
 			$text = str_replace('╬', '<span style="display:none" id="pc_page_break">&nbsp;</span>', $text);
 			//prevent bots from seeing raw email addresses
@@ -156,6 +243,49 @@ final class PC_page extends PC_base {
 			$text =& $$var;
 		}
 	}
+	
+	public function Get_encoded_page_link_by_id($id, $ln = '') {
+		$encoded_link = 'pc_page:' . $id;
+		if (!empty($ln)) {
+			$encoded_link .= ':' . $ln;
+		}
+		$encoded_link .= '/';
+		return $encoded_link;
+	}
+	
+	protected function _replace_link_match($matches) {
+		$matches[1] = rtrim($matches[1],"/");
+		$encoded_parts = explode(':', $matches[1]);
+		$page_id_index = 0;
+		if ($encoded_parts[0] == 'pc_page') {
+			$page_id_index = 1;
+		}
+		$ln_index = $page_id_index + 1;
+		$page_id = v($encoded_parts[$page_id_index]);
+		$page_ln = v($encoded_parts[$ln_index]);
+		
+		$controller_data = $this->get_controller_data_from_id($page_id);
+		$page_link = '';
+		if ($controller_data and $this->core->Count_hooks('core/page/get-page-url/'.$controller_data['plugin'])) {
+			$this->core->Init_hooks('core/page/get-page-url/'.$controller_data['plugin'], array(
+				'url'=> &$page_link,
+				'id' => $controller_data['id'],
+				'ln' => $page_ln
+			));
+			if (!empty($page_link)) {
+				return $page_link;
+			}
+		}
+		
+		
+		$page_link = $this->Get_page_link_by_id($page_id, $page_ln);
+		return $page_link;
+	}
+	
+	protected function _decode_links(&$text) {
+		$text = preg_replace_callback("/(?<=href=\")((pc_page:)[^:]+(:\w+)?\/?)/ui", "PC_page::_replace_link_match", $text);
+	}
+	
 	public function Encode_emails($text) {
 		$text = preg_replace_callback("#".$this->cfg['patterns']['email']."#i", array($this, 'Encode_email'), $text);
 		return $text;
@@ -166,8 +296,11 @@ final class PC_page extends PC_base {
 	}
 	public function Parse_gallery_files_requests(&$text) {
 		if (!empty($text)) {
+			//echo $text;
 			//preg_match_all('#"((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+)")#i', $text, $matches);
-			preg_match_all('#(url\("?|")((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+))("?\)|")#i', $text, $matches);
+			//preg_match_all('#(url\("?|")((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+))("?\)|")#i', $text, $matches);
+			preg_match_all('#(url\("?|")(?:[^"]*)((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+))("?\)|")#i', $text, $matches);
+			//print_pre($matches);
 			if (count($matches[6])) {
 				//print_pre($matches);
 				$r = $this->query("SELECT f.id,filename,"
@@ -185,11 +318,15 @@ final class PC_page extends PC_base {
 					}
 					//print_pre($files);
 					for ($a=0; isset($matches[0][$a]); $a++) {
-						$to = ''.$this->cfg['directories']['gallery'].'/'.$files[$matches[6][$a]]['path'].$matches[4][$a].$matches[5][$a].$files[$matches[6][$a]]['filename'].'';
-						$this->gallery_request_map[$files[$matches[6][$a]]['path'].$files[$matches[6][$a]]['filename']] = $matches[6][$a];
+						$m_id = $matches[6][$a];
+						$m_type = $matches[5][$a];
+						$m_type_pre = $matches[4][$a];
+						$m_full = $matches[2][$a];
+						$to = ''.$this->cfg['directories']['gallery'].'/'.$files[$m_id]['path'].$m_type_pre.$m_type.$files[$m_id]['filename'].'';
+						$this->gallery_request_map[$files[$m_id]['path'].$files[$m_id]['filename']] = $m_id;
 						//echo $to.'<br />';
-						$text = preg_replace("#".$matches[2][$a]."([^0-9])#", $to."$1", $text, -1, $count);
-						if (!$count) $text = str_replace($matches[2][$a], $to, $text);
+						$text = preg_replace("#".$m_full."([^0-9])#", $to."$1", $text, -1, $count);
+						if (!$count) $text = str_replace($m_full, $to, $text);
 					}
 				}
 			}
@@ -205,16 +342,37 @@ final class PC_page extends PC_base {
 			for ($a=0; isset($gmaps[0][$a]); $a++) {
 				$json_data = urldecode($gmaps[5][$a]);
 				$data = json_decode($json_data);
+				//print_pre($data);
+				$map_custom_options = v($data->map_options);
+				$map_custom_options = trim($map_custom_options);
+				$map_custom_options = trim($map_custom_options, ',');
+				if (!empty($map_custom_options)) {
+					$map_custom_options = ', ' . $map_custom_options;
+				}
+				$marker_custom_options = v($data->marker_options);
+				$marker_custom_options = trim($marker_custom_options);
+				$marker_custom_options = trim($marker_custom_options, ',');
+				if (!empty($marker_custom_options)) {
+					$marker_custom_options = ', ' . $marker_custom_options;
+				}
+				$marker_image = v($data->marker_image);
+				if (!empty($marker_image)) {
+					
+					//echo $marker_image = $this->Parse_gallery_file_request($marker_image);
+					//print_pre($marker_image);
+					$marker_image = ', icon:"' . $this->core->Absolute_url($marker_image) .'"';
+				}
+				
 				$id = 'gmap_'.$this->_gmap_counter++;
 				$w = $gmaps[3][$a];
 				$h = $gmaps[4][$a];
 				$google_map_frame = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
 				.'<script type="text/javascript">'
-					.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false};'
+					.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false'.(isset($data->scrollwheel)?',scrollwheel:'.$data->scrollwheel:''). $map_custom_options . '};'
 					.'var '.$id.'=null;'
 					.'$(function(){'
 						.$id.'=new google.maps.Map(document.getElementById(\''.$id.'\'),options_'.$id.');'
-						.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center});'
+						.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
 					.'});'
 				.'</script></div>';
 				$text = preg_replace('#'.preg_quote($gmaps[0][$a], "#").'#m', $google_map_frame, $text, 1);
@@ -294,9 +452,118 @@ final class PC_page extends PC_base {
 		}
 		return $this->cache->Cache(array('page_pathes', $pid), $path);
 	}
-	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false, $includeParents=false) {
+	
+	public function Get_pages_data($select = '*', $where = '', $where_params = array(), $limit = '') {
+		$where_s = $where;
+		if (!empty($where_s)) {
+			$where_s = ' WHERE ' . $where_s;
+		}
+		$limit_s = $limit;
+		if (!empty($limit_s)) {
+			$limit_s = ' LIMIT ' . $limit;
+		}
+		$query = "SELECT $select FROM {$this->db_prefix}pages $where_s $limit_s";
+		$r = $this->prepare($query);
+		$success = $r->execute($where_params);
+		
+		$single_value = true;
+		if (strpos($select, ',') !== false or strpos($select, '*') === false) {
+			$single_value = false;
+		}
+		$data = array();
+		
+		while ($d = $r->fetch()) {
+			if (strpos($select, ',') !== false or strpos($select, '*') !== false) {
+				$data[] = $d;
+			}
+			else {
+				$data[] = $d[$select];
+			}
+		}
+		return $data;
+	}
+	
+	public function Get_page_data($page_id, $select = '*', $where = '', $limit = 1) {
+		$where_s = $where;
+		if (!empty($where_s)) {
+			$where_s = ' AND ' . $where_s;
+		}
+		$limit_s = $limit;
+		if (!empty($limit_s)) {
+			$limit_s = ' LIMIT ' . $limit;
+		}
+		$query = "SELECT $select FROM {$this->db_prefix}pages WHERE id = ? $where_s $limit_s";
+		$r = $this->prepare($query);
+		$params = array();
+		$params[] = $page_id;
+		$success = $r->execute($params);
+		
+		if ($success) {
+			if (strpos($select, ',') !== false or strpos($select, '*') !== false) {
+				return $r->fetch();
+			}
+			else {
+				return $r->fetchColumn();
+			}
+		}
+		return false;
+	}
+	
+	public function Get_page_parent_id($page_id) {
+		$select = 'idp';
+		return $this->Get_page_data($page_id, $select);
+	}
+	
+	public function Get_page_site_id($page_id) {
+		$select = 'site';
+		return $this->Get_page_data($page_id, $select);
+	}
+	
+	public function Get_id_by_content($name, $value, $ln) {
+		$query = "SELECT pid FROM {$this->db_prefix}content WHERE $name = ? AND ln = ? LIMIT 1";
+		$r_category = $this->prepare($query);
+		$queryParams = array();
+		$queryParams[] = $value;
+		$queryParams[] = $ln;
+
+		$this->debug_query($query, $queryParams);
+		
+		$s = $r_category->execute($queryParams);
+		if (!$s) return false;
+
+		if ($d = $r_category->fetchColumn()) {
+			return $d;
+		}
+		return false;
+	}
+	
+	public function Get_content_by_id($id, $name, $ln) {
+		$query = "SELECT $name FROM {$this->db_prefix}content WHERE pid = ? AND ln = ? LIMIT 1";
+		$r_category = $this->prepare($query);
+		$queryParams = array();
+		$queryParams[] = $id;
+		$queryParams[] = $ln;
+
+		$this->debug_query($query, $queryParams);
+		
+		$s = $r_category->execute($queryParams);
+		if (!$s) return false;
+
+		if ($d = $r_category->fetchColumn()) {
+			return $d;
+		}
+		return false;
+	}
+	
+	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false, $includeParents=false, $fields = array(), $lang = '') {
 		$where = array();
-		$params = array(v($this->site->ln));
+		if (empty($lang)) {
+			$lang = v($this->site->ln);
+		}
+		if (empty($lang)) {
+			$lang = v($this->site->default_ln);
+		}
+		$params = array($lang);
 		if (!is_null($id)) {
 			if (!$use_reference_id) {
 				if (is_array($id)) {
@@ -314,18 +581,39 @@ final class PC_page extends PC_base {
 				$params[] = $id;
 			}
 		}
-		$r = $this->prepare("SELECT *"
-		." FROM {$this->db_prefix}pages p"
-		." LEFT JOIN {$this->db_prefix}content c ON c.pid=p.id and c.ln=?"
-		.(count($where)?" WHERE ".implode(' and ', $where):""));
+		$fields_string = '*';
+		if (!empty($fields)) {
+			$fields_string = implode(',', $fields);
+		}
+		$query = "SELECT $fields_string"
+			." FROM {$this->db_prefix}pages p"
+			." LEFT JOIN {$this->db_prefix}content c ON c.pid=p.id and c.ln=?"
+			.(count($where)?" WHERE ".implode(' and ', $where):"");
+
+			
+		$r = $this->prepare($query);
 		$s = $r->execute($params);
 		if (!$s) return false;
 		if (!$r->rowCount()) return (is_null($id)?array():false);
 		$list = array();
+		$valid_html_fields = array('text', 'info', 'info2', 'info3');
+		$needed_html_fields = array_intersect($valid_html_fields, $fields);
 		while ($d = $r->fetch()) {
+			if (!empty($fields)) {
+				if (!empty($needed_html_fields)) {
+					foreach ($valid_html_fields as $key => $value) {
+						if (!isset($d[$value])) {
+							$d[$value] = '';
+						}
+					}
+				}
+			}
 			if ($parseLinks) $this->Parse_html_output($d['text'], $d['info'], $d['info2'], $d['info3']);
 			$list[] = $d;
 		}
+		$valid_html_fields = array('text', 'info', 'info2', 'info3');
+
+		
 		if ($includeParents) {
 			$idsList = array();
 			foreach ($list as $p) $idsList[] = $p['idp'];
@@ -337,9 +625,52 @@ final class PC_page extends PC_base {
 		}
 		return (is_null($id)||is_array($id)?$list:$list[0]);
 	}
+	
+	public function Get_page_link_by_id($id, $ln = '') {
+		$cache_key = $id . '/' . $ln;
+		if (isset($this->decoded_links[$cache_key])) {
+			return $this->decoded_links[$cache_key];
+		}
+		$page_data = $this->Get_page($id, false, false, false, array('route', 'permalink'), $ln);
+		if (isset($page_data['permalink']) and !empty($page_data['permalink'])) {
+			$page_link =  $page_data['permalink'] . '/';
+			if (!empty($ln) and $ln != $this->site->default_ln) {
+				if (strpos($page_link, $ln . '/') !== 0) {
+					$page_link = $ln . '/' . $page_link;
+				}
+			}
+			$this->decoded_links[$cache_key] = $page_link;
+			return $page_link; 
+		}
+		if (isset($page_data['route']) and !empty($page_data['route'])) {
+			$page_link =  $page_data['route'] . '/';
+			if (!empty($ln) and $ln != v($this->site->default_ln)) {
+				if (strpos($page_link, $ln . '/') !== 0) {
+					$page_link = $ln . '/' . $page_link;
+				}
+			}
+			$this->decoded_links[$cache_key] = $page_link;
+			return $page_link;
+		}
+		return false;
+	}
+	
+	public function Get_page_anchors_by_id($id, $ln = '') {
+		$anchors = array();
+		$html_fields = array('text', 'info', 'info2', 'info3');
+		$page_data = $this->Get_page($id, false, false, false, $html_fields, $ln);
+		foreach ($page_data as $key => $value) {
+			preg_match_all('/\<a\sname\s?=\s?"(.+)"/ui', $value, $matches);
+			if (!empty($matches[1])) {
+				$anchors = array_merge($anchors, $matches[1]);
+			}
+		}
+		return $anchors;
+	}
+	
 	public function Load_menu() {
 		$now = time();
-		$r = $this->prepare("SELECT mp.id idp,p.id pid,c.id cid,c.name,c.route,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id FROM {$this->db_prefix}pages mp"
+		$r = $this->prepare("SELECT mp.id idp,p.id pid,c.id cid,c.name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
 		." AND p.controller!='menu' AND p.nomenu<1"
 		." LEFT JOIN {$this->db_prefix}content c ON pid=p.id AND ln='{$this->site->ln}'"
@@ -362,6 +693,10 @@ final class PC_page extends PC_base {
 			}
 			if ($menu['pid'] == $this->page->data['pid']) {
 				$menu['current'] = true;
+			}
+			if (v($menu['permalink'])) {
+				$menu['real_route'] = $menu['route'];
+				$menu['route'] = $menu['permalink'];
 			}
 			if ($menu['redirect_from_home']) $menu['route'] = '';
 			$this->menus[$map[$menu['idp']]][] = $menu;
@@ -437,6 +772,9 @@ final class PC_page extends PC_base {
 		return $r->fetchColumn();
 	}
 	public function Get_submenu($id, $fields=array(), $limit=false, $include_content=true, $include_nomenu=false) {
+		if (!in_array('permalink', $fields)) {
+			$fields[] = 'permalink';
+		}
 		//fields selection!
 		$now = time();
 		//retrieve only specified fields
@@ -448,6 +786,7 @@ final class PC_page extends PC_base {
 				'cid'=> 'c.id cid',
 				'name'=> 'c.name',
 				'route'=> 'c.route',
+				'permalink'=> 'c.permalink',
 				'nr'=> 'p.nr',
 				'hot'=> 'p.hot',
 				'info'=> 'c.info',
@@ -479,7 +818,7 @@ final class PC_page extends PC_base {
 				}
 			}
 		}
-		$r = $this->prepare("SELECT ".(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route":'').",p.nr,p.hot,p.date").","
+		$query = "SELECT ".(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'h.id', 'h.front'), array('separator'=>'▓'))." redirects_from"
 		." FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
@@ -490,7 +829,10 @@ final class PC_page extends PC_base {
 		." WHERE mp.id ".(is_array($id)?'in('.implode(',', $id).')':'=?')." and p.published=1"
 		." and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')"
 		." GROUP BY p.id"
-		." ORDER BY mp.nr,p.nr".(($limit)?" limit $limit":""));
+		." ORDER BY mp.nr,p.nr".(($limit)?" limit $limit":"");
+		
+
+		$r = $this->prepare($query);
 		$params = array();
 		if (!is_array($id)) $params[] = $id;
 		if (is_array($id) && !count($id)) return false;
@@ -505,10 +847,19 @@ final class PC_page extends PC_base {
 			if (isset($menu['info'])) $this->Parse_html_output($menu['info']);
 			if (isset($menu['info2'])) $this->Parse_html_output($menu['info2']);
 			if (isset($menu['info3'])) $this->Parse_html_output($menu['info3']);
+			
+			//print_pre($menu);
+			
+			if (v($menu['permalink'])) {
+				$menu['real_route'] = $menu['route'];
+				$menu['route'] = $menu['permalink'];
+			}
+			
 			$this->core->Parse_data_str($menu['redirects_from'], '▓', '░');
 			$menu['redirect_from_home'] = in_array(1, $menu['redirects_from']);
 			$menu['redirects_from'] = array_keys($menu['redirects_from']);
 			if ($menu['redirect_from_home']) $menu['route'] = '';
+					
 			$items[] = $menu;
 		}
 		return $items;
@@ -685,8 +1036,8 @@ final class PC_page extends PC_base {
 	public function Set($key, $value) {
 		$this->data[$key] = $value;
 	}
-	public function Get_by_controller($ctrl) {
-		$r = $this->prepare("SELECT id FROM {$this->db_prefix}pages p"
+	public function Get_by_controller($ctrl, $select = 'id') {
+		$r = $this->prepare("SELECT $select FROM {$this->db_prefix}pages p"
 		." WHERE p.site=? and p.deleted=0 and p.published=1 and (p.date_from is null or p.date_from<=?) and (p.date_to is null or p.date_to>=?)"
 		." and controller=?");
 		$now = time();
@@ -711,9 +1062,15 @@ final class PC_page extends PC_base {
 		}
 		return $ids;
 	}
-	public function Get_trashed() {
-		$r = $this->prepare("SELECT id pid FROM {$this->db_prefix}pages WHERE deleted=1 and idp=0");
-		$s = $r->execute();
+	public function Get_trashed($site_id = null) {
+		$q_params = array();
+		$cond = '';
+		if (!is_null($site_id) and $site_id > 0) {
+			$cond .= ' and site = ?';
+			$q_params[] = $site_id;
+		}
+		$r = $this->prepare("SELECT id pid FROM {$this->db_prefix}pages WHERE deleted=1 and idp=0" . $cond);
+		$s = $r->execute($q_params);
 		if (!$s) return false;
 		$pages = array();
 		while ($d = $r->fetch()) {

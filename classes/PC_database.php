@@ -39,7 +39,7 @@ class PC_database_fields {
 	public function Parse($table, &$data, &$params) {
 		$insertData = array();
 		$s = true;
-		foreach ($data as $field=>$value) {
+		if (count($data)) foreach ($data as $field=>$value) {
 			$r = $this->Validate($table, $field, $value);
 			if ($r === true) {
 				$insertData[$field] = $value;
@@ -59,6 +59,22 @@ final class PC_database extends PDO {
 		call_user_func_array(array('parent', '__construct'), $args);
 		$this->fields = new PC_database_fields;
 	}
+	
+	
+	public function get_flag_query_condition($flag, &$query_params = array(), $col = 'flags', $table = '') {
+		$flag_number = $flag;
+		if (strpos($flag, '0x') !== false) {
+			$flag_number = substr($flag_number, 2);
+		}
+		if (!empty($table)) {
+			$table .= '.';
+		}
+		$cond = "({$table}$col & ?) = ?";
+		$query_params[] = $flag_number;
+		$query_params[] = $flag_number;
+		return $cond;
+	}
+	
 	/* public function Select() {}
 	public function Insert() {}
 	public function Delete() {}

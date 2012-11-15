@@ -27,3 +27,5 @@ admin/backups/*
 config.php
 media/uppod/
 nbproject/
+logs/
+admin/excel_attr/

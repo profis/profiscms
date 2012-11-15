@@ -25,6 +25,8 @@ final class PC_auth_permissions extends PC_base {
 				'core'=> array(
 					'access_admin'=> false,
 					'admin'=> false,
+					'pages'=> false,
+					'page_nodes' => false,
 					'plugins'=> false
 				)
 			);
@@ -117,6 +119,9 @@ final class PC_auth_permissions extends PC_base {
 			//insert permission data
 			$r = $this->prepare("INSERT INTO {$this->db_prefix}auth_permissions (data,user_id,plugin,name) VALUES(?,?,?,?)");
 		}
+		if (is_array($data)) {
+			$data = json_encode($data);
+		}
 		$s = $r->execute(array($data, $user_id, $plugin, $name));
 		return $s;
 	}
@@ -153,8 +158,17 @@ final class PC_auth_permissions extends PC_base {
 	}
 	
 	/**
-	* Method used authorize already authenticated user. Method accepts any size of variables which are obtained with function "func_get_args()". Allways expected
-	* al least two variables which are: plugin name and handler name. Also in this method called function "call_user_func_array()" with arguments:
+	* Method used authorize already authenticated user. Method accepts any size of variables which are obtained with function "func_get_args()". 
+	* Allways expected al least two variables which are: plugin name and handler name. 
+	* If handler exists - the following arguments (starting from the 3rd) will be passed to the handler.
+	* Otherwise:
+	* Third argument boolean optional - if true, authorization is not strict - true will be returned if no permission data exists for the user or permission data array is empty. 
+	* If third argument is not boolean, it is ignored and is considered as following argument.
+	* Following arguments are keys in multidimensional array (last argument being recource id).
+	* For example function call with arguments ('core', 'page_nodes', true, 'site', 1, 25) 
+	* will authorize if the user has access to the resource id = 25 in the $permissions['site'][1] array  
+	* where $permissions are permission data for the 'core' -> 'page_access'
+	* Also in this method called function "call_user_func_array()" with arguments:
 	* handler name, which obtained with PC_auth_permissions::Get_handler(), and arguments given to this method, which retrieved with function "func_get_args()".
 	* @param mixed given list of variables.
 	* @return bool TRUE if authorization was successful, or FALSE otherwise.
@@ -167,14 +181,39 @@ final class PC_auth_permissions extends PC_base {
 		$args = func_get_args();
 		if (!isset($args[0], $args[1])) return false;
 		if (!$this->auth->Is_authenticated()) return false;
-		if (!$this->Is_permission_set($args[0], $args[1])) return false;
+		if (!$this->Is_permission_set($args[0], $args[1])) {
+			return false;
+		}
+		
 		if ($handler = $this->Get_handler($args[0], $args[1])) {
 			$data = $this->Get_permission($args[0], $args[1]);
 			$args = array_slice($args, 2);
 			array_unshift($args, $data);
 			return call_user_func_array($handler, $args);
 		}
-		return ($this->_user[$args[0]][$args[1]]=='1'?true:false);
+		
+		$data = $this->Get_permission($args[0], $args[1]);
+		$not_strict = false;
+		if (isset($args[2])) {
+			$skip_args = 2;
+			if ($args[2] and is_bool($args[2])) {
+				$not_strict = true;
+				$skip_args++;
+			}
+			$path_to_the_recource = array_slice($args, $skip_args);
+			$recource_id = array_pop($path_to_the_recource);
+			foreach ($path_to_the_recource as $key) {
+				if (!is_array($data) || !isset($data[$key])) {
+					return ($not_strict ? true:false);
+				}
+				$data = $data[$key];
+			}
+			if (!is_array($data) || empty($data)) {
+				return ($not_strict ? true:false);
+			}
+			return (in_array($recource_id, $data) ? true:false);
+		}
+		return ($data == '1' ? true:false);
 	}
 	
 	/**
@@ -189,6 +228,58 @@ final class PC_auth_permissions extends PC_base {
 		return $this->_user[$plugin][$name];
 	}
 
+	/**
+	 * Method used to get accessible resources for already authenticated user. 
+	 * Method accepts any size of variables which are obtained with function "func_get_args()". 
+	 * Allways expected al least two variables which are: plugin name and handler name. 
+	 * Following arguments are keys in multidimensional array (last argument being recource id in multidimensional array).
+	 * For example function call with arguments ('core', 'page_access', 'site', 1) will retrieve $permissions['site'][1]  
+	 */
+	public function get_accessible_resources() {
+		$args = func_get_args();
+		//$a =& $b
+		$this->temp_permission_data = $permission = $this->Get_permission($args[0], $args[1]);
+		$this->temp_permission_data_array = & $this->temp_permission_data;
+		if (!$permission) {
+			return false;
+		}
+		array_shift($args);
+		array_shift($args);
+		$permission_subset = $permission;
+		foreach ($args as $key => $arg) {
+			if (!is_array($permission_subset) || !isset($permission_subset[$arg])) {
+				return false;
+			}
+			$permission_subset = $permission_subset[$arg];
+			$this->temp_permission_data_array = & $this->temp_permission_data_array[$arg];
+		}
+		return $permission_subset;
+	}
+	
+	/**
+	 * Method used to get accessible resources for already authenticated user. 
+	 * Method accepts any size of variables which are obtained with function "func_get_args()". 
+	 * Allways expected al least two variables which are: plugin name and handler name. 
+	 * Following arguments are keys in multidimensional array (last argument being recource id in multidimensional array).
+	 * Last argument is the recource id to be added
+	 * For example function call with arguments ('core', 'page_access', 'site', 1) will retrieve $permissions['site'][1]  
+	 */
+
+	public function add_accessible_recource() {
+		$args = func_get_args();
+		if (count($args) < 3) {
+			return false;
+		}
+		$recource_id = array_pop($args);
+		$accessible_recources = call_user_func_array(array($this, "get_accessible_resources"), $args);
+				
+		if (!in_array($recource_id, $this->temp_permission_data_array)) {
+			array_push($this->temp_permission_data_array, $recource_id);
+			return $this->Save_for_user($this->auth->Get_current_user_id(), $args[0], $args[1], $this->temp_permission_data);
+		}
+		return true;
+	}
+	
 	/**
 	* Method used to check if given plugin and it's handler exist in current instance permissions list.
 	* @param string given plugin name.
@@ -612,6 +703,26 @@ final class PC_auth extends PC_base {
 		return true;
 	}
 	
+	public function Authorize_access_to_plugin($plugin) {
+		return $this->Authorize('core', 'admin') || $this->Authorize('core', 'plugins', $plugin);
+	}
+	
+	public function Authorize_access_to_pages() {
+		return $this->Authorize('core', 'admin') or $this->Authorize('core', 'pages');
+	}
+	
+	public function Authorize_access_to_site_page($site_id, $page_id) {
+		return $page_id == '0' or $this->Authorize('core', 'admin') or $this->Authorize('core', 'page_nodes', true, 'sites', $site_id, $page_id);
+	}
+	
+	public function Get_accessible_site_pages($site_id) {
+		return $this->permissions->get_accessible_resources('core', 'page_nodes', 'sites', $site_id);
+	}
+	
+	public function Make_site_page_accessible($site_id, $page_id) {
+		$this->permissions->add_accessible_recource('core', 'page_nodes', 'sites', $site_id, $page_id);
+	}
+	
 	/**
 	* Method used to check  permissions by given parameters. In this method are called functions "func_get_args()" and "call_user_func_array()". The second one calls 
 	* "Authorize()" on current instance instantiated "PC_auth_permisions" object by submitting arguments returned by "func_get_args()".
@@ -619,7 +730,28 @@ final class PC_auth extends PC_base {
 	* @see PC_auth_permisions::Authorize().
 	*/
 	public function Authorize() {
+		$this->debug('Authorize()');
 		$args = func_get_args();
-		return call_user_func_array(array($this->permissions, 'Authorize'), $args);
+		$this->debug($args, 1);
+		$result = call_user_func_array(array($this->permissions, 'Authorize'), $args);
+		if ($result) {
+			$this->debug(':) Authorized' , 2);
+		}
+		else {
+			$this->debug(':( Did not authorize' , 2);
+		}
+		return $result;
 	}
+	
+	
+	public function Get_current_user_id() {
+		if (!$this->Is_authenticated()) return false;
+		if (isset($_SESSION['auth_data']) and isset($_SESSION['auth_data']['id'])) {
+			if ($_SESSION['auth_data']['id']) {
+				return $_SESSION['auth_data']['id'];
+			} 
+		}
+		return false;
+	}
+	
 }

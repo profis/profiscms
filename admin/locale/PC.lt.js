@@ -28,12 +28,19 @@ PC.langs.lt = {
 	edit: 'Redaguoti',
 	copy: 'Kopijuoti',
 	del: 'Ištrinti',
+	move_left: 'Į kairę',
+    move_right: 'Į desinę',
+    move_up: 'Į viršų',
+    move_down: 'Į apačią',
+
 	close: 'Uždaryti',
 	seo: 'SEO',
-	name: 'Vardas',
+	name: 'Pavadinimas',
+	custom_name: 'Pavadinimas tekste',
 	link: 'Nuoroda',
 	seo_link: 'Lengvai skaitoma nuoroda',
-	title: 'Pavadinimas',
+	seo_permalink: 'Pastovi nuoroda',
+	title: 'Antraštė',
 	desc: 'Aprašymas',
 	keyword: 'Raktinis žodis',
 	keywords: 'Raktiniai žodžiai',
@@ -68,9 +75,26 @@ PC.langs.lt = {
 		permissions: {
 			types: {
 				core: {
-					access_admin: 'Prisijungti prie administravimo įrankio',
-					admin: 'Valdyti viską: svetaines, puslapius, visus papildinius ir t.t.',
-					plugins: 'Priėjimas prie konkrečių papildinių (papildinių specifinių teisių nustatymai koreguojami atskirai)'
+					access_admin: {
+						title: 'Administravimas',
+						description: 'Prisijungti prie administravimo įrankio'
+					},
+					admin: {
+						title: 'Superadminas',
+						description: 'Valdyti viską: svetaines, puslapius, visus papildinius ir t.t.'
+					},
+					pages: {
+						title: 'Puslapiai',
+						description: 'Priėjimas prie puslapių'
+					},
+					page_nodes: {
+						title: 'Konkretūs puslapiai',
+						description: 'Priėjimas prie konkrečių puslapių'
+					},
+					plugins: {
+						title: 'Papildiniai',
+						description: 'Priėjimas prie konkrečių papildinių (papildinių specifinių teisių nustatymai koreguojami atskirai)'
+					}
 				}
 			}
 		}
@@ -89,7 +113,8 @@ PC.langs.lt = {
 		shortcut_to: 'Nukreipti į',
 		new_page: 'Naujas puslapis',
 		new_subpage: 'Naujas subpuslapis',
-		rename: 'Pervadinti'
+		rename: 'Pervadinti',
+		addNew: 'Sukurti naują'
 	},
 	tab: {
 		text: 'Tekstas',
@@ -175,6 +200,8 @@ PC.langs.lt = {
 			tags: {
 				p: 'Pastraipa',
 				table: 'Lentelė',
+				tr: 'Lentelės eilutė',
+				td: 'Lentelės langelis',
 				img: 'Paveiksliukas',
 				span: 'Tekstas',
 				a: 'Nuoroda',
@@ -275,6 +302,7 @@ PC.langs.lt = {
 			border_color: 'Rėmelio spalva',
 			target_cell: 'Pasirinktas langelis',
 			target_row: 'Visi langeliai eilutėje',
+			target_col: 'Visi langeliai stulpelyje',
 			target_all: 'Visi langeliai lentelėje',
 			wrap: 'Žodžių laužymas'
 		},
@@ -316,9 +344,11 @@ PC.langs.lt = {
 			cropper_loading: 'Prašome palaukti, kirpti bus galima, kai paveiksliukas bus įkeltas...',
 			mark_unused: 'Pažymėti nenaudotus failus',
 			close_after_insert: 'Po iterpimo galeriją uždaryti',
+			close_after_click_outside: 'Uždaryti galeriją po paspaudimo už jos ribų',
 			size: 'Dydis',
 			files_selected_suffix: ' pasirinkti failai',
 			no_files: 'Pasirinktoje kategorijoje failų nėra<br />Galite įkelti failų paspaudę mygtuką „Įkelti" meniu juostoje viršuje',
+			no_files_in_trashed: 'Pasirinktoje kategorijoje failų nėra',
 			thumbnails: {
 				thumbnail: 'Miniatiūra',
 				small: 'Mažas',
@@ -372,7 +402,14 @@ PC.langs.lt = {
 				view: {
 					view: 'Rodyti',
 					icons: 'Ikonėles',
-					detailed: 'Detales'
+					detailed: 'Detales',
+					
+					sort_by_name: 'Rūšiuoti pagal vardą',
+					sort_by_size: 'Rūšiuoti pagal dydį',
+					sort_by_modified: 'Rūšiuoti pagal datą',
+					
+					asc: 'didėjančiai',
+					desc: 'mažėjančiai'
 				},
 				sort: {
 					sort: 'Rūšiuoti',
@@ -384,7 +421,8 @@ PC.langs.lt = {
 			},
 			category: {
 				create: {
-					error_title: 'Kategorijos nepavyko sukurti'
+					error_title: 'Kategorijos nepavyko sukurti',
+					default_name: 'Kategorija'
 				},
 				rename: {
 					error_title: 'Kategorijos nepavyko pervadinti'
@@ -518,7 +556,8 @@ PC.langs.lt = {
 			},
 			resize: 'Apkarpymas',
 			normal: 'Normalus',
-			adaptive: 'Prisitaikantis'
+			adaptive: 'Prisitaikantis',
+			semi_adaptive: 'Pusiau prisitaikantis'
 		},
 		gmaps: {
 			title: 'Google žemėlapiai',
@@ -547,6 +586,7 @@ PC.langs.lt = {
 			id: 'ID',
 			_class: 'Stiliaus klasė',
 			style: 'Stilius',
+			rel: 'Lightbox grupė',
 			border: 'Rėmelis',
 			solid: 'Vientisas',
 			dotted: 'Taškeliais',
@@ -639,8 +679,8 @@ PC.langs.lt = {
 			title: 'HTML kodo redaktorius',
 			wrap: 'Žodžių laužymas'
 		},
-                mergetablecells: {
-			title: 'Sujungti lentelės langelius',
+		mergetablecells: {
+			title: 'Sujungti lentelės langelius'
 		},
 		tables: {
 			title: 'Įterpti lentelę',
@@ -666,7 +706,9 @@ PC.langs.lt = {
 			more: 'Daugiau'
 		},
 		plugins: {
-			title: 'Modulių valdymas'
+			title: 'Modulių valdymas',
+			restart_admin_title: 'Perkrauti administravimo panelę',
+			restart_admin_confirm_question: 'Ar norite perkrauti administravimo panelę, kad pamatyti aktyvuotus modulius?'
 		}
 	},
 	mod: {
@@ -744,6 +786,7 @@ PC.langs.lt = {
 			theme: 'Šablonas',
 			id: 'ID',
 			name: 'Pavadinimas',
+			activated: 'Aktyvuota',
 			msg: {
 				site_delete_title: 'Patvirtinkite svetainės ištrinimą',
 				site_delete: 'Jūs tikrai norite ištrinti šią svetainę ir visus jos puslapius?',

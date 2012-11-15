@@ -28,12 +28,18 @@ PC.langs.ru = {
 	edit: 'Изменить',
 	copy: 'Копировать',
 	del: 'Удалить',
+    move_left: 'Влево',
+    move_right: 'Вправо',
+    move_up: 'Вверх',
+    move_down: 'Вниз',
 	close: 'Закрыть',
 	seo: 'SEO',
-	name: 'Имя',
+	name: 'Название',
+	custom_name: 'Название в тексте',
 	link: 'Ссылка',
 	seo_link: 'SEO ссылка',
-	title: 'Название',
+	seo_permalink: 'Постоянная ссылка',
+	title: 'Заголовок',
 	desc: 'Описание',
 	keyword: 'Ключевое слово',
 	keywords: 'Ключевые слова',
@@ -68,9 +74,26 @@ PC.langs.ru = {
 		permissions: {
 			types: {
 				core: {
-					access_admin: 'Доступ в панель управления',
-					admin: 'Управление всем: сайтами, страницами, плагинами и т.д.',
-					plugins: 'Доступ к плагинам (доступ к внутренним частям плагинов конфигурируется отдельно)'
+					access_admin: {
+						title: 'Access admin',
+						description: 'Доступ в панель управления'
+					},
+					admin: {
+						title: 'Super admin',
+						description: 'Управление всем: сайтами, страницами, плагинами и т.д.'
+					},
+					pages: {
+						title: 'pages',
+						description: 'Доступ к дереву страниц'
+					},
+					page_nodes: {
+						title: 'page_nodes',
+						description: 'Управление доступом к определенным страницам дерева'
+					},
+					plugins: {
+						title: 'plugins',
+						description: 'Доступ к плагинам (доступ к внутренним частям плагинов конфигурируется отдельно)'
+					}
 				}
 			}
 		}
@@ -89,7 +112,8 @@ PC.langs.ru = {
 		shortcut_to: 'Ссылка на',
 		new_page: 'Новая страница',
 		new_subpage: 'Новая подстраница',
-		rename: 'Переименовать'
+		rename: 'Переименовать',
+		addNew: 'Добавить'
 	},
 	tab: {
 		text: 'Текст',
@@ -175,6 +199,8 @@ PC.langs.ru = {
 			tags: {
 				p: 'Параграф',
 				table: 'Таблица',
+				tr: 'Строка таблицы',
+				td: 'Ячейки таблицы',
 				img: 'Изображение',
 				span: 'Текст',
 				a: 'Ссылка',
@@ -275,6 +301,7 @@ PC.langs.ru = {
 			border_color: 'Цвет границы',
 			target_cell: 'Данная ячейка',
 			target_row: 'Все ячейки в строке',
+			target_col: 'Все ячейки в столбикe',
 			target_all: 'Все ячейки в таблице',
 			wrap: 'Перенос слов'
 		},
@@ -316,9 +343,11 @@ PC.langs.ru = {
 			cropper_loading: 'Пожалуйста подождите, задать параметры можно только после загрузки изображения...',
 			mark_unused: 'Пометить неиспользуемые файлы',
 			close_after_insert: 'Закрыть галерею, вставив изображение',
+			close_after_click_outside: 'Закрывать галерею после нажатия за её пределы', 
 			size: 'Размер',
 			files_selected_suffix: 'Выбранные файлы',
 			no_files: 'Выбранная категория пуста.<br />Вы можете добавить файлы, нажав кнопку в панели управления сверху',
+			no_files_in_trashed: 'Выбранная категория пуста.',
 			thumbnails: {
 				thumbnail: 'Превью изображения',
 				small: 'Маленького',
@@ -372,7 +401,14 @@ PC.langs.ru = {
 				view: {
 					view: 'Посмотреть',
 					icons: 'Иконки',
-					detailed: 'Детализированый список'
+					detailed: 'Детализированый список',
+					
+					sort_by_name: 'Сортировать по названию',
+					sort_by_size: 'Сортировать по размеру',
+					sort_by_modified: 'Сортировать по дате',
+					
+					asc: 'по восходящему',
+					desc: 'по нисходящему'
 				},
 				sort: {
 					sort: 'Сортировать',
@@ -384,7 +420,8 @@ PC.langs.ru = {
 			},
 			category: {
 				create: {
-					error_title: 'Категория не была создана'
+					error_title: 'Категория не была создана',
+					default_name: 'Категория'
 				},
 				rename: {
 					error_title: 'Категория не была переименована'
@@ -518,7 +555,8 @@ PC.langs.ru = {
 			},
 			resize: 'Кадрирование',
 			normal: 'Нормальный',
-			adaptive: 'Aдаптивный'
+			adaptive: 'Aдаптивный',
+			semi_adaptive: 'Полу-aдаптивный'
 		},
 		gmaps: {
 			title: 'Карты Googlе',
@@ -547,6 +585,7 @@ PC.langs.ru = {
 			id: 'ID',
 			_class: 'Класс стилей',
 			style: 'Стиль',
+			rel: 'Lightbox группа',
 			border: 'Рамка',
 			solid: 'Однородный',
 			dotted: 'Пунктиром',
@@ -638,9 +677,9 @@ PC.langs.ru = {
 		source: {
 			title: 'Редактор кода HTML',
 			wrap: 'Перенос слов'
-		},
-                mergetablecells: {
-			title: 'Объединить ячейки',
+		},	
+		mergetablecells: {
+			title: 'Объединить ячейки'
 		},
 		tables: {
 			title: 'Вставить таблицу',
@@ -666,7 +705,9 @@ PC.langs.ru = {
 			more: 'Подробнее'
 		},
 		plugins: {
-			title: 'Менеджер плагинов'
+			title: 'Менеджер плагинов',
+			restart_admin_title: 'Перезагрузить панель администратора',
+			restart_admin_confirm_question: 'Перезагрузить панель администратора, чтобы увидеть список активных модулей?'
 		}
 	},
 	mod: {
@@ -744,6 +785,7 @@ PC.langs.ru = {
 			theme: 'Шаблон',
 			id: 'ID',
 			name: 'Название',
+			activated: 'Активированный',
 			msg: {
 				site_delete_title: 'Подтвердите удаление сайта',
 				site_delete: 'Вы действительно хотите удалить этот сайт и все его страницы?',

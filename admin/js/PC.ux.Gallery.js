@@ -167,7 +167,20 @@ Ext.ComponentMgr.registerType('pc_gallery_files_template', PC.ux.gallery.files.T
 PC.ux.gallery.FilesCurrentTemplate = 'icons';
 PC.ux.gallery.MarkUnusedFiles = false;
 PC.ux.gallery.CloseAfterInsert = false;
+PC.ux.gallery.CloseAfterOutside = false;
+PC.ux.gallery.CloseAfterClickOutside = false;
 //
+
+if (PC.utils.getCookie('admin_mark_unused_files')) {
+	PC.ux.gallery.MarkUnusedFiles = true;
+}
+if (PC.utils.getCookie('admin_close_after_insert')) {
+	PC.ux.gallery.CloseAfterInsert = true;
+}
+if (PC.utils.getCookie('admin_close_after_click_outside_gallery')) {
+	PC.ux.gallery.CloseAfterClickOutside = true;
+}
+
 PC.ux.gallery.SelectedCategory = 0;
 
 PC.ux.gallery.files.GetShortName = function(name, record, tpl) {
@@ -274,6 +287,7 @@ PC.ux.gallery.files.actions = {
 			}
 		},
 		Delete: {
+			hidden: true,
 			disabled: true,
 			text: PC.i18n.dialog.gallery.action._delete,
 			icon: 'images/delete.png',
@@ -314,7 +328,64 @@ PC.ux.gallery.files.actions = {
 				}
 			}
 		},
+		Sorting: {
+			id:  'sorting_split_button',
+			xtype: 'splitbutton', icon: 'images/hmenu-asc.gif',
+			tooltip: PC.i18n.dialog.gallery.action.view.view,
+			menu: [
+				{	text: PC.i18n.dialog.gallery.action.view.sort_by_name + ' ' + PC.i18n.dialog.gallery.action.view.asc,
+					icon: 'images/arrow-down.gif',
+					handler: function(button){
+						PC.dialog.gallery.filesStore.sort('short_name', 'ASC');
+						console.log(this);
+						this.activate();
+					},
+					active: true,
+					ref: '_sort_by_name_asc'
+				},
+				{	text: PC.i18n.dialog.gallery.action.view.sort_by_name + ' ' + PC.i18n.dialog.gallery.action.view.desc,
+					icon: 'images/arrow-up.gif',
+					handler: function(button){
+						PC.dialog.gallery.filesStore.sort('short_name', 'DESC');
+					},
+					active: true,
+					ref: '../_sort_by_name_dedc'
+				},
+				'-',
+				{	text: PC.i18n.dialog.gallery.action.view.sort_by_size + ' ' + PC.i18n.dialog.gallery.action.view.asc,
+					icon: 'images/arrow-down.gif',
+					handler: function(button){
+						PC.dialog.gallery.filesStore.sort('size_in_bytes', 'ASC');
+					},
+					ref: '../../_sort_by_name_dedc2'
+				},
+				{	text: PC.i18n.dialog.gallery.action.view.sort_by_size + ' ' + PC.i18n.dialog.gallery.action.view.desc,
+					icon: 'images/arrow-up.gif',
+					handler: function(button){
+						PC.dialog.gallery.filesStore.sort('size_in_bytes', 'DESC');
+					},
+					ref: '../../../_sort_by_name_dedc3'
+				},
+				'-',
+				{	text: PC.i18n.dialog.gallery.action.view.sort_by_modified + ' ' + PC.i18n.dialog.gallery.action.view.asc,
+					icon: 'images/arrow-down.gif',
+					handler: function(button){
+						PC.dialog.gallery.filesStore.sort('modified', 'ASC');
+					}
+				},
+				{	text: PC.i18n.dialog.gallery.action.view.sort_by_modified + ' ' + PC.i18n.dialog.gallery.action.view.desc,
+					icon: 'images/arrow-up.gif',
+					handler: function(button){
+						PC.dialog.gallery.filesStore.sort('modified', 'DESC');
+					}
+				}
+			],
+			handler: function() {
+				// choose next template in the menu
+			}
+		},
 		ChangeTemplate: {
+			id:  'change_template_split_button',
 			xtype: 'splitbutton', icon: 'images/application_view_tile.png',
 			tooltip: PC.i18n.dialog.gallery.action.view.view,
 			menu: [
@@ -340,6 +411,7 @@ PC.ux.gallery.files.actions = {
 			}
 		},
 		Settings: {
+			id:  'settings_split_button',
 			icon: 'images/Compile.png', xtype: 'splitbutton',
 			tooltip: PC.i18n.dialog.gallery.title.settings,
 			/*handler: function(){
@@ -363,6 +435,7 @@ PC.ux.gallery.files.actions = {
 				new Ext.menu.CheckItem({
 					text: PC.i18n.dialog.gallery.close_after_insert,
 					checked: PC.ux.gallery.CloseAfterInsert,
+					/*
 					handler: function() {
 						if (!PC.ux.gallery.CloseAfterInsert) {
 							PC.utils.setCookie('admin_close_after_insert', true);
@@ -371,7 +444,37 @@ PC.ux.gallery.files.actions = {
 							PC.utils.deleteCookie('admin_close_after_insert');
 						}
 						PC.ux.gallery.CloseAfterInsert = !PC.ux.gallery.CloseAfterInsert;
+					},
+					*/
+					listeners: {
+						checkchange: function(check_item, checked){
+							if (checked) {
+								PC.utils.setCookie('admin_close_after_insert', true);
+							}
+							else {
+								PC.utils.deleteCookie('admin_close_after_insert');
+							}
+							PC.ux.gallery.CloseAfterInsert = checked;
+						}
 					}
+					
+				}),
+				new Ext.menu.CheckItem({
+					text: PC.i18n.dialog.gallery.close_after_click_outside,
+					checked: PC.ux.gallery.CloseAfterClickOutside,
+					listeners: {
+						checkchange: function(check_item, checked){
+							if (checked) {
+								PC.utils.setCookie('admin_close_after_click_outside_gallery', true);
+							}
+							else {
+								PC.utils.deleteCookie('admin_close_after_click_outside_gallery');
+							}
+							PC.ux.gallery.CloseAfterClickOutside = checked;
+							PC.dialog.gallery.window.pc_set_temp_window(checked);
+						}
+					}
+					
 				}),
 				/*
 				{	icon: 'images/filter.gif', text: PC.i18n.dialog.gallery.mark_unused,
@@ -441,16 +544,19 @@ PC.ux.gallery.files.actions = {
 				var category = PC.dialog.gallery.categories.getNodeById(PC.ux.gallery.SelectedCategory);
 				var path = '';
 				if (category) if (category.attributes.path.length > 0) path = category.attributes.path+'/';
+				
+				
 				//get selected item
 				var records = PC.dialog.gallery.files_view.getSelectedRecords();
 				var record = records[0];
 				var url = PC.global.BASE_URL+'gallery/'+path+record.data.name;
+				
 				//init clipboard
 				ZeroClipboard.setMoviePath('images/ZeroClipboard.swf');
 				clip = new ZeroClipboard.Client();
 				clip.setText(url);
 				//show window
-				var window = new Ext.Window({
+				var window = new PC.ux.Window({
 					title: PC.i18n.dialog.gallery.action.copy_to_clipboard,
 					closeAction: 'close',
 					padding: '5px 5px 0 5px',
@@ -492,6 +598,7 @@ PC.ux.gallery.files.actions = {
 					}
 				});
 				//dialog.show_window(window);
+				PC.dialog.gallery.window.pc_temp_window_children['copy_link'] = window;
 				window.show();
 			}
 		},
@@ -607,7 +714,7 @@ PC.ux.gallery.files.Store = function(config){
 		},
 		autoLoad: true,
 		fields: [
-			'id', 'name', 'extension', 'filetype', 'path', 'category', 'size', 'modified', 'in_use',
+			'id', 'name', 'extension', 'filetype', 'path', 'category', 'size', 'size_in_bytes', 'modified', 'in_use',
 			'replace_name',
 			{name: 'short_name', mapping: 'name', convert: PC.ux.gallery.files.GetShortName}
 			//{name: 'short_name_for_detailed_tpl', mapping: 'name', convert: this.short_name_for_detailed_tpl}
@@ -626,6 +733,8 @@ PC.ux.gallery.files.View = function(config) {
 		cls: 'gallery_files_view',
 		//tpl: new PC.dialog.gallery.files.Template,
 		emptyText: PC.i18n.dialog.gallery.no_files,
+		emptyTextNormal: PC.i18n.dialog.gallery.no_files,
+		emptyTextTrashed: PC.i18n.dialog.gallery.no_files_in_trashed,
 		autoScroll: true,
 		itemSelector: 'div.thumb-wrap',
 		multiSelect: true,
@@ -651,7 +760,17 @@ PC.ux.gallery.files.View = function(config) {
 	PC.ux.gallery.files.View.superclass.constructor.call(this, config);
 };
 
-Ext.extend(PC.ux.gallery.files.View, Ext.DataView, {});
+Ext.extend(PC.ux.gallery.files.View, Ext.DataView, {
+	refresh: function() {
+		if (this.getStore().baseParams.trashed) {
+			this.emptyText = this.emptyTextTrashed;
+		}
+		else {
+			this.emptyText = this.emptyTextNormal;
+		}
+		PC.ux.gallery.files.View.superclass.refresh.call(this);
+	}
+});
 
 Ext.ComponentMgr.registerType('pc_gallery_files_view', PC.ux.gallery.files.View);
 

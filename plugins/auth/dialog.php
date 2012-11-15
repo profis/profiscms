@@ -966,14 +966,27 @@ function mod_auth_click() {
 			//url: 'ajax.gallery.php?action=get_thumbnail_types',
 			reader: new Ext.data.ArrayReader({
 				fields: [
-					'plugin','name', 'description',
+					'plugin',
+					'name',
+					{	name: 'localized_name',
+						mapping: 'name',
+						convert: function(value, data){
+							var types_ln = PC.i18n.auth.permissions.types;
+							if (types_ln[data[0]] == undefined) return data[1];
+							if (types_ln[data[0]][data[1]] == undefined) return data[1];
+							if (types_ln[data[0]][data[1]].title == undefined) return data[1];
+							return types_ln[data[0]][data[1]].title;
+						}
+					},
+					'description',
 					{	name: 'localized_description',
 						mapping: 'description',
 						convert: function(value, data){
 							var types_ln = PC.i18n.auth.permissions.types;
 							if (types_ln[data[0]] == undefined) return PC.i18n.no_description;
 							if (types_ln[data[0]][data[1]] == undefined) return PC.i18n.no_description;
-							return types_ln[data[0]][data[1]];
+							if (types_ln[data[0]][data[1]].description == undefined) return PC.i18n.no_description;
+							return types_ln[data[0]][data[1]].description;
 						}
 					}
 				]
@@ -1046,9 +1059,12 @@ function mod_auth_click() {
 			{	dataIndex: 'plugin',
 				hidden: true
 			},
+			{	dataIndex: 'name',
+				hidden: true
+			},
 			{	header: 'Name',
 				width: 50,
-				dataIndex: 'name'
+				dataIndex: 'localized_name'
 			},
 			{	header: 'Description',
 				id: 'pc_auth_description_col',
@@ -1102,6 +1118,25 @@ function mod_auth_click() {
 						var editor = PC.auth.perms.editors.Get(plugin, r.data.name);
 						//edit
 						var id = Ext.id();
+						
+						
+						var callback_ok = function(window) {
+							//handler
+							var perm_data = window.editor.data.Get(window);
+							if (typeof perm_data == 'object' && perm_data != null) {
+								if (dialog.permissions._loaded.Set(r.data.plugin, r.data.name, perm_data)) {
+									window.close();
+									return;
+								}
+							}
+							Ext.MessageBox.show({
+								title: PC.i18n.error,
+								msg: 'Error while validating changes',
+								buttons: Ext.MessageBox.OK,
+								icon: Ext.MessageBox.ERROR
+							});
+						}
+						
 						var button = new Ext.Button({
 							text: '<img src="images/pencil.png" alt="" />',
 							style: 'margin-top:-3px;margin-left:-3px;margin-bottom:-2px;',
@@ -1109,7 +1144,7 @@ function mod_auth_click() {
 								//decode permission data
 								var perm_data = dialog.permissions._loaded.Get(r.data.plugin, r.data.name, true);
 								//construct window
-								var window = {
+								var window_config = {
 									title: 'Permissions editor',
 									width: 500, maxHeight: 600,
 									listeners: {
@@ -1128,7 +1163,7 @@ function mod_auth_click() {
 									flex: 1,
 									labelWidth: 120,
 									labelAlign: 'right',
-									defaults: {xtype: 'textfield', anchor: '100%'},
+									//defaults: {xtype: 'textfield', anchor: '100%'},
 									layoutConfig: {
 										align: 'stretch'
 									},
@@ -1136,20 +1171,7 @@ function mod_auth_click() {
 									buttons: [
 										{	text: Ext.Msg.buttonText.ok,
 											handler: function() {
-												//handler
-												var perm_data = window.editor.data.Get(window);
-												if (typeof perm_data == 'object' && perm_data != null) {
-													if (dialog.permissions._loaded.Set(r.data.plugin, r.data.name, perm_data)) {
-														window.close();
-														return;
-													}
-												}
-												Ext.MessageBox.show({
-													title: PC.i18n.error,
-													msg: 'Error while validating changes',
-													buttons: Ext.MessageBox.OK,
-													icon: Ext.MessageBox.ERROR
-												});
+												callback_ok(window);
 											}
 										},
 										{	text: Ext.Msg.buttonText.cancel,
@@ -1160,13 +1182,32 @@ function mod_auth_click() {
 									],
 									editor: editor
 								};
-								var custom_config = editor.window.Get(perm_data);
-								//apply custom config
-								Ext.apply(window, custom_config);
-								//show window and load data
-								window = new Ext.Window(window);
-								window.show();
+								
+								var window = false;
+								var show_window_after_data_load = false;
+								var hook_name = 'core/auth/get_perm_window/' + plugin;
+								if (PC.hooks.Count(hook_name) > 0) {
+									var params = {};
+									PC.hooks.Init(hook_name, params);
+									if (params.show_window_after_data_load) {
+										show_window_after_data_load = true;
+									}
+								}
+								if (!window) {
+									var custom_config = editor.window.Get(perm_data);
+									//apply custom config
+									Ext.apply(window_config, custom_config);
+									//show window and load data
+									window = new Ext.Window(window_config);
+								}
+								
+								if (!window.isVisible() && !show_window_after_data_load) {
+									window.show();
+								}
 								editor.data.Load(window, perm_data);
+								if (!window.isVisible() && show_window_after_data_load) {
+									window.show();
+								}
 							}
 						});
 						//render
@@ -1526,6 +1567,7 @@ function mod_auth_click() {
 			callback: function(options, success, response){
 				if (success && response.responseText) {
 					try {
+						//debugger;
 						var data = Ext.decode(response.responseText);
 						dialog.config = data;
 						dialog.permissions.store.loadData(dialog.config.perms);

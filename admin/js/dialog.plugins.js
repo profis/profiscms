@@ -117,6 +117,14 @@ PC.dialog.plugins = {
 											var cmp = Ext.getCmp('PluginsMenuItem-'+ plugin);
 											if (cmp) cmp.destroy();
 										});
+										if (r.activated.length > 0) {
+											Ext.Msg.confirm(dialog.ln.restart_admin_title, dialog.ln.restart_admin_confirm_question, function(fn){
+												if (fn == 'yes') {
+													reload_admin();
+												}
+											});
+										}
+
 									}
 									if (r.success) {
 										dialog.grid.getStore().commitChanges();
@@ -142,7 +150,7 @@ PC.dialog.plugins = {
 				}
 			]
 		});
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
 			/*layoutConfig: {
 				align: 'stretch'

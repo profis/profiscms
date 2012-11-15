@@ -26,8 +26,23 @@ PC.dialog.links = {
 					onTrigger1Click: function() {
 						//console.log(PC.admin._editor_ln_select.get('db_fld_redirect'));
 						var trigger = this;
-						Show_redirect_page_window(function(value){
-							trigger.setValue(value);
+						Show_redirect_page_window(function(url, lang, page_id){
+							trigger.setValue(url);
+							if (page_id) {
+								Ext.Ajax.request({
+									url: PC.global.BASE_URL + PC.global.ADMIN_DIR  + '/api/page_anchors/' + page_id + '/' + lang,
+									success: function(result){
+										var json_result = Ext.util.JSON.decode(result.responseText);
+										var s = dialog.window._anchor.getStore();
+										Ext.iterate(json_result, function(value, display_value) {
+											this.add(new this.recordType({
+												anchor: url + '#' + value,
+												name: value
+											}));
+										}, s);
+									}
+								});
+							}
 						}, true);
 					},
 					trigger2Class: 'x-form-link-trigger',
@@ -38,7 +53,8 @@ PC.dialog.links = {
 								field.setValue(url);
 								field.fireEvent('change');
 							},
-							thumbnail_type: null
+							thumbnail_type: null,
+							close_after_insert_forced: true
 						};
 						var src = field.getValue();
 						if (/^gallery\//.test(src)) {
@@ -59,12 +75,26 @@ PC.dialog.links = {
 				{	ref: '../../_anchor',
 					fieldLabel: this.ln.anchor,
 					xtype: 'combo', mode: 'local',
-					store: dialog.Get_anchors(),
+					//store: dialog.Get_anchors(),
+					store: {
+						xtype: 'arraystore',
+						fields: ['anchor', 'name'],
+						idIndex: 0,
+						data: [
+							['', ' - ']
+						]
+					},
+					valueField: 'anchor',
+					displayField: 'name',
 					triggerAction: 'all',
 					listeners: {
 						change: function(cb, value, old) {
+							if (!value) {
+								//dialog.window._href.setValue('');
+								dialog.window._href.disable();
+							}
 							if (value.length) {
-								dialog.window._href.setValue('#'+value);
+								dialog.window._href.setValue(value);
 								dialog.window._href.disable();
 							}
 							else {
@@ -72,7 +102,17 @@ PC.dialog.links = {
 							}
 						},
 						select: function(cb, record, index) {
-							cb.fireEvent('change', cb, record.data.field1, cb.getValue());
+							cb.fireEvent('change', cb, record.data.anchor, cb.getValue());
+						},
+						afterrender: function(combo) {
+							var s = combo.getStore();
+							var anchors = dialog.Get_anchors();
+							Ext.iterate(anchors, function(value, display_value) {
+								this.add(new this.recordType({
+									anchor: value,
+									name: display_value
+								}));
+							}, s);
 						}
 					}
 				},
@@ -192,7 +232,7 @@ PC.dialog.links = {
 			items: [this.general, this.advanced, this.events],
 			border: false
 		};
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title_insert,
 			layout: 'vbox',
 			layoutConfig: {
@@ -224,9 +264,11 @@ PC.dialog.links = {
 	},
 	Get_anchors: function() {
 		var nodes = tinymce.activeEditor.dom.select('a.mceItemAnchor,img.mceItemAnchor');
-		var anchors = new Array();
-		for (i=0; i<nodes.length; i++) {
-			anchors.push(nodes[i].getAttribute('name'));
+		var anchors = {};
+		var name;
+		for (var i=0; i<nodes.length; i++) {
+			name = nodes[i].getAttribute('name');
+			anchors['#' + name] = name;
 		}
 		return anchors;
 	},
@@ -261,6 +303,10 @@ PC.dialog.links = {
 		var elm, elementArray, i;
 		
 		if (tinymce.isIE) inst.selection.moveToBookmark(this.bookmark);
+
+		if (inst.selection.getRng().endOffset-inst.selection.getRng().startOffset == 0 && PC.dialog.links.last_position) {
+			inst.selection.moveToBookmark(PC.dialog.links.last_position);
+		}
 
 		elm = inst.selection.getNode();
 		this.checkPrefix(this.window._href);

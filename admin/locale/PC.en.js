@@ -30,11 +30,17 @@ PC.langs.en = {
 	edit: 'Edit',
 	copy: 'Copy',
 	del: 'Delete',
+	move_left: 'Move left',
+	move_right: 'Move right',
+	move_up: 'Move up',
+	move_down: 'Move down',
 	close: 'Close',
 	seo: 'SEO',
 	name: 'Name',
+	custom_name: 'Name in text',
 	link: 'Link',
 	seo_link: 'User friendly URL',
+	seo_permalink: 'Permalink',
 	title: 'Title',
 	desc: 'Description',
 	keyword: 'Keyword',
@@ -66,13 +72,30 @@ PC.langs.en = {
 		invalid: 'Invalid username or password specified.',
 		database_error: 'Database error',
 		unknown_error: 'Unknown error',
-		login_error: 'Login error',
-		permissions: {
+		login_error: 'Login error', 
+		permissions: { 
 			types: {
 				core: {
-					access_admin: 'Access admin panel',
-					admin: 'Manage everything: sites, pages, all plugins etc.',
-					plugins: 'Access to plugins (permissions of custom plugin actions should be configured separately)'
+					access_admin: {
+						title: 'Access admin',
+						description: 'Access admin panel'
+					},
+					admin: {
+						title: 'Super admin',
+						description: 'Access to everything: sites, pages, all plugins etc.'
+					},
+					pages: {
+						title: 'Pages',
+						description: 'Access to the page tree'
+					},
+					page_nodes: {
+						title: 'Page nodes',
+						description: 'Manage access to certain pages in tree'
+					},
+					plugins: {
+						title: 'Plugins',
+						description: 'Manage access to plugins (permissions of custom plugin actions should be configured separately)'
+					}
 				}
 			}
 		}
@@ -91,7 +114,8 @@ PC.langs.en = {
 		shortcut_to: 'Shortcut to',
 		new_page: 'New page',
 		new_subpage: 'New subpage',
-		rename: 'Rename'
+		rename: 'Rename',
+		addNew: 'Add new'
 	},
 	tab: {
 		text: 'Text',
@@ -177,6 +201,8 @@ PC.langs.en = {
 			tags: {
 				p: 'Paragraph',
 				table: 'Table',
+				tr: 'Table row',
+				td: 'Table cell',
 				img: 'Image',
 				span: 'Text',
 				a: 'Link',
@@ -277,6 +303,7 @@ PC.langs.en = {
 			border_color: 'Border color',
 			target_cell: 'Current cell',
 			target_row: 'All cells in row',
+			target_col: 'All cells in column',
 			target_all: 'All cells in table',
 			wrap: 'Word wrap'
 		},
@@ -318,9 +345,11 @@ PC.langs.en = {
 			cropper_loading: 'Please wait, cropper will start when image has finished loading...',
 			mark_unused: 'Mark unused files',
 			close_after_insert: 'Close gallery after insert',
+			close_after_click_outside: 'Close gallery after clicking outside it',
 			size: 'Size',
 			files_selected_suffix: ' files selected',
-			no_files: 'There is no files in the selected category,<br />You can upload some files by pressing button in the toolbar above',
+			no_files: 'There are no files in the selected category,<br />You can upload some files by pressing button in the toolbar above',
+			no_files_in_trashed: 'There are no files in the selected category',
 			thumbnails: {
 				thumbnail: 'Thumbnail',
 				small: 'Small',
@@ -374,7 +403,13 @@ PC.langs.en = {
 				view: {
 					view: 'View',
 					icons: 'Icons',
-					detailed: 'Detailed'
+					detailed: 'Detailed',
+					sort_by_name: 'Sort by name',
+					sort_by_size: 'Sort by size',
+					sort_by_modified: 'Sort by date modified',
+					
+					asc: 'ASC',
+					desc: 'DESC'
 				},
 				sort: {
 					sort: 'Sort',
@@ -386,7 +421,8 @@ PC.langs.en = {
 			},
 			category: {
 				create: {
-					error_title: 'Category was not created'
+					error_title: 'Category was not created',
+					default_name: 'Category'
 				},
 				rename: {
 					error_title: 'Category was not renamed'
@@ -520,7 +556,8 @@ PC.langs.en = {
 			},
 			resize: 'Resize',
 			normal: 'Normal',
-			adaptive: 'Adaptive'
+			adaptive: 'Adaptive',
+			semi_adaptive: 'Semi adaptive'
 		},
 		gmaps: {
 			title: 'Google Maps',
@@ -549,6 +586,7 @@ PC.langs.en = {
 			id: 'Id',
 			_class: 'Style class',
 			style: 'Style',
+			rel: 'Lightbox group',
 			border: 'Border',
 			solid: 'Solid',
 			dotted: 'Dotted',
@@ -641,8 +679,8 @@ PC.langs.en = {
 			title: 'HTML Source Editor',
 			wrap: 'Word wrap'
 		},
-                mergetablecells: {
-			title: 'Merge table cells',
+		mergetablecells: {
+			title: 'Merge table cells'
 		},
 		tables: {
 			title: 'Insert table',
@@ -668,7 +706,9 @@ PC.langs.en = {
 			more: 'More'
 		},
 		plugins: {
-			title: 'Modules manager'
+			title: 'Modules manager',
+			restart_admin_title: 'Restart admin',
+			restart_admin_confirm_question: 'Would you like to restart admin to see activated plugins?'
 		}
 	},
 	mod: {
@@ -746,6 +786,7 @@ PC.langs.en = {
 			theme: 'Theme',
 			id: 'ID',
 			name: 'Name',
+			activated: 'Activated',
 			msg: {
 				site_delete_title: 'Confirm site deletion',
 				site_delete: 'Are you sure you want to delete this site and all its pages?',

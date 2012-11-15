@@ -66,6 +66,6 @@ $cfg['core_plugins'] = array('core','page', 'backup', 'domains', 'sites', 'varia
 $cfg['salt'] = '#%4#%F3456fsg34%#13as97$^g1';
 
 $cfg['valid_page_fields'] = array(
-	'name', 'info', 'info2', 'info3', 'title', 'keywords', 'description', 'route', 'text',
+	'name', 'info', 'info2', 'info3', 'title', 'keywords', 'description', 'route', 'permalink', 'text',
 	'redirect', 'controller', 'route_lock', 'published', 'hot', 'nomenu', 'date_from', 'date_to', 'date', 'reference_id'
 );

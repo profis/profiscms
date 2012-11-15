@@ -19,10 +19,12 @@ PC.pages = {
 						var n = PC.tree.component.getNodeById(opts.params['new']);
 						n.expand();
 						var nn = PC.tree.Append(n, data);
-						PC.tree.component.localizeNode(nn);
-						nn.loaded = true;
-						nn.expand();
-						node_rename_menu(nn, true);
+						if (nn) {
+							PC.tree.component.localizeNode(nn);
+							nn.loaded = true;
+							nn.expand();
+							node_rename_menu(nn, true);
+						}
 						return; // OK
 					} catch(e) {};
 				}

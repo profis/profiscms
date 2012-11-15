@@ -74,7 +74,7 @@ PC.dialog.multilnedit = {
 				]
 			};
 			Ext.apply(cfg, params);
-			PC.dialog.styles.multilnedit = new Ext.Window(cfg);
+			PC.dialog.styles.multilnedit = new PC.ux.Window(cfg);
 			PC.dialog.styles.multilnedit.show();
 		}
 	},

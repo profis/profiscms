@@ -590,7 +590,7 @@ function mod_backup_click() {
 		]
 	});
 	
-	var w = new Ext.Window({
+	var w = new PC.ux.Window({
 		modal: true,
 		//title: PC.plugin.backup.name,
 		title: PC.i18n.mod.backup.backup_restore,

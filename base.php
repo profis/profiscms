@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
  
 if (phpversion() < 5.2) die('ProfisCMS requires at least PHP 5.2 version.');
-define('PC_VERSION', '4.3.0');
+define('PC_VERSION', '4.4.0b');
 
 //error handling
 require('error_handling.php');
@@ -26,7 +26,6 @@ mb_internal_encoding('UTF-8');
 //session for site/admin users
 //force system to use submitted session id
 if (isset($_POST['phpsessid'])) session_id($_POST['phpsessid']);
-session_start();
 
 //play with working directories
 $cfg['path']['cwd'] = str_replace('\\', '/', getcwd()).'/';
@@ -69,7 +68,7 @@ $class_autoload = array(
 * Use Register_class_autoloader($class, $path) to extend this list.
 * @param mixed $cls.
 */
-function __autoload($cls) {
+function PC_autoload($cls) {
 	global $class_autoload;
 	if (!isset($class_autoload[$cls])) {
 		if (preg_match("#^PC_[a-z0-9_]+$#i", $cls)) {
@@ -82,12 +81,16 @@ function __autoload($cls) {
 	if (!is_file($path)) return false;
 	require_once($path);
 }
+spl_autoload_register('PC_autoload');
 
 require("database.php");
 
 chdir($cfg['cwd']);
 
 $cfg += get_dir_url_info();
+session_name('PHPSESSID_' . md5($cfg['url']['base']));
+session_start();
+
 $HTTPS = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS'])!='off';
 $PROTOCOL = $HTTPS ? 'https://' : 'http://';
 
@@ -99,6 +102,7 @@ $auth = new PC_auth;
 $plugins = new PC_plugins;
 $plugins->Scan();
 $routes = new PC_routes;
+
 $site = new PC_site;
 $page = new PC_page;
 $gallery = new PC_gallery;

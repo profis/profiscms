@@ -256,7 +256,7 @@ AwesomeUploader = Ext.extend(Ext.Panel, {
 			,file_size_limit: this.maxFileSizeBytes + ' B'
 			,file_types: this.flashSwfUploadFileTypes
 			,file_types_description: this.flashSwfUploadFileTypesDescription
-			,file_upload_limit: 100
+			,file_upload_limit: 0
 			,file_queue_limit: 0
 			,debug: false
 			,post_params: this.extraPostData
@@ -437,6 +437,11 @@ AwesomeUploader = Ext.extend(Ext.Panel, {
 	}
 	,swfUploadSuccess:function(file, serverData){ //called when the file is done
 		try{
+			var myRegexp = /(\{.+\})/;
+			var match = myRegexp.exec(serverData);
+			if (match[0] && match[1] && serverData != match[1]) {
+				serverData = match[1];
+			}
 			console.log(serverData);
 			var result = Ext.util.JSON.decode(serverData);//throws a SyntaxError.
 		}catch(e){

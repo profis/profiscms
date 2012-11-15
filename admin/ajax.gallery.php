@@ -20,14 +20,16 @@ error_reporting(0); //ensure PHP won't output any error data and won't destroy J
 $cfg['core']['no_login_form'] = true; //don't output login form if there's no active session
 
 require_once('admin.php'); //ensure the user is authorized, otherwise stop executing this script
-if (!$auth->Authorize('core', 'admin')) {
+//$auth->debug = true;
+//$auth->set_instant_debug_to_file($cfg['path']['base'] . 'logs/auth/auth_for_ajax_gallery_php.html', false, 5);
+if (!$auth->Authorize('core', 'admin') and !$auth->Authorize('core', 'access_admin')) {
 	die('No access');
 }
 
 $gallery = new PC_gallery;
 header('Cache-Control: no-cache');
 # Parse gallery actions and return JSON result
-$action = isset($_GET['action'])? $_GET['action'] : $_POST['action'];
+$action = isset($_GET['action'])? $_GET['action'] : v($_POST['action']);
 
 if ($action != 'debug_tree') header('Content-Type: application/json');
 $output = array(); //otherwise, if no response data for request found, JSON will return nothing
@@ -39,7 +41,7 @@ if ($action == "get_categories") {
 		$result = $gallery->Get_categories($parent, $trashed);
 		if ($result && count($result['categories'])) {
 			foreach ($result['categories'] as $category) {
-				$output[] = array(
+				$temp = array(
 					'trashed'=>(v($category['trashed'])>0?1:0),
 					//'leaf'=>($category['rgt']-$category['lft']<=1),
 					'id'=>$category['id'],
@@ -47,7 +49,13 @@ if ($action == "get_categories") {
 					'text'=>$category['category'],
 					'size'=>number_format($category['size'] /1024/1024, 2),
 					'path'=>$category['path'],
-					'iconCls'=>'gallery_folder');
+					'iconCls'=>'gallery_folder'
+					);
+				if ($category['rgt']-$category['lft']<=1) {
+					$temp['children'] = array();
+					$temp['expanded'] = true;
+				}
+				$output[] = $temp;
 			}
 		}
 	}
@@ -56,7 +64,7 @@ if ($action == "get_categories") {
 		$result = $gallery->Get_categories();
 		if (v($result['success'])) {
 			foreach ($result['categories'] as $category) {
-				$categories[] = array(
+				$temp = array(
 					'trashed'=>0,
 					//'leaf'=>($category['rgt']-$category['lft']<=1),
 					'id'=>$category['id'],
@@ -66,6 +74,11 @@ if ($action == "get_categories") {
 					'path'=>$category['path'],
 					'iconCls'=>'gallery_folder'
 				);
+				if ($category['rgt']-$category['lft']<=1) {
+					$temp['children'] = array();
+					$temp['expanded'] = true;
+				}
+				$categories[] = $temp;
 			}
 		}
 		$output[] = array(
@@ -110,7 +123,8 @@ elseif ($action == "create_category") {
 elseif ($action == "rename_category") {
 	$category_id = $_POST['category_id'];
 	$category = $_POST['category'];
-	$result = $gallery->Rename_category($category_id, $category);
+	$old_category = $_POST['old_category'];
+	$result = $gallery->Rename_category($category_id, $category, $old_category);
 	if (!v($result['success'])) {
 		$output['success'] = false;
 		$output['errors'] = $result['errors'];
@@ -132,7 +146,7 @@ elseif ($action == "get_files") {
 	$category_id = v($_POST['category_id']);
 	$trashed = (bool)v($_POST['trashed']);
 	$filter = v($_POST['filter']);
-	if ($category_id != 'bin' && !$trashed) {
+	if (!empty($filter) || $category_id != 'bin' && !$trashed) {
 		$result = $gallery->Get_files($category_id, $filter);
 	}
 	else {
@@ -142,11 +156,19 @@ elseif ($action == "get_files") {
 		//print_pre($result);
 		if (count($result['files'])) {
 			if ($category_id != 'bin' && !$trashed) {
+				//echo 'not trashed ';
+				$size_in_bytes_max_length = 20;
+				$size_in_bytes_prefix = '000000000000000000000000000000000';
 				foreach ($result['files'] as &$file) {
 					//echo '<pre>'; print_r($file); echo '</pre>';
 					if (!empty($file['path'])) $file['path'] .= '/';
 					else $file['path'] = '';
 					$filetype = $gallery->filetypes[$file['extension']];
+					$size_in_bytes = v($file['size']);
+					$size_in_bytes_length = strlen($size_in_bytes);
+					if ($size_in_bytes_length < $size_in_bytes_max_length) {
+						$size_in_bytes = substr($size_in_bytes_prefix, 0, $size_in_bytes_max_length - $size_in_bytes_length) . $size_in_bytes;
+					} 
 					$output[] = array(
 						'id'=>$file['id'],
 						'name'=>$file['filename'],
@@ -155,16 +177,25 @@ elseif ($action == "get_files") {
 						'path'=>$file['path'],
 						'category'=>v($file['category']),
 						'size'=>($file['size']<307200?number_format($file['size'] /1024).' KB':number_format($file['size'] /1024/1024, 2).' MB'),
+						'size_in_bytes'=>$size_in_bytes,
 						'modified'=>date('Y-m-d H:i', $file['date_modified']),
 						'in_use'=>($file['in_use']>0)
 					);
 				}
 			}
 			else {
-				foreach ($result['files'] as &$file) {
+				foreach ($result['files'] as $key => &$file) {
+					if (!$file['id']) {
+						unset($result['files'][$key]);
+						continue;
+					}
 					if (!empty($file['path'])) $file['path'] .= '/';
 					else $file['path'] = '';
-					$file['filetype'] = $gallery->filetypes[$file['extension']];
+					$file_type = '';
+					if (isset($gallery->filetypes) and isset($file['extension'])) {
+						$file_type = $gallery->filetypes[$file['extension']];
+					}
+					$file['filetype'] = $file_type;
 					$file['name'] = $file['filename'];
 					$file['size'] = ($file['size']<307200?number_format($file['size'] /1024).' KB':number_format($file['size'] /1024/1024, 2).' MB');
 					$file['modified'] = date('Y-m-d H:i', $file['date_modified']);
@@ -175,9 +206,13 @@ elseif ($action == "get_files") {
 		}
 	}
 	else $output = $result;
+	//print_r($output);
 }
 elseif ($action == "upload_file") {
-	$category_id = $_POST['category_id'];
+	$category_id = v($_POST['category_id']);
+	if (empty($category_id)) {
+		$category_id = v($_GET['category_id']);
+	}
 	$result = $gallery->Upload_file($category_id, $_FILES['Filedata']);
 	if (!v($result['success'])) {
 		$output['success'] = false;
@@ -198,6 +233,8 @@ elseif ($action == "delete_file") {
 elseif ($action == "delete_files") {
 	$file_ids = $_POST['file_ids'];
 	$files = explode(',', $file_ids);
+	$succeeded = 0;
+	$failed = 0;
 	for ($a=0; isset($files[$a]); $a++) {
 		$result = $gallery->Delete_file($files[$a]);
 		if (v($result['success'])) {
@@ -304,22 +341,24 @@ elseif ($action == "restore_files") {
 		}
 	}
 	else {
-		$r = $db->query("SELECT c.*,sum(p.date_trashed) trashed"
-		." FROM {$cfg['db']['prefix']}gallery_categories c"
-		." LEFT JOIN {$cfg['db']['prefix']}gallery_categories p ON c.lft between p.lft and p.rgt"
-		." WHERE c.id=$cid"
-		." GROUP BY c.id,c.category,c.directory,c.lft,c.rgt,c.parent,c.author,c.date_created,c.date_trashed");
+		$query = "SELECT c.*,sum(p.date_trashed) trashed"
+			." FROM {$cfg['db']['prefix']}gallery_categories c"
+			." LEFT JOIN {$cfg['db']['prefix']}gallery_categories p ON c.lft between p.lft and p.rgt"
+			." WHERE c.id=$cid"
+			." GROUP BY c.id,c.category,c.directory,c.lft,c.rgt,c.parent,c.author,c.date_created,c.date_trashed";
+		$r = $db->query($query);
 		if (!$r) {
 			$output['success'] = false;
 			$output['errors'][] = 'database';
 		}
 		else {
-			if (mysql_num_rows($r) == 0) {
+			if ($r->rowCount() == 0) {
 				$output['success'] = false;
 				$output['errors'][] = 'not_found';
 			}
 			else {
-				$data = mysql_fetch_assoc($r);
+				//$data = mysql_fetch_assoc($r);
+				$data = $r->fetch();
 				if ($data['trashed'] > 0) {
 					$r = $db->prepare("UPDATE {$cfg['db']['prefix']}gallery_files SET date_trashed=0 WHERE id IN(?)");
 					$r->execute(array($file_ids));
@@ -350,7 +389,7 @@ elseif ($action == "empty_trash") {
 		$output['success'] = false;
 		$output['errors'] = $r['errors'];
 	}
-	else $output = $result;
+	else $output = array('success' => true);
 }
 elseif ($action == "get_thumbnail_types") {
 	$r = $gallery->Get_thumbnail_types();

@@ -54,6 +54,11 @@
 	font-family: Tahoma, Arial, Helvetica, Sans-Serif;
 }
 
+.x-tree-node  .tree_node_grey_out span{
+	color: #666;
+	font-style:italic;
+}
+
 .login_header {
 	text-align: center;
 	font: bold 14px Arial;
@@ -204,6 +209,9 @@ filter: alpha(opacity=50)
 .x-editor-disabled .ext-el-mask {
 background: #fff;
 }
+#pc_editor_page_page .ext-el-mask {
+background: transparent;
+}
 /* Color Picker */
 #color-picker-colours span.color {
 display: block; float: left;
@@ -215,3 +223,21 @@ cursor: pointer;
 .x-profis-datepicker .x-date-disabled span{
 color: #aaa;
 }
+
+/*
+.pc_gallery_body table{
+	height: 100%;
+}
+
+.pc_gallery_body tr{
+	vertical-align: top;
+}
+
+.pc_gallery_body td{
+	height: 100%;
+}
+
+.gallery_files_view {
+	height: 100%;
+}
+*/

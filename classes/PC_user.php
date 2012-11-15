@@ -299,7 +299,6 @@ final class PC_user extends PC_base {
 		);
 	}
 	public function Send_activation_code($email, $code) {
-		include_once $this->core->cfg["path"]["classes"] . "class.phpmailer.php";
 		$mail = new PHPMailer();
 		$mail->SMTPDebug  = 1;
 		$mail->CharSet = "utf-8";

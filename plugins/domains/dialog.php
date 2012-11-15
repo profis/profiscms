@@ -256,7 +256,7 @@ function mod_domains_click() {
 		grd.edit_btn.setDisabled(dis);
 		grd.del_btn.setDisabled(dis);
 	});
-	var w = new Ext.Window({
+	var w = new PC.ux.Window({
 		modal: true,
 		title: PC.i18n.mod.domains.selfname,
 		width: 530,

@@ -29,6 +29,9 @@ PC.dialog.gallery = {
 		if (PC.utils.getCookie('admin_close_after_insert')) {
 			PC.ux.gallery.CloseAfterInsert = true;
 		}
+		if (PC.utils.getCookie('admin_close_after_click_outside_gallery')) {
+			PC.ux.gallery.CloseAfterClickOutside = true;
+		}
 		/*if (PC.utils.getCookie('admin_selected_category')) {
 			PC.ux.gallery.SelectedCategory = PC.utils.getCookie('admin_selected_category');
 		}*/
@@ -181,6 +184,7 @@ PC.dialog.gallery = {
 									node.attributes.trashed = 0;
 									//PC.dialog.gallery.categories.getRootNode().reload();
 									PC.dialog.gallery.categories.getLoader().load(PC.dialog.gallery.categories.getRootNode(), function(){
+										PC.dialog.gallery.select_category(PC.ux.gallery.SelectedCategory);
 										var node = PC.dialog.gallery.categories.getNodeById(PC.ux.gallery.SelectedCategory);
 										if (node) node.ensureVisible();
 									});
@@ -191,6 +195,52 @@ PC.dialog.gallery = {
 							},
 							failure: function(){
 								PC.dialog.gallery.show_connection_error();
+							}
+						});
+					}
+				},
+				{
+					text: PC.i18n.dialog.gallery.action._delete, iconCls: 'gallery_delete',
+					handler: function() {
+						Ext.Msg.show({
+							title: PC.i18n.dialog.gallery.category._delete.confirmation.title,
+							msg: PC.i18n.dialog.gallery.category._delete.confirmation.message,
+							buttons: {
+								ok: PC.i18n.dialog.gallery.button.ok,
+								cancel: PC.i18n.dialog.gallery.button.cancel
+							},
+							fn: function(bid) {
+								if (bid == 'ok') {
+									Ext.Ajax.request({
+										url: 'ajax.gallery.php?action=delete_category',
+										method: 'POST',
+										params: {
+											category_id: PC.dialog.gallery.categories_context.contextNode.attributes.id
+										},
+										success: function(result){
+											var json_result = Ext.util.JSON.decode(result.responseText);
+											if (json_result.success) {
+												if (PC.ux.gallery.SelectedCategory == PC.dialog.gallery.categories_context.contextNode.attributes.id) {
+													PC.dialog.gallery.select_category(0);
+												}
+												var node = PC.dialog.gallery.categories_context.contextNode;
+												var trash = PC.dialog.gallery.categories.getNodeById('bin');
+												if (trash) {
+													trash.reload();
+													//node.attributes.trashed = 1;
+													//trash.insertBefore(node, trash.firstChild);
+												}
+												node.remove();
+											}
+											else {
+												PC.dialog.gallery.show_request_errors(PC.i18n.dialog.gallery.category._delete.error_title, json_result.errors);
+											}
+										},
+										failure: function(){
+											PC.dialog.gallery.show_connection_error();
+										}
+									});
+								}
 							}
 						});
 					}
@@ -457,6 +507,18 @@ PC.dialog.gallery = {
 							};
 							field.fireEvent('specialkey', field, e);
 						}
+					},
+					{	icon: 'images/zoom_out.png',
+						handler: function(b) {
+							var field = b.ownerCt.items.get('gallery_files_store_filter');
+							field.setValue('');
+							var e = {
+								getKey: function() {
+									return Ext.EventManager.ENTER;
+								}
+							};
+							field.fireEvent('specialkey', field, e);
+						}
 					}
 				]
 			}
@@ -473,8 +535,10 @@ PC.dialog.gallery = {
 				beforecomplete: function(Editor, value, start_value){
 					if (Editor.editNode.disabled) {
 						if (value == '') {
-							Editor.editNode.destroy();
-							return;
+							value = PC.i18n.dialog.gallery.category.create.default_name;
+							Editor.setValue(value);
+							//Editor.editNode.destroy();
+							//return;
 						}
 						Ext.Ajax.request({
 							url: 'ajax.gallery.php?action=create_category',
@@ -501,9 +565,13 @@ PC.dialog.gallery = {
 						if (start_value == value) {
 							return;
 						}
+						if (value == '') {
+							Editor.setValue(start_value);
+							return;
+						}
 						Ext.Ajax.request({
 							url: 'ajax.gallery.php?action=rename_category',
-							method: 'POST', params: {category_id: Editor.editNode.id, category: value},
+							method: 'POST', params: {category_id: Editor.editNode.id, category: value, old_category: start_value},
 							success: function(result){
 								var json_result = Ext.util.JSON.decode(result.responseText);
 								if (!json_result.success) {
@@ -544,6 +612,9 @@ PC.dialog.gallery = {
 						if (node) if (node.attributes.trashed != undefined) if (node.attributes.trashed) return;
 					}
 					PC.dialog.gallery.insert_files('small/');
+					if (PC.dialog.gallery.params.close_after_insert_forced) {
+						PC.dialog.gallery.window.hide();
+					}
 				},
 				containercontextmenu: function(view, e){
 					//e.preventDefault();
@@ -626,7 +697,7 @@ PC.dialog.gallery = {
 				new Ext.menu.Item(PC.ux.gallery.files.actions.Get('Insert', this.files_view)),
 				new Ext.menu.Item(PC.ux.gallery.files.actions.Get('CreateThumbnail', this.files_view)),
 				PC.ux.gallery.files.actions.Get('Rename', this.files_view),
-				//PC.ux.gallery.files.actions.Get('_delete', this.files_view),
+				PC.ux.gallery.files.actions.Get('Delete', this.files_view),
 				PC.ux.gallery.files.actions.Get('Trash', this.files_view),
 				PC.ux.gallery.files.actions.Get('Restore', this.files_view),
 				PC.ux.gallery.files.actions.Get('CopyLink', this.files_view)
@@ -643,21 +714,47 @@ PC.dialog.gallery = {
 				PC.ux.gallery.files.actions.Get('CreateThumbnail', this.files_view),
 				PC.ux.gallery.files.actions.Get('Rename', this.files_view),
 				PC.ux.gallery.files.actions.Get('Trash', this.files_view),
+				PC.ux.gallery.files.actions.Get('Delete', this.files_view),
 				PC.ux.gallery.files.actions.Get('CopyLink', this.files_view),
 				{xtype: 'tbfill'},
+				PC.ux.gallery.files.actions.Get('Sorting', this.files_view),
 				PC.ux.gallery.files.actions.Get('ChangeTemplate', this.files_view),
 				PC.ux.gallery.files.actions.Get('Settings', this.files_view)
 			]
 		});
 		
+		//this.files_view.region = 'center';
+		this.files_view.flex = 1;
+		
+		this.empty_view = new Ext.BoxComponent({
+			width: 20,
+			//height: 20,
+			region: 'east'
+		});
+		
 		this.files = new Ext.Panel({
+			ref: '_files',
 			region: 'center',
-			layout: 'fit',
+			//layout: 'table',
+			
+			layout: {
+				type: 'table'
+				//extraCls: 'pc_gallery_table'
+			},
+			
+			//items: [this.files_view, this.empty_view],
 			items: this.files_view,
 			tbar: this.files_toolbar
 		});
 		
-		this.window = new Ext.Window({
+		var temp_window = false;
+		
+		if (PC.ux.gallery.CloseAfterClickOutside) {
+			temp_window = true;
+		}
+		
+		this.window = new PC.ux.Window({
+			pc_temp_window: temp_window,
 			title: PC.i18n.dialog.gallery.title.gallery,
 			border: false,
 			layout: 'border',
@@ -670,11 +767,6 @@ PC.dialog.gallery = {
 			items: [PC.dialog.gallery.categories, PC.dialog.gallery.files],
 			listeners: {
 				//dont allow to drag gallery window outside viewable area (currently doesn't support draging out of view in the right or bottom)
-				move: function(window, x, y) {
-					if (x < 0 && y < 0) window.setPagePosition(0, 0);
-					else if (x < 0) window.setPagePosition(0, y);
-					else if (y < 0) window.setPagePosition(x, 0);
-				}
 				/*,deactivate: function(){
 					if (!dialog.child_window_active) dialog.window.hide();
 				}*/
@@ -814,7 +906,7 @@ PC.dialog.gallery = {
 						PC.dialog.gallery.thumbnail_types_store.rejectChanges();
 						return false;
 					}
-					if (record.data.group && changes['use_adaptive_resize'] != undefined) {
+					if (false && record.data.group && changes['use_adaptive_resize'] != undefined) {
 						Ext.Msg.alert(PC.i18n.error, PC.i18n.dialog.gallery.error.change_default_type_resize);
 						PC.dialog.gallery.thumbnail_types_store.rejectChanges();
 						return false;
@@ -843,13 +935,17 @@ PC.dialog.gallery = {
 								}
 								else {
 									PC.dialog.gallery.thumbnail_types_store.rejectChanges();
-									PC.dialog.gallery.thumbnail_types_store.remove(record);
+									if (record.data._new) {
+										PC.dialog.gallery.thumbnail_types_store.remove(record);
+									}
 									PC.dialog.gallery.show_request_errors(PC.i18n.dialog.gallery.thumbnails.edit.error_title, json_result.errors);
 								}
 							}
 							else {
 								PC.dialog.gallery.thumbnail_types_store.rejectChanges();
-								PC.dialog.gallery.thumbnail_types_store.remove(record);
+								if (record.data._new) {
+									PC.dialog.gallery.thumbnail_types_store.remove(record);
+								}
 								PC.dialog.gallery.show_connection_error();
 							}
 							//PC.dialog.gallery.thumbnail_types_store.sort('group', 'DESC');
@@ -954,6 +1050,7 @@ PC.dialog.gallery = {
 								idIndex: 0,
 								data: [
 									[0, PC.i18n.dialog.gallery.normal],
+									//[2, PC.i18n.dialog.gallery.semi_adaptive],
 									[1, PC.i18n.dialog.gallery.adaptive]
 								]
 							},
@@ -966,7 +1063,8 @@ PC.dialog.gallery = {
 							preventMark: true
 						},
 						renderer: function(value, metaData, record, rowIndex, colIndex, store) {
-							if (value == '1') return PC.i18n.dialog.gallery.adaptive;
+							if (value == '1') {return PC.i18n.dialog.gallery.adaptive}
+							//else if (value == '2') {return PC.i18n.dialog.gallery.semi_adaptive}
 							else return PC.i18n.dialog.gallery.normal;
 						},
 						width: 40
@@ -1029,7 +1127,28 @@ PC.dialog.gallery = {
 			}*/
 		});
 		
+		this.window.pc_temp_window_children['settings'] = this.settings;
+		this.window.pc_temp_window_children['settings_split_button'] = 'settings_split_button';
+		this.window.pc_temp_window_children['change_template_split_button'] = 'change_template_split_button';
+		this.window.pc_temp_window_children['sorting_split_button'] = 'sorting_split_button';
+		
+		if (typeof dialog.params.save_fn == 'function') {
+			PC.ux.gallery.files.actions.Get('Insert', this.files_view).hide();
+		}
+		else {
+			//dialog.show_window(PC.ux.gallery.files.actions.Get('Insert', this.files_view));
+			PC.ux.gallery.files.actions.Get('Insert', this.files_view).show();
+		}
 		this.window.show();
+		
+		this.files.body.setStyle('overflow', 'auto');
+		this.files.body.addClass('pc_gallery_body');
+		/*
+		var files_view_el = Ext.get(this.files_view.id);
+		if (files_view_el) {
+			files_view_el.setStyle('display', 'table');
+		}
+		*/
 		
 		Ext.extend(PC.dialog.gallery.file_drag_zone, Ext.dd.DragZone, {
 			// We don't want to register our file elements, so let's 
@@ -1040,7 +1159,9 @@ PC.dialog.gallery = {
 				if(target){
 					var view = this.view;
 					if(!view.isSelected(target)){
-						view.onClick(e);
+						if (e.button == 2) {
+							view.onClick(e);
+						}
 					}
 					var selNodes = view.getSelectedNodes();
 					var dragData = {
@@ -1167,6 +1288,7 @@ PC.dialog.gallery = {
 					}
 				])*/
 			});
+			dialog.window.pc_temp_window_children['preview'] = image_preview;
 			image_preview.show();
 			//dialog.show_window(image_preview);
 			//close preview when image is clicked
@@ -1193,14 +1315,14 @@ PC.dialog.gallery = {
 		var dialog = this;
 		this.awesome_uploader = {
 			xtype: 'awesomeuploader',
-			standardUploadUrl: 'ajax.gallery.php',
-			flashUploadUrl: 'ajax.gallery.php',
-			xhrUploadUrl: 'ajax.gallery.php',
+			standardUploadUrl: 'ajax.gallery.php?action=upload_file&category_id=' + PC.ux.gallery.SelectedCategory,
+			flashUploadUrl: 'ajax.gallery.php?action=upload_file&category_id=' + PC.ux.gallery.SelectedCategory,
+			xhrUploadUrl: 'ajax.gallery.php?action=upload_file&category_id=' + PC.ux.gallery.SelectedCategory,
 			extraPostData: {
 				action: 'upload_file',
 				category_id: PC.ux.gallery.SelectedCategory,
 				//needs edit: session cookie name should be returned by php's function session_name()
-				phpsessid: PC.utils.getCookie('PHPSESSID')
+				phpsessid: PC.utils.getCookie(PC.global['session.name'])
 			},
 			listeners: {
 				//scope: this,
@@ -1216,10 +1338,17 @@ PC.dialog.gallery = {
 					setTimeout(function(){
 						PC.dialog.gallery.awesome_uploader_window.close();
 					}, 250);
+					
+					var path = PC.dialog.gallery.categories.getNodeById(PC.ux.gallery.SelectedCategory).getPath();
+						
 					PC.dialog.gallery.categories.getLoader().load(PC.dialog.gallery.categories.getRootNode(), function(){
-						var n = PC.dialog.gallery.categories.getNodeById(PC.ux.gallery.SelectedCategory);
-						if (n) n.ensureVisible();
+						//var n = PC.dialog.gallery.categories.getNodeById(PC.ux.gallery.SelectedCategory);
+						//if (n) n.ensureVisible();
+						if (path) {
+							PC.dialog.gallery.categories.selectPath(path);
+						}
 					});
+					
 				}
 			}
 		};
@@ -1234,6 +1363,7 @@ PC.dialog.gallery = {
 			items: this.awesome_uploader,
 			resizable: false
 		});
+		dialog.window.pc_temp_window_children['uploader'] = this.awesome_uploader_window;
 		this.awesome_uploader_window.show();
 		//dialog.show_window(PC.dialog.gallery.awesome_uploader_window);
 	},
@@ -1275,7 +1405,11 @@ PC.dialog.gallery = {
 				//var file_src = PC.global.BASE_URL +'gallery/'+record.data.path +'large/'+ record.data.name;
 				var file_src = 'gallery/'+ PC.global.ADMIN_DIR +'/id/';
 				if (typeof dialog.params.thumbnail_type!='undefined') {
-					if (dialog.params.thumbnail_type != null) file_src += dialog.params.thumbnail_type +'/';
+					if (dialog.params.thumbnail_type != null) {
+						if (dialog.params.thumbnail_type != '') {
+							file_src += dialog.params.thumbnail_type + '/';
+						}
+					}
 				}
 				else file_src += 'small/';
 				file_src += record.data.id;
@@ -1299,6 +1433,12 @@ PC.dialog.gallery = {
 					var width = _img.width;
 					var height = _img.height;
 					insert_code += 'width="'+ width +'" height="'+ height +'"/></a>';
+					if (tinyMCE.activeEditor.selection.getNode().parentNode) {
+						var parent_tag_name = tinyMCE.activeEditor.selection.getNode().parentNode.tagName;
+						if (parent_tag_name == 'A' || parent_tag_name == 'a') {
+							tinyMCE.activeEditor.selection.select(tinyMCE.activeEditor.selection.getNode().parentNode);
+						}
+					}
 					tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,insert_code);
 				}
 				_img.onerror = function(){
@@ -1505,7 +1645,7 @@ PC.dialog.gallery = {
 		var actions = PC.ux.gallery.files.actions;
 		var view = this.files_view;
 		if (this.is_category_trashed(id)) {
-			if (!this.is_category_trashed(previous)) {
+			if (!this.is_category_trashed(previous) || previous == 0) {
 				actions.Get('Upload', view).hide();
 				actions.Get('Restore', view).hide();
 				actions.Get('Insert', view).hide();
@@ -1513,12 +1653,14 @@ PC.dialog.gallery = {
 				actions.Get('CreateThumbnail', view).hide();
 				actions.Get('Rename', view).hide();
 				actions.Get('Trash', view).hide();
+				actions.Get('Delete', view).hide();
 				actions.Get('CopyLink', view).hide();
 				actions.Get('Restore', view).show();
+				actions.Get('Delete', view).show();
 			}
 		}
 		else {
-			if (this.is_category_trashed(previous)) {
+			if (this.is_category_trashed(previous) || actions.Get('Upload', view).isHidden()) {
 				actions.Get('Upload', view).show();
 				actions.Get('Restore', view).show();
 				actions.Get('Insert', view).show();
@@ -1528,6 +1670,7 @@ PC.dialog.gallery = {
 				actions.Get('Trash', view).show();
 				actions.Get('CopyLink', view).show();
 				actions.Get('Restore', view).hide();
+				actions.Get('Delete', view).hide();
 			}
 		}
 	},
@@ -1959,7 +2102,8 @@ PC.dialog.gallery = {
 							cropper.preserve_ratio = !cropper.preserve_ratio;
 							var imgLoad = image;
 							imgLoad.onload = (function(){
-								cropper.window.setSize(imgLoad.width + 15, imgLoad.height + 60);
+								//cropper.window.setSize(Math.max(imgLoad.width, thumbnailType.width) + 15, imgLoad.height + 60);
+								cropper.window.doLayout();
 								if (typeof cropper.crop == 'object') cropper.crop.destroy();
 								if (cropper.cropping_image_ratio < 1) {
 									var min_thumb_width = thumbnail_type_record.data.thumbnail_max_w * cropper.cropping_image_ratio;
@@ -2042,6 +2186,7 @@ PC.dialog.gallery = {
 								scope: this
 							}
 						});
+						dialog.window.pc_temp_window_children['cropper'] = cropper.window;
 						cropper.window.show();
 						//dialog.show_window(cropper.window);
 						Ext.Msg.hide();
@@ -2132,6 +2277,7 @@ PC.dialog.gallery = {
 		}
 	}
 };
+
 Ext.DataView.DragSelector = function(cfg){
     cfg = cfg || {};
     var view, proxy, tracker;

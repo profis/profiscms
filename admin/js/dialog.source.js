@@ -4,7 +4,7 @@ PC.dialog.source = {
 	show: function() {
 		this.ln = PC.i18n.dialog.source;
 		var dialog = this;
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
 			modal: true, layout: 'border',
 			width: 900, height: 500,

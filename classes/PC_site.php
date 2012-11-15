@@ -71,6 +71,8 @@ final class PC_site extends PC_base {
 		if (!is_null($id)) {
 			$this->Load($id);
 		}
+		$this->debug = true;
+		$this->set_instant_debug_to_file($this->cfg['path']['base'] . 'logs/site/site.html', false, 5);
 	}
 	/**
 	* Method used to load current page by given $route object. Method inside calls PC_site::Get_page_path() is called.
@@ -79,14 +81,30 @@ final class PC_site extends PC_base {
 	* @see PC_site::Get_page_path()
 	*/
 	public function Load_page($route) {
+		$this->debug("Load_page(", 2);
+		$this->debug($route, 2);
 		$this->core->Init_hooks('before_load_page', array(
 			'page'=> &$route
 		));
 		$this->_page_is_loaded = true;
 		//$route['text'] = preg_replace("/href=\"".$this->default_ln."\//", "href=\"",  $route['text']);
 		$this->loaded_page = &$route;
+		$nearest_published = false;
 		if (isset($route['path'])) {
 			$path_part_1 = $this->Get_page_path($route['path'][0]['idp'], false);
+			foreach ($path_part_1 as $key => $part) {
+				if ($part['published']) {
+					$nearest_published = $part;
+				}
+				else {
+					if ($nearest_published) {
+						$this->core->Redirect_local($this->Get_link($nearest_published['route']));
+					}
+					else {
+						$this->core->Redirect_local($this->Get_home_link());
+					}
+				}
+			}
 			$path_part_2 = $route['path'];
 			$this->loaded_page['route_path'] = array_merge($path_part_1, $path_part_2);
 		}
@@ -122,6 +140,48 @@ final class PC_site extends PC_base {
 	* @see PC_site::Load_page_by_route()
 	*/
 	public function Load_page_by_path() {
+		$this->debug('Load_page_by_path(' . $this->routes->Get_request() . ')');
+		$permalink_request = false;
+		$hook_object = false;
+		
+		$this->page->absorb_debug_settings($this, 5);
+		
+		$request_trimmed = trim($this->routes->Get_request(), '/');
+		
+		if (!empty($request_trimmed)) {
+			$permalink_page_id = $this->page->Get_id_by_content('permalink', $request_trimmed, $this->ln);
+			if ($permalink_page_id) {
+				$this->debug('Permalink page was found: ' . $permalink_page_id, 2);
+				$permalink_request = $this->page->Get_content_by_id($permalink_page_id, 'route', $this->ln);
+				if ($permalink_request) {
+					$this->debug('Page route was found: ' . $permalink_request, 3);
+				}
+			}
+		}
+		
+		if (!$permalink_request) {
+			$this->core->Init_hooks('core/site/request-from-permalink', array(
+				'request'=> $this->routes->Get_request(),
+				'permalink_request'=> &$permalink_request,
+				'logger' => &$this,
+				'ln' => $this->ln
+			));
+			if ($hook_object) {
+				$this->debug('Debug from hook [core/route/load-page-by-path] object');
+				$this->debug($hook_object->get_debug_string(), 1);
+			}
+		}
+		
+
+		//return;
+		if ($permalink_request) {
+			$this->debug("Parsing new request: " . $permalink_request, 1);
+			$this->routes->Parse_request($permalink_request);
+		}
+		
+		$this->debug('Debug from page:', 6);
+		$this->debug($this->page->get_debug_string(), 7);
+		
 		if ($this->routes->Exists(1)) {
 			if ($this->routes->Exists(2)) {
 				$path = $this->routes->Get_range(1);
@@ -156,11 +216,16 @@ final class PC_site extends PC_base {
 	public function Load_page_by_route() {
 		//get route data
 		$args = func_get_args();
+		$this->debug('Load_page_by_route(', 1);
+		$this->debug($args, 1);
 		$route = call_user_func_array(array($this->page, 'Get_route_data'), $args);
 		//analyze route data
 		//core controller shouldnt be loaded
 		if ($route['controller'] == 'core') {
+			$this->debug($route, 2);
+			$this->debug('Will do action', 2);
 			$this->core->Do_action(v($route['action']), v($route['data']));
+			
 		}
 		//dont open page if page language != current language
 		/*elseif ($route['ln'] != $this->ln) {
@@ -188,7 +253,7 @@ final class PC_site extends PC_base {
 		else return false;
 	}
 	/**
-	* Method used identify current site. Inside this method is called PC_site::Get_by_domain() method. If site considered identified 
+	* Method used identify current site. Inside this method is called PC_site::Get_by_domain() method. If site considered identified, 
 	* method PC_site::Load_site_data() called, method PC_core::Show_error() otherwise.
 	* @see PC_site::Get_by_domain()
 	* @see PC_site::Load_site_data()
@@ -372,7 +437,7 @@ final class PC_site extends PC_base {
 	*/
 	public function Load($id) {
 		$d = $this->Get($id);
-		return $this->Load_site_data($d);
+		$this->Load_site_data($d);		
 	}	
 	/**
 	* Method used to retrieve site data by request (or by optional $entry_address) from database.
@@ -387,11 +452,12 @@ final class PC_site extends PC_base {
 			$entry_address = rtrim($_SERVER['HTTP_HOST'].($pos?substr($request, 0, $pos):$request), '/');
 			//$entry_address = preg_replace("#^http://(.+)$#", "$1", $cfg['url']['base']);
 		}
-		$r = $this->prepare("SELECT s.id,s.name,s.theme,d.ln,".$this->sql_parser->group_concat($this->sql_parser->concat_ws("░", 'l.nr', 'l.ln', 'l.name'), array('order'=>array('by'=>'l.nr'),'separator'=>'▓'))." languages, mask, active"
-		." FROM {$this->db_prefix}domains d"
-		." LEFT JOIN {$this->db_prefix}sites s ON id=d.site"
-		." LEFT JOIN {$this->db_prefix}languages l ON l.site=s.id"
-		." WHERE ? LIKE mask GROUP BY s.id,s.name,s.theme,d.ln,d.nr,d.mask ORDER BY d.nr,length(mask) desc LIMIT 1");
+		$query = "SELECT s.id,s.name,s.theme,d.ln,".$this->sql_parser->group_concat($this->sql_parser->concat_ws("░", 'l.nr', 'l.ln', 'l.name', 'l.disabled', 'l.name'), array('order'=>array('by'=>'l.nr'),'separator'=>'▓'))." languages, mask, active"
+			." FROM {$this->db_prefix}domains d"
+			." LEFT JOIN {$this->db_prefix}sites s ON id=d.site"
+			." LEFT JOIN {$this->db_prefix}languages l ON l.site=s.id AND l.disabled = 0"
+			." WHERE ? LIKE mask GROUP BY s.id,s.name,s.theme,d.ln,d.nr,d.mask ORDER BY d.nr,length(mask) desc LIMIT 1";
+		$r = $this->prepare($query);
 		$s = $r->execute(array($entry_address));
 		if (!$s) die('Get_site_by_domain error.');
 		if ($r->rowCount() < 1) return false;
@@ -430,7 +496,7 @@ final class PC_site extends PC_base {
 		$r = $this->prepare("SELECT s.*,d.mask,d.ln,"
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws("░",'l.ln','l.name'), array('order'=>array('by'=>'l.nr'),'separator'=>'▓'))." langs"
 		." FROM {$this->db_prefix}sites s"
-		." LEFT JOIN {$this->db_prefix}languages l ON l.site=s.id"
+		." LEFT JOIN {$this->db_prefix}languages l ON l.site=s.id AND l.disabled = 0"
 		." LEFT JOIN {$this->db_prefix}domains d ON d.site=s.id"
 		." WHERE s.id=? GROUP BY s.id,s.name,s.theme,s.editor_width,s.editor_background,d.mask,d.nr,d.ln ORDER BY s.id LIMIT 1");
 		$success = $r->execute(array($id));
@@ -460,7 +526,7 @@ final class PC_site extends PC_base {
 		}
 		$sites = array();
 		$r = $this->query("SELECT s.*,d.mask,"
-		.$this->sql_parser->group_concat($this->sql_parser->concat_ws("░",'l.ln','l.name'), array('order'=>array('by'=>'l.nr'),'separator'=>'▓'))." langs"
+		.$this->sql_parser->group_concat($this->sql_parser->concat_ws("░",'l.ln','l.name', 'l.disabled'), array('order'=>array('by'=>'l.nr'),'separator'=>'▓'))." langs"
 		." FROM {$this->db_prefix}sites s"
 		." LEFT JOIN {$this->db_prefix}languages l ON l.site=s.id"
 		." LEFT JOIN {$this->db_prefix}domains d ON d.site=s.id"
@@ -475,7 +541,8 @@ final class PC_site extends PC_base {
 				$site['langs'] = array();
 				foreach ($langs as &$lang) {
 					$lang = explode('░', $lang);
-					$site['langs'][$lang[0]] = $lang[1];
+					//$site['langs'][$lang[0]] = $lang[1];
+					$site['langs'][$lang[0]] = array($lang[1], $lang[2]);
 				}
 				unset($langs);
 			} else $site['langs'] = array();
@@ -524,12 +591,33 @@ final class PC_site extends PC_base {
 		else $text =& $this->page->Get_text($id);
 		if (isset($this->force_headings)) $force_headings = $this->force_headings;
 		if ($force_headings) {
-			if (!preg_match("#^\s*<h1[^>]*>#", $text)) if (!empty($this->loaded_page['name'])) {
-				$text = "<h1>".$this->loaded_page['name']."</h1>\n".$text;
+			$h1_name = $this->loaded_page['custom_name'];
+			if (empty($h1_name)) {
+				$h1_name = $this->loaded_page['name'];
+			}
+			if (!preg_match("#^\s*<h1[^>]*>#", $text)) if (!empty($h1_name)) {
+				$text = "<h1>".$h1_name."</h1>\n".$text;
 			}
 		}
 		return $text;
 	}
+	
+	public function Get_title_for_text() {
+		$title = v($this->loaded_page['custom_name']);
+		if (empty($title)) {
+			$title = v($this->loaded_page['name']);
+		}
+		return $title;
+	}
+	
+	public function Get_title_for_text_from_page_data(&$page_data) {
+		$title = v($page_data['custom_name']);
+		if (empty($title)) {
+			$title = v($page_data['name']);
+		}
+		return $title;
+	}
+	
 	/**
 	* @todo remove or use this method... At 2012-01-20 14:23 method is unused and inside calling undefined methods...
 	*/
@@ -544,7 +632,7 @@ final class PC_site extends PC_base {
 	*/
 	public function Get_title() {
 		if (!$this->Page_is_loaded()) return false;
-		return (!empty($this->loaded_page['title'])?$this->loaded_page['title']:$this->loaded_page['name']);
+		return str_replace('"', '&quot;', (!empty($this->loaded_page['title'])?$this->loaded_page['title']:$this->loaded_page['name']));
 	}
 	/**
 	* Method used to set loaded page title.
@@ -575,11 +663,23 @@ final class PC_site extends PC_base {
 	public function Get_favicon($theme=null) {
 		$path = $this->Get_theme_path($theme, false);
 		if (!$path) return false;
+
+		$publicPath = '';
 		if (is_file($path."favicon.ico")) {
 			$publicPath = $this->Get_theme_path($theme)."favicon.ico";
+		}
+		if (empty($publicPath)) {
+			$default_icon_path = 'media/images/favicon.ico';
+			if (is_file($default_icon_path)) {
+				$publicPath = $default_icon_path;
+			}
+		}
+		
+		if (!empty($publicPath)) {
 			return '<link rel="icon" href="'.$publicPath.'" type="image/vnd.microsoft.icon" />'
 			.'<link rel="shortcut icon" href="'.$publicPath.'" type="image/vnd.microsoft.icon" />';
 		}
+		
 		return false;
 	}
 	/**
@@ -867,7 +967,11 @@ final class PC_site extends PC_base {
 		}
 		//sekantis ifas atkomentuotas todel, kad sis funkcionalumas reikalingas sudarinejant puslapio kalbos pasirinkimo linkus
 		elseif (!$this->Is_front_page()) {
-			$link .= v($this->loaded_page['routes'][$ln]);
+			$link_to_append = v($this->loaded_page['routes'][$ln]);
+			if (v($this->loaded_page['permalinks'][$ln])) {
+				$link_to_append = $this->loaded_page['permalinks'][$ln];
+			}
+			$link .= $link_to_append;
 		}
 		elseif (empty($link)) $link = $this->cfg['url']['base'].$this->link_prefix;
 		if (strrpos($link, '?')) {

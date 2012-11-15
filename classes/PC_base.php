@@ -13,8 +13,73 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
-abstract class PC_base {
-	public $cfg, $path, $db, $db_prefix, $sql_parser, $core, $site, $routes, $route, $page, $cache, $plugins, $gallery, $auth;
+abstract class PC_base extends PC_debug{
+	
+	
+	/**
+	 *
+	 * @var PC_core; 
+	 */
+	public $core;
+	
+	/**
+	 *
+	 * @var PC_site
+	 */
+	public $site;
+	
+	
+	/**
+	 *
+	 * @var PC_database 
+	 */
+	public $db;
+	
+	
+	/**
+	 *
+	 * @var PC_sql_parser
+	 */
+	public $sql_parser;
+	
+	/**
+	 *
+	 * @var PC_routes 
+	 */
+	public $routes;
+	
+	/**
+	 *
+	 * @var array
+	 */
+	public $route;
+	
+	/**
+	 *
+	 * @var PC_page
+	 */
+	public $page;
+	
+	/**
+	 *
+	 * @var PC_cache
+	 */
+	public $cache;
+	
+	
+	public $view_cache;
+	
+	
+	public $link_cache;
+	
+	public $cfg, $path, $db_prefix, $plugins, $gallery;
+	
+	/**
+	 *
+	 * @var PC_auth
+	 */
+	public $auth;
+	
 	final public function __construct() {
 		global $cfg, $db, $core, $site, $routes, $page, $cache, $plugins, $sql_parser, $gallery, $auth;
 		$this->cfg =& $cfg;

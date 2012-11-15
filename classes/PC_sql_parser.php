@@ -197,7 +197,9 @@ final class PC_sql_parser extends PC_base {
 	/**
 	* @todo implement or remove.
 	*/
-	public function escape() {} //alias to PDO->quote();
+	public function escape($v) {
+		return $this->db->quote($v);
+	} //alias to PDO->quote();
 	
 	/**
 	* @todo implement or remove.

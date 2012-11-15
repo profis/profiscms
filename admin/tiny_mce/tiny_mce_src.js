@@ -2340,7 +2340,9 @@ tinymce.create('static tinymce.util.XHR', {
 												return;
 											}
 										}
-										else if (valid_tags != tag) return;
+										else if (valid_tags != tag && valid_tags != tag.toLowerCase()) {
+											return;
+										}
 									}
 									
 									if (!lo[v]) {
@@ -8636,6 +8638,15 @@ tinymce.create('tinymce.ui.Separator:tinymce.ui.Control', {
 		},
 
 		hideMenu : function(e) {
+			
+			var temp_length = PC.global.temp_windows.length;
+			var w = false;
+			for (var i = 0; i < temp_length; i++) {
+				w = PC.global.temp_windows[i];
+				if (w && !w.hidden && !PC.global.temp_window_has_opened_child(w)) w.hide();
+			}
+			return;
+			
 			var w = PC.dialog.colorpicker.window;
 			if (w) w.hide();
 			return;

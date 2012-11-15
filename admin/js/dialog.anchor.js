@@ -17,7 +17,7 @@ PC.dialog.anchor = {
 				}
 			]
 		};
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
 			layout: 'vbox',
 			layoutConfig: {

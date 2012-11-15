@@ -1,21 +1,32 @@
 Ext.ns('PC.dialog');
 PC.dialog.gmaps = {
 	edit_mode: false,
-        show: function() {
-            if (typeof google != 'object' || typeof google.maps != 'object' || typeof google.maps.LatLng != 'function') {
-                var dialog = this;
-                var callback_for_google = function() {
-                    var callback_for_maps = function() {
-                        dialog.show_when_js_loaded();
-                    }
-                    google.load("maps", "3", {"callback" : callback_for_maps, "other_params": "sensor=false"});
-          
-                };
-                PC.utils.loadScript('https://www.google.com/jsapi/?sensor=false', callback_for_google);
-            }
-            else {
-                this.show_when_js_loaded();
-            }
+	
+	load_google: function (after_show_callback) {
+		var dialog = this;
+		if (typeof google != 'object' || typeof google.maps != 'object' || typeof google.maps.LatLng != 'function') {
+			var callback_for_google = function() {
+				var callback_for_maps = function() {
+					dialog.show_when_js_loaded();
+					if (after_show_callback && typeof(after_show_callback) == "function") {
+						after_show_callback();
+					}
+				}
+				google.load("maps", "3", {"callback" : callback_for_maps, "other_params": "sensor=false"});
+			};
+			PC.utils.loadScript('https://www.google.com/jsapi/?sensor=false', callback_for_google);
+		}
+		else {
+			dialog.show_when_js_loaded();
+			if (after_show_callback && typeof(after_show_callback) == "function") {
+				after_show_callback();
+			}
+		}
+	},
+	
+	
+	show: function(after_show_callback) {
+		this.load_google(after_show_callback);
 	},
 	show_when_js_loaded: function() {
 		this.ln = PC.i18n.dialog.gmaps;
@@ -29,7 +40,7 @@ PC.dialog.gmaps = {
 			}
 			return;
 		}
-                this.default_options = {
+        this.default_options = {
 			center: new google.maps.LatLng(55.17804878976065, 23.910986328124977),
 			zoom: 7,
 			mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -41,6 +52,7 @@ PC.dialog.gmaps = {
 			xtype: 'panel',
 			plain: true,
 			border: false,
+			flex: 1,
 			afterRender: function() {
 				this.map = new google.maps.Map(this.container.dom, options);
 				this.marker = new google.maps.Marker({
@@ -60,14 +72,81 @@ PC.dialog.gmaps = {
 				toolbar.get('marker_position_longitude').setValue(Math.round(pos.lng()*1000000)/1000000);
 			}
 		});
-		this.window = new Ext.Window({
+		
+		this.map_tab = {
+			title: 'Map',
+
+			items: [
+				this.panel
+			]
+		}
+		
+		this.options_tab = {
+			title: 'Options',
+			layout: 'form',
+			padding: '6px 9px 0 3px',
+			border: false,
+			autoScroll: true,
+			bodyCssClass: 'x-border-layout-ct',
+			//labelWidth: 120,
+			labelAlign: 'top',
+			defaults: {anchor: '100%', xtype:'textarea'},
+			items: [
+				{	
+					fieldLabel: 'Map options (separated by comma)',//this.ln.bg_image,
+					ref: '../../_gmap_map_options'
+				},
+				
+				{	
+					fieldLabel: 'Marker options (separated by comma)',//this.ln.bg_image,
+					ref: '../../_gmap_marker_options'
+				},
+				{	fieldLabel: 'Icon image',
+					xtype:'trigger', 
+					ref: '../../_gmap_marker_image',
+					triggerClass: 'x-form-search-trigger',
+					selectOnFocus: true,
+					onTriggerClick: function() {
+						var field = this;
+						var params = {
+							callee: 'image',
+							save_fn: function(url){
+								field.setValue(url);
+							}
+						};
+						var src = field.getValue();
+						if (/^gallery\//.test(src)) {
+							params.select_id = src.substring(src.lastIndexOf('/')+1);
+						}
+						PC.dialog.gallery.show(params);
+					}
+				},
+			]
+		};
+		
+		this.tabs = {
+			xtype: 'tabpanel',
+			activeTab: 0,
+			//width: 700,
+			//height: 400,
+			flex: 1,
+			items: [this.map_tab, this.options_tab],
+			border: false
+		};
+		
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
+			layout: 'vbox',
+			layoutConfig: {
+				align: 'stretch'
+			},
 			closeAction: 'hide',
 			width: 800,
 			height: 450,
 			resizable: false,
 			closeAction: 'hide',
-			items: this.panel,
+			//items: this.panel,
+			items: this.tabs,
 			bbar: new Ext.Toolbar({
 				items: [
 					{	icon: 'images/gmaps_marker.png',
@@ -183,14 +262,17 @@ PC.dialog.gmaps = {
 								latitude: pos.lat(),
 								longitude: pos.lng(),
 								zoom: PC.dialog.gmaps.panel.map.getZoom(),
-								map_type: PC.dialog.gmaps.panel.map.getMapTypeId()
+								map_type: PC.dialog.gmaps.panel.map.getMapTypeId(),
+								map_options: PC.dialog.gmaps.window._gmap_map_options.getValue(),
+								marker_options: PC.dialog.gmaps.window._gmap_marker_options.getValue(),
+								marker_image: PC.dialog.gmaps.window._gmap_marker_image.getValue()
 							};
 							var json_data = escape(Ext.util.JSON.encode(map_data));
 							if (!PC.dialog.gmaps.edit_mode) {
 								//insert new map
 								var map_object = '<object classid="clsid:google-map" width="'+width+'" height="'+height+'" codebase="http://maps.google.com/">'
 												   +'<param name="map_data" value="'+json_data+'" />'
-												   +'<embed src="maps.google.com" type="application/google-map" width="'+width+'" height="'+height+'" map_data="'+json_data+'"></embed>'
+												  +'<embed src="maps.google.com" type="application/google-map" width="'+width+'" height="'+height+'" map_data="'+json_data+'"></embed>'
 												   +'</object>';
 								tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent", false, map_object);
 							} else {
@@ -220,9 +302,18 @@ PC.dialog.gmaps = {
 		var pos = PC.dialog.gmaps.panel.map.getCenter();
 		toolbar.get('marker_position_latitude').setValue(Math.round(pos.lat()*1000000)/1000000);
 		toolbar.get('marker_position_longitude').setValue(Math.round(pos.lng()*1000000)/1000000);
+		PC.dialog.gmaps.window._gmap_map_options.setValue(options.map_options);
+		PC.dialog.gmaps.window._gmap_marker_options.setValue(options.marker_options);
+		PC.dialog.gmaps.window._gmap_marker_image.setValue(options.icon);
 		this.options = options;
 		return true;
 	},
+	/*
+	edit_map: function(el) {
+		this.load_google('edit_map_when_js_loaded', el);
+	},
+	*/
+	
 	edit_map: function(el) {
 		this.edit_element = el;
 		this.edit_data = {
@@ -234,7 +325,10 @@ PC.dialog.gmaps = {
 			center: new google.maps.LatLng(settings.latitude, settings.longitude),
 			zoom: settings.zoom,
 			mapTypeId: eval('google.maps.MapTypeId.'+settings.map_type.toUpperCase()),
-			streetViewControl: false
+			streetViewControl: false,
+			map_options: settings.map_options,
+			marker_options: settings.marker_options,
+			icon: settings.marker_image
 		};
 		this.load_options(options);
 		//w x h
@@ -254,6 +348,7 @@ PC.dialog.gmaps = {
 		this.edit_mode = true;
 		this.toggle_edit_mode();
 	},
+	
 	toggle_edit_mode: function() {
 		if (this.edit_mode) {
 			var toolbar = this.window.getBottomToolbar();

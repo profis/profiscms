@@ -1,6 +1,14 @@
 // Path to the blank image must point to a valid location on your server
 Ext.BLANK_IMAGE_URL = 'ext/resources/images/default/s.gif';
 // Main application entry point
+
+PC_acl_manager = {
+	has_access_to_pages: function() {
+		return PC.global.permissions.admin || PC.global.permissions.pages;
+	}
+}
+
+
 Ext.onReady(function(){
 	// write your application here
 	Ext.QuickTips.init();
@@ -20,6 +28,7 @@ Ext.onReady(function(){
 							Ext.Ajax.request({
 								url: 'ajax.page.php?action=delete',
 								params: {
+									site: PC.global.site,
 									id: n.id,
 									old_idp: n.parentNode.id
 								},
@@ -319,6 +328,25 @@ Ext.onReady(function(){
 											id: 'db_fld_name'
 										}]
 									},
+									{	id: 'db_fld_custom_name_title',
+										xtype: 'box',
+										style: 'padding: 6px',
+										html: PC.i18n.custom_name.replace(/\s/, '&nbsp;') + ':'
+									},
+									{	xtype: 'container',
+										id: 'db_fld_custom_name_container',
+										layout: 'fit',
+										height: 22,
+										items: [{
+											xtype: 'textfield',
+											//xtype: 'profis_multilnfield',
+											editorCfg: {
+												title: PC.i18n.name
+											},
+											ref: '../../../../../../../../_fld_custom_name',
+											id: 'db_fld_custom_name'
+										}]
+									},
 									//route
 									{	id: 'db_fld_route_title',
 										xtype: 'box',
@@ -349,6 +377,26 @@ Ext.onReady(function(){
 											boxLabel: PC.i18n.page.route_lock,
 											ref: '../../../../../../../../_fld_route_lock',
 											id: 'db_fld_route_lock'
+										}]
+									},
+									//permalink
+									{	id: 'db_fld_permalink_title',
+										xtype: 'box',
+										style: 'padding: 6px',
+										html: PC.i18n.seo_permalink.replace(/\s/, '&nbsp;') + ':'
+									},
+									{	xtype: 'container',
+										id: 'db_fld_permalink_container',
+										layout: 'fit',
+										height: 22,
+										items: [{
+											xtype: 'textfield',
+											//xtype: 'profis_multilnfield',
+											editorCfg: {
+												title: PC.i18n.seo_permalink
+											},
+											ref: '../../../../../../../../_fld_i18n',
+											id: 'db_fld_permalink'
 										}]
 									},
 									//title
@@ -600,58 +648,7 @@ Ext.onReady(function(){
 										id: 'db_fld_redirect_container',
 										xtype: 'container',
 										layout: 'fit',
-										items: new Ext.form.TwinTriggerField({
-											fieldLabel: PC.i18n.menu.shortcut_to.replace(/\s/, '&nbsp;'),
-											ref: '../../../../../../_fld_redirect',
-											id: 'db_fld_redirect',
-											selectOnFocus: true,
-											trigger1Class: 'x-form-folder-trigger',
-											onTrigger1Click: function() {
-												//console.log(PC.admin._editor_ln_select.get('db_fld_redirect'));
-												var field = this;
-												Show_redirect_page_window(function(value){
-													field.setValue(value);
-												}, undefined, this.getValue());
-											},
-											trigger2Class: 'x-form-remove-trigger',
-											onTrigger2Click: function() {
-												Ext.getCmp('db_fld_redirect').setRawValue('');
-											},
-											listeners: {
-												afterrender: function(field) {
-													//initialize drop target on this field
-													new Ext.dd.DropTarget(field.el.dom, {
-														ddGroup: 'tree_pages',
-														notifyEnter: function(ddSource, e, data) {
-															if (PC.tree.IsNodeDeleted(ddSource.dragData.node)) return ddSource.proxy.dropNotAllowed;
-															if (ddSource.dragData.node.id == PC.global.pid) return ddSource.proxy.dropNotAllowed;
-															return ddSource.proxy.dropAllowed;
-														},
-														notifyOver: function(ddSource, e, data) {
-															return ddSource.proxy.dropStatus;
-														},
-														notifyDrop: function(ddSource, e, data) {
-															if (PC.tree.IsNodeDeleted(ddSource.dragData.node)) return false; // deny from recycle bin
-															if (ddSource.dragData.node.id == PC.global.pid) return false; // deny self
-															field.setValue(ddSource.dragData.node.attributes.id);
-															return true;
-														}
-													});
-												},
-												change: function(field, value, old) {
-													if (value == PC.global.page.id.originalValue) {
-														field.setValue('');
-														alert('You cannot redirect this page to itself');
-													}
-												}
-											}
-											//},{
-											//	fieldLabel: PC.i18n.last_update,
-											//	xtype: 'textfield',
-											//	ref: '../../../../../../_fld_last_update',
-											//	readOnly: true,
-											//	id: 'db_fld_last_update'
-										})
+										items: PC.view_factory.get_shortcut_field()
 									},
 									{	ref: '../../../../../../../_fld_reference_id',
 										id: 'db_fld_reference_id',
@@ -944,6 +941,7 @@ Ext.onReady(function(){
 					}
 				}
 			});
+			
 			//console.log(request_params); Ext.Msg.hide(); return;
 			Ext.Ajax.request({
 				url: 'ajax.page.php?action=update',
@@ -979,23 +977,15 @@ Ext.onReady(function(){
 								node.attributes._routes[ln] = fresh_content.route;
 							});
 							//---
-							Load_page_data(data);
-							//load to store
-							//PC.editors.Fill();
-							//---
-							PC.tree.component.renderIcon(node);
-							PC.tree.component.localizeNode(node);
+							Load_page_data({treeNode: node}, data);
 							//init save hook
 							PC.hooks.Init('page.save', {
 								tree: PC.tree.component,
 								params: request_params,
 								data: data
 							});
-							//parentNode.childNodes = [];
-							//parentNode.reload();
-							//PC.tree.component.renderIcon(nn);
 							Reload_content_archive();
-							if (is_function(callback)) callback();
+							if (typeof callback == 'function') callback();
 							return;
 						}
 						else if (data.errors.length) {
@@ -1082,7 +1072,7 @@ Ext.onReady(function(){
 						}
 					]
 				},
-				items: (PC.global.permissions.admin?AdminArea:[{
+				items: (PC_acl_manager.has_access_to_pages()?AdminArea:[{
 					xtype: 'panel',
 					region: 'center',
 					bodyStyle: 'background:#E5EFFD;',
@@ -1152,14 +1142,14 @@ Ext.onReady(function(){
 						if (window.execScript)
 							window.execScript(m[2]); // IE
 						else {
-                                                    /*
+                                                    //*
                                                     //Making js code debuggable:
                                                     var e = document.createElement('script');
                                                     e.type = 'text/javascript';
                                                     e.text = m[2];
                                                     document.body.appendChild(e);
-                                                   */
-                                                   window.eval(m[2]); // the world
+                                                   //*/
+                                                   //window.eval(m[2]); // the world
                                                 }
 					} catch(e) {
 						debug_alert(e);
@@ -1208,8 +1198,40 @@ Ext.onReady(function(){
 	if (!PC.global.permissions.admin) {
 		var mask = Ext.get('loading-mask');
 		if (mask) mask.remove();
+	};
+	var keep_alive_period = (PC.global['session.gc_maxlifetime'] - 90) * 1000;
+	if (keep_alive_period > 0) {
+		var delayed_task = new Ext.util.DelayedTask(function(){
+			var periodic_task = {
+				run: function(){
+					Ext.Ajax.request({
+						url: PC.global.BASE_URL + 'api/keepalive'
+					});
+				},
+				interval: keep_alive_period
+			}
+			Ext.TaskMgr.start(periodic_task);
+		});
+		delayed_task.delay(keep_alive_period);
 	}
+
+	PC.global.tinymce_absolut = new Ext.Container({
+		autoEl: 'div',
+		hidden: true,
+		renderTo: Ext.getBody(),
+		defaults: {
+			xtype: 'container'
+		},
+	//  The two items below will be Ext.Containers, each encapsulated by a <DIV> element.
+		items: [{
+			xtype: 'profis_tinymce',
+			ref: '_tinymce',
+			id: 'absolut_tinymce'
+		}]
+	});
+
 });
+
 function Reload_page_controller_list(n) {
 	if (n == undefined) n = PC.tree.component.getSelectionModel().selNode;
 	var list = [['','-']];
@@ -1272,7 +1294,8 @@ function Check_preview_action_availability() {
 			return;
 		}
 	}
-	PC.tree.actions.Preview.hide();
+	PC.tree.actions.Preview.show();
+	//PC.tree.actions.Preview.hide();
 }
 function Load_home_page_on_tree_load() {
 	var tree = PC.tree.component;
@@ -1333,10 +1356,10 @@ function Get_all_site_languages() {
 	all_langs = undefined;
 	return all_languages;
 }
-function Load_page_data(data, callback) {
+function Load_page_data(info, data, callback) {
 	if (data == undefined) return;
 	//choose and load suitable editor
-	return PC.editors.Load(data, true, callback);
+	return PC.editors.Load(info, data, true, callback);
 }
 function Load_page(data) {
 	if (data == undefined && PC.global.pid == 0) return;
@@ -1348,7 +1371,7 @@ function Load_page(data) {
 		waitConfig: {interval:100}
 	});
 	clear_fields();
-	if (data != undefined) return Load_page_data(data, Ext.Msg.hide);
+	if (data != undefined) return Load_page_data({}, data, Ext.Msg.hide);
 	Ext.Ajax.request({
 		url: 'ajax.page.php',
 		params: {'action':'get','id':PC.global.pid},
@@ -1357,7 +1380,7 @@ function Load_page(data) {
 			if (success && rspns.responseText) {
 				try {
 					var data = Ext.decode(rspns.responseText);
-					Load_page_data(data, Ext.Msg.hide);
+					Load_page_data({treeNode: PC.tree.component.getNodeById(PC.global.pid)}, data, Ext.Msg.hide);
 				} catch(e) { Ext.Msg.hide(); };
 			}
 		}
@@ -1403,12 +1426,12 @@ function Load_to_editor(ln, original) {
 	//fill page fields
 	Ext.each(PC.global.db_flds, function(i) {
 		var field = Ext.getCmp('db_fld_'+i);
-		if (/^(name|info|info2|info3|title|keywords|description|route|text)$/.test(i)) {
+		if (/^(name|custom_name|info|info2|info3|title|keywords|description|route|permalink|text)$/.test(i)) {
 			var source = content_store[i];
 			if (original) field.setValue(source.originalValue);
 			else field.setValue(source.value);
 			//flag editors as not dirty
-			if (/^(info|info2|info3|text)$/.test(i)) {
+			if (/^(info|info2|info3_|text)$/.test(i)) {
 				//clear undo history
 				tinymce.editors['db_fld_'+i].undoManager.clear();
 				tinymce.editors['db_fld_'+i].isNotDirty = 1;
@@ -1514,7 +1537,7 @@ function Render_redirects_from() {
 		Ext.iterate(from, function(id, names) {
 			//is front page?
 			var node = PC.tree.component.getNodeById(id);
-			if (node) if (node.attributes._front) {
+			if (node && node.attributes._front) {
 				name = PC.i18n.home;
 			}
 			else if (names[PC.global.tree_ln] == undefined) {
@@ -1632,7 +1655,7 @@ function Content_dirty() {
 			else return;
 		}
 		var field = Ext.getCmp('db_fld_'+i);
-		if (/^(name|title|keywords|description|route)$/.test(i)) {
+		if (/^(name|custom_name|title|keywords|description|route|permalink)$/.test(i)) {
 			var store = content_store[i];
 			
 		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|date|reference_id)$/.test(i)) {
@@ -1686,7 +1709,7 @@ function Save_content_to_store(ln_change_to) {
 	Ext.each(PC.global.db_flds, function(i) {
 		if (i == 'publishing_date') return;
 		var field = Ext.getCmp('db_fld_'+i);
-		if (/^(name|text|info|info2|info3|title|keywords|description|route)$/.test(i)) {
+		if (/^(name|custom_name|text|info|info2|info3|title|keywords|description|route|permalink)$/.test(i)) {
 			var store = content_store[i];
 			
 		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|date|reference_id)$/.test(i)) {
@@ -1846,16 +1869,100 @@ function Logout() {
 	});
 }
 function Show_redirect_page_window(return_callback, get_route, select_node_path, init_value) {
-	var w = new Ext.Window({
-		modal: true,
-		title: PC.i18n.sel_redir_dst,
-		width: 300,
-		height: 350,
-		layout: 'vbox',
-		layoutConfig: {
-			align: 'stretch',
-			pack: 'start'
-		},
+	var additionalBaseParams = false;
+	var function_params = {};
+	var ok_disabled = true;
+	if (typeof return_callback == 'object') {
+		function_params = return_callback;
+		if (function_params.additionalBaseParams) {
+			additionalBaseParams = function_params.additionalBaseParams;
+		}
+		if (function_params.enable_ok_button) {
+			ok_disabled = false;
+		}
+	}
+	
+	var callback_ok;
+	if (function_params.callback_ok && typeof function_params.callback_ok == 'function') {
+		callback_ok = function_params.callback_ok;
+	}
+	else {
+		callback_ok = function(w) {
+			var n = w._tree.getSelectionModel().getSelectedNode();
+			if (n) {
+				/*if (n.id == PC.global.page.id.originalValue && w._ln_sel.getValue() == PC.global.ln) {
+					alert('You cannot redirect this page to itself');
+				}
+				else {*/
+					var load_anchors = true;
+
+
+					var lang = w._ln_sel.getValue();
+
+					var set_url_callback = function(url) {
+						if (typeof return_callback == 'function') {
+							return_callback(url, lang, n.id);
+						}
+						w.close();
+					}
+
+					var url = false;
+					if (get_route) {
+						
+						if (url === false) {
+							url = 'pc_page:' + n.id;
+							if (lang != '') {
+								url += ':' + lang
+							}
+						}
+						
+						/*
+						if (n.attributes._routes) {
+							if (n.attributes._routes[lang]) {
+								url = 'pc_page:' + n.id;
+								//, lang+'/'+n.attributes._routes[lang]+'/'
+								if (lang != '') {
+									url += ':' + lang
+								}
+							}
+						}
+
+						var n_id_parts = n.id.split('/');
+						var plugin_name = n_id_parts[0];
+						var hook_name = 'core/page/generate_url/' + plugin_name;
+
+						if (url === false && PC.hooks.Count(hook_name) > 0) {
+							var params = {};
+							params.callback = set_url_callback;
+							params.full_id = n.id;
+							params.id = n_id_parts[n_id_parts.length - 1];
+							params.ln = lang;
+							PC.hooks.Init(hook_name, params);
+							return;
+						}
+						*/
+
+					}
+
+					if (url === false) {
+						url = n.id;
+					}
+
+					set_url_callback(url);
+
+					/*
+					if (typeof return_callback == 'function') {
+						return_callback((get_route?w._ln_sel.getValue()+'/'+n.attributes._routes[w._ln_sel.getValue()]+'/':n.id), w._ln_sel.getValue());
+					}
+					w.close();
+					*/
+				//}
+				//self.setValue('?' + w._ln_sel.getValue() + '=' + n.id);
+			}
+		}
+	}
+	
+	var window_config = {
 		items: [
 			{
 				layout: 'form',
@@ -1895,13 +2002,15 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 						ref: '../_ln_sel',
 						listeners: {
 							select: function(self, rec, ndx) {
-								w._tree.setLn(rec.get('ln_id'));
+								//w._tree.setLn(rec.get('ln_id'));
+								self.ownerCt.ownerCt._tree.setLn(rec.get('ln_id'));
 							}
 						}
 					}
 				]
 			},
 			{	xtype: 'profis_pagetree',
+				additionalBaseParams: additionalBaseParams,
 				enableDD: false,
 				ref: '_tree',
 				selModel: new Ext.tree.DefaultSelectionModel({
@@ -1936,7 +2045,15 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 						}
 					},
 					beforeappend: function(tr, prnt, n) {
-						if (n.id < 0 || n.id == 'create' || n.attributes.controller == 'search' || n.attributes._front > 0) return false;
+						if (n.id < 0 || n.id == 'create' || n.attributes.controller == 'search' || n.attributes._front > 0) {
+							//function_params.allow_front
+							if (n.attributes._front > 0) {
+								
+							}
+							else {
+								return false;
+							}
+						}
 					},
 					beforeclick: function(n, e) {
 						if (n.attributes.controller == 'menu') return false;
@@ -1945,24 +2062,28 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 				_sid: (init_value!=undefined?init_value:undefined)
 			}
 		],
+		width: 300,
+		height: 350,
+		layout: 'vbox',
+		layoutConfig: {
+			align: 'stretch',
+			pack: 'start'
+		}
+	};
+	
+	if (function_params.return_only_window_config) {
+		return window_config
+	}
+	
+	Ext.apply(window_config, {
+		modal: true,
+		title: PC.i18n.sel_redir_dst,
 		buttons: [
 			{	ref: '../ok_btn',
 				text: Ext.Msg.buttonText.ok,
-				disabled: true,
+				disabled: ok_disabled,
 				handler: function() {
-					var n = w._tree.getSelectionModel().getSelectedNode();
-					if (n) {
-						/*if (n.id == PC.global.page.id.originalValue && w._ln_sel.getValue() == PC.global.ln) {
-							alert('You cannot redirect this page to itself');
-						}
-						else {*/
-							if (typeof return_callback == 'function') {
-								return_callback((get_route?w._ln_sel.getValue()+'/'+n.attributes._routes[w._ln_sel.getValue()]+'/':n.id), w._ln_sel.getValue());
-							}
-							w.close();
-						//}
-						//self.setValue('?' + w._ln_sel.getValue() + '=' + n.id);
-					}
+					callback_ok(w)
 				}
 			},
 			{	text: Ext.Msg.buttonText.cancel,
@@ -1972,8 +2093,14 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 			}
 		]
 	});
+	
+	var w = new Ext.Window(window_config);
+	if (function_params.window_config) {
+		Ext.apply(w, function_params.window_config);
+	}
 	w.show();
 	w._tree.root.expand();
+	return w;
 }
 function Reload_content_archive() {
 	if (PC.global.pid < 1) return;
@@ -2021,16 +2148,16 @@ function Render_page_actions(controller) {
 	if (controller == undefined) var controller = PC.global.page.controller.value;
 	var front = 0;
 	if (PC.global.page.front != undefined) front = PC.global.page.front.value;
-	var could_be_enabled_or_disabled = 'controller|name_container|title_container|keywords_container|description_container|route_container|redirect|redirect_container|published|route_lock_container|hot|nomenu|date_container|name_title|route_title|title_title|description_title|keywords_title|date|time|reference_id';
+	var could_be_enabled_or_disabled = 'controller|name_container|custom_name_container|title_container|keywords_container|description_container|route_container|permalink_container|redirect|redirect_container|published|route_lock_container|hot|nomenu|date_container|name_title|custom_name_title|route_title|permalink_title|title_title|description_title|keywords_title|date|time|reference_id';
 	if (front > 0) {
-		var disabled = 'controller|route_container|route_title|published|route_lock_container|hot|nomenu|date_container|date|time|reference_id';
+		var disabled = 'controller|route_container|permalink_container|route_title|permalink_title|published|route_lock_container|hot|nomenu|date_container|date|time|reference_id';
 	}
 	else if (controller == 'menu') {
 		//console.log(controller);
-		var disabled = 'title_container|title_title|keywords_container|keywords_title|description_container|description_title|route_container|route_title|redirect_container|published|route_lock_container|hot|nomenu|date_container|date|time';
+		var disabled = 'title_container|title_title|keywords_container|keywords_title|description_container|description_title|route_container|permalink_container|route_title|permalink_title|redirect_container|published|route_lock_container|hot|nomenu|date_container|date|time';
 	}
 	else if (controller == 'search') {
-		var disabled = 'controller|name_container|redirect|redirect_container|route_lock_container|hot|nomenu|date_container|name_title|date|time|reference_id';
+		var disabled = 'controller|name_container|custom_name_container|redirect|redirect_container|route_lock_container|hot|nomenu|date_container|name_title|date|time|reference_id';
 	}
 	/*else if (Controller_has_fields(controller)) {
 		
@@ -2082,7 +2209,9 @@ function save_prompt(callback) {
 }
 
 window.onbeforeunload = function() {
-	if (PC.global.permissions.admin) if (Content_dirty()) {
+	var do_not_check = PC.global.do_not_check_dirty_content;
+	PC.global.do_not_check_dirty_content = false;
+	if (PC_acl_manager.has_access_to_pages()) if (!do_not_check && Content_dirty()) {
 		return PC.i18n.msg.title.save;
 	}
 }
@@ -2096,7 +2225,7 @@ function node_rename_menu(node, create_mode) {
 		node: node,
 		create_mode: create_mode,
 		values: node.attributes._names,
-		title: (create_mode?PC.i18n.menu.new_page:PC.i18n.menu.rename),
+		title: (create_mode?PC.i18n.menu.addNew:PC.i18n.menu.rename),
 		Save: function(vals, w, d) {
 			if (vals) {
 				var data = vals.other;
@@ -2111,7 +2240,8 @@ function node_rename_menu(node, create_mode) {
 					_window: w,
 					params: {
 						data: Ext.encode(data),
-						return_page: true
+						return_page: true,
+						rename_only: true
 					},
 					method: 'POST',
 					callback: function(opts, success, rspns) {
@@ -2125,35 +2255,8 @@ function node_rename_menu(node, create_mode) {
 									PC.tree.component.localizeNode(opts._node);
 									var currentPage = (data.id == PC.global.pid);
 									if (currentPage) {
-										PC.editors.Load(data, true);
-										/*Ext.iterate(data.content, function(lng,vars){
-											if (currentPage) {
-												var content_store = PC.global.page.content[lng];
-												content_store.name.value = content_store.name.originalValue = vars.name;
-												content_store.route.value = content_store.route.originalValue = vars.route;
-												if (lng == PC.global.ln) {
-													// Update name field
-													var fld = Ext.getCmp('db_fld_name');
-													fld.setValue(vars.name);
-													fld.originalValue = vars.name;
-													// Update i18n field
-													var fld = Ext.getCmp('db_fld_route');
-													fld.setValue(vars.route);
-													fld.originalValue = vars.route;
-												}
-											}
-										});*/
+										PC.editors.Load({treeNode: opts._node}, data, true);
 									}
-									/*var pl = PC.getPluginFromID(vals.id);
-									if (pl) {
-										PC.hooks.Init('core/tree/rename/'+ pl, {
-											tree: PC.tree.component,
-											node: opts._node,
-											data: data,
-											currentPage: currentPage,
-											createMode: create_mode
-										});
-									}*/
 									PC.hooks.Init('page.save', {
 										tree: PC.tree.component,
 										params: vals,
@@ -2170,13 +2273,17 @@ function node_rename_menu(node, create_mode) {
 							buttons: Ext.MessageBox.OK,
 							icon: Ext.MessageBox.ERROR
 						});
-						//opts._window._ok_btn.enable();
 					}
 				});
 				return true;
 			}
 		}
 	});
+}
+
+
+function reload_admin() {
+	window.location.href = PC.global.BASE_URL + PC.global.ADMIN_DIR;
 }
 
 function debug_alert(o) {
@@ -2189,6 +2296,8 @@ function debug_alert(o) {
 	}
 	alert(a);
 }
+
+
 var Base64 = {
 	// private property
 	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",

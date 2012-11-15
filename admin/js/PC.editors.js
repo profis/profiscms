@@ -1,3 +1,6 @@
+PC.global.tinymce = {};
+PC.global.tinymce.contents = {};
+PC.global.tinymce.undo_managers = {};
 PC.editors = {
 	Default: 'page',
 	Current: ['page', 'page'],
@@ -87,7 +90,8 @@ PC.editors = {
 		if (typeof callback == 'function') callback();
 		return true;
 	},
-	Load: function(data, freshLoad, callback) {
+	Load: function(info, data, freshLoad, callback) {
+		if (typeof info == 'object') this.Info = info;
 		if (data == undefined) return false;
 		var id = PC.pages.ParseID(data.id);
 		var ctrl = 'page';
@@ -155,6 +159,7 @@ PC.editors = {
 		else if (typeof callback == 'function') callback(false);
 	},
 	Save: function(callback) {
+		var saving_began = new Date();
 		Ext.MessageBox.show({
 			title: PC.i18n.msg.title.saving,
 			msg: PC.i18n.msg.saving,
@@ -162,12 +167,41 @@ PC.editors = {
 			wait: true,
 			waitConfig: {interval:100}
 		});
+		
 		PC.editors.Store();
 		var editor = PC.editors.Get();
 		if (typeof editor.Save == 'function') {
-			editor.Save(callback);
+			editor.Save(function(){
+				var treeNode = PC.editors.GetTreeNode();
+				if (treeNode) {
+					PC.tree.component.localizeNode(treeNode);
+					PC.tree.component.renderIcon(treeNode);
+				}
+				if (typeof callback == 'function') callback();
+			});
 		}
 		else if (typeof callback == 'function') callback(false);
-		Ext.Msg.hide();
+		var saving_ended = new Date();
+		var elapsed = saving_began.getElapsed(saving_ended);
+		var min_time = 500;
+		var time_to_wait = min_time - elapsed;
+		if (time_to_wait > 0) {
+			var delayed_task = new Ext.util.DelayedTask(function(){
+				Ext.Msg.hide();
+			});
+			delayed_task.delay(time_to_wait);
+		}
+		else {
+			Ext.Msg.hide();
+		}
+	},
+	/**
+	 * Returns tree node relative to the page loaded in the editor
+	 */
+	GetTreeNode: function() {
+		if (typeof PC.editors.Info != 'object') return false;
+		if (PC.editors.Info == null) return false;
+		if (PC.editors.Info.treeNode == undefined) return false;
+		return PC.editors.Info.treeNode;
 	}
 }

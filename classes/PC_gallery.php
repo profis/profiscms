@@ -68,7 +68,7 @@ final class PC_gallery extends PC_base {
 		// config
 		$this->config['image_for_croping_max_dimensions'] = 600;
 		$this->config['max_category_name_length'] = 50;
-		$this->config['max_filename_length'] = 80;
+		$this->config['max_filename_length'] = 255;
 		$this->config['max_thumbnail_type_length'] = 20;
 		$this->config['disallow_delete_untrashed_category'] = false; // if true then trash album first
 		$this->config['max_filesize'] = 167772150; //max value: 167772150 B = 159.9 MB (limited by image database 'image_size' column data type)
@@ -96,8 +96,12 @@ final class PC_gallery extends PC_base {
 		$cyrillic = array('а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я','А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я');
 		$latin = array('a','b','v','g','d','e','yo','zh','z','i','j','k','l','m','n','o','p','r','s','t','u','f','h','c','ch','sh','shсh','','y','','eh','yu','ya','A','B','V','G','D','E','Yo','Zh','Z','I','J','K','L','M','N','O','P','R','S','T','U','F','H','C','Ch','Sh','Shсh','','Y','','Eh','Yu','Ya');
 		$name = str_replace($cyrillic, $latin, $name);
+		$name = remove_utf8_accents($name);
 		// transliteration
 		$name = strtolower(@iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $name));
+		if (false and $converted_name) {
+			$name = $converted_name;
+		}
 		// character/string blacklist (could also be censorship)
 		$blacklist = array('#','$','&','(',')',',','.',':','%','@','/','[',']','_','?','!','+','=','^');
 		$name = trim(str_replace($blacklist, '-', $name));
@@ -156,7 +160,7 @@ final class PC_gallery extends PC_base {
 		}
 		// Simple delete for a file
 		if (is_file($directory)) {
-			return unlink($directory);
+			return @unlink($directory);
 		}
 		// Loop through the folder
 		$dir = dir($directory);
@@ -792,7 +796,7 @@ final class PC_gallery extends PC_base {
 	* @return mixed array with key "errors" on failure; or array with keys "success" and "directory" otherwise.
 	* @see PC_gallery::Format_name_for_link();
 	*/
-	public function Rename_category($category_id, $category) {
+	public function Rename_category($category_id, $category, $old_category) {
 		$category_id = (int)$category_id;
 		if ($category_id < 1) $response['errors'][] = "category_id";
 		if (!preg_match('/^'.$this->patterns['category'].'$/ui', $category))
@@ -818,10 +822,13 @@ final class PC_gallery extends PC_base {
 		$current_path = $this->config['gallery_path'].$data['path'].'/';
 		$new_category_directory = $this->Format_name_for_link($category);
 		$new_path = $this->config['gallery_path'].$data['path'].'/../'.$new_category_directory;
-		if (is_dir($new_path)) {
-			$response['errors'][] = "directory_exists";
-			return $response;
+		if (strcasecmp($category, $old_category) != 0) {
+			if (is_dir($new_path)) {
+				$response['errors'][] = "directory_exists";
+				return $response;
+			}
 		}
+		
 		if (!rename($current_path, $new_path)) {
 			$response['errors'][] = "rename_directory";
 			return $response;
@@ -879,15 +886,61 @@ final class PC_gallery extends PC_base {
 		if ($data['date_trashed'] == 0 && $this->config['disallow_delete_untrashed_album']) {
 			return $this->Trash_category($category_id);
 		}
+		
+		
+		$success = false;
+		
+		$r_cat = $db->prepare("SELECT category.*
+			FROM {$this->db_prefix}gallery_categories category
+			WHERE category.lft between ? and ?");
+		$res_cat = $r_cat->execute(array($data['lft'], $data['rgt']));
+		
+		if ($res_cat) {
+			while ($cat_data = $r_cat->fetch()) {
+				$r_files = $db->prepare("SELECT *
+					FROM {$this->db_prefix}gallery_files
+					WHERE category_id = ?");
+
+				$res_files = $r_files->execute(array($cat_data['id']));
+				if ($res_files) {
+					while ($file_data = $r_files->fetch()) {
+						$r_use = $db->prepare("DELETE
+							FROM {$this->db_prefix}gallery_files_in_use
+							WHERE file_id = ?");
+						$r_use->execute(array($file_data['id']));
+					}
+					$r_files_delete = $db->prepare("DELETE
+						FROM {$this->db_prefix}gallery_files
+						WHERE category_id = ?");
+					$r_files_delete->execute(array($cat_data['id']));
+				}
+			}
+			$r_cat_delete = $db->prepare("DELETE 
+				FROM {$this->db_prefix}gallery_categories
+				WHERE lft between ? and ?");
+			$success = $r_cat_delete->execute(array($data['lft'], $data['rgt']));
+		}
+		
+			
 		//needs addition: first copy directory to the Temp, if error occurs - restore it.
-		$this->Remove_directory($this->config['gallery_path'].$data['path'].'/');
-		$r = $db->prepare("DELETE category.*, files.*, gallery_files_in_use.*
-		FROM {$this->db_prefix}gallery_categories category
-		LEFT JOIN {$this->db_prefix}gallery_files files ON files.category_id = category.id
-		LEFT JOIN {$this->db_prefix}gallery_files_in_use ON file_id = files.id
-		WHERE category.lft between ? and ?");
+		if ($success) {
+			$this->Remove_directory($this->config['gallery_path'].$data['path'].'/');
+		}
+		/*
+		$delete_query = "DELETE category.*, files.*, gallery_files_in_use.*
+			FROM {$this->db_prefix}gallery_categories category
+			LEFT JOIN {$this->db_prefix}gallery_files files ON files.category_id = category.id
+			LEFT JOIN {$this->db_prefix}gallery_files_in_use ON file_id = files.id
+			WHERE category.lft between ? and ?";
+		$delete_query_for_debug = $delete_query;
+		$delete_query_for_debug = preg_replace('/\?/', $data['lft'], $delete_query_for_debug, 1);
+		$delete_query_for_debug = preg_replace('/\?/', $data['rgt'], $delete_query_for_debug, 1);
+		echo $delete_query_for_debug;
+		$r = $db->prepare($delete_query);
 		$success = $r->execute(array($data['lft'], $data['rgt']));
-		if (!$success || $r->rowCount() < 1) {
+		*/
+		
+		if (!$success || $r_cat_delete->rowCount() < 1) {
 			$response['errors'][] = "database";
 			return $response;
 		}
@@ -1155,36 +1208,65 @@ final class PC_gallery extends PC_base {
 	* @return mixed array with keys "success", "filename", "filedata" on success, or array with key "errors" otherwise.
 	* @see PC_gallery::Sort_path()
 	*/
-	public function Get_file_by_id($id) {
-		$id = (int)$id;
-		if ($id < 1) {
-			$response['errors'][] = "file_id";
-			return $response;
+	public function Get_file_by_id($id, $logger = null) {
+		$returnOne = false;
+		$queryParams = array();
+		if (is_array($id)) {
+			if (empty($id)) {
+				$response['errors'][] = "file_id";
+				return $response;
+			}
+			$queryParams = array_merge($queryParams, $id);
 		}
-		$r = $this->prepare("SELECT size, extension, filename, f.category_id,count(files_in_use.file_id) in_use,"
-		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true,'separator'=>'/'))." path,"
-		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.id'), array('distinct'=>true,'separator'=>'/'))." path_id"
-		." FROM {$this->db_prefix}gallery_files f
-		LEFT JOIN {$this->db_prefix}gallery_categories c ON c.id = category_id
-		LEFT JOIN {$this->db_prefix}gallery_categories path ON c.lft BETWEEN path.lft AND path.rgt
-		LEFT JOIN {$this->db_prefix}gallery_files_in_use files_in_use ON files_in_use.file_id=f.id
-		WHERE f.id=?
-		GROUP BY f.id,f.size,f.extension,f.filename,f.category_id");
-		$success = $r->execute(array($id));
+		else {
+			$id = (int)$id;
+			if ($id < 1) {
+				$response['errors'][] = "file_id";
+				return $response;
+			}
+			$queryParams[] = $id;
+			$returnOne = true;
+		}
+		$query = "SELECT f.id, size, extension, filename, f.category_id,count(files_in_use.file_id) in_use,"
+			.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true,'separator'=>'/'))." path,"
+			.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.id'), array('distinct'=>true,'separator'=>'/'))." path_id"
+			." FROM {$this->db_prefix}gallery_files f
+			LEFT JOIN {$this->db_prefix}gallery_categories c ON c.id = category_id
+			LEFT JOIN {$this->db_prefix}gallery_categories path ON c.lft BETWEEN path.lft AND path.rgt
+			LEFT JOIN {$this->db_prefix}gallery_files_in_use files_in_use ON files_in_use.file_id=f.id
+			WHERE f.id".(is_array($id)?' '.$this->sql_parser->in($id):'=?')
+			."GROUP BY f.id,f.size,f.extension,f.filename,f.category_id";
+		$r = $this->prepare($query);
+		if (!is_null($logger)) {
+			$logger->debug('Get_file_by_id query:');
+			$logger->debug_query($query, $queryParams);
+		}
+		
+		$success = $r->execute($queryParams);
 		if (!$success) {
 			$response['errors'][] = "database";
 			return $response;
 		}
-		if ($r->rowCount() != 1) {
+		if ($r->rowCount() < 1) {
 			$response['errors'][] = "file_not_found";
 			return $response;
 		}
-		$data = $r->fetch();
-		$this->Sort_path($data['path']);
-		$this->Sort_path($data['path_id']);
-		if (!empty($data['path'])) $data['path'] .= '/';
-		$data['link'] = $data['path'].$data['filename'];
-		return array("success"=>true, "filedata"=> $data);
+		$list = array();
+		while ($d = $r->fetch()) {
+			$this->Sort_path($d['path']);
+			$this->Sort_path($d['path_id']);
+			if (!empty($d['path'])) $d['path'] .= '/';
+			$d['link'] = $d['path'].$d['filename'];
+			$d['type'] = $this->filetypes[$d['extension']];
+			$list[] = $d;
+		}
+		$r = array("success"=>true);
+		if ($returnOne) {
+			if (!count($list)) return false;
+			$r["filedata"] = $list[0];
+			return $r;
+		}
+		else return $list;
 	}
 	
 	/**
@@ -1302,7 +1384,7 @@ final class PC_gallery extends PC_base {
 						if (!empty($category_path) && $category_path != '/')
 							$file_path .= $category_path.'/';
 						$file_path .= $filename;
-						$thumb = PhpThumbFactory::create($file_path, array('jpegQuality'=>$type['thumbnail_quality']));
+						$thumb = PhpThumbFactory::create($file_path, array('resizeUp' => true, 'jpegQuality'=>$type['thumbnail_quality']));
 						if ($thumbnail_type == "thumbnail" || $type['use_adaptive_resize']) {
 							$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
 						}
@@ -1434,6 +1516,11 @@ final class PC_gallery extends PC_base {
 				$ct['dll'] = 'application/octet-stream';
 				$ct['xls'] = 'application/vnd.ms-excel';
 				$ct['ppt'] = 'application/vnd.ms-powerpoint';
+				$ct['pptx'] = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+				
+				$ct['xlsx'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+				$ct['docx'] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+				
 				$ct['wbxml']= 'application/vnd.wap.wbxml';
 				$ct['wmlc'] = 'application/vnd.wap.wmlc';
 				$ct['wmlsc']= 'application/vnd.wap.wmlscriptc';
@@ -1676,13 +1763,20 @@ final class PC_gallery extends PC_base {
 		$category_id = (int)$category_id;
 		if ($category_id < 0)
 			$response['errors'][] = "category_id";
-		if (!is_uploaded_file($temp_file['tmp_name']))
+		if (empty($_FILES)) {
+			$response['errors'][] = "files_empty";
+		}
+		elseif (!@is_uploaded_file($temp_file['tmp_name']))
 			$response['errors'][] = "file_not_found";
 		else {
 			//validate file extension
-			$pathinfo = pathinfo($temp_file['name']);
-			if (!preg_match('/^'.$this->patterns['filename'].'$/ui', $pathinfo['basename']))
+			$pathinfo = pathinfo('a' . $temp_file['name']);
+			$pathinfo['basename'] = substr($pathinfo["basename"], 1);
+			$pathinfo['filename'] = substr($pathinfo["filename"], 1);
+			if (!preg_match('/^'.$this->patterns['filename'].'$/ui', $pathinfo['basename'])) {
 				$response['errors'][] = "filename";
+			}
+				
 			$extension = strtolower($pathinfo['extension']);
 			if (!isset($this->filetypes[strtolower($pathinfo['extension'])]))
 				$response['errors'][] = "unallowed_file";
@@ -1715,6 +1809,7 @@ final class PC_gallery extends PC_base {
 			$file_path = $this->config['gallery_path'];
 		}
 		$r = $this->Generate_unique_filename($temp_file['name'], $file_path);
+		
 		if (!$r['success']) {
 			$response['errors'][] = "filename";
 			return $response;
@@ -1730,7 +1825,7 @@ final class PC_gallery extends PC_base {
 		//print_pre($this->db->errorInfo());
 		//print_pre($r->errorInfo());
 		if (!$success) {
-			unlink($file_path.$filename);
+			@unlink($file_path.$filename);
 			$response['errors'][] = "database";
 			return $response;
 		}
@@ -1779,7 +1874,7 @@ final class PC_gallery extends PC_base {
 			$response['errors'][] = "delete";
 			return $response;
 		}*/
-		unlink($full_path.$data['filename']);
+		@unlink($full_path.$data['filename']);
 		
 		if ($this->filetypes[$data['extension']] == 'image') {
 			//delete all image thumbs found in the album path directory named thumb-*
@@ -1787,16 +1882,16 @@ final class PC_gallery extends PC_base {
 			foreach (glob($full_path.'thumb-*') as $thumbnail_path) {
 				if (is_dir($thumbnail_path)) {
 					//delete thumb
-					unlink($thumbnail_path.'/'.$data['filename']);
+					@unlink($thumbnail_path.'/'.$data['filename']);
 					//delete thumb crop data
-					unlink($thumbnail_path.'/'.$data['filename'].'.txt');
+					@unlink($thumbnail_path.'/'.$data['filename'].'.txt');
 				}
 			}
 		}
 		//old thumbnail deletion by type list from the database (doesn't delete thumbs that doesn't exist in the db)
 		/*foreach ($this->Get_thumbnail_types() as $thumbnail_type) {
 			$thumbnail_path = $full_path.'thumb-'.$thumbnail_type['thumbnail_type'].'/'.$data['filename'];
-			unlink($thumbnail_path);
+			@unlink($thumbnail_path);
 		}*/
 		$r = $db->prepare("DELETE FROM {$this->db_prefix}gallery_files WHERE id=?");
 		$r->execute(array($file_id));
@@ -1961,12 +2056,12 @@ final class PC_gallery extends PC_base {
 		$r = $db->prepare("UPDATE {$this->db_prefix}gallery_files SET category_id=? WHERE id=?");
 		$success = $r->execute(array($category_id, $file_id));
 		if (!$success) {
-			foreach ($created as $fpath) unlink($fpath);
+			foreach ($created as $fpath) @unlink($fpath);
 			$response['errors'][] = "move_image";
 			return $response;
 		}
 		//need to update image links used in the content!!!
-		foreach ($unlink_after_success as $fpath) unlink($fpath);
+		foreach ($unlink_after_success as $fpath) @unlink($fpath);
 		return array("success"=>true);
 	}
 	
@@ -2069,7 +2164,7 @@ final class PC_gallery extends PC_base {
 	* @return mixed array with keys "success" and "type" on success, or array with key "errors" otherwise.
 	*/
 	public function Create_thumbnail_type($thumbnail_type, $max_w, $max_h, $quality=76, $use_adaptive_resize) {
-		$use_adaptive_resize = (bool)$use_adaptive_resize;
+		$use_adaptive_resize = (int)$use_adaptive_resize;
 		$thumbnail_type = strtolower($thumbnail_type);
 		if (!preg_match('/^'.$this->patterns['thumbnail_type'].'$/', $thumbnail_type))
 			$response['errors'][] = "thumbnail_type"; 
@@ -2268,7 +2363,7 @@ final class PC_gallery extends PC_base {
 		}
 		if (isset($use_adaptive_resize)) {
 			$use_adaptive_resize = (int)$use_adaptive_resize;
-			if ($use_adaptive_resize != 0 && $use_adaptive_resize != 1)
+			if (!in_array($use_adaptive_resize, array(0, 1, 2)))
 				$response['errors'][] = "use_adaptive_resize";
 		}
 		if (empty($max_w) && empty($max_h) && empty($quality) && $type == $new_type && is_null($use_adaptive_resize)) {
@@ -2419,7 +2514,11 @@ final class PC_gallery extends PC_base {
 					if (isset($r['errors'])) if (count($r['errors'])) continue;
 					$file = array();
 					foreach ($return_thumbnail_types as $type) {
-						$file[$type] = $r['category_path'].'/'.$type.'/'.$r['filename'];
+						$clean_type = $type;
+						if (!empty($type)) {
+							$type .= '/';
+						}
+						$file[$clean_type] = $r['category_path'] . '/' . $type . $r['filename'];
 					}
 					$files[] = $file;
 				}
@@ -2427,6 +2526,11 @@ final class PC_gallery extends PC_base {
 			}
 		}
 		return $m[1];
+	}
+	public function Get_image_thumbnail($src, $type=null) {
+		$r = $this->Parse_file_request($src);
+		if (isset($r['errors'])) if (count($r['errors'])) return $src;
+		return (!empty($r['category_path'])?$r['category_path'].'/':'').(is_null($type)?'':$type.'/').$r['filename'];
 	}
 	
 	/**

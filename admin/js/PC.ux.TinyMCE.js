@@ -13,28 +13,28 @@ tinymce.create('tinymce.plugins.Profis', {
 						var selection = tinyMCE.activeEditor.selection.getContent();
 						switch (PC.global.ln) {
 							case 'lt':
-								tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'&bdquo;'+selection+'&ldquo;');
+								tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'&bdquo;'+selection+'&ldquo;'); //„This sentence is surrounded by &bdquo; and &ldquo;, which are a type of quotation marks.“ 
 								break;
 							case 'ru':
-								tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'«'+selection+'»');
+								tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'&laquo;'+selection+'&raquo;'); //«This sentence is surrounded by &laquo; and &raquo;, which are a type of quotation marks.» 
 								break;
 							default:
-								tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'"'+selection+'"');
+								tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'&ldquo;'+selection+'&rdquo;'); //“This sentence is surrounded by &ldquo; and &rdquo;, which are a type of quotation marks.” 
 						}
 					}
                 });
                 c.onRenderMenu.add(function(c, m) {
-                    m.add({title : '" "', onclick : function() {
+                    m.add({title : '&ldquo; &rdquo;', onclick : function() {
 						var selection = tinyMCE.activeEditor.selection.getContent();
-						tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'"'+selection+'"');
+						tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'&ldquo;'+selection+'&rdquo;');
                     }});
                     m.add({title : '&bdquo; &ldquo;', onclick : function() {
 						var selection = tinyMCE.activeEditor.selection.getContent();
                         tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'&bdquo;'+selection+'&ldquo;');
                     }});
-					m.add({title : '« »', onclick : function() {
+					m.add({title : '&laquo; &raquo;', onclick : function() {
 						var selection = tinyMCE.activeEditor.selection.getContent();
-                        tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'«'+selection+'»');
+                        tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent",false,'&laquo;'+selection+'&raquo;');
                     }});
                 });
                 return c;
@@ -112,14 +112,15 @@ PC.ux.TinyMCE = function(config) {
 			theme_advanced_resizing: false,
 			media_strict: false, //cms media works only in non-strict mode
 			//extended_valid_elements: 'object[id|style|width|height|classid|codebase],embed[src|type|width|height|flashvars|wmode],a[name|href|target|title|onclick|class],img[class|src|border=0|alt|title|hspace|vspace|width|height|align|onmouseover|onmouseout|name|style],hr[class|width|size|noshade],font[face|size|color|style],span[class|align|style],input[required|name|style|class|type|value|tabindex|maxlength|readonly|size|id],textarea[rows|cols|required|name|style|class|tabindex|readonly|id]',
-			extended_valid_elements: 'object[id|style|width|height|classid|codebase],embed[src|type|width|height|flashvars|wmode],'
-				+'a[name|href|target|title|onclick|class],'
+			extended_valid_elements: 'object[id|style|width|height|classid|codebase|marker_options],embed[src|type|width|height|flashvars|wmode],'
+				+'a[name|href|target|title|onclick|class|rel],'
 				+'img[class|src|border=0|alt|title|hspace|vspace|width|height|align|onmouseover|onmouseout|name|style],'
 				+'hr[class|width|size|noshade],font[face|size|color|style],span[class|align|style|title|id],'
 				+'input[required|name|style|class|type|value|tabindex|maxlength|readonly|size|id|checked|placeholder],'
 				+'textarea[rows|cols|required|name|style|class|tabindex|readonly|id|placeholder],'
 				+'iframe[width|height|src|frameborder|scrolling|marginheight|marginwidth],fb:like,'
 				+'select[size,class,id,style,title,name,required,multiple,disabled],',
+			invalid_elements : "script,style",
 			template_external_list_url: 'example_template_list.js',
 			content_css: PC.global.BASE_URL+'themes/'+ Get_site()[2] +'/custom.css?'+new Date().getTime(),
 			//custom editor css by theme: PC.global.BASE_URL+'media/editor.css, '+ 
@@ -174,8 +175,10 @@ PC.ux.TinyMCE = function(config) {
 				ed.onDblClick.add(function(ed, e) {
 					var target_class = e.target.className;
 					if (target_class == 'mceItemGmap') {
-						PC.dialog.gmaps.show();
-						PC.dialog.gmaps.edit_map(e.target);
+						var after_show_callback = function() {
+							PC.dialog.gmaps.edit_map(e.target);
+						}
+						PC.dialog.gmaps.show(after_show_callback);
 					}
 					else if (target_class == 'mceItemFlash') {
 						PC.dialog.media.show(e.target);
@@ -194,6 +197,7 @@ PC.ux.TinyMCE = function(config) {
 				//remove preloader mask when the last editor has finished loading
 				ed.onPostRender.add(function(ed){
 					if (ed.id == 'db_fld_info3') {
+					//if (ed.id == 'absolut_tinymce') {	
 						Load_home_page_on_tree_load();
 						var mask = Ext.get('loading-mask');
 						if (mask) mask.remove();
@@ -212,14 +216,24 @@ PC.ux.TinyMCE = function(config) {
 				//remove all borders
 				o.node.innerHTML = o.node.innerHTML.replace(/border="\d+"/mig, 'border="0"');
 				//remove cellspacing/padding
-				o.node.innerHTML = o.node.innerHTML.replace(/(cellpadding|cellspacing)="\d+"/mig, '');
+				//o.node.innerHTML = o.node.innerHTML.replace(/(cellpadding|cellspacing)="\d+"/mig, '');
 				//remove borders in table: .replace(/(<table.+?)border="\d+"(.+?<\/table>)/mig, '$1border="0"$2')
 				//remove <p> tags in table
 				o.node.innerHTML = o.node.innerHTML.replace(/(<td[^>]*>)\s*<p>(.+?)<\/p>\s*(<\/td>)/mig, '$1$2$3');
 				setTimeout(function(){
 					tinymce.editors[0].addVisual();
 				}, 50);
-			}
+			},
+			paste_text_replacements : [
+				//Copy paste from tiny_mce\plugins\paste\editor_plugin.js and modified:
+				[/\u2026/g, "..."],
+				//Profis: new line:
+				[/[\x93\x94\u201d]/g, '"'],
+				//Profis: commented line:
+				//[/[\x93\x94\u201c\u201d]/g, '"'],
+				[/[\x60\x91\x92\u2018\u2019]/g, "'"]
+
+			]
 		}
 	};
 	if (Ext.isGecko || Ext.isOpera || Ext.isChrome)
@@ -336,7 +350,7 @@ PC.ux.TinyMCE = function(config) {
 				p.mce_height = s.height;
 				p.mce_auto_focus = s.auto_focus;
 				
-				var win = new Ext.Window(wincfg);
+				var win = new PC.ux.Window(wincfg);
 				
 				p.mce_window_id = win.getId();
 				
@@ -509,3 +523,20 @@ Ext.extend(PC.ux.TinyMCE, Ext.form.Field, {
 });
 
 Ext.ComponentMgr.registerType('profis_tinymce', PC.ux.TinyMCE);
+
+
+
+PC.ux.VirtualTinyMCE = function(config) {
+	PC.ux.VirtualTinyMCE.superclass.constructor.call(this, config);
+};
+
+Ext.extend(PC.ux.VirtualTinyMCE, Ext.form.Field, {
+	defaultAutoCreate: {
+		tag: 'textarea'
+	},
+	restart: function() {
+		
+	}
+});
+
+Ext.ComponentMgr.registerType('profis_virtual_tinymce', PC.ux.VirtualTinyMCE);

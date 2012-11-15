@@ -8,6 +8,13 @@ PC.getPluginFromID = function(id) {
 	return pl;
 }
 
+PC.getOwnerPlugin = function(node) {
+	if (node.attributes.controller != undefined) {
+		return node.attributes.controller;
+	}
+	return PC.getPluginFromID(node.id);
+}
+
 PC.utils.getFlagOffsets = function(lang) {
 	var result = [0, 0];
 	if (lang.match(/^[a-z]{2}$/)) {
@@ -93,7 +100,8 @@ PC.utils.localize = function(path, langs) {
 		PC.utils.applyProps(eval('PC.i18n'+p), eval('PC.langs.'+PC.global.admin_ln+p));
 	}
 }
-PC.utils.extractName = function(names, callback) {
+PC.utils.extractName = function(names, callback, cfg) {
+	if (typeof cfg != 'object') var cfg = {};
 	var name = '', greyOut = false;
 	if (typeof names != 'object') {
 		name = '...';
@@ -112,6 +120,7 @@ PC.utils.extractName = function(names, callback) {
 		});
 		if (name == '') name = '...';
 	}
+	if (cfg.greyOut != undefined) greyOut = cfg.greyOut;
 	if (greyOut) name = '<span style="color: #666"><i>'+ name +'</i></span>';
 	if (typeof callback == 'function') callback(name);
 	return name;
@@ -178,6 +187,15 @@ PC.utils.getCookie = function(name) {
 	return unescape( document.cookie.substring( len, end ) );
 }
 
+/**
+* Sets cookie
+* @param {String} name    A cookie name.
+* @param {String} value    A cookie value.
+* @param {String} expires = null   Cookie expiration in ours
+* @param {String} path = null
+* @param {String} domain = null
+* @param {String} secure = null
+*/
 PC.utils.setCookie = function(name, value, expires, path, domain, secure) {
 	var today = new Date();
 	today.setTime( today.getTime() );
@@ -204,7 +222,12 @@ PC.utils.loadScript = function(src, callback){
 	var s = document.createElement('script');
 	s.setAttribute('type', 'text/javascript');
 	s.setAttribute('src', src);
-	if (typeof callback == 'function') s.onload = callback;
+	if (typeof callback == 'function') {
+		s.onreadystatechange = function () {
+		   if (this.readyState == 'complete') callback();
+		}
+		s.onload = callback;
+	}
 	return body.appendChild(s);
 }
 

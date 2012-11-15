@@ -17,11 +17,36 @@
 error_reporting(0); //ensure PHP won't output any error data and won't destroy JSON structure
 $cfg['core']['no_login_form'] = true; //don't output login form if there's no active session
 require_once('admin.php'); //ensure the user is authorized, otherwise stop executing this script
+
 $id = $_GET['id'];
 $ln = $_GET['ln'];
+
+$controller_data = $page->get_controller_data_from_id($id);
+			
+$url = '';
+$is_permalink = false;
+if ($controller_data and $core->Count_hooks('core/page/parse-page-url/'.$controller_data['plugin'])) {
+	$core->Init_hooks('core/page/parse-page-url/'.$controller_data['plugin'], array(
+		'url'=> &$url,
+		'page_id'=> &$id,
+		'is_permalink'=> &$is_permalink,
+		'get_page_id' => true,
+		'id' => $controller_data['id'],
+		'ln' => $ln
+	));
+	if (false and !empty($url)) {
+		echo $url;
+		echo '<hr />';
+		echo $id;
+		echo '<hr />';
+		//$this->core->Redirect_local($url, 301);
+	}
+}
+
+
 if ($id < 1 || empty($ln)) {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
-	die('You should specify both page ID and language.');
+	die($id . ' - You should specify both page ID and language.');
 }
 $r = $db->prepare("SELECT d.ln,d.mask,p.front,p.site, route"
 ." FROM {$cfg['db']['prefix']}pages p"
@@ -36,11 +61,28 @@ if (!$success) {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 	die('Database error');
 }
-if ($r->rowCount() != 1) {
+if ($r->rowCount() < 1) {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 	die('Page with specified ID and language combination was not found');
 }
 $page = $r->fetch();
 
-$location = $cfg['url']['base'].($page['front']?'':($ln==$page['ln']?'':$ln.'/').$page['route'].'/');
+print_pre($page);
+
+if (empty($url)) {
+	$url = ($page['front']?'':($ln==$page['ln']?'':$ln.'/').$page['route'].'/');
+}
+else {
+	if (!$is_permalink) {
+		$url = ($ln==$page['ln']?'':$ln.'/').$page['route'].'/' . $url;
+	}
+}
+
+$url = $cfg['url']['base'] . $url;
+
+if ($page['ln'] == $ln and strpos($url, $cfg['url']['base'] . $ln.'/') !== false) {
+	$url = str_replace($cfg['url']['base'] . $ln.'/', $cfg['url']['base'], $url);
+}
+
+$location = $url;
 header('Location: '.$location);

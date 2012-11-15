@@ -343,8 +343,10 @@ PC.dialog.tables = {
 						var field = this;
 						var params = {
 							callee: 'image',
-							save_fn: function(url){
+							thumbnail_type : '',
+							save_fn: function(url, rec, callback, params){
 								field.setValue(url);
+								callback();
 							}
 						};
 						var src = field.getValue();
@@ -361,7 +363,7 @@ PC.dialog.tables = {
 				}
 			]
 		});
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
 			modal: true,
 			width: this.chooser_width+380, height: this.chooser_height+70,
@@ -402,13 +404,16 @@ PC.dialog.tables = {
 							}
 							styles += 'border:'+p.border_size+'px '+p.border_style+' '+p.border_color+';';
 						}
+						var bg_img_style = '';
 						if (p.bg_image != '' && p.bg_image != undefined) {
+							bg_img_style = 'url('+ p.bg_image +')';
 							styles += 'background-image: url('+ p.bg_image +');';
 						}
 						if (p.custom_styles != '' && p.custom_styles != undefined) {
 							styles += p.custom_styles;
 						}
 						if (dialog.edit_mode) {
+							tinymce.activeEditor.execCommand('mceBeginUndoLevel');
 							var table = Ext.get(dialog.table);
 							table.set({
 								width: p.w+p.w_unit,
@@ -417,9 +422,15 @@ PC.dialog.tables = {
 								cellpadding: p.cellpadding,
 								'class': p.cls,
 								align: p.align,
-								style: styles
+								style: styles,
+								_mce_style: styles
 							});
+							if (bg_img_style != '') {
+								table.setStyle('background-image', bg_img_style); 
+							}
 							tinymce.activeEditor.addVisual();
+							tinymce.activeEditor.nodeChanged();
+							tinymce.activeEditor.execCommand('mceEndUndoLevel');
 							dialog.window.close();
 							return;
 						}
@@ -593,7 +604,8 @@ PC.dialog.quicktable = {
 		}
 		this.chooser_width = this.chooser_cols*this.cell_side;
 		this.chooser_height = this.chooser_rows*this.cell_side;
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
+			pc_temp_window: true,
 			closeAction: 'hide',
 			width: this.chooser_width+12,
 			height: this.chooser_height+42,
@@ -725,6 +737,11 @@ PC.dialog.quicktable = {
 				}
 			}
 		});
+
+		this.window.addListener('deactivate', function(w) {
+			w.hide();
+		});
+		
 		this.window.show();
 		this.window.setPagePosition(x, y);
 	}

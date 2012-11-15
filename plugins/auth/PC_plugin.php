@@ -5,3 +5,4 @@ function auth_core_access_handler($data, $plugin_name) {
 	return true;
 }
 $this->auth->permissions->Register('core', 'plugins', 'auth_core_access_handler');
+$this->auth->permissions->Register('core', 'page_nodes', false);

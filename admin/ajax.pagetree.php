@@ -16,12 +16,25 @@
  */
 $cfg['core']['no_login_form'] = true;
 require_once 'admin.php';
-if (!$auth->Authorize('core', 'admin')) {
+$full_access = true;
+/* @var $auth PC_auth */ 
+$auth->debug = true;
+$auth->set_instant_debug_to_file($cfg['path']['base'] . 'logs/auth/auth_for_ajax_pagetree_php.html', false, 5);
+if (!$auth->Authorize_access_to_pages()) {
 	die('No access');
+	$full_access = false;
 }
+
 header('Content-Type: application/json');
 header('Cache-Control: no-cache');
 $out = array();
+
+
+require_once 'classes/Page_manager.php';
+$page_manager = new Page_manager();
+
+$page_manager->set_debug($auth->debug);
+
 // ****************************************************************
 // PAGES: GET SUBNODES
 // input:
@@ -32,98 +45,55 @@ $out = array();
 //     _names: array of ln=>name
 //     _empty: 1 if no children
 //     ...
+//     
+//  For this operation, node access is not needed to be checked: 
+//  $page_manager ensures only accessible subnodes will be generated 
 if (isset($_POST['node'])) {
 	$deleted = v($_POST['deleted'], false);
 	if ($deleted == 'false') $deleted = false;
 	$deleted = (boolean)$deleted;
-	$id = v($_POST['node']);
-	$plugin = v($_POST['controller']);
+		
 	$site_id = v($_POST['site']);
+	$id = v($_POST['node']);
+	
+	$plugin = v($_POST['controller']);
 	$search = v($_POST['searchString'], null);
 	$additional = v($_POST['additional']);
+	
+	if ($id) {
+		$search = null;
+	}
+	
+	$additional = stripslashes($additional);
+	
+	$node_children = array();
+
 	if (!($additional = json_decode($additional, true))) {
 		$additional = array();
 	}
-	//search tree
-	if (!empty($search)) {
-		$site->Load($site_id);
-		$r = Get_tree_childs($id, $site_id, false, $search);
-		if ($r) $out = $r;
-		//$r = $core->Search($search);
-		//---
-		/*if (count($r)) {
-			foreach ($r as $data) {
-				$ids[] = $data['pid'];
-				print_pre($data['pid']);
-				//$out[] = Parse_page_to_node($data);
-			}
-		}*/
-	}
-	//normal load
-	else {
-		//check if given id belongs to `page` or `plugin specific renderer`
-		if (preg_match("#^(".$cfg['patterns']['plugin_name'].")/(.+)$#i", $id, $m)) {
-			//given id is with plugin prefix, what means that we need to generate tree items using that plugin tree renderer
-			if (empty($plugin)) $plugin = $m[1];
-			$id = $m[2];
-		}
-		$rendered = false;
-		if (!empty($plugin)) {
-			if ($core->Count_hooks('core/tree/get-childs/'.$plugin) >= 1) {
-				$rendered = true;
-				//init renderer hooks to generate output results
-				$core->Init_hooks('core/tree/get-childs/'.$plugin, array(
-					'id'=> $id,
-					'additional'=> &$additional,
-					'data'=> &$out
-				));
-			}
-		}
-		if (!$rendered) if (is_numeric($id) && (int)$id == $id) {
-			//given id is page id
-			//recycle bin subnodes
-			if ($id == -1) {
-				$out = Get_tree_childs($id, $site_id, true);
-				$out = array_reverse($out); // show last deleted first
-			}
-			else {
-				// ***** NORMAL MODE *****
-				$out = Get_tree_childs($id, $site_id, $deleted);
-				//if node is root, we need to append static top level nodes (home page, bin, search page and others)
-				if ($id == 0) {
-					//"Create new page" node
-					$i = array(
-						'id' => 'create',
-						'cls' => 'cms-tree-node-add',
-						'draggable' => false,
-						'_nosel' => 1,
-						'leaf' => true
-					);
-					$out[] = $i;
-					//recycle bin
-					$i = array(
-						'id' => -1,
-						'cls' => 'cms-tree-node-trash',
-						'draggable' => false,
-						'_nosel' => 1
-					);
-					$r = $db->prepare("SELECT count(*) FROM {$cfg['db']['prefix']}pages WHERE deleted=1 and site=?");
-					$success = $r->execute(array($site_id));
-					if ($success) {
-						$count = $r->fetchColumn();
-						if ($count == 0) {
-							$i['_empty'] = 1;
-							$i['expandable'] = false;
-						}
-					}
-					$out[] = $i;
-				}
-			}
-		}
-	}
+	
+	$additional['load_children'] = '';
+	
+	$rendered = false;
+	$out;	
+	
+	$page_tree_params = array(
+		'search' => $search,
+		'plugin' => $plugin,
+		'date' => false,
+		'additional' => $additional,
+		'deleted' => $deleted
+	);
+			
+	$rendered = true;
+	
+	$out = $page_manager->get_accessible_children($site_id, $id, $page_tree_params);
 	echo json_encode($out);
-	return;
+	$auth->debug('Debug from page manager:', 3);
+	$auth->debug($page_manager->get_debug_string(), 3);
+	exit;
 }
+
 
 // ****************************************************************
 // TREE: INSERT NEW NODE
@@ -134,6 +104,15 @@ if (isset($_POST['node'])) {
 //     id: new ID
 //     _names: empty array
 if (isset($_POST['new']) && isset($_POST['site'])) {
+	if (!$page_manager->is_node_accessible($_POST['new'], $_POST['site'])) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		$auth->debug('Debug from page manager:', 3);
+		$auth->debug($page_manager->get_debug_string(), 3);
+		exit;
+	}
 	$site_data = $site->Get($_POST['site'], true, true);
 	if ($site_data) {
 		$r = $db->prepare("SELECT max(nr),front FROM {$cfg['db']['prefix']}pages WHERE idp=? GROUP BY front");
@@ -172,6 +151,13 @@ if (isset($_POST['new']) && isset($_POST['site'])) {
 //     del: node ID to delete
 // output: empty array
 if (isset($_POST['del'])) {
+	if (!$page_manager->is_node_accessible($_POST['del'])) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		exit;
+	}
 	$r = $db->prepare("DELETE FROM {$cfg['db']['prefix']}content WHERE pid=?");
 	$r->execute(array($_POST['del']));
 	$gallery = new PC_gallery;
@@ -192,6 +178,8 @@ if (isset($_POST['del'])) {
 //     ungzipped data field
 
 if (isset($_POST['archive']) && is_numeric($_POST['archive'])) {
+	//No need for permission checking here. 
+	//Data will be loaded into fields without saving. Permission will be checked when page will be saved.
 	$r = $db->prepare("SELECT * FROM {$cfg['db']['prefix']}content_archive WHERE id=? LIMIT 1");
 	$r->execute(array($_POST['archive']));
 	if ($cfg['db']['type'] == 'pgsql') $r->bindColumn('data', $archive_data, PDO::PARAM_STR);
@@ -211,6 +199,13 @@ if (isset($_POST['archive']) && is_numeric($_POST['archive'])) {
 // output: empty array
 
 if (isset($_POST['archive_delete'])) {
+	if (!$page_manager->is_node_accessible($_POST['id'])) {
+		$out = array(
+			'error' => 'authorization failed for page_node'
+		);
+		echo json_encode($out);
+		exit;
+	}
 	$todel = array();
 	if ($js = json_decode($_POST['archive_delete']))
 		if (is_array($js))

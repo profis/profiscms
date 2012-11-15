@@ -5,7 +5,7 @@ PC.dialog.mergetablecells = {
                 this.ln = PC.i18n.dialog.mergetablecells;
 		this.ln_tables = PC.i18n.dialog.tables;
 		var dialog = this;
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
 			title: this.ln.title,
                         layout: 'form',
                         padding: '6px 9px 0 3px',

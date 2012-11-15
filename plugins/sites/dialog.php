@@ -33,7 +33,7 @@ if (isset($_POST['ajax'])) {
 	if (isset($_POST['add']) && is_array($_POST['add'])) {
 		$r_site = $db->prepare("INSERT INTO {$cfg['db']['prefix']}sites (name,theme,editor_width,editor_background) VALUES(?,?,?,?)");
 		$r_front_page = $db->prepare("INSERT INTO {$cfg['db']['prefix']}pages (site,front,published,controller) VALUES(?,1,1,'')");
-		$r_langs = $db->prepare("INSERT INTO {$cfg['db']['prefix']}languages (site,ln,name,nr) VALUES (?,?,?,?)");
+		$r_langs = $db->prepare("INSERT INTO {$cfg['db']['prefix']}languages (site,ln,name,nr,disabled) VALUES (?,?,?,?,?)");
 		foreach ($_POST['add'] as $v)
 			if (isset($v['n']) && isset($v['d']) && isset($v['l']) && isset($v['width']) && isset($v['background']) && is_array($v['l'])) {
 				$r_site->execute(array(
@@ -45,9 +45,9 @@ if (isset($_POST['ajax'])) {
 				$k = $db->lastInsertId($sql_parser->Get_sequence('sites'));
 				$i = 0;
 				$r_front_page->execute(array($k));
-				foreach ($v['l'] as $ln_id=>$ln_name) {
+				foreach ($v['l'] as $ln_id=>$ln_data) {
 					if (preg_match('/^[a-z]{2}$/', $ln_id)) {
-						$r_langs->execute(array($k, $ln_id, substr($ln_name, 0, 255), $i++));
+						$r_langs->execute(array($k, $ln_id, substr($ln_data['name'], 0, 255), $i++, $ln_data['disabled']));
 					}
 				}
 			}
@@ -56,7 +56,7 @@ if (isset($_POST['ajax'])) {
 	if (isset($_POST['s']) && is_array($_POST['s'])) {
 		$r_sites = $db->prepare("UPDATE {$cfg['db']['prefix']}sites SET name=?, theme=?, editor_width=?, editor_background=?, active=? WHERE id=?");
 		$r_del_langs = $db->prepare("DELETE FROM {$cfg['db']['prefix']}languages WHERE site=?");
-		$r_langs = $db->prepare("INSERT INTO {$cfg['db']['prefix']}languages (site,ln,name,nr) VALUES(?,?,?,?)");
+		$r_langs = $db->prepare("INSERT INTO {$cfg['db']['prefix']}languages (site,ln,name,nr,disabled) VALUES(?,?,?,?,?)");
 		foreach ($_POST['s'] as $k=>$v) {
 			if (isset($v['n']) && isset($v['d']) && isset($v['l']) && isset($v['width']) && isset($v['background']) && is_array($v['l'])) {
 				$sites = $site->Get_all();
@@ -73,9 +73,9 @@ if (isset($_POST['ajax'])) {
 					}
 					$r_del_langs->execute(array($k));
 					$i = 0;
-					foreach ($v['l'] as $ln_id=>$ln_name) {
+					foreach ($v['l'] as $ln_id=>$ln_data) {
 						if (preg_match('/^[a-z]{2}$/', $ln_id)) {
-							$r_langs->execute(array($k, $ln_id, substr($ln_name, 0, 255), $i++));
+							$r_langs->execute(array($k, $ln_id, substr($ln_data['name'], 0, 255), $i++, $ln_data['disabled']));
 						}
 					}
 				}
@@ -126,8 +126,12 @@ if (isset($_POST['ajax'])) {
 	foreach ($sites as $k=>$v) {
 		$tmp = array();
 		if (isset($v['langs']))
-			foreach ($v['langs'] as $k1=>$v1)
-				$tmp[] = array($k1, $v1);
+			foreach ($v['langs'] as $k1=>$v1) {
+				array_unshift($v1, $k1);
+				$tmp[] = $v1;
+				//$tmp[] = array($k1, $v1);
+			}
+				
 		//$out[] = array($k, $v['name'], $v['theme'], $tmp);
 		$out[] = array($k, $v['name'], $v['theme'], $tmp, null, $v['editor_width'], $v['editor_background'], $v['mask'], $v['active']);
 	}
@@ -152,7 +156,7 @@ function mod_sites_langs_click() {
 			item.get('lang_store').each(function(item1, ndx1, all1) {
 				if (!dk[item1.get('ln_id')]) {
 					dk[item1.get('ln_id')] = true;
-					d.push([item1.get('ln_id'), item1.get('ln_name')]);
+					d.push([item1.get('ln_id'), item1.get('ln_name'), item1.get('ln_disabled')]);
 				}
 			});
 		});
@@ -164,7 +168,7 @@ function mod_sites_langs_click() {
 			site_dir: t,
 			site_langs: d,
 			lang_store: new Ext.data.ArrayStore({
-				fields: ['ln_id', 'ln_name'],
+				fields: ['ln_id', 'ln_name', 'ln_disabled'],
 				idIndex: 0,
 				data: d
 			}),
@@ -235,7 +239,8 @@ function mod_sites_langs_click() {
 				rqparams['add['+newi+'][background]'] = rec.get('editor_background');
 				rqparams['add['+newi+'][active]'] = rec.get('active');
 				rec.data.lang_store.each(function(item) {
-					rqparams['add['+newi+'][l]['+item.get('ln_id')+']'] = item.get('ln_name');
+					rqparams['add['+newi+'][l]['+item.get('ln_id')+'][name]'] = item.get('ln_name');
+					rqparams['add['+newi+'][l]['+item.get('ln_id')+'][disabled]'] = item.get('ln_disabled');
 				});
 				newi++;
 			} else { // old site
@@ -245,7 +250,8 @@ function mod_sites_langs_click() {
 				rqparams['s['+rec.get('site_id')+'][background]'] = rec.get('editor_background');
 				rqparams['s['+rec.get('site_id')+'][active]'] = rec.get('active');
 				rec.data.lang_store.each(function(item) {
-					rqparams['s['+rec.get('site_id')+'][l]['+item.get('ln_id')+']'] = item.get('ln_name');
+					rqparams['s['+rec.get('site_id')+'][l]['+item.get('ln_id')+'][name]'] = item.get('ln_name');
+					rqparams['s['+rec.get('site_id')+'][l]['+item.get('ln_id')+'][disabled]'] = item.get('ln_disabled');
 				});
 			}
 		});
@@ -330,7 +336,7 @@ function mod_sites_langs_click() {
 	var lang_store = null;
 	site_store.each(function(rec) {
 		rec.data.lang_store = new Ext.data.ArrayStore({
-			fields: ['ln_id', 'ln_name'],
+			fields: ['ln_id', 'ln_name', 'ln_disabled'],
 			idIndex: 0,
 			data: rec.data.site_langs
 		});
@@ -548,6 +554,7 @@ function mod_sites_langs_click() {
 	var re = new Ext.ux.grid.RowEditor({
 		saveText: Ext.Msg.buttonText.ok,
 		clicksToEdit: 2,
+		errorSummary: false,
 		listeners: {
 			beforeedit: function(ed, idx) {
 				if (ed.editing)
@@ -566,7 +573,8 @@ function mod_sites_langs_click() {
 		var sel = lang_grid.getSelectionModel().getSelected();
 		var rec = new lang_store.recordType({
 			ln_id: '',
-			ln_name: ''
+			ln_name: '',
+			ln_disabled: ''
 		});
 		var idx;
 		if (sel) {
@@ -656,6 +664,38 @@ function mod_sites_langs_click() {
 					}
 				},
 				width: 150
+			},
+			{	xtype: 'gridcolumn',
+				header: PC.i18n.mod.sites_langs.activated,
+				dataIndex: 'ln_disabled',
+				sortable: false,
+				menuDisabled: true,
+				width: 100,
+				renderer: function(value, metaData, record, rowIndex, colIndex, store) {
+					//Values are flipped: 1 means no; 0 means yes.
+					//This is because in db there is field 'disabled' and in frontend there is column 'activated'
+					return (value=='1'?PC.i18n.no:PC.i18n.yes);
+				},
+				editor: {
+					xtype: 'combo',
+					mode: 'local',
+					store: {
+						xtype: 'arraystore',
+						fields: ['value', 'name'],
+						idIndex: 0,
+						data: [
+							['0', PC.i18n.yes],
+							['1', PC.i18n.no]
+						]
+					},
+					validator: function(val) {
+						return true;
+					},
+					valueField: 'value',
+					displayField: 'name',
+					forceSelection: true,
+					triggerAction: 'all'
+				}
 			}
 		],
 		listeners: {
@@ -696,10 +736,10 @@ function mod_sites_langs_click() {
 		var only_1 = (sm.getCount()==1 && sm.getSelected().get('site_id')==1);
 		lang_grid.del_btn.setDisabled(dis || only_1);
 	});
-	var w = new Ext.Window({
+	var w = new PC.ux.Window({
 		modal: true,
 		title: PC.i18n.mod.sites_langs.selfname,
-		width: 800,
+		width: 900,
 		height: 400,
 		layout: 'hbox',
 		layoutConfig: {

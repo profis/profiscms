@@ -609,7 +609,7 @@ function mod_variables_click() {
 									checked: val_w_items.length==1 ? 1 : 0
 								});
 							});
-							var val_w = new Ext.Window({
+							var val_w = new PC.ux.Window({
 								modal: true,
 								title: ln.choose_new_value_title,
 								width: 250,
@@ -719,7 +719,7 @@ function mod_variables_click() {
 			}
 		]
 	});
-	var w = new Ext.Window({
+	var w = new PC.ux.Window({
 		modal: false,
 		title: ln.selfname,
 		width: 640,
@@ -748,7 +748,7 @@ function mod_variables_click() {
 					for (var x in all_tabs) {
 						var st = all_tabs[x].str_store;
 						var sid = x=='all' ? null : x;
-						st.each(function(rec) {
+						Ext.each(st.modified, function(rec) {
 							if (rec.dirty) {
 								var a, i;
 								if (o[rec.data.key] === undefined) {

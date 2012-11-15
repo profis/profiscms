@@ -1,13 +1,53 @@
 <?php
 require("base.php");
+
+
+
 error_reporting(E_ALL);
 if ($routes->Get(1) == 'admin') {
 	//administrator API
 	$routes->Shift(2);
 	require("admin/admin.php");
+	
+	require_once 'admin/Admin_api.php';
+	$admin_api = new Admin_api();
+	
+	$api_name = v($routes->Get(1));
+	
+	if (method_exists($admin_api, $api_name)) {
+		$answer = $admin_api->$api_name(v($routes->Get(2)), v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)), v($routes->Get(6)));
+		if (is_array($answer)) {
+			$answer = json_encode($answer);
+		}
+		echo $answer;
+		exit;
+	}
+	
 	switch (v($routes->Get(1))) {
 		case 'phpinfo':
 			phpinfo();
+			break;
+		case 'tree':
+			$tree = $core->Get_object('PC_database_tree');
+			switch (v($routes->Get(2))) {
+				case 'debug':
+					$params = array(
+						'cols'=> array(
+							'parent'=> v($routes->Get(4)),
+							'name'=> v($routes->Get(5))
+						)
+					);
+					$tree->Debug(v($routes->Get(3)), $params);
+					break;
+				case 'recalculate':
+					$params = array(
+						'cols'=> array(
+							'parent'=> v($routes->Get(4))
+						)
+					);
+					$tree->Recalculate(v($routes->Get(3)), $params);
+					break;
+			}
 			break;
 		case 'plugin':
 			$pluginName = str_replace('-', '_', $routes->Get(2));
@@ -38,6 +78,8 @@ else {
 	//public API
 	$routes->Shift(1);
 	switch($routes->Get(1)) {
+		case 'keepalive':
+			break;
 		case 'texts':
 			$site->Identify();
 			$ln = v($routes->Get(2));
@@ -107,8 +149,11 @@ else {
 				global $page;
 				$list = array();
 				foreach ($page->Get_submenu($pid) as $p) {
-					$list[$p['pid']] = $p;
-					$list += Get_sub_list($p['pid']);
+					if (v($p['pid'])) {
+						$list[$p['pid']] = $p;
+						$list += Get_sub_list($p['pid']);
+					}
+					
 				}
 				return $list;
 			}
@@ -116,11 +161,15 @@ else {
 				echo 'This site is turned off, so you can`t view its` sitemap.';
 				exit;
 			}
+			///*
 			header ("Content-Type:text/xml");
 			echo '<?xml version="1.0" encoding="UTF-8"?>';
 			echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+			//*/
 			$page->Load_menu();
 			$list = array();
+			print_pre($page->menus);
+			//break;
 			foreach ($page->menus as $menu) {
 				foreach ($menu as $p) {
 					$list[$p['pid']] = $p;
@@ -129,7 +178,9 @@ else {
 			}
 			$ids = array();
 			foreach ($list as $p) {
-				$ids[] = $p['pid'];
+				if (v($p['pid'])) {
+					$ids[] = $p['pid'];
+				}
 				continue;
 				/*echo '<url>'."\r\n";
 				echo '<loc>'.$cfg['url']['base'].$site->Get_link($p['route']).'</loc>'."\r\n";
@@ -137,11 +188,13 @@ else {
 				if ((int)$p['hot'] > 0) echo '<priority>0.8</priority>'."\r\n";
 				echo '</url>'."\r\n";*/
 			}
-			$r = $db->query("SELECT pid,route,ln FROM {$cfg['db']['prefix']}content WHERE pid in(".implode(',', $ids).")");
+			$query = "SELECT pid,route,ln FROM {$cfg['db']['prefix']}content WHERE pid in(".implode(',', $ids).")";
+			$r = $db->query($query);
 			if (!$r) {
 				header('HTTP/1.1 503 Service Temporarily Unavailable');
 				exit;
 			}
+			
 			while ($d = $r->fetch()) {
 				echo '<url>'."\r\n";
 				echo '<loc>'.$cfg['url']['base'].$site->Get_link($d['route'], $d['ln']).'</loc>'."\r\n";
