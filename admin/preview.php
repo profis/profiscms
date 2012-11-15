@@ -67,7 +67,7 @@ if ($r->rowCount() < 1) {
 }
 $page = $r->fetch();
 
-print_pre($page);
+//print_pre($page);
 
 if (empty($url)) {
 	$url = ($page['front']?'':($ln==$page['ln']?'':$ln.'/').$page['route'].'/');

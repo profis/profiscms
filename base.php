@@ -95,7 +95,7 @@ $HTTPS = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && strtolower($_SERVER['H
 $PROTOCOL = $HTTPS ? 'https://' : 'http://';
 
 $memstore = new PC_memstore; // used only to store values temporarily within process memory (previously was $cache = new PC_cache;)
-$cache = isset($cfg["cache"]["class"]) ? new {$cfg["cache"]["class"]} : new PC_cache;
+$cache = isset($cfg["cache"]["class"]) ? new $cfg["cache"]["class"] : new PC_cache;
 
 $core = new PC_core;
 

@@ -29,7 +29,7 @@
 		//print_pre($gallery->Get_category_id_by_path('automobiliai'));
 		?>
 		<div style="background:#222;padding:3px 5px;">
-			<a style="color:#fff;font-weight:bold" href="<?php echo $cfg['url']['base']; ?>">Home</a>
+			<a style="color:#fff;font-weight:bold" href="<?php echo $site->Get_link(0); ?>">Home</a>
 		</div>
 		<div style="background:#ccc;padding:3px 5px;">
 			<?php
