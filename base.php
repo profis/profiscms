@@ -94,7 +94,9 @@ session_start();
 $HTTPS = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS'])!='off';
 $PROTOCOL = $HTTPS ? 'https://' : 'http://';
 
-$cache = new PC_cache;
+$memstore = new PC_memstore; // used only to store values temporarily within process memory (previously was $cache = new PC_cache;)
+$cache = isset($cfg["cache"]["class"]) ? new {$cfg["cache"]["class"]} : new PC_cache;
+
 $core = new PC_core;
 
 $auth = new PC_auth;
@@ -106,3 +108,4 @@ $routes = new PC_routes;
 $site = new PC_site;
 $page = new PC_page;
 $gallery = new PC_gallery;
+

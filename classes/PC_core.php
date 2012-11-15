@@ -524,18 +524,18 @@ final class PC_core extends PC_base {
 		if (!is_array($args)) $args = array($args);
 		$path = array('core', 'objects', $className);
 		if (is_null($idIndex)) {
-			$objects = $this->cache->Get($path);
+			$objects = $this->memstore->Get($path);
 			if (!$objects) $idIndex = 0;
 			else $idIndex = count($objects);
 		}
 		elseif ($idIndex < 0) $idIndex = 0;
 		$path[] = $idIndex;
 		//return already created instance
-		$object = $this->cache->Get($path);
+		$object = $this->memstore->Get($path);
 		if ($object) return $object;
 		//create new instance
 		$reflectionCls = new ReflectionClass($className);
-		return $this->cache->Cache($path, $reflectionCls->newInstanceArgs($args));
+		return $this->memstore->Cache($path, $reflectionCls->newInstanceArgs($args));
 	}
 	/**
 	 * Makes $params an object from array

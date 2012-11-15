@@ -472,18 +472,17 @@ final class PC_site extends PC_base {
 		return $d;
 	}
 	/**
-	* Method used to get site by given site id. In this method is used PC_cache::Get() method for retrieving site from the cache. If cache is empty - 
-	* database queried and cache filled with sites. Also called PC_site::Get_all().
+	* Method used to get site by given site id. Also called PC_site::Get_all().
 	* @param mixed $id given to look for the site.
 	* @param bool $cache given to indicate of cache usage; TRUE means that cache is used.
 	* @param bool $get_all_simultaneously given to indicate, that all sites loaded to cache if specified TRUE.
 	* @return mixed array containing data about requested site.
-	* @see PC_cache::Get()
+	* @see PC_memstore::Get()
 	* @see PC_site::Get_all()
 	*/
 	public function &Get($id, $cache=true, $get_all_simultaneously=false) {
 		if ($cache) {
-			$cached =& $this->cache->Get('sites', $id);
+			$cached =& $this->memstore->Get('sites', $id);
 			if ($cached) return $cached;
 		}
 		if ($get_all_simultaneously) {
@@ -501,7 +500,7 @@ final class PC_site extends PC_base {
 		." WHERE s.id=? GROUP BY s.id,s.name,s.theme,s.editor_width,s.editor_background,d.mask,d.nr,d.ln ORDER BY s.id LIMIT 1");
 		$success = $r->execute(array($id));
 		if (!$success) {
-			$this->cache->Uncache('sites', $id);
+			$this->memstore->Uncache('sites', $id);
 			return false;
 		}
 		$site = $r->fetch();
@@ -511,18 +510,17 @@ final class PC_site extends PC_base {
 			$lang = explode('░', $lang);
 			$site['languages'][$lang[0]] = $lang[1];
 		}
-		return $this->cache->Cache(array('sites', $id), $site);
+		return $this->memstore->Cache(array('sites', $id), $site);
 	}
 	/**
-	* Method used to get all sites. In this method is used PC_cache::Get() method for retrieving all sites from the cache. If cache is empty - 
-	* database queried and cache filled with sites.
+	* Method used to get all sites.
 	* @param bool $cache given to indicate of cache usage; TRUE means that cache is used.
 	* @return mixed array of cached sites.
-	* @see PC_cache::Get()
+	* @see PC_memstore::Get()
 	*/
 	public function Get_all($cache=true) {
-		if ($cache && $this->cache->Is_cached('sites')) {
-			return $this->cache->Get('sites');
+		if ($cache && $this->memstore->Is_cached('sites')) {
+			return $this->memstore->Get('sites');
 		}
 		$sites = array();
 		$r = $this->query("SELECT s.*,d.mask,"
@@ -532,7 +530,7 @@ final class PC_site extends PC_base {
 		." LEFT JOIN {$this->db_prefix}domains d ON d.site=s.id"
 		." GROUP BY s.id,s.name,s.theme,s.editor_width,s.editor_background,d.mask,d.nr ORDER BY s.id, d.nr");
 		if (!$r) {
-			$this->cache->Uncache('sites');
+			$this->memstore->Uncache('sites');
 			return false;
 		}
 		while ($site = $r->fetch()) {
@@ -548,7 +546,7 @@ final class PC_site extends PC_base {
 			} else $site['langs'] = array();
 			$sites[$site['id']] = $site;
 		}
-		return $this->cache->Cache('sites', $sites);
+		return $this->memstore->Cache('sites', $sites);
 	}
 	//routes
 	/**
@@ -1099,22 +1097,22 @@ final class PC_site extends PC_base {
 		return $html;
 	}
 	/**
-	* Method used to add some custom data cache. This method uses PC_cache::Cache() method.
+	* Method used to add some custom data cache. This method uses PC_memstore::Cache() method.
 	* param mixed $key given key to add to cache with given $data.
 	* param mixed $data given data to to cache.
 	* @return mixed cached object.
-	* @see PC_cache::Cache()
+	* @see PC_memstore::Cache()
 	*/
 	public function &Register_data($key, $data) {
-		return $this->cache->Cache(array('site_data', $key), $data);
+		return $this->memstore->Cache(array('site_data', $key), $data);
 	}
 	/**
-	* Method used to get data from cache. This method uses PC_cache::Get() method.
+	* Method used to get data from cache. This method uses PC_memstore::Get() method.
 	* param mixed $key given key to look for data by.
 	* @return mixed object found by given key.
-	* @see PC_cache::Get_cached()
+	* @see PC_memstore::Get_cached()
 	*/
 	public function &Get_data($key) {
-		return $this->cache->Get(array('site_data', $key));
+		return $this->memstore->Get(array('site_data', $key));
 	}
 }

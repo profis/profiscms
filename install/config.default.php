@@ -23,10 +23,13 @@ $cfg['db']['name'] = '';
 $cfg['db']['prefix'] = 'pc_';
 $cfg['db']['charset'] = 'utf8';
 $cfg['db']['collation'] = 'utf8_general_ci';
+
 //timezone
 $cfg['timezone'] = 'Europe/Vilnius';
+
 //development
 $cfg['debug_mode'] = false;
+
 //languages
 $cfg['languages'] = array(
 	'lt'=> 'Lietuvių',
@@ -34,6 +37,7 @@ $cfg['languages'] = array(
 	'ru'=> 'Русский'
 );
 $cfg['admin_ln'] = 'en';
+
 //directories
 $cfg['directories'] =  array(
 	'admin' => 'admin',
@@ -43,12 +47,21 @@ $cfg['directories'] =  array(
 	'gallery' => 'gallery',
 	'config' => 'config'
 );
+
 //core variables defaults
 $cfg['core_defaults'] = array(
 	'no_gzip' => false,
 	'no_login_form' => false,
 	'demo_mode' => false
 );
+
+// caching
+$cfg["cache"] = array(
+	'class' => 'PC_file_cache',
+	'defaultExpireTime' => 600, // 10 minutes
+	'options' => array('folder' => 'cache'), // PC_file_cache specific options
+);
+
 //if custom value is not set then set this by its configured (default) value
 foreach ($cfg['core_defaults'] as $key=>$value) {
 	if (!isset($cfg['core'][$key])) $cfg['core'][$key] = $value;

@@ -29,3 +29,6 @@ media/uppod/
 nbproject/
 logs/
 admin/excel_attr/
+# Cache
+cache/
+!cache/.htaccess

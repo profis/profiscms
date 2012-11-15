@@ -435,7 +435,7 @@ final class PC_page extends PC_base {
 		else $pid = $page;
 		//enable caching
 		if ($cache) {
-			$cached =& $this->cache->Get('page_pathes', $pid);
+			$cached =& $this->memstore->Get('page_pathes', $pid);
 			if ($cached) return $cached;
 		}
 		//print_pre($page);
@@ -450,7 +450,7 @@ final class PC_page extends PC_base {
 			//get parent
 			$page = $this->Get_page(v($page['idp']), $parseLinks);
 		}
-		return $this->cache->Cache(array('page_pathes', $pid), $path);
+		return $this->memstore->Cache(array('page_pathes', $pid), $path);
 	}
 	
 	public function Get_pages_data($select = '*', $where = '', $where_params = array(), $limit = '') {

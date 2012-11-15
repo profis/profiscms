@@ -66,11 +66,11 @@ abstract class PC_base extends PC_debug{
 	 */
 	public $cache;
 	
-	
-	public $view_cache;
-	
-	
-	public $link_cache;
+	/**
+	 *
+	 * @var PC_memstore
+	 */
+	public $memstore;
 	
 	public $cfg, $path, $db_prefix, $plugins, $gallery;
 	
@@ -81,7 +81,7 @@ abstract class PC_base extends PC_debug{
 	public $auth;
 	
 	final public function __construct() {
-		global $cfg, $db, $core, $site, $routes, $page, $cache, $plugins, $sql_parser, $gallery, $auth;
+		global $cfg, $db, $core, $site, $routes, $page, $memstore, $cache, $plugins, $sql_parser, $gallery, $auth;
 		$this->cfg =& $cfg;
 		$this->path =& $cfg['path'];
 		$this->db =& $db;
@@ -92,6 +92,7 @@ abstract class PC_base extends PC_debug{
 		$this->routes =& $routes;
 		$this->route =& $routes->list;
 		$this->page =& $page;
+		$this->memstore =& $memstore;
 		$this->cache =& $cache;
 		$this->plugins =& $plugins;
 		$this->gallery =& $gallery;
