@@ -202,6 +202,25 @@ INSERT INTO `pc_domains` (`mask`, `site`, `ln`, `nr`) VALUES
 -- --------------------------------------------------------
 
 -- 
+-- Table structure for table `pc_forms`
+-- 
+
+CREATE TABLE `pc_forms` (
+  `pid` int(11)  NOT NULL,
+  `form_id` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `data` text COLLATE utf8_unicode_ci NOT NULL,
+  `time` datetime  NOT NULL,
+  `ip` int(11) UNSIGNED NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- 
+-- Dumping data for table `pc_forms`
+-- 
+
+
+-- --------------------------------------------------------
+
+-- 
 -- Table structure for table `pc_gallery_categories`
 -- 
 

@@ -208,6 +208,297 @@ final class PC_page extends PC_base {
 		);
 		return $redirect;
 	}
+	public function Process_forms(&$text) {
+		$dom = new DOMDocument();
+		// Create a fictional XHTML document with just the contents of $text in the body.
+		// Both DOCTYPE and character set definition are necessary for all the magic to work properly.
+		$dom->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body>'.$text.'</body></html>');
+		$formElements = $dom->getElementsByTagName('form');
+		$pageForms = array();
+		for ($i=0; $i<$formElements->length; $i++) {
+			$form = $formElements->item($i);
+			$formId = $form->getAttribute('id');
+			$formSettings = json_decode($form->getAttribute('pcformsettings'), true);
+			$form->removeAttribute('pcformsettings');
+			$formSubmitEmails = array();
+			$thankYouText = '';
+			if (!is_null($formSettings)) {
+				if (array_key_exists('emails', $formSettings)) {
+					$formSubmitEmails = explode(';', $formSettings['emails']);
+				}
+				if (array_key_exists('thankYouText', $formSettings)) {
+					$thankYouText = $formSettings['thankYouText'];
+				}
+			}
+			$formIdHash = 'pc_' . md5($formId.'_honeypot');
+			$pageForm = array('status' => array('status' => 'initialized'), 'id' => $formId, 'idHash' => $formIdHash, 'submitEmails' => $formSubmitEmails, 'thankYouText' => $thankYouText, 'DOMElement' => &$form, 'fields' => array());
+			
+			foreach (array('input','textarea','select') as $tagName) {
+				$inputs = $form->getElementsByTagName($tagName);
+				for ($j=0; $j<$inputs->length; $j++) {
+					$field = $inputs->item($j);
+					$fieldName = preg_replace('/\[\]$/', '', $field->getAttribute('name'), -1, $isArray);
+					if ($fieldName != '') {
+						$nameAttribute = 'pc_' . md5($fieldName);
+						$field->setAttribute('name', $nameAttribute . ($isArray?'[]':''));
+						//$pageForm['fields'][$fieldName]['isArray'] = (bool)$isArray;
+						//$element = array();
+						//$element['type'] = ($tagName == 'input' ? $field->getAttribute('type') : $tagName);
+						//$element['required'] = $field->hasAttribute('required');
+						//$element['DOMElement'] = &$field;
+						//$pageForm['fields'][$fieldName]['elements'][] = $element;
+						//if ($element['required']) {
+							//$pageForm['fields'][$fieldName]['hasRequired'] = true;
+						//}
+						//if (!array_key_exists('hasRequired', $pageForm['fields'][$fieldName])) {
+							//$pageForm['fields'][$fieldName]['hasRequired'] = false;
+						//}
+						$pageForm['fields'][$fieldName]['type'] = ($tagName == 'input' ? $field->getAttribute('type') : $tagName);
+						$pageForm['fields'][$fieldName]['name'] = $nameAttribute;
+						$pageForm['fields'][$fieldName]['required'] = $field->hasAttribute('required');
+						$pageForm['fields'][$fieldName]['DOMElement'] = &$field;
+						if ($tagName == 'select') {
+							$fieldOptions = $field->getElementsByTagName('option');
+							$options = array();
+							for ($k=0; $k<$fieldOptions->length; $k++) {
+								$fieldOption = $fieldOptions->item($k);
+								$optionValue = $fieldOption->getAttribute('value');
+								if ($optionValue == '') {
+									$optionValue = $fieldOption->nodeValue;
+								}
+								$options[] = array('value' => $optionValue, 'title' => $fieldOption->nodeValue, 'DOMElement' => &$fieldOption);
+							}
+							$pageForm['fields'][$fieldName]['options'] = $options;
+						}
+					}
+				}
+			}
+			
+			$honeyPotField = $form->appendChild(new DOMElement('input'));
+			$honeyPotField->setAttribute('name', $formIdHash);
+			$honeyPotField->setAttribute('type', 'hidden');
+			$honeyPotField->setAttribute('value', '');
+			
+			$pageForms[] = $pageForm;
+		}
+		
+		foreach ($pageForms as &$pageForm) {
+			if (array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == '')) {
+				$pageForm['status']['status'] = 'submitted';
+				$values = array();
+				$files = array();
+				foreach ($pageForm['fields'] as $fieldName => &$field) {
+					//if (array_key_exists($fieldName, $_POST) && (is_array($_POST['fieldName']) === $field['isArray'])) {
+						//$values[$fieldName] = $_POST[$fieldName];
+					//} else {
+						//$values[$fieldName] = $field['isArray'] ? array() : '';
+					//}
+					if (($field['type'] != 'file') && array_key_exists($field['name'], $_POST) && ($_POST[$field['name']] != '') && ($_POST[$field['name']] != array())) {
+						$values[$fieldName] = $_POST[$field['name']];
+					} elseif (($field['type'] == 'file') && array_key_exists($field['name'], $_FILES) && is_uploaded_file($_FILES[$field['name']]['tmp_name'])) {
+						$files[$fieldName] = $_FILES[$field['name']];
+					} else {
+						$values[$fieldName] = '';
+						if ($field['required']) {
+							$pageForm['status'] = array('status' => 'error', 'errors' => array('required field missing'));
+						}
+					}
+					
+					//// Validation and re-filling of badly submitted forms
+					//foreach ($field['elements'] as &$element) {
+						//if ($field['isArray']) {
+							//switch ($element['type']) {
+								//case 'checkbox':
+								//case 'radio':
+									//if (in_array($element['DOMElement']->getAttribute('value'), $values[$fieldName])) {
+										//$element['DOMElement']->setAttribute('checked', 'checked');
+									//} else {
+										//$element['DOMElement']->removeAttribute('checked');
+										//if ($element['required']) {
+											//$pageForm['submitted'] = false;
+										//}
+									//}
+									//break;
+								//case 'select':
+									//// more magic
+									//break;
+								//case 'file':
+									//if ($element['required'] && !array_key_exists($fieldName, $_FILES)) {
+										//$pageForm['submitted'] = false;
+									//}
+									//break;
+								//case 'image':
+								//case 'hidden':
+								//case 'reset':
+								//case 'submit':
+								//case 'button':
+									//// if required, check if this value exists in the submitted array
+									//if ($element['required'] && !in_array($element['DOMElement']->getAttribute('value'), $values[$fieldName])) {
+										//$pageForm['submitted'] = false;
+									//}
+									//break;
+								//default:
+									//// we can't really know which of the array elements was a value
+									//// of this particular field, so we'll just check if the array
+									//// is non-empty
+									//if ($element['required'] && empty($values[$fieldName])) {
+										//$pageForm['submitted'] = false;
+									//}
+									//break;
+							//}
+						//}
+					//}
+					
+					//if (array_key_exists($fieldName, $_POST) && !empty($_POST['fieldName'])) {
+						//$values[$fieldName] = $_POST['$fieldName'];
+						//switch($field['type']) {
+							//case('textarea'):
+								//if(is_string($_POST['fieldName'])) {
+									//$field['DOMElement']->nodeValue = htmlspecialchars($_POST['fieldName']);
+								//} elseif($field['required']) {
+									//$pageForm['submitted'] = false;
+								//}
+								//break;
+							//case('select'):
+								
+							
+						//}
+						//$field['DOMElement']->setAttribute('value', $_POST['$fieldName']);
+					//}
+					
+					//if($field['required'] && !array_key_exists($fieldName, $_POST)) {
+						//$pageForm['submitted'] = false;
+					//}
+					
+				}
+				if ($pageForm['status']['status'] == 'submitted') {
+					if(!empty($files)) {
+						$baseLocation = $this->cfg['path']['uploads'];
+						foreach ($files as $inputName => $fileInfo) {
+							$fileLocation = md5($pageForm->id) . '/' . md5($inputName) . '/';
+							if(!mkdir($baseLocation . $fileLocation, 0777, true)) {
+								$pageForm['status'] = array('status' => 'error', 'errors' => array('mkdir'));
+							}
+							$pathInfo = pathinfo($fileInfo['name']);
+							$newName = $fileLocation . $pathInfo['basename'];
+							$newPath = $baseLocation . $newName;
+							// ensure there is no file with this name yet
+							for($i=0; file_exists($newPath); $i++) {
+								$newName = $fileLocation . $pathInfo['filename'].'_'.$i;
+								if(array_key_exists('extension', $pathInfo)) {
+									$newName .= '.'.$pathInfo['extension'];
+								}
+								$newPath = $this->cfg['path']['uploads'].$newName;
+							}
+							if(!move_uploaded_file($fileInfo['tmp_name'], $newPath)) {
+								$pageForm['status'] = array('status' => 'error', 'errors' => array('move_uploaded_file'));
+								continue(2);
+							}
+							
+							$values[$inputName] = (object)array('name' => $fileInfo['name'], 'location' => $newName, 'size' => $fileInfo['size']);
+						}
+					}
+					
+					
+					$r = $this->prepare("INSERT INTO {$this->db_prefix}forms (pid,form_id,data,time,ip) values(?,?,?,NOW(),?)");
+					$s = $r->execute(array($this->page_data['pid'], $pageForm['id'], json_encode($values), ip2long($_SERVER['REMOTE_ADDR'])));
+					if (!$s) {
+						$pageForm['status'] = array('status' => 'error', 'errors'=>array('database'));
+						continue;
+					}
+					$pageForm['status'] = array('status'=> 'saved');
+					
+					// Send mail if addresses are set
+					if (!empty($pageForm['submitEmails'])) {
+						$mail = new PHPMailer();
+						$mail->SMTPDebug  = 1;
+						$mail->CharSet = "utf-8";
+						$mail->SetFrom($this->cfg['from_email']);
+						$mail->Subject = lang('form_submitted_subject', $pageForm['id']);
+						foreach ($pageForm['submitEmails'] as $submitEmail) {
+							$mail->AddAddress($submitEmail);
+						}
+						
+						$mailBodyDOM = new DOMDocument;
+						$mailBodyDOM->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body></body></html>');
+						$body = $mailBodyDOM->getElementsByTagName('body')->item(0);
+						
+						$body->appendChild(new DOMElement('p', lang('form_submitted_heading')));
+						$body->appendChild(new DOMElement('p', lang('form_submitted_text', $pageForm['id'], $this->page_data['name'])));
+						$textBody = lang('form_submitted_heading') . "\r\n\r\n" . lang('form_submitted_text', $pageForm['id'], $this->page_data['name']) . "\r\n\r\n";
+						$table = $body->appendChild(new DOMElement('table'));
+						foreach ($values as $fieldName => $value) {
+							$row = $table->appendChild(new DOMElement('tr'));
+							$headCell = $row->appendChild(new DOMElement('th', lang('form_submitted_field_name', $fieldName)));
+							$textBody .= lang('form_submitted_field_name', $fieldName)."\r\n";
+							switch(gettype($value)) {
+								case 'array':
+									$count = count($value);
+									$headCell->setAttribute('rowspan', $count);
+									$row->appendChild(new DOMElement('td', $value[0]));
+									$textBody .= '    '.$value[0]."\r\n";
+									for ($i=1; $i<$count; $i++) {
+										$row = $table->appendChild (new DOMElement('tr'));
+										$row->appendChild (new DOMElement('td', $value[$i]));
+										$textBody .= '    '.$value[0]."\r\n";
+									}
+									$textBody .= "\r\n";
+									break;
+								case 'object':
+									$row->appendChild (new DOMElement('td', lang('form_submitted_file', $value->name)));
+									$textBody .= '    ' . lang('form_submitted_file', $value->name) . "\r\n\r\n";
+									$mail->addAttachment($this->cfg['path']['uploads'].$value->location, $value->name);
+									break;
+								case 'string':
+								default:
+									$row->appendChild (new DOMElement('td', $value));
+									$textBody .= '    '.$value."\r\n\r\n";
+									break;
+							}
+						}
+						
+						$mail->Body = $mailBodyDOM->saveHTML();
+						$mail->AltBody = $textBody;
+						
+						if (!$mail->Send()) {
+							$pageForm['status'] = array('status' => 'error', 'errors'=>array('email'));
+							// echo 'Mailer error: ' . $mail->ErrorInfo;
+						} else {
+							$pageForm['status'] = array('status' => 'sent');
+						}
+					}
+					
+					if (!empty($pageForm['thankYouText'])) {
+						$thankYouDiv = $dom->createElement('div', $pageForm['thankYouText']);
+						$thankYouDiv->setAttribute('class', 'pc_form_thank_you');
+						$pageForm['DOMElement']->parentNode->replaceChild($thankYouDiv, $pageForm['DOMElement']);
+					}
+				}
+			}
+		}
+		
+		echo "<!--\n\$pageForms:\n";
+		var_dump($pageForms);
+		echo "\n\npage_data:\n";
+		var_dump($this->page_data);
+		echo "\n\n-->";
+		
+		// replace current source code with the generated
+		$body = $dom->getElementsByTagName('body')->item(0);
+		$output = '';
+		foreach ($body->childNodes as $child) {
+			$output .= $dom->saveXML($child);
+		}
+		$text = $output;
+		
+		//check if template for forms exists and include it if so
+		$templateFile = $this->core->Get_theme_path(null, false).'template_forms.php';
+		if (is_file($templateFile)) {
+			$this->core->Output_start();
+			include($templateFile);
+			$text = $this->core->Output_end();
+		}
+	}
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
 		//$this->page_data['pid']
@@ -218,6 +509,7 @@ final class PC_page extends PC_base {
 			#
 			$this->Replace_google_map_objects($text);
 			$this->Parse_gallery_files_requests($text);
+			$this->Process_forms($text);
 			$this->core->Init_hooks('parse_html_output', array(
 				'text'=> &$text
 			));

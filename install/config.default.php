@@ -27,6 +27,9 @@ $cfg['db']['collation'] = 'utf8_general_ci';
 //timezone
 $cfg['timezone'] = 'Europe/Vilnius';
 
+//from address for emails
+$cfg['from_email'] = 'noreply@example.org';
+
 //development
 $cfg['debug_mode'] = false;
 
@@ -45,7 +48,8 @@ $cfg['directories'] =  array(
 	'classes' => 'classes',
 	'plugins' => 'plugins',
 	'gallery' => 'gallery',
-	'config' => 'config'
+	'config' => 'config',
+	'uploads' => 'upload'
 );
 
 //core variables defaults
