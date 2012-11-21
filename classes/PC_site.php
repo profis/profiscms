@@ -74,6 +74,18 @@ final class PC_site extends PC_base {
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['base'] . 'logs/site/site.html', false, 5);
 	}
+	
+	/**
+	 * Method for getting site id
+	 * @return int
+	 */
+	public function get_id() {
+		if (isset($this->data['id'])) {
+			return $this->data['id'];
+		}
+		return false;
+	}
+	
 	/**
 	* Method used to load current page by given $route object. Method inside calls PC_site::Get_page_path() is called.
 	* @param mixed $route given to set required variables and perform required tasks on page loading.
@@ -98,9 +110,11 @@ final class PC_site extends PC_base {
 				}
 				else {
 					if ($nearest_published) {
+						$this->debug('Redirecting to nearest published', 4);
 						$this->core->Redirect_local($this->Get_link($nearest_published['route']));
 					}
 					else {
+						$this->debug('Redirecting to home', 4);
 						$this->core->Redirect_local($this->Get_home_link());
 					}
 				}
@@ -118,6 +132,7 @@ final class PC_site extends PC_base {
 		//$this->loaded_page['path'] = array_merge($path_part_1, (count($this->loaded_page['path'])>1?array_slice($path_part_2, 1,
 		//count($path_part_2)-1):$path_part_2));
 		if (isset($route['path'])) $this->loaded_page['path'] = $this->loaded_page['route_path'];
+		$this->debug('Init hook (after_load_page)', 2);
 		$this->core->Init_hooks('after_load_page', array(
 			'page'=> &$route
 		));
@@ -149,9 +164,13 @@ final class PC_site extends PC_base {
 		$request_trimmed = trim($this->routes->Get_request(), '/');
 		
 		if (!empty($request_trimmed)) {
-			$permalink_page_id = $this->page->Get_id_by_content('permalink', $request_trimmed, $this->ln);
+			$ln = null;
+			$permalink_page_id = $this->page->Get_id_by_content('permalink', $request_trimmed, $ln);
 			if ($permalink_page_id) {
 				$this->debug('Permalink page was found: ' . $permalink_page_id, 2);
+				if (!is_null($ln)) {
+					$this->ln = $ln;
+				}
 				$permalink_request = $this->page->Get_content_by_id($permalink_page_id, 'route', $this->ln);
 				if ($permalink_request) {
 					$this->debug('Page route was found: ' . $permalink_request, 3);
@@ -159,12 +178,14 @@ final class PC_site extends PC_base {
 			}
 		}
 		
+		$ln = null;
 		if (!$permalink_request) {
+			
 			$this->core->Init_hooks('core/site/request-from-permalink', array(
 				'request'=> $this->routes->Get_request(),
 				'permalink_request'=> &$permalink_request,
 				'logger' => &$this,
-				'ln' => $this->ln
+				'ln' => &$ln
 			));
 			if ($hook_object) {
 				$this->debug('Debug from hook [core/route/load-page-by-path] object');
@@ -175,7 +196,10 @@ final class PC_site extends PC_base {
 
 		//return;
 		if ($permalink_request) {
-			$this->debug("Parsing new request: " . $permalink_request, 1);
+			if (!is_null($ln)) {
+				$this->ln = $ln;
+			}
+			$this->debug("Parsing new request (ln is $ln): " . $permalink_request, 1);
 			$this->routes->Parse_request($permalink_request);
 		}
 		

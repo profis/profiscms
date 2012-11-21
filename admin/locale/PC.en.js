@@ -14,6 +14,7 @@ PC.langs.en = {
 	custom: 'Custom',
 	core: 'Core',
 	logout: 'Logout',
+	clear_cache: 'Clear cache',
 	no_title: 'No title',
 	home: 'Home page',
 	find: 'Find',

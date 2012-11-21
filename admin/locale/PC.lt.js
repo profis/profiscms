@@ -12,6 +12,7 @@ PC.langs.lt = {
 	custom: 'Papildomi',
 	core: 'Pagrindiniai',
 	logout: 'Atsijungti',
+	clear_cache: 'Išvalyti kešą',
 	no_title: 'Nėra pavadinimo',
 	home: 'Titulinis',
 	find: 'Ieškoti',

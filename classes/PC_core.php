@@ -26,6 +26,16 @@ final class PC_core extends PC_base {
 	 * Private fields $_hooks and $_callbacks of type array.
 	 */
 	private $_hooks = array(), $_callbacks = array();
+	
+	
+	/**
+	 *
+	 * @var array 
+	 * array key is hook name, array value is array of names of hooks that must be triggered after hook has been processed
+	 */
+	private $_hook_observers = array();
+	
+	
 	/**
 	 * Public field $editor.
 	 */
@@ -101,6 +111,16 @@ final class PC_core extends PC_base {
 	* @param string $location given URI where user will be redirected.
 	*/
 	public function Redirect($location, $type=null) {
+		$this->debug = true;
+		$this->clear_debug_string();
+		$this->set_instant_debug_to_file($this->cfg['path']['base'] . 'logs/router/redirect.html', false, 5);
+		$this->debug($this->routes->Get_request());
+		$this->debug($_GET);
+		$this->debug("Redirect($location $type)", 2);
+		
+		$call_stack = debug_backtrace();
+		$this->debug($this->get_callstack($call_stack), 3);
+		
 		switch ($type) {
 			case 301: header("HTTP/1.1 301 Moved Permanently"); break;
 			case 403: header("HTTP/1.1 403 Forbidden"); break;
@@ -496,6 +516,7 @@ final class PC_core extends PC_base {
 		foreach ($this->_hooks[(string)$event] as $callback) {
 			call_user_func($callback, $params);
 		}
+		$this->Trigger_hook_observers($event, $params);
 		return true;
 	}
 	public function Count_hooks($event) {
@@ -511,6 +532,31 @@ final class PC_core extends PC_base {
 	public function Init_callback($event, $params=array()) {
 		if (!isset($this->_callbacks[(string)$event])) return false;
 		return call_user_func($this->_callbacks[(string)$event], $params);
+	}
+	
+	/**
+	 * 
+	 * @param string $event - hook name
+	 * @param string $observer - name of hook that must be triggered after $event has been inited
+	 * @return boolean
+	 */
+	public function Register_hook_observer($event, $observer) {
+		$this->_hook_observers[(string)$event][] = $observer;
+		return true;
+	}
+	
+	/**
+	 * Method used to trigger (init) hooks that have been registered as $event hook observers.
+	 * @param string $event
+	 * @param array $params = array
+	 * @return boolean
+	 */
+	public function Trigger_hook_observers($event, $params = array()) {
+		if (!isset($this->_hook_observers[(string)$event])) return false;
+		if (!is_array($this->_hook_observers[(string)$event])) return false;
+		foreach ($this->_hook_observers[(string)$event] as $observer) {
+			$this->Init_hooks($observer, $params);
+		}
 	}
 	
 	/**

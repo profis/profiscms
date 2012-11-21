@@ -83,6 +83,11 @@ final class PC_gallery extends PC_base {
 		$this->patterns['file_request'] = '('.$this->patterns['category_path'].'\/)?'.$this->patterns['filename']; // path + filename
 		$this->patterns['thumbnail_type'] = "[a-z0-9][a-z0-9\-_]{0,".($this->config['max_thumbnail_type_length']-2)."}[a-z0-9]";
 		$this->patterns['file_link'] = '('.$this->patterns['category_path'].'\/)?'.'(thumb-('.$this->patterns['thumbnail_type'].')\/|(small|large|thumbnail))?'.$this->patterns['filename']; // path + thumbnail_type + filename
+		
+		
+		$this->debug = true;
+		$this->set_instant_debug_to_file($this->cfg['path']['base'] . 'logs/gallery/pc_gallery.html', false, 5);
+		
 	}
 	// uncategorized methods
 	/**
@@ -1344,6 +1349,8 @@ final class PC_gallery extends PC_base {
 	* @see PC_gallery::Get_thumbnail_types()
 	*/
 	public function Output_file($filename, $category_path, $thumbnail_type='', $file) {
+		$this->debug("Output_file($filename, $category_path, $thumbnail_type)");
+		$this->debug($file, 1);
 		$set = ini_set('memory_limit', '512M');
 		if (!empty($thumbnail_type) && !preg_match('/^'.$this->patterns['thumbnail_type'].'$/', $thumbnail_type)) {
 			$response['errors'][] = "thumbnail_type";
@@ -1384,15 +1391,29 @@ final class PC_gallery extends PC_base {
 						if (!empty($category_path) && $category_path != '/')
 							$file_path .= $category_path.'/';
 						$file_path .= $filename;
+						$this->debug('creating: ' . $file_path, 1);
 						$thumb = PhpThumbFactory::create($file_path, array('resizeUp' => true, 'jpegQuality'=>$type['thumbnail_quality']));
+						$this->debug('Current dimensions before resizing:', 3);
+						$this->debug($thumb->currentDimensions, 4);
 						if ($thumbnail_type == "thumbnail" || $type['use_adaptive_resize']) {
+							$this->debug("thumb->adaptiveResize({$type['thumbnail_max_w']}, {$type['thumbnail_max_h']})", 2);
 							$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
 						}
-						else $thumb->resize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
+						else {
+							$this->debug("thumb->resize({$type['thumbnail_max_w']}, {$type['thumbnail_max_h']})", 2);
+							$thumb->resize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
+						}
 						$crop_data['x'] = ($thumb->originalImageInfo[0]/2)-($thumb->currentDimensions['width']/2);
 						$crop_data['y'] = ($thumb->originalImageInfo[1]/2)-($thumb->currentDimensions['height']/2);
 						$crop_data['w'] = $thumb->currentDimensions['width'];
 						$crop_data['h'] = $thumb->currentDimensions['height'];
+						$this->debug('newDimensions:', 3);
+						$this->debug($thumb->getNewDimensions(), 4);
+						
+						$this->debug('Current dimensions after resizing:', 3);
+						$this->debug($thumb->currentDimensions, 4);
+						$this->debug('imagecopyresampled_params:', 3);
+						$this->debug($thumb->imagecopyresampled_params, 4);
 						/*if ($thumbnail_type == "thumbnail" || $thumbnail_type == "large") {
 							if ($type['use_adaptive_resize']) {
 								$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
@@ -2231,6 +2252,9 @@ final class PC_gallery extends PC_base {
 	* @see PhpThumbFactory
 	*/
 	public function Crop_thumbnail($file_id, $thumbnail_type, $x_start, $y_start, $width, $height) {
+		$this->debug = true;
+		$this->set_instant_debug_to_file($this->cfg['path']['base'] . 'logs/gallery/pc_gallery_crop.html', false, 5);
+		$this->debug("Crop_thumbnail($file_id, $thumbnail_type, $x_start, $y_start, $width, $height)");
 		$file_id = (int)$file_id;
 		if ($file_id < 1)
 			$response['errors'][] = "file_id";

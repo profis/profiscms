@@ -267,6 +267,7 @@ class PC_debug {
 				if ($diff < 0.000001 or strpos($diff, 'E') !== false) {
 					$diff = '0.000000...';
 				}
+				$string = $this->exec_times_wrap_begin . " <strong>Time summary for $first_key</strong> " . $this->exec_times_wrap_end . $string;
 				$string.= $this->exec_times_wrap_begin . " <strong>Total execution time</strong> " . $diff . $this->exec_times_wrap_end;
 			}
 		}

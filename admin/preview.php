@@ -34,7 +34,8 @@ if ($controller_data and $core->Count_hooks('core/page/parse-page-url/'.$control
 		'id' => $controller_data['id'],
 		'ln' => $ln
 	));
-	if (false and !empty($url)) {
+	if (true and !empty($url)) {
+		echo '<hr />';
 		echo $url;
 		echo '<hr />';
 		echo $id;
@@ -73,7 +74,7 @@ if (empty($url)) {
 	$url = ($page['front']?'':($ln==$page['ln']?'':$ln.'/').$page['route'].'/');
 }
 else {
-	if (!$is_permalink) {
+	if (false and !$is_permalink) {
 		$url = ($ln==$page['ln']?'':$ln.'/').$page['route'].'/' . $url;
 	}
 }

@@ -16,7 +16,12 @@ RewriteCond %{REQUEST_URI} !admin/(.*)
 RewriteCond %{REQUEST_FILENAME} !-f
 #RewriteCond %{REQUEST_FILENAME} !-d [OR]
 #RewriteCond %{REQUEST_URI} /$
+
+#Everything goes to site.php
 RewriteRule ^(.*)$ site.php [L]
+
+
+
 
 <Files PC_errors.txt>
   order allow,deny

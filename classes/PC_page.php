@@ -25,6 +25,18 @@ final class PC_page extends PC_base {
 	public function Init() {
 		//constructor
 	}
+	
+	/**
+	 * Method for getting page id
+	 * @return int
+	 */
+	public function get_id() {
+		if (isset($this->page_data['pid'])) {
+			return $this->page_data['pid'];
+		}
+		return false;
+	}
+	
 	public function Get_route_data($route=null, $route_is_page_id=false, $path=array(), $internal_redirects=true) {
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['base'] . 'logs/router/route.html', false, 25);
@@ -211,6 +223,7 @@ final class PC_page extends PC_base {
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
 		//$this->page_data['pid']
+		//echo $t1;
 		$tc = 1;
 		$var = 't'.$tc;
 		$text =& $$var;
@@ -254,8 +267,12 @@ final class PC_page extends PC_base {
 	}
 	
 	protected function _replace_link_match($matches) {
-		$matches[1] = rtrim($matches[1],"/");
-		$encoded_parts = explode(':', $matches[1]);
+		//print_pre($matches);
+		$full_match = $matches[1];
+		$full_match = rtrim($full_match,"/");
+		$full_match_parts = explode('[', $full_match);
+		$full_match = trim($full_match_parts[0]);
+		$encoded_parts = explode(':', $full_match);
 		$page_id_index = 0;
 		if ($encoded_parts[0] == 'pc_page') {
 			$page_id_index = 1;
@@ -273,17 +290,22 @@ final class PC_page extends PC_base {
 				'ln' => $page_ln
 			));
 			if (!empty($page_link)) {
+				//echo '<hr />' . $page_link;
 				return $page_link;
 			}
 		}
 		
 		
 		$page_link = $this->Get_page_link_by_id($page_id, $page_ln);
+		//echo '<hr />' . $page_link;
 		return $page_link;
 	}
 	
 	protected function _decode_links(&$text) {
-		$text = preg_replace_callback("/(?<=href=\")((pc_page:)[^:]+(:\w+)?\/?)/ui", "PC_page::_replace_link_match", $text);
+		//echo $text;
+		$text = preg_replace_callback("/(?<=href=\")[^\"]*((pc_page:)[^:]+(:\w+)?\/?)/ui", "PC_page::_replace_link_match", $text);
+		//$text = preg_replace("/(?<=href=\")[^\"]*((pc_page:)[^:]+(:\w+)?\/?)/ui", "http://www.nba.com/", $text);
+		//echo $text;
 	}
 	
 	public function Encode_emails($text) {
@@ -296,6 +318,7 @@ final class PC_page extends PC_base {
 	}
 	public function Parse_gallery_files_requests(&$text) {
 		if (!empty($text)) {
+			//echo "<hr /><hr />Parse_gallery_files_requests()";
 			//echo $text;
 			//preg_match_all('#"((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+)")#i', $text, $matches);
 			//preg_match_all('#(url\("?|")((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+))("?\)|")#i', $text, $matches);
@@ -325,11 +348,17 @@ final class PC_page extends PC_base {
 						$to = ''.$this->cfg['directories']['gallery'].'/'.$files[$m_id]['path'].$m_type_pre.$m_type.$files[$m_id]['filename'].'';
 						$this->gallery_request_map[$files[$m_id]['path'].$files[$m_id]['filename']] = $m_id;
 						//echo $to.'<br />';
+						//echo '<hr /><hr />preg_replace(' . "#".$m_full."([^0-9])#" .',' . $to."$1";
 						$text = preg_replace("#".$m_full."([^0-9])#", $to."$1", $text, -1, $count);
-						if (!$count) $text = str_replace($m_full, $to, $text);
+						if (!$count) {
+							//echo '<hr />' . "str_replace($m_full, $to";
+							$text = str_replace($m_full, $to, $text);
+						}
 					}
 				}
 			}
+			//echo "<hr /><hr />parsed_html:";
+			//echo $text;
 		}
 		return true;
 	}
@@ -519,20 +548,25 @@ final class PC_page extends PC_base {
 		return $this->Get_page_data($page_id, $select);
 	}
 	
-	public function Get_id_by_content($name, $value, $ln) {
-		$query = "SELECT pid FROM {$this->db_prefix}content WHERE $name = ? AND ln = ? LIMIT 1";
-		$r_category = $this->prepare($query);
+	public function Get_id_by_content($name, $value, &$ln = null) {
 		$queryParams = array();
 		$queryParams[] = $value;
-		$queryParams[] = $ln;
-
+		$where_ln = '';
+		if (!is_null($ln)) {
+			$queryParams[] = $ln;
+			$where_ln = ' AND ln = ?';
+		}
+		$query = "SELECT pid, ln FROM {$this->db_prefix}content WHERE $name = ? $where_ln LIMIT 1";
+		$r_category = $this->prepare($query);
+		
 		$this->debug_query($query, $queryParams);
 		
 		$s = $r_category->execute($queryParams);
 		if (!$s) return false;
 
-		if ($d = $r_category->fetchColumn()) {
-			return $d;
+		if ($d = $r_category->fetch()) {
+			$ln = $d['ln'];
+			return $d['pid'];
 		}
 		return false;
 	}
@@ -626,6 +660,12 @@ final class PC_page extends PC_base {
 		return (is_null($id)||is_array($id)?$list:$list[0]);
 	}
 	
+	/**
+	 * Method for getting link to the page
+	 * @param type $id
+	 * @param type $ln
+	 * @return string|boolean
+	 */
 	public function Get_page_link_by_id($id, $ln = '') {
 		$cache_key = $id . '/' . $ln;
 		if (isset($this->decoded_links[$cache_key])) {
@@ -634,11 +674,6 @@ final class PC_page extends PC_base {
 		$page_data = $this->Get_page($id, false, false, false, array('route', 'permalink'), $ln);
 		if (isset($page_data['permalink']) and !empty($page_data['permalink'])) {
 			$page_link =  $page_data['permalink'] . '/';
-			if (!empty($ln) and $ln != $this->site->default_ln) {
-				if (strpos($page_link, $ln . '/') !== 0) {
-					$page_link = $ln . '/' . $page_link;
-				}
-			}
 			$this->decoded_links[$cache_key] = $page_link;
 			return $page_link; 
 		}
@@ -659,6 +694,9 @@ final class PC_page extends PC_base {
 		$anchors = array();
 		$html_fields = array('text', 'info', 'info2', 'info3');
 		$page_data = $this->Get_page($id, false, false, false, $html_fields, $ln);
+		if (!is_array($page_data)) {
+			return $anchors;
+		}
 		foreach ($page_data as $key => $value) {
 			preg_match_all('/\<a\sname\s?=\s?"(.+)"/ui', $value, $matches);
 			if (!empty($matches[1])) {
@@ -740,7 +778,7 @@ final class PC_page extends PC_base {
 				$html .= '<ul style="padding-left:15px;">';
 				foreach ($submenu as $item) {
 					$hot = (isset($item['hot'])?($item['hot']?' class="hot"':''):'');
-					$html .= '<li'.$hot.'><a '.($this->site->Is_opened($item['pid'])?'style="font-weight:bold;" ':'').'href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.$item['id'].'</i>').'</a></li>';
+					$html .= '<li'.$hot.'><a '.($this->site->Is_opened($item['pid'])?'style="font-weight:bold;" ':'').'href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.v($item['id']).'</i>').'</a></li>';
 				}
 				unset($hot);
 				$html .= '</ul>';
