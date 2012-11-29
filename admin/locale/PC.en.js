@@ -858,6 +858,10 @@ PC.langs.en = {
 				lang_empty: 'Language name cannot be empty',
 				lang_none: 'There must be at least one language'
 			}
+		},
+		forms: {
+			selfname: 'Saved forms',
+			ip_address: 'IP address'
 		}
 	},
 	no_description: 'No description',

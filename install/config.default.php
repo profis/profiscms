@@ -79,7 +79,7 @@ $cfg['patterns'] = array(
 );
 
 //don't change following settings if you're not sure what you're doing!
-$cfg['core_plugins'] = array('core','page', 'backup', 'domains', 'sites', 'variables', 'auth');
+$cfg['core_plugins'] = array('core','page', 'backup', 'domains', 'sites', 'variables', 'auth', 'forms');
 $cfg['salt'] = '#%4#%F3456fsg34%#13as97$^g1';
 
 $cfg['valid_page_fields'] = array(
