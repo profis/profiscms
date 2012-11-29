@@ -93,9 +93,9 @@ function mod_forms_click() {
 	var applyFilter = function(tab) {
 		var filter = tab.search_field.getValue();
 		if(filter=='') {
-			tab.store.clearFilter();
+			tab.grid.store.clearFilter();
 		} else {
-			tab.store.filter([
+			tab.grid.store.filter([
 				{	fn: function(r) {
 						var p = new RegExp(filter.replace('\\', '\\\\'), 'i');
 						var match = false;
@@ -117,7 +117,7 @@ function mod_forms_click() {
 	};
 	
 	var clearFilter = function(tab) {
-		tab.store.clearFilter();
+		tab.grid.store.clearFilter();
 		tab.search_field.setValue('');
 	};
 	
@@ -131,7 +131,8 @@ function mod_forms_click() {
 				if (clicked == 'yes') {
 					var del_records=[];
 					var del_ids=[];
-					tab.getSelectionModel().each(function(rec) {
+					tab.grid.getSelectionModel().each(function(rec) {
+						console.log(rec.data.id);
 						if (rec.data.id != '') {
 							del_records.push(rec);
 							del_ids.push(rec.data.id);
@@ -150,7 +151,7 @@ function mod_forms_click() {
 								try {
 									var data = Ext.decode(rspns.responseText);
 									if (rspns.responseText == '[]') {
-										tab.store.remove(del_records);
+										tab.grid.store.remove(del_records);
 										return; // OK
 									}
 								} catch(e) {};
@@ -192,9 +193,7 @@ function mod_forms_click() {
 		buttons: [
 			{xtype: 'tbfill'},
 			{
-				text: Ext.Msg.buttonText.ok,
-				disabled: true,
-				ref: '../ok_btn',
+				text: PC.i18n.close,
 				handler: function() {
 					w.close();
 				}
@@ -248,43 +247,53 @@ function mod_forms_click() {
 								renderer: formRenderer
 							});
 						});
-						var mytab = new Ext.grid.EditorGridPanel({
+						var mytab = new Ext.Panel({
 							title: tabName,
 							border: false,
-							stripeRows: true,
-							store: new Ext.data.JsonStore({
-								autoDestroy: true,
-								fields: baseflds.concat(myfields),
-								data: gridData[tabName]
-							}),
-							colModel: new Ext.grid.ColumnModel({
-								defaults: { sortable: true },
-								columns: basecols.concat(mycols)
-							}),
-							selModel: new Ext.grid.RowSelectionModel({
-								moveEditorOnEnter: false,
-								listeners: {
-									selectionchange: function(sm) {
-										var dis = (sm.getCount() == 0);
-										mytab.del_btn.setDisabled(dis);
-									}
-								}
-							}),
-							listeners: {
-								cellclick: function(grid, rowIndex, colIndex) {
-									var cell = grid.getView().getCell(rowIndex, colIndex);
-									var mywin = new Ext.Window({
-										width: 500
-										,title: "my Popup"
-										,height: 500
-										,items: new Ext.menu.TextItem({
-										html: cell.textContent.replace(/\n/g, '<br />')
-										})
-									});
-									mywin.show();
-									//alert(cell.textContent);
-								}
+							layout: 'hbox',
+							layoutConfig: {
+								align: 'stretch'
 							},
+							items: [
+								{
+									flex: 3,
+									xtype: 'editorgrid',
+									ref: 'grid',
+									stripeRows: true,
+									store: new Ext.data.JsonStore({
+										autoDestroy: true,
+										fields: baseflds.concat(myfields),
+										data: gridData[tabName]
+									}),
+									colModel: new Ext.grid.ColumnModel({
+										defaults: { sortable: true },
+										columns: basecols.concat(mycols)
+									}),
+									selModel: new Ext.grid.RowSelectionModel({
+										moveEditorOnEnter: false,
+										listeners: {
+											selectionchange: function(sm) {
+												var dis = (sm.getCount() == 0);
+												mytab.del_btn.setDisabled(dis);
+											}
+										}
+									}),
+									listeners: {
+										cellclick: function(grid, rowIndex, colIndex) {
+											var cell = grid.getView().getCell(rowIndex, colIndex);
+											mytab.detailPanel.body.update(cell.textContent.replace(/\n/g, '<br />'));
+										}
+									},
+								},
+								{
+									flex: 1,
+									autoScroll: true,
+									title: ln.field_contents,
+									ref: 'detailPanel',
+									padding: 7,
+									bodyStyle: "background: #ffffff;"
+								}
+							],
 							tbar: [
 								{	ref: '../del_btn',
 									disabled: true,
@@ -326,7 +335,6 @@ function mod_forms_click() {
 						tabs.add(mytab);
 					});
 					tabs.setActiveTab(0);
-					w.ok_btn.enable();
 					return;
 				} catch(e) {};
 			}

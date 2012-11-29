@@ -861,7 +861,8 @@ PC.langs.en = {
 		},
 		forms: {
 			selfname: 'Saved forms',
-			ip_address: 'IP address'
+			ip_address: 'IP address',
+			field_contents: 'Field contents'
 		}
 	},
 	no_description: 'No description',
