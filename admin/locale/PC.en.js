@@ -605,7 +605,7 @@ PC.langs.en = {
 			thank_you_text: 'Thank you text',
 			title: 'Title',
 			id: 'Id',
-			_class: 'Class',
+			_class: 'Style class',
 			style: 'Style',
 			border: 'Border',
 			solid: 'Solid',
@@ -645,8 +645,6 @@ PC.langs.en = {
 			rows: 'Rows',
 			multiple: 'Multiple',
 			maxuploadsize: 'Max file size (KiB)',
-			yes: 'yes',
-			no: 'no',
 			label: 'Label',
 			new_option: 'Add option',
 			delete_option: 'Delete option'
