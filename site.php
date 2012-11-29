@@ -28,8 +28,29 @@ if ($site->Identify(true) && $site->Render()) {
 	$core->Init_hooks('site_render');
 	require($site->data['tpl']);
 }
+
+$time = microtime(); $time = explode(" ", $time); $time = $time[1] + $time[0]; $finish = $time; $totaltime = ($finish - $start);
+$total_time = round($totaltime,3);
+
+
+
+if (v($cfg['debug_time_to_file'])) {
+	$width = round(100 * $total_time);
+	$time_log_file = $cfg['path']['base'] . 'logs/_time.html';
+	$s = '';
+	if (!file_exists($time_log_file)) {
+		$s = '<head><meta http-equiv="Content-Type" content="text/html;charset=utf-8" /></head>';
+	}
+	
+	$s .= '​======   ' . date('Y-m-d H:i:s') . '    ========<br />';
+	$s .=	'<div style = "margin-left: 20px;">' . $total_time . ' - ' . $routes->Get_request().'</div>';
+	$s .= '<div style = "margin-left: 20px; width: ' . $width . 'px; background-color: orange; height: 5px; line-height: 5px;">&nbsp;</div>​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​';
+	@file_put_contents($time_log_file, $s, FILE_APPEND);
+}
+
 if (v($cfg['debug_mode'])) {
-	$time = microtime(); $time = explode(" ", $time); $time = $time[1] + $time[0]; $finish = $time; $totaltime = ($finish - $start);
-	echo '<br /><span style="border: 1px dashed #e5e09b; background: #fffde0; color: #000000;">Page generated in <b>'.round($totaltime,3).'s</b></span><br /><br />';
+	echo '<br /><span style="border: 1px dashed #e5e09b; background: #fffde0; color: #000000;">Page generated in <b>'.$total_time.'s</b></span><br /><br />';
 	echo '<span style="border: 1px dashed #e5e09b; background: #fffde0; color: #000000;">Memory allocated for the script: <b>'.(memory_get_usage(true)/1024/1024).' MB</b> (peak: <b>'.(memory_get_peak_usage(true)/1024/1024).' MB</b>)</span>';
 }
+//print_pre($_GET);
+//print_pre($_SERVER);

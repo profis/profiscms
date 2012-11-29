@@ -22,6 +22,8 @@ new saving system (future):
 error_reporting(0); //ensure PHP won't output any error data and won't destroy JSON structure
 $cfg['core']['no_login_form'] = true; //don't output login form if there's no active session
 require_once('admin.php'); //ensure the user is authorized, otherwise stop executing this script
+$auth->debug = true;
+$auth->set_instant_debug_to_file($cfg['path']['base'] . 'logs/auth/auth_for_ajax_page_php.html', false, 5);
 if (!$auth->Authorize_access_to_pages()) die('No access');
 //header('Content-Type: application/json');
 header('Cache-Control: no-cache');
@@ -38,6 +40,8 @@ $logger->debug("Action: " . $action);
 
 require_once 'classes/Page_manager.php';
 $page_manager = new Page_manager();
+
+$page_manager->absorb_debug_settings($auth, 5);
 
 $page_id = v($_POST['id']);
 
@@ -523,7 +527,7 @@ elseif ($action == 'move') {
 	
 	if (!$page_manager->is_node_accessible($id)) {
 		$out = array(
-			'error' => 'authorization failed for page_node'
+			'error' => 'authorization failed for page_node being moved'
 		);
 		echo json_encode($out);
 		exit;
@@ -531,9 +535,9 @@ elseif ($action == 'move') {
 	
 	$idp = $_POST['idp'];
 	
-	if (!$page_manager->is_node_accessible($idp)) {
+	if ($idp != 0 and !$page_manager->is_node_accessible($idp)) {
 		$out = array(
-			'error' => 'authorization failed for page_node'
+			'error' => 'authorization failed for page_node new parent'
 		);
 		echo json_encode($out);
 		exit;

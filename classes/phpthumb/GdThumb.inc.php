@@ -303,6 +303,10 @@ class GdThumb extends ThumbBase
 			$cropY = intval(($this->currentDimensions['height'] - $this->maxHeight) / 2);
 		}
 		
+		//Profis fix: source crop width/height cannot exceed boundaries
+		$src_cropWidth = min($cropWidth, $this->newDimensions['newWidth'] - $cropX);
+		$src_cropHeight = min($cropHeight, $this->newDimensions['newHeight'] - $cropY);
+		
 		imagecopyresampled
 		(
             $this->workingImage,
@@ -313,8 +317,20 @@ class GdThumb extends ThumbBase
             $cropY,
             $cropWidth,
             $cropHeight,
-            $cropWidth,
-            $cropHeight
+            $src_cropWidth,
+            $src_cropHeight
+		);
+		
+		//Profis fix: remembering imagecopyresampled arguments
+		$this->imagecopyresampled_params = array(
+			'dst_x ' => 0,
+            'dst_y ' => 0,
+            'src_x ' => $cropX,
+            'src_y ' => $cropY,
+            'dst_w ' => $cropWidth,
+            'dst_h ' => $cropHeight,
+            'src_w ' => $src_cropWidth,
+            'src_h ' => $src_cropHeight
 		);
 		
 		// update all the variables and resources to be correct

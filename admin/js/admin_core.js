@@ -1064,6 +1064,8 @@ Ext.onReady(function(){
 					items: [
 						{xtype:'tbtext', html: '<img style="vertical-align: -3px" src="images/profis16.png" alt="" /> &nbsp;Profis CMS '+ PC.version},
 						'->',
+						{text: PC.i18n.clear_cache, icon: 'images/clear_cache.png', handler: Clear_cache},
+						{xtype:'tbseparator'},
 						{text: PC.i18n.logout, icon: 'images/door_open.png', handler: Logout},
 						{xtype:'tbseparator'},
 						{	ref: '../../_modz',
@@ -1691,6 +1693,9 @@ function Content_dirty() {
 		//console.log('fieldValue: '+ fieldValue);
 		//console.log('get field value: '+ field.getValue());
 		//console.log('store.value: '+ store.value);
+		if (!store) {
+			debugger;
+		}
 		if (fieldValue != store.value) {
 			dirty = true;
 			return false;
@@ -1854,6 +1859,13 @@ function Flag_editors_as_clean() {
 		}
 	});
 }
+
+function Clear_cache() {
+	Ext.Ajax.request({
+		url: PC.global.BASE_URL + 'admin/api/clear_cache'
+	});
+}
+
 function Logout() {
 	Ext.MessageBox.show({
 		title: PC.i18n.msg.title.confirm,
@@ -1912,11 +1924,34 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 						if (url === false) {
 							url = 'pc_page:' + n.id;
 							if (lang != '') {
-								url += ':' + lang
+								url += ':' + lang;
+							}
+							var pseudo_url = '';
+							if (n.attributes._routes) {
+								if (n.attributes._routes[lang]) {
+									pseudo_url = n.attributes._routes[lang] + '/';
+								}
+							}
+							if (pseudo_url == '') {
+								if (n.attributes._names) {
+									if (n.attributes._names[lang]) {
+										pseudo_url = n.attributes._names[lang] + '/';
+										pseudo_url = pseudo_url.replace(/\]/g, "");
+										pseudo_url = pseudo_url.replace(/\[/g, "");
+									}
+								}
+							}
+							if (pseudo_url != '') {
+								if (lang != '') {
+									pseudo_url = lang + '/' + pseudo_url;
+								}
+								pseudo_url = '[' + pseudo_url + '] ';
+								url = pseudo_url + url;
 							}
 						}
 						
 						/*
+
 						if (n.attributes._routes) {
 							if (n.attributes._routes[lang]) {
 								url = 'pc_page:' + n.id;
@@ -1926,7 +1961,6 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 								}
 							}
 						}
-
 						var n_id_parts = n.id.split('/');
 						var plugin_name = n_id_parts[0];
 						var hook_name = 'core/page/generate_url/' + plugin_name;

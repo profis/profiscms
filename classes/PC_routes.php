@@ -60,6 +60,17 @@ final class PC_routes {
 			$this->get_request = v($request_uri[1]);
 		}
 		else $this->request = $request;
+		
+		//echo $this->request . '<hr />';
+		//$page_match = preg_match('/((?:.)*\/)(\d+)\/?$/ui', $this->request, $matches);
+		$page_match = preg_match('/((?:.)*\/)page(\d+)\/?$/ui', $this->request, $matches);
+		if ($page_match and $matches[1] and $matches[2]) {
+			//print_r($matches);
+			$this->request = $matches[1];
+			$_GET['page'] = $matches[2];
+		}
+		
+		
 		return true;
 	}
 	/**
@@ -82,6 +93,10 @@ final class PC_routes {
 				if (!preg_match("#^(\pN+|[\pL\pN][\pL\pN-_]{0,253}[\pL\pN])$#u", $this->list[$a])) unset($this->list[$a]);
 			}
 			array_unshift($this->list, null);
+			$route_count = count($this->list);
+			if ($route_count > 0) {
+				
+			}
 		}
 	}
 	/**

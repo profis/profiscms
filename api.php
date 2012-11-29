@@ -71,6 +71,9 @@ if ($routes->Get(1) == 'admin') {
 				echo 'Plugin name was not filled';
 			}
 			break;
+		case 'clear_cache':
+			$cache->flush();
+			break;
 		default: echo 'Please select API action that you want to execute:<ul><li><a href="'.htmlspecialchars($cfg['url']['base']).'admin/api/phpinfo/">PHPinfo</a></li></ul>';
 	}
 }

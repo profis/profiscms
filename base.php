@@ -32,9 +32,21 @@ $cfg['path']['cwd'] = str_replace('\\', '/', getcwd()).'/';
 $cfg['cwd'] =& $cfg['path']['cwd'];
 chdir(dirname(__FILE__));
 
-require_once('config.php');
-require_once('functions.php');
+$config_files = array(
+	'config/system_config.php',
+	'config.php',
+	'config/system_config_2.php',
+	'config_2.php'
+);
 
+foreach ($config_files as $key => $filename) {
+	if (file_exists($filename)) {
+		@require_once($filename);
+	}
+}
+
+require_once('functions.php');
+//print_pre($cfg);exit;
 //date_default_timezone_set(v($cfg['timezone'], "Europe/Vilnius"));
 date_default_timezone_set('UTC');
 

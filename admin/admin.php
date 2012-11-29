@@ -19,6 +19,18 @@ chdir(dirname(__FILE__));
 if (!class_exists('PC_base')) require_once '../base.php';
 require_once 'auth.php';
 
+if (!is_null($cache)) {
+	$core->Register_hook('core/cache/clear', 'PC_clear_cache');
+	$core->Register_hook_observer('create_page', 'core/cache/clear');
+	$core->Register_hook_observer('move_page', 'core/cache/clear');
+	$core->Register_hook_observer('after_page_save', 'core/cache/clear');
+}
+
+function PC_clear_cache() {
+	global $cache;
+	$cache->flush();
+}
+
 function get_plugin_icon($fn=false) {
 	global $cfg;
 	if (!$fn) {

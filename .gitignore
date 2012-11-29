@@ -31,7 +31,7 @@ nbproject/
 logs/
 admin/excel_attr/
 # Cache
-cache/
+cache/*
 !cache/.htaccess
 # Uploads
 upload/*
