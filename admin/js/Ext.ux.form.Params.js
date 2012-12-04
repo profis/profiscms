@@ -692,7 +692,9 @@ Ext.ux.form.Params = {
 									}
 								} else if(attribute.name == 'data-maxuploadsize') {
 									// convert KiB to bytes
-									val *= 1024;
+									if(val != '') {
+										val *= 1024;
+									}
 								}
 								if(attribute.pack && (dialog.formItem.tagName.toLowerCase() != 'form')) {
 									if((typeof(val) != 'undefined') && (val !== '') && (val !== false)) {
@@ -906,7 +908,9 @@ Ext.ux.form.Params = {
 						val = val.replace(/^\s+/,"").replace(/\s+$/,"");
 					} else if(attribute.name == 'data-maxuploadsize') {
 						// convert bytes to KiB
-						val /= 1024;
+						if (val != '') {
+							val /= 1024;
+						}
 					}
 					field.setValue(val);
 				}
