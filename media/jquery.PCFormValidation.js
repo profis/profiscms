@@ -19,24 +19,46 @@ $(document).ready(function(){
 	var supports_filereader = Boolean(window.FileReader);
 
 	function markValid(element) {
-		var $$ = $(element);
-		if(element.backupBackgroundColor) {
-			$(element).css('backgroundColor', element.backupBackgroundColor);
+		try {
+			element.setCustomValidity('');
+		} catch(e) {
+			var $$ = $(element);
+			var backupBackgroundColor = $$.data('backupBackgroundColor');
+			var backupTitle = $$.data('backupTitle');
+			if(typeof backupBackgroundColor !== 'undefined') {
+				$$.css('backgroundColor', backupBackgroundColor);
+			}
+			if(typeof backupTitle !== 'undefined') {
+				$$.attr('title', backupTitle);
+			}
 		}
 	}
 
-	function markInvalid(element) {
-		var $$ = $(element);
-		if(!element.backupBackgroundColor) {
-			element.backupBackgroundColor = $$.css('backgroundColor');
+	function markInvalid(element, message) {
+		try {
+			element.setCustomValidity(message);
+		} catch(e) {
+			var $$ = $(element);
+			if(typeof $$.data('backupBackgroundColor') === 'undefined') {
+				$$.data('backupBackgroundColor', $$.css('backgroundColor'));
+			}
+			if(typeof $$.data('backupTitle') === 'undefined') {
+				var backupTitle = $$.attr('title');
+				if(!backupTitle) {
+					backupTitle = '';
+				}
+				$$.data('backupTitle', backupTitle);
+			}
+			$$.css('backgroundColor', '#ffcccc');
+			$$.attr('title', message);
 		}
-		$$.css('backgroundColor', '#ffcccc');
 	}
 
 	// Validate an element
 	function validate(element){
 		var $$ = $(element);
 		var valid = true;
+		var message = null;
 
 		// If not supported natively, check whether this field is
 		// required and missing
@@ -45,14 +67,16 @@ $(document).ready(function(){
 			var required = element.getAttribute('required') == null ? false : true;
 			if(valid && required && ((value == null) || (value == ''))) {
 				valid = false;
+				message = 'This field is required!';
 			}
 		}
 
 		// If window.FileReader supported and we have files selected for
 		// submission, ensure they are not too big
 		if(valid && supports_filereader && element.files && element.files[0]) {
-			if($$.data().maxuploadsize && ($$.data().maxuploadsize < element.files[0].size)) {
+			if($$.data(maxuploadsize) && ($$.data(maxuploadsize) < element.files[0].size)) {
 				valid = false;
+				message = 'The file you have selected is too big!';
 			}
 		}
 
@@ -61,7 +85,7 @@ $(document).ready(function(){
 			markValid(element);
 			return true;
 		}else{
-			markInvalid(element);
+			markInvalid(element, message);
 			return false;
 		}
 	}

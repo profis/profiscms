@@ -545,8 +545,10 @@ final class PC_page extends PC_base {
 						}
 						
 						if (!empty($pageForm['thankYouText'])) {
+							// The following two lines allow to use HTML in the thank you text
 							$thankYouDiv = $dom->createDocumentFragment();
 							@$thankYouDiv->appendXML('<div class="pc_form_thank_you">' . $pageForm['thankYouText'] . '</div>');
+							// The following two lines disallow use of HTML in the thank you text
 							//$thankYouDiv = $dom->createElement('div', $pageForm['thankYouText']);
 							//$thankYouDiv->setAttribute('class', 'pc_form_thank_you');
 							$pageForm['DOMElement']->parentNode->replaceChild($thankYouDiv, $pageForm['DOMElement']);

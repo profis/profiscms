@@ -467,3 +467,19 @@ CREATE TABLE `pc_variables` (
 -- Dumping data for table `pc_variables`
 -- 
 
+INSERT INTO `pc_variables` (`vkey`, `controller`, `site`, `ln`, `value`) VALUES
+('form_submitted_field_name', 'forms', 0, 'en', '%s:'),
+('form_submitted_field_name', 'forms', 0, 'lt', '%s:'),
+('form_submitted_field_name', 'forms', 0, 'ru', '%s:'),
+('form_submitted_file', 'forms', 0, 'en', 'File attachment: %s'),
+('form_submitted_file', 'forms', 0, 'lt', 'Pridėtas failas: %s'),
+('form_submitted_file', 'forms', 0, 'ru', 'Приложенный файл: %s'),
+('form_submitted_heading', 'forms', 0, 'en', 'Hello!'),
+('form_submitted_heading', 'forms', 0, 'lt', 'Sveiki!'),
+('form_submitted_heading', 'forms', 0, 'ru', 'Здравствуйте!'),
+('form_submitted_subject', 'forms', 0, 'en', 'Form has been submitted (%s)'),
+('form_submitted_subject', 'forms', 0, 'lt', 'Pateikta forma (%s)'),
+('form_submitted_subject', 'forms', 0, 'ru', 'Заполнена форма (%s)'),
+('form_submitted_text', 'forms', 0, 'en', 'The form “%s” on page “%s” has been submitted. Below are the contents.'),
+('form_submitted_text', 'forms', 0, 'lt', 'Užpildyta tinklapyje „%2$s“ esanti forma „%1$s“. Žemiau – pateiktas jos turinys.'),
+('form_submitted_text', 'forms', 0, 'ru', 'На странице «%s» заполнена форма «%s». Ниже – её содержимое.');
