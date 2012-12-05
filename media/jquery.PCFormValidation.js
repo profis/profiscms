@@ -70,7 +70,8 @@ $(document).ready(function(){
 		// If window.FileReader supported and we have files selected for
 		// submission, ensure they are not too big
 		if(valid && supports_filereader && element.files && element.files[0]) {
-			if($$.data(maxuploadsize) && ($$.data(maxuploadsize) < element.files[0].size)) {
+			var maxSize = $$.data('maxuploadsize');
+			if(maxSize && (maxSize < element.files[0].size)) {
 				valid = false;
 				message = 'The file you have selected is too big!';
 			}
