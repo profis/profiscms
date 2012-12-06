@@ -324,9 +324,10 @@ final class PC_page extends PC_base {
 							
 							if(array_key_exists($field['name'], $_FILES)) {
 								$file = $_FILES[$field['name']];
+								$errmsg = false;
 								if(is_uploaded_file($file['tmp_name'])) {
 									if(is_numeric($field['maxuploadsize']) && ($field['maxuploadsize'] != 0) && array_key_exists($fieldName, $files) && (filesize($file['tmp_name']) > $field['maxuploadsize'])) {
-										$pageForm['status'] = array('status' => 'error', 'errors' => array('The uploaded file is too big.'));
+										$errmsg = 'The file you chose to upload is too big.';
 									} else {
 										$files[$fieldName] = $file;
 									}
@@ -334,22 +335,21 @@ final class PC_page extends PC_base {
 									switch($file['error']) {
 										case UPLOAD_ERR_NO_FILE:
 											if ($field['required']) {
-												$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+												$errmsg = 'Required field missing.';
 											}
 										break;
 										case UPLOAD_ERR_INI_SIZE:
-											$pageForm['status'] = array('status' => 'error', 'errors' => array('The uploaded file exceeds the upload_max_filesize directive in php.ini.'));
-										break;
 										case UPLOAD_ERR_FORM_SIZE:
-											$pageForm['status'] = array('status' => 'error', 'errors' => array('The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form.'));
-										break;
-										case UPLOAD_ERR_PARTIAL:
-											$pageForm['status'] = array('status' => 'error', 'errors' => array('The uploaded file was only partially uploaded.'));
+											$errmsg = 'The file you chose to upload is too big.';
 										break;
 										default:
-											$pageForm['status'] = array('status' => 'error', 'errors' => array('The file was not uploaded successfully. You should probably contact the website administrator.'));
+											$errmsg = 'The file was not uploaded successfully. Please try again or concact the website administrator.';
 										break;
 									}
+								}
+								if ($errmsg) {
+									$field['DOMElement']->setAttribute('data-error', $errmsg);
+									$pageForm['status'] = array('status' => 'error', 'errors' => array($errmsg));
 								}
 							} elseif ($field['required']) {
 								$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));

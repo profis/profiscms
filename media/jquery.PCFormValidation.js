@@ -3,7 +3,6 @@
  * Checks if required fields are filled in.
  * Initially based on HTML5 Form Fallback script from
  * http://forrst.com/posts/HTML5_Form_jQuery_fallback-hTO
- * and http://www.sitebase.be
  *
  * Copyright (c) 2010 Sitebase, http://www.sitebase.be
  * Copyright (c) 2012 Profis, http://www.profis.eu
@@ -51,29 +50,37 @@ $(document).ready(function(){
 	}
 	
 	// Validate an element
-	function validate(element){
+	function validate(element, live){
 		var $$ = $(element);
 		var valid = true;
 		var message = null;
 		
-		// If not supported natively, check whether this field is
-		// required and missing
-		if(!supports_required) {
-			var value = $$.val();
-			var required = element.getAttribute('required') == null ? false : true;
-			if(valid && required && ((value == null) || (value == ''))) {
-				valid = false;
-				message = 'This field is required!';
-			}
+		// Mark fields that have been marked as bad in the backend
+		if($$.data('error')) {
+			valid = false;
+			message = $$.data('error');
+			$$.data('error', false);
 		}
-		
-		// If window.FileReader supported and we have files selected for
-		// submission, ensure they are not too big
-		if(valid && supports_filereader && element.files && element.files[0]) {
-			var maxSize = $$.data('maxuploadsize');
-			if(maxSize && (maxSize < element.files[0].size)) {
-				valid = false;
-				message = 'The file you have selected is too big!';
+		if (live && valid) {
+			// If not supported natively, check whether this field is
+			// required and missing
+			//if(!supports_required) {
+				var value = $$.val();
+				var required = element.getAttribute('required') == null ? false : true;
+				if(valid && required && ((value == null) || (value == ''))) {
+					valid = false;
+					message = 'This field is required!';
+				}
+			//}
+
+			// If window.FileReader supported and we have files selected for
+			// submission, ensure they are not too big
+			if(valid && supports_filereader && element.files && element.files[0]) {
+				var maxSize = $$.data('maxuploadsize');
+				if(maxSize && (maxSize < element.files[0].size)) {
+					valid = false;
+					message = 'The file you have selected is too big!';
+				}
 			}
 		}
 		
@@ -86,13 +93,21 @@ $(document).ready(function(){
 			return false;
 		}
 	}
-	
+
+	// Perform initial validation and highlight invalid fields
+	$('input,textarea,select').each(function() {
+		validate(this, false);
+	})
+
 	// Handle live validation
 	$('input,textarea,select').keyup(function() {
-		validate(this);
+		validate(this, true);
 	}).change(function() {
-		validate(this);
+		validate(this, true);
+	}).blur(function() {
+		validate(this, true);
 	});
+
 	
 	// Block submit if there are invalid fields found
 	$('form').submit(function() {
