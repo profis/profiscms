@@ -95,25 +95,19 @@ $(document).ready(function(){
 	}
 
 	// Perform initial validation and highlight invalid fields
+	// then bind the same function to handle live validation
 	$('input,textarea,select').each(function() {
 		validate(this, false);
-	})
-
-	// Handle live validation
-	$('input,textarea,select').keyup(function() {
-		validate(this, true);
-	}).change(function() {
-		validate(this, true);
-	}).blur(function() {
+	}).bind('keyup change blur', function() {
 		validate(this, true);
 	});
 
 	
 	// Block submit if there are invalid fields found
-	$('form').submit(function() {
+	$('form').bind('submit', function() {
 		var formValid = true;
 		$('input,textarea,select').each(function() {
-			inputValid = validate(this);
+			inputValid = validate(this, true);
 			formValid = formValid && inputValid;
 		});
 		return formValid;
