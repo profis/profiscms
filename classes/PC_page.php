@@ -327,7 +327,7 @@ final class PC_page extends PC_base {
 							if(array_key_exists($field['name'], $_FILES)) {
 								$file = $_FILES[$field['name']];
 								if(is_uploaded_file($file['tmp_name'])) {
-									if(is_numeric($field['maxuploadsize']) && ($field['maxuploadsize'] != 0) && array_key_exists($fieldName, $files) && (filesize($file['tmp_name']) > $field['maxuploadsize'])) {
+									if(is_numeric($field['maxuploadsize']) && ($field['maxuploadsize'] != 0) && (filesize($file['tmp_name']) > $field['maxuploadsize'])) {
 										$error = 'Uploaded file is too big.';
 										$errmsg = lang('form_file_too_big');
 									} else {
