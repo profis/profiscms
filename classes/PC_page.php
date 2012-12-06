@@ -276,9 +276,15 @@ final class PC_page extends PC_base {
 							$pageForm['fields'][$fieldName]['type'] = ($tagName == 'input' ? $field->getAttribute('type') : $tagName);
 							$pageForm['fields'][$fieldName]['name'] = $nameAttribute;
 							$pageForm['fields'][$fieldName]['required'] = $field->hasAttribute('required');
+							if ($pageForm['fields'][$fieldName]['required']) {
+								$field->setAttribute('data-msg-required', lang('form_field_required'));
+							}
 							$pageForm['fields'][$fieldName]['DOMElement'] = $field;
 							if ($pageForm['fields'][$fieldName]['type'] == 'file') {
 								$pageForm['fields'][$fieldName]['maxuploadsize'] = $field->getAttribute('data-maxuploadsize');
+								if ($pageForm['fields'][$fieldName]['maxuploadsize']) {
+									$field->setAttribute('data-msg-filetoobig', lang('form_file_too_big'));
+								}
 							}
 							if ($tagName == 'select') {
 								$fieldOptions = $field->getElementsByTagName('option');
@@ -316,18 +322,14 @@ final class PC_page extends PC_base {
 					$files = array();
 					foreach ($pageForm['fields'] as $fieldName => &$field) {
 						if ($field['type'] == 'file') {
-							if (array_key_exists($field['name'], $_FILES)) {
-								if(is_uploaded_file($_FILES[$field['name']]['tmp_name'])) {
-									$files[$fieldName] = $_FILES[$field['name']];
-								}
-							}
-							
+							$error = false;
+							$errmsg = false;
 							if(array_key_exists($field['name'], $_FILES)) {
 								$file = $_FILES[$field['name']];
-								$errmsg = false;
 								if(is_uploaded_file($file['tmp_name'])) {
 									if(is_numeric($field['maxuploadsize']) && ($field['maxuploadsize'] != 0) && array_key_exists($fieldName, $files) && (filesize($file['tmp_name']) > $field['maxuploadsize'])) {
-										$errmsg = 'The file you chose to upload is too big.';
+										$error = 'Uploaded file is too big.';
+										$errmsg = lang('form_file_too_big');
 									} else {
 										$files[$fieldName] = $file;
 									}
@@ -335,24 +337,28 @@ final class PC_page extends PC_base {
 									switch($file['error']) {
 										case UPLOAD_ERR_NO_FILE:
 											if ($field['required']) {
-												$errmsg = 'Required field missing.';
+												$error = 'Required field missing.';
+												$errmsg = lang('form_field_required');
 											}
 										break;
 										case UPLOAD_ERR_INI_SIZE:
 										case UPLOAD_ERR_FORM_SIZE:
-											$errmsg = 'The file you chose to upload is too big.';
+											$error = 'Uploaded file is too big (PHP settings).';
+											$errmsg = lang('form_file_too_big');
 										break;
 										default:
-											$errmsg = 'The file was not uploaded successfully. Please try again or concact the website administrator.';
+											$error = 'File upload error.';
+											$errmsg = lang('form_file_upload_error');
 										break;
 									}
 								}
-								if ($errmsg) {
-									$field['DOMElement']->setAttribute('data-error', $errmsg);
-									$pageForm['status'] = array('status' => 'error', 'errors' => array($errmsg));
-								}
 							} elseif ($field['required']) {
-								$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+								$error = 'Required field missing.';
+								$errmsg = lang('form_field_required');
+							}
+							if ($error) {
+								$field['DOMElement']->setAttribute('data-error', $errmsg);
+								$pageForm['status'] = array('status' => 'error', 'errors' => array($error));
 							}
 						} else {
 							if (array_key_exists($field['name'], $_POST)) {

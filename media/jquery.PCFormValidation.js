@@ -69,7 +69,7 @@ $(document).ready(function(){
 				var required = element.getAttribute('required') == null ? false : true;
 				if(valid && required && ((value == null) || (value == ''))) {
 					valid = false;
-					message = 'This field is required!';
+					message = $$.data('msgRequired');
 				}
 			//}
 
@@ -79,7 +79,7 @@ $(document).ready(function(){
 				var maxSize = $$.data('maxuploadsize');
 				if(maxSize && (maxSize < element.files[0].size)) {
 					valid = false;
-					message = 'The file you have selected is too big!';
+					message = $$.data('msgFiletoobig');
 				}
 			}
 		}

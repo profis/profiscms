@@ -482,4 +482,13 @@ INSERT INTO `pc_variables` (`vkey`, `controller`, `site`, `ln`, `value`) VALUES
 ('form_submitted_subject', 'forms', 0, 'ru', 'Заполнена форма (%s)'),
 ('form_submitted_text', 'forms', 0, 'en', 'The form “%s” on page “%s” has been submitted. Below are the contents.'),
 ('form_submitted_text', 'forms', 0, 'lt', 'Užpildyta tinklapyje „%2$s“ esanti forma „%1$s“. Žemiau – pateiktas jos turinys.'),
-('form_submitted_text', 'forms', 0, 'ru', 'На странице «%s» заполнена форма «%s». Ниже – её содержимое.');
+('form_submitted_text', 'forms', 0, 'ru', 'На странице «%s» заполнена форма «%s». Ниже – её содержимое.'),
+('form_field_required', 'forms', 0, 'en', 'This field is required.'),
+('form_field_required', 'forms', 0, 'lt', 'Šis laukas privalomas.'),
+('form_field_required', 'forms', 0, 'ru', 'Это поле обязательное.'),
+('form_file_too_big', 'forms', 0, 'en', 'The file you chose to upload is too big.'),
+('form_file_too_big', 'forms', 0, 'lt', 'Failas, kurį pasirinkote įkelti, yra per didelis.'),
+('form_file_too_big', 'forms', 0, 'ru', 'Файл, вами выбраный для закачки, слишком большой.'),
+('form_file_upload_error', 'forms', 0, 'en', 'The file was not uploaded successfully. Please try again or concact the website administrator.'),
+('form_file_upload_error', 'forms', 0, 'lt', 'Failo įkelti nepavyko. Pabandykite dar kartą arba susisiekite su svetainės administratoriumi.'),
+('form_file_upload_error', 'forms', 0, 'ru', 'Файл незагружен. Попробуйте еще раз или свяжитесь с администратором сайта.');
