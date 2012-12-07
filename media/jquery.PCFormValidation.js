@@ -98,7 +98,7 @@ $(document).ready(function(){
 	// then bind the same function to handle live validation
 	$('input,textarea,select').each(function() {
 		validate(this, false);
-	}).bind('keyup change blur', function() {
+	}).bind('keyup change blur invalid', function() {
 		validate(this, true);
 	});
 
