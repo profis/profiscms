@@ -420,6 +420,12 @@ final class PC_page extends PC_base {
 										$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
 									}
 								break;
+								case 'password':
+									// same as above, but check for non-empty value
+									if ($field['required'] && !$nonEmptyValueSubmitted) {
+										$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+									}
+								break;
 								case 'textarea':
 									// same as text fields (below) but sets nodeValue instead of a 'value' attribute
 									if ($nonEmptyValueSubmitted) {
