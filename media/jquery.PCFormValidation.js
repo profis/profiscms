@@ -64,10 +64,11 @@ $(document).ready(function(){
 		if (live && valid) {
 			// If not supported natively, check whether this field is
 			// required and missing
+			// EDIT: perform the check unconditionally
 			//if(!supports_required) {
 				var value = $$.val();
 				var required = element.getAttribute('required') == null ? false : true;
-				if(valid && required && ((value == null) || (value == ''))) {
+				if(valid && required && ((value == null) || ((value instanceof Array) && (value.join('') == '')) || ($.trim(value) == ''))) {
 					valid = false;
 					message = $$.data('msgRequired');
 				}

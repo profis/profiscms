@@ -366,7 +366,7 @@ final class PC_page extends PC_base {
 							}
 							$defaultValue = $field['DOMElement']->getAttribute('value');
 							$defaultValueSubmitted = array_key_exists($fieldName, $values) && (($defaultValue == $values[$fieldName]) || ($field['isArray'] && is_array($values[$fieldName]) && in_array($defaultValue, $values[$fieldName])));
-							$nonEmptyValueSubmitted = array_key_exists($fieldName, $values) && ($values[$fieldName] != '') && ($values[$fieldName] != array());
+							$nonEmptyValueSubmitted = array_key_exists($fieldName, $values) && (trim($values[$fieldName]) != '') && ($values[$fieldName] != array());
 							
 							switch ($field['type']) {
 								case 'checkbox':
@@ -386,7 +386,7 @@ final class PC_page extends PC_base {
 										if ($field['isArray']) {
 											if (is_array($values[$fieldName])) {
 												foreach ($field['options'] as $option) {
-													if (in_array($option['value'], $values[$fieldName])) {
+													if (($option['value'] != '') && in_array($option['value'], $values[$fieldName])) {
 														$option['DOMElement']->setAttribute('selected', 'selected');
 														$optionSelected = true;
 													}
@@ -395,7 +395,7 @@ final class PC_page extends PC_base {
 										} else {
 											if (!is_array($values[$fieldName])) {
 												foreach($field['options'] as $option) {
-													if ($option['value'] == $values[$fieldName]) {
+													if (($option['value'] != '') && $option['value'] == $values[$fieldName]) {
 														$option['DOMElement']->setAttribute('selected', 'selected');
 														$optionSelected = true;
 													}
