@@ -22,7 +22,8 @@ Ext.ux.form.Meniu = {
 			this.window.setPagePosition(x, y);
 			return;
 		}
-		this.window = new Ext.Window({
+		this.window = new PC.ux.Window({
+			pc_temp_window: true,
 			width: 175,
 			layout: 'form',
 			bodyCssClass: 'x-border-layout-ct',
@@ -45,7 +46,7 @@ Ext.ux.form.Meniu = {
 						}
 					}
 				}
-					],
+			],
 			listeners: {
 				deactivate: function(w){
 					w.hide();
