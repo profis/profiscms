@@ -515,6 +515,13 @@ Ext.ux.form.Params = {
 					autoDestroy: true,
 					fields: ['textContent', 'value', 'selected', 'disabled']
 				}),
+				plugins: [
+					new Ext.ux.dd.GridDragDropRowOrder({
+						copy: false,
+						scrollable: true,
+						targetCfg: {}
+					})
+				],
 				colModel: new Ext.grid.ColumnModel({
 					defaults: { width: 120, sortable: false },
 					columns: [
