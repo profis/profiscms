@@ -745,7 +745,7 @@ Ext.ux.form.Params = {
 									for(var j=0; j<optionAttributes.length; j++) {
 										var optname = optionAttributes[j];
 										var optval = rows[i].data[optname];
-										if((typeof(optval) != 'undefined') && (optval !== '') && (optval !== false)) {
+										if((typeof(optval) != 'undefined') && (optval !== false) && ((optval !== '') || (optname == 'value'))) {
 											optdata[optname] = optval;
 										}
 									}

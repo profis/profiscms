@@ -293,7 +293,8 @@ final class PC_page extends PC_base {
 									$fieldOption = $fieldOptions->item($k);
 									$optionValue = $fieldOption->getAttribute('value');
 									if ($optionValue == '') {
-										$optionValue = $fieldOption->nodeValue;
+										// explicitly set value as empty
+										$fieldOption->setAttribute('value', '');
 									}
 									$options[] = array('value' => $optionValue, 'title' => $fieldOption->nodeValue, 'DOMElement' => $fieldOption);
 								}

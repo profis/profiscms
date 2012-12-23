@@ -167,7 +167,11 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 			for(var i=0; i<options.length; i++) {
 				var textContent = options[i].textContent;
 				delete options[i].textContent;
-				dom.add(ob, 'option', options[i], textContent)
+				var on = dom.add(ob, 'option', options[i], textContent);
+				if(options[i].value === '') {
+					// explicitly set value as empty
+					on.value = '';
+				}
 			}
 		} else if(tagName == 'label') {
 			ob = dom.create('label', attrObject, n.innerHTML);
@@ -209,7 +213,7 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 					var o = {};
 					for (var i=0; i<va.length; i++) {
 						var cav = dom.getAttrib(on, va[i]);
-						if((typeof(cav) != 'undefined') && (cav != '')) {
+						if((typeof(cav) != 'undefined') && ((cav != '') || (va[i] == 'value'))) {
 							o[va[i]] = cav;
 						}
 					}

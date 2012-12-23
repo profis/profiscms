@@ -142,6 +142,7 @@ PC.ux.TinyMCE = function(config) {
 				+'iframe[width|height|src|frameborder|scrolling|marginheight|marginwidth],fb:like,'
 				+'label[for|onfocus|onblur],'
 				+'select[size|name|required|multiple|disabled|onfocus|onblur|onchange],'
+				+'option[disabled|label|selected|value=],'
 				+'form[action|accept|accept-charset|enctype|method|pcformsettings]',
 			invalid_elements : "script,style",
 			template_external_list_url: 'example_template_list.js',

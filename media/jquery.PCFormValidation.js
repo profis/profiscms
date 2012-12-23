@@ -107,7 +107,7 @@ $(document).ready(function(){
 	// Block submit if there are invalid fields found
 	$('form').bind('submit', function() {
 		var formValid = true;
-		$('input,textarea,select').each(function() {
+		$(this).find('input,textarea,select').each(function() {
 			inputValid = validate(this, true);
 			formValid = formValid && inputValid;
 		});
