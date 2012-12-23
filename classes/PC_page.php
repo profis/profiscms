@@ -257,11 +257,13 @@ final class PC_page extends PC_base {
 					$inputs = $form->getElementsByTagName($tagName);
 					for ($j=0; $j<$inputs->length; $j++) {
 						$field = $inputs->item($j);
-						$fieldName = preg_replace('/\[\]$/', '', $field->getAttribute('name'), -1, $isArray);
+						$fieldName = preg_replace('/\[\]$/', '', $field->getAttribute('name'), -1, $multiple);
 						if ($fieldName != '') {
+							$type = ($tagName == 'input') ? $field->getAttribute('type') : $tagName;
+							$multiple = $multiple || $field->hasAttribute('multiple') || ($type == 'checkbox');
 							$nameAttribute = 'pc_' . md5($fieldName);
-							$field->setAttribute('name', $nameAttribute . ($isArray?'[]':''));
-							$pageForm['fields'][$fieldName]['isArray'] = (bool)$isArray;
+							$field->setAttribute('name', $nameAttribute . ($multiple?'[]':''));
+							$pageForm['fields'][$fieldName]['multiple'] = $multiple;
 							//$element = array();
 							//$element['type'] = ($tagName == 'input' ? $field->getAttribute('type') : $tagName);
 							//$element['required'] = $field->hasAttribute('required');
@@ -273,7 +275,7 @@ final class PC_page extends PC_base {
 							//if (!array_key_exists('hasRequired', $pageForm['fields'][$fieldName])) {
 								//$pageForm['fields'][$fieldName]['hasRequired'] = false;
 							//}
-							$pageForm['fields'][$fieldName]['type'] = ($tagName == 'input' ? $field->getAttribute('type') : $tagName);
+							$pageForm['fields'][$fieldName]['type'] = $type;
 							$pageForm['fields'][$fieldName]['name'] = $nameAttribute;
 							$pageForm['fields'][$fieldName]['required'] = $field->hasAttribute('required');
 							if ($pageForm['fields'][$fieldName]['required']) {
@@ -365,8 +367,10 @@ final class PC_page extends PC_base {
 							if (array_key_exists($field['name'], $_POST)) {
 								$values[$fieldName] = $_POST[$field['name']];
 							}
+							// relevant for checkboxes, radios, hidden fields and buttons only
 							$defaultValue = $field['DOMElement']->getAttribute('value');
-							$defaultValueSubmitted = array_key_exists($fieldName, $values) && (($defaultValue == $values[$fieldName]) || ($field['isArray'] && is_array($values[$fieldName]) && in_array($defaultValue, $values[$fieldName])));
+							$defaultValueSubmitted = array_key_exists($fieldName, $values) && (($defaultValue == $values[$fieldName]) || ($field['multiple'] && is_array($values[$fieldName]) && in_array($defaultValue, $values[$fieldName])));
+							// relevant for freeform text inputs only
 							$nonEmptyValueSubmitted = array_key_exists($fieldName, $values) && (trim($values[$fieldName]) != '') && ($values[$fieldName] != array());
 							
 							switch ($field['type']) {
@@ -384,7 +388,7 @@ final class PC_page extends PC_base {
 								case 'select':
 									if (array_key_exists($fieldName, $values)) {
 										$optionSelected = false;
-										if ($field['isArray']) {
+										if ($field['multiple']) {
 											if (is_array($values[$fieldName])) {
 												foreach ($field['options'] as $option) {
 													if (($option['value'] != '') && in_array($option['value'], $values[$fieldName])) {
