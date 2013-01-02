@@ -642,13 +642,15 @@ PC.langs.en = {
 			selected: 'Selected',
 			disabled: 'Disabled',
 			image_url: 'Image URL',
-			cols: 'Cols',
+			cols: 'Columns',
 			rows: 'Rows',
 			multiple: 'Multiple',
 			maxuploadsize: 'Max file size (KiB)',
 			label: 'Label',
 			new_option: 'Add option',
-			delete_option: 'Delete option'
+			delete_option: 'Delete option',
+			width: 'Width',
+			height: 'Height'
 		},
 		links: {
 			title_insert: 'Insert link',

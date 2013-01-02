@@ -32,13 +32,15 @@ Ext.ux.form.Params = {
 				break;
 				case 'text':
 					items.push({fieldLabel: this.ln.value, ref: '../../_value'});
-					items.push({fieldLabel: this.ln.size, ref: '../../_size'});
+//					items.push({fieldLabel: this.ln.size, ref: '../../_size'});
+					items.push({fieldLabel: this.ln.width, ref: '../../_width'});
 					items.push({fieldLabel: this.ln.maxlength, ref: '../../_maxlength'});
 					items.push({fieldLabel: this.ln.readonly, xtype: 'combo', ref: '../../_readonly',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['readonly',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 					items.push({fieldLabel: this.ln.required, xtype: 'combo', ref: '../../_required',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['required',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 				break;
 				case 'password':
-					items.push({fieldLabel: this.ln.size, ref: '../../_size'});
+//					items.push({fieldLabel: this.ln.size, ref: '../../_size'});
+					items.push({fieldLabel: this.ln.width, ref: '../../_width'});
 					items.push({fieldLabel: this.ln.maxlength, ref: '../../_maxlength'});
 					items.push({fieldLabel: this.ln.required, xtype: 'combo', ref: '../../_required',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['required',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 				break;
@@ -52,14 +54,18 @@ Ext.ux.form.Params = {
 					items.push({fieldLabel: this.ln.required, xtype: 'combo', ref: '../../_required',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['required',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 				break;
 				case 'textarea':
-					items.push({fieldLabel: this.ln.cols, ref: '../../_cols'});
-					items.push({fieldLabel: this.ln.rows, ref: '../../_rows'});
+//					items.push({fieldLabel: this.ln.cols, ref: '../../_cols'});
+//					items.push({fieldLabel: this.ln.rows, ref: '../../_rows'});
+					items.push({fieldLabel: this.ln.width, ref: '../../_width'});
+					items.push({fieldLabel: this.ln.height, ref: '../../_height'});
 					items.push({fieldLabel: this.ln.value, ref: '../../_textContent',xtype: 'textarea', height: 32});
 					items.push({fieldLabel: this.ln.readonly, xtype: 'combo', ref: '../../_readonly',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['readonly',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 					items.push({fieldLabel: this.ln.required, xtype: 'combo', ref: '../../_required',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['required',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 				break;
 				case 'select':
-					items.push({fieldLabel: this.ln.size, ref: '../../_size'});
+//					items.push({fieldLabel: this.ln.size, ref: '../../_size'});
+					items.push({fieldLabel: this.ln.width, ref: '../../_width'});
+					items.push({fieldLabel: this.ln.height, ref: '../../_height'});
 					items.push({fieldLabel: this.ln.multiple, xtype: 'combo', ref: '../../_multiple',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['multiple',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 					items.push({fieldLabel: this.ln.required, xtype: 'combo', ref: '../../_required',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['required',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 				break;
@@ -663,39 +669,61 @@ Ext.ux.form.Params = {
 								var val = obj.getValue();
 								if(attribute.name == 'style') {
 									// prepend border
-									if (dialog.window._border.innerCt._style.getValue() != '')
-									{
-										val = 'border:'
-											+ dialog.window._border.innerCt._size.getValue() + 'px '
-											+ dialog.window._border.innerCt._style.getValue() + ' '
-											+ dialog.window._border.innerCt._color.getValue() + ';' + val;
+									if (dialog.window._border) {
+										if (dialog.window._border.innerCt._style.getValue() != '')
+										{
+											val = 'border:'
+												+ dialog.window._border.innerCt._size.getValue() + 'px '
+												+ dialog.window._border.innerCt._style.getValue() + ' '
+												+ dialog.window._border.innerCt._color.getValue() + ';' + val;
+										}
 									}
 									// prepend margin
-									var margin = dialog.window._margin.innerCt;
-									var sides = new Array();
-									sides[0] = parseInt((margin._top.getValue()>0?margin._top.getValue():0));
-									sides[1] = parseInt((margin._right.getValue()>0?margin._right.getValue():0));
-									sides[2] = parseInt((margin._bottom.getValue()>0?margin._bottom.getValue():0));
-									sides[3] = parseInt((margin._left.getValue()>0?margin._left.getValue():0));
-									if (sides[0] > 0 || sides[1] > 0 || sides[2] > 0 || sides[3] > 0) {
-										var margin_sheet = 'margin:'+sides.join('px ')+'px';
-										val = margin_sheet+';'+val;
+									if (dialog.window._margin) {
+										var margin = dialog.window._margin.innerCt;
+										var sides = new Array();
+										sides[0] = parseInt((margin._top.getValue()>0?margin._top.getValue():0));
+										sides[1] = parseInt((margin._right.getValue()>0?margin._right.getValue():0));
+										sides[2] = parseInt((margin._bottom.getValue()>0?margin._bottom.getValue():0));
+										sides[3] = parseInt((margin._left.getValue()>0?margin._left.getValue():0));
+										if (sides[0] > 0 || sides[1] > 0 || sides[2] > 0 || sides[3] > 0) {
+											var margin_sheet = 'margin:'+sides.join('px ')+'px';
+											val = margin_sheet+';'+val;
+										}
 									}
 									// prepend padding
-									var padding = dialog.window._padding.innerCt;
-									var sides = new Array();
-									sides[0] = parseInt((padding._top.getValue()>0?padding._top.getValue():0));
-									sides[1] = parseInt((padding._right.getValue()>0?padding._right.getValue():0));
-									sides[2] = parseInt((padding._bottom.getValue()>0?padding._bottom.getValue():0));
-									sides[3] = parseInt((padding._left.getValue()>0?padding._left.getValue():0));
-									if (sides[0] > 0 || sides[1] > 0 || sides[2] > 0 || sides[3] > 0) {
-										var margin_sheet = 'padding:'+sides.join('px ')+'px';
-										val = margin_sheet+';'+val;
+									if (dialog.window._padding) {
+										var padding = dialog.window._padding.innerCt;
+										var sides = new Array();
+										sides[0] = parseInt((padding._top.getValue()>0?padding._top.getValue():0));
+										sides[1] = parseInt((padding._right.getValue()>0?padding._right.getValue():0));
+										sides[2] = parseInt((padding._bottom.getValue()>0?padding._bottom.getValue():0));
+										sides[3] = parseInt((padding._left.getValue()>0?padding._left.getValue():0));
+										if (sides[0] > 0 || sides[1] > 0 || sides[2] > 0 || sides[3] > 0) {
+											var margin_sheet = 'padding:'+sides.join('px ')+'px';
+											val = margin_sheet+';'+val;
+										}
 									}
 									// prepend background-color
-									var bgcolor = dialog.window._background_color.getValue();
-									if((typeof(bgcolor) != 'undefined') && (bgcolor != '')) {
-										val = 'background-color:'+bgcolor+';'+val;
+									if (dialog.window._background_color) {
+										var bgcolor = dialog.window._background_color.getValue();
+										if((typeof(bgcolor) != 'undefined') && (bgcolor != '')) {
+											val = 'background-color:'+bgcolor+';'+val;
+										}
+									}
+									// prepend width
+									if(dialog.window._width) {
+										var width = dialog.window._width.getValue();
+										if((typeof(width) != 'undefined') && (width != '')) {
+											val = 'width:'+width+'px;'+val;
+										}
+									}
+									// prepend height
+									if(dialog.window._height) {
+										var height = dialog.window._height.getValue();
+										if((typeof(height) != 'undefined') && (height != '')) {
+											val = 'height:'+height+'px;'+val;
+										}
 									}
 								} else if(attribute.name == 'data-maxuploadsize') {
 									// convert KiB to bytes
@@ -803,113 +831,143 @@ Ext.ux.form.Params = {
 					}
 					if(attribute.name == 'style') {
 						//parse margin
-						var margin_start = val.lastIndexOf('margin:');
-						if (margin_start >= 0) {
-							var margin_end = val.indexOf(';', margin_start);
-							var margin = val.substring(margin_start+7, margin_end).replace(/^\s+/,"");
-							var sides = margin.split(' ');
-							//cut margin from the styles
-							val = val.substring(0, margin_start) + val.substring(margin_end+1);
-							//update margin values
-							margin = dialog.window._margin.innerCt;
-							switch (sides.length) {
-								case 0:
-									margin._top.setValue(0);
-									margin._right.setValue(0);
-									margin._bottom.setValue(0);
-									margin._left.setValue(0);
-									break;
-								case 1:
-									margin._top.setValue(parseInt(sides[0]));
-									margin._right.setValue(parseInt(sides[0]));
-									margin._bottom.setValue(parseInt(sides[0]));
-									margin._left.setValue(parseInt(sides[0]));
-									break;
-								case 2:
-									margin._top.setValue(parseInt(sides[0]));
-									margin._right.setValue(parseInt(sides[1]));
-									margin._bottom.setValue(parseInt(sides[0]));
-									margin._left.setValue(parseInt(sides[1]));
-									break;
-								case 3:
-									margin._top.setValue(parseInt(sides[0]));
-									margin._right.setValue(parseInt(sides[1]));
-									margin._bottom.setValue(parseInt(sides[2]));
-									margin._left.setValue(0);
-									break;
-								default: //4 or more
-									margin._top.setValue(parseInt(sides[0]));
-									margin._right.setValue(parseInt(sides[1]));
-									margin._bottom.setValue(parseInt(sides[2]));
-									margin._left.setValue(parseInt(sides[3]));
+						if(dialog.window._margin) {
+							var margin_start = val.lastIndexOf('margin:');
+							if (margin_start >= 0) {
+								var margin_end = val.indexOf(';', margin_start);
+								var margin = val.substring(margin_start+7, margin_end).replace(/^\s+/,"");
+								var sides = margin.split(' ');
+								//cut margin from the styles
+								val = val.substring(0, margin_start) + val.substring(margin_end+1);
+								//update margin values
+								margin = dialog.window._margin.innerCt;
+								switch (sides.length) {
+									case 0:
+										margin._top.setValue(0);
+										margin._right.setValue(0);
+										margin._bottom.setValue(0);
+										margin._left.setValue(0);
+										break;
+									case 1:
+										margin._top.setValue(parseInt(sides[0]));
+										margin._right.setValue(parseInt(sides[0]));
+										margin._bottom.setValue(parseInt(sides[0]));
+										margin._left.setValue(parseInt(sides[0]));
+										break;
+									case 2:
+										margin._top.setValue(parseInt(sides[0]));
+										margin._right.setValue(parseInt(sides[1]));
+										margin._bottom.setValue(parseInt(sides[0]));
+										margin._left.setValue(parseInt(sides[1]));
+										break;
+									case 3:
+										margin._top.setValue(parseInt(sides[0]));
+										margin._right.setValue(parseInt(sides[1]));
+										margin._bottom.setValue(parseInt(sides[2]));
+										margin._left.setValue(0);
+										break;
+									default: //4 or more
+										margin._top.setValue(parseInt(sides[0]));
+										margin._right.setValue(parseInt(sides[1]));
+										margin._bottom.setValue(parseInt(sides[2]));
+										margin._left.setValue(parseInt(sides[3]));
+								}
 							}
 						}
 						//parse padding
-						var padding_start = val.lastIndexOf('padding:');
-						if (padding_start >= 0) {
-							var padding_end = val.indexOf(';', padding_start);
-							var padding = val.substring(padding_start+8, padding_end).replace(/^\s+/,"");
-							var sides = padding.split(' ');
-							//cut padding from the styles
-							val = val.substring(0, padding_start) + val.substring(padding_end+1);
-							//update padding values
-							padding = dialog.window._padding.innerCt;
-							switch (sides.length) {
-								case 0:
-									padding._top.setValue(0);
-									padding._right.setValue(0);
-									padding._bottom.setValue(0);
-									padding._left.setValue(0);
-									break;
-								case 1:
-									padding._top.setValue(parseInt(sides[0]));
-									padding._right.setValue(parseInt(sides[0]));
-									padding._bottom.setValue(parseInt(sides[0]));
-									padding._left.setValue(parseInt(sides[0]));
-									break;
-								case 2:
-									padding._top.setValue(parseInt(sides[0]));
-									padding._right.setValue(parseInt(sides[1]));
-									padding._bottom.setValue(parseInt(sides[0]));
-									padding._left.setValue(parseInt(sides[1]));
-									break;
-								case 3:
-									padding._top.setValue(parseInt(sides[0]));
-									padding._right.setValue(parseInt(sides[1]));
-									padding._bottom.setValue(parseInt(sides[2]));
-									padding._left.setValue(0);
-									break;
-								default: //4 or more
-									padding._top.setValue(parseInt(sides[0]));
-									padding._right.setValue(parseInt(sides[1]));
-									padding._bottom.setValue(parseInt(sides[2]));
-									padding._left.setValue(parseInt(sides[3]));
+						if(dialog.window._padding) {
+							var padding_start = val.lastIndexOf('padding:');
+							if (padding_start >= 0) {
+								var padding_end = val.indexOf(';', padding_start);
+								var padding = val.substring(padding_start+8, padding_end).replace(/^\s+/,"");
+								var sides = padding.split(' ');
+								//cut padding from the styles
+								val = val.substring(0, padding_start) + val.substring(padding_end+1);
+								//update padding values
+								padding = dialog.window._padding.innerCt;
+								switch (sides.length) {
+									case 0:
+										padding._top.setValue(0);
+										padding._right.setValue(0);
+										padding._bottom.setValue(0);
+										padding._left.setValue(0);
+										break;
+									case 1:
+										padding._top.setValue(parseInt(sides[0]));
+										padding._right.setValue(parseInt(sides[0]));
+										padding._bottom.setValue(parseInt(sides[0]));
+										padding._left.setValue(parseInt(sides[0]));
+										break;
+									case 2:
+										padding._top.setValue(parseInt(sides[0]));
+										padding._right.setValue(parseInt(sides[1]));
+										padding._bottom.setValue(parseInt(sides[0]));
+										padding._left.setValue(parseInt(sides[1]));
+										break;
+									case 3:
+										padding._top.setValue(parseInt(sides[0]));
+										padding._right.setValue(parseInt(sides[1]));
+										padding._bottom.setValue(parseInt(sides[2]));
+										padding._left.setValue(0);
+										break;
+									default: //4 or more
+										padding._top.setValue(parseInt(sides[0]));
+										padding._right.setValue(parseInt(sides[1]));
+										padding._bottom.setValue(parseInt(sides[2]));
+										padding._left.setValue(parseInt(sides[3]));
+								}
 							}
 						}
 						//parse border
-						var border_start = val.lastIndexOf('border:');
-						if (border_start >= 0) {
-							var border_end = val.indexOf(';', border_start);
-							var border = val.substring(border_start+7, border_end).replace(/^\s+/,"");
-							var sides = border.split(' ');
-							//update border values
-							border = dialog.window._border.innerCt;
-							if (sides.length == 3) {
-								//cut border from the styles
-								val = val.substring(0, border_start) + val.substring(border_end+1);
-								border._size.setValue(parseInt(sides[0])).enable();
-								border._style.setValue(sides[1]);
-								border._color.setValue(sides[2]).enable();
+						if(dialog.window._border) {
+							var border_start = val.lastIndexOf('border:');
+							if (border_start >= 0) {
+								var border_end = val.indexOf(';', border_start);
+								var border = val.substring(border_start+7, border_end).replace(/^\s+/,"");
+								var sides = border.split(' ');
+								//update border values
+								border = dialog.window._border.innerCt;
+								if (sides.length == 3) {
+									//cut border from the styles
+									val = val.substring(0, border_start) + val.substring(border_end+1);
+									border._size.setValue(parseInt(sides[0])).enable();
+									border._style.setValue(sides[1]);
+									border._color.setValue(sides[2]).enable();
+								}
 							}
 						}
 						//parse background-color
-						var bgcolor_start = val.lastIndexOf('background-color:');
-						if(bgcolor_start >= 0) {
-							var bgcolor_end = val.indexOf(';', bgcolor_start);
-							var bgcolor = val.substring(bgcolor_start+17, bgcolor_end).replace(/^\s+/,"");
-							//cut background-color from the styles
-							val = val.substring(0, bgcolor_start) + val.substring(bgcolor_end+1);
-							dialog.window._background_color.setValue(bgcolor);
+						if(dialog.window._background_color) {
+							var bgcolor_start = val.lastIndexOf('background-color:');
+							if(bgcolor_start >= 0) {
+								var bgcolor_end = val.indexOf(';', bgcolor_start);
+								var bgcolor = val.substring(bgcolor_start+17, bgcolor_end).replace(/^\s+/,"");
+								//cut background-color from the styles
+								val = val.substring(0, bgcolor_start) + val.substring(bgcolor_end+1);
+								dialog.window._background_color.setValue(bgcolor);
+							}
+						}
+						//parse width
+						if(dialog.window._width) {
+							var width_start = val.lastIndexOf('width:');
+							if(width_start >= 0) {
+								var width_end = val.indexOf(';', width_start);
+								var width = val.substring(width_start+6, width_end).replace(/^\s+/,"");
+								//cut width from the styles
+								val = val.substring(0, width_start) + val.substring(width_end+1);
+								dialog.window._width.setValue(parseInt(width));
+							}
+						}
+						//parse height
+						if(dialog.window._height) {
+							var height_start = val.lastIndexOf('height:');
+							if(height_start >= 0) {
+								var height_end = val.indexOf(';', height_start);
+								var height = val.substring(height_start+7, height_end).replace(/^\s+/,"");
+								//cut height from the styles
+								val = val.substring(0, height_start) + val.substring(height_end+1);
+								dialog.window._height.setValue(parseInt(height));
+							}
 						}
 						//clean up style
 						val = val.replace(/^\s+/,"").replace(/\s+$/,"");
