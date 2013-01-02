@@ -220,8 +220,393 @@ final class PC_page extends PC_base {
 		);
 		return $redirect;
 	}
+	public function Process_forms(&$text, $currentFormSubmitHash, $nextFormSubmitHash) {
+		$dom = new DOMDocument();
+		/* Create a fictional XHTML document with just the contents of $text in the body.
+		 * Both DOCTYPE and character set definition are necessary for all the magic to work properly.
+		 */
+		$dom->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body>'.$text.'</body></html>');
+		
+		/*
+		 * Generate informational array about all forms on the page
+		 * and add honeypot fields to each form.
+		 */
+		$formElements = $dom->getElementsByTagName('form');
+
+		if ($formElements->length) {
+			$pageForms = array();
+			for ($i=0; $i<$formElements->length; $i++) {
+				$form = $formElements->item($i);
+				$formId = $form->getAttribute('id');
+				$formSettings = json_decode($form->getAttribute('pcformsettings'), true);
+				$form->removeAttribute('pcformsettings');
+				$formSubmitEmails = array();
+				$thankYouText = '';
+				if (!is_null($formSettings)) {
+					if (array_key_exists('emails', $formSettings)) {
+						$formSubmitEmails = explode(';', $formSettings['emails']);
+					}
+					if (array_key_exists('thankYouText', $formSettings)) {
+						$thankYouText = $formSettings['thankYouText'];
+					}
+				}
+				$formIdHash = 'pc_' . md5($formId.'_honeypot');
+				$pageForm = array('status' => array('status' => 'initialized'), 'id' => $formId, 'idHash' => $formIdHash, 'submitEmails' => $formSubmitEmails, 'thankYouText' => $thankYouText, 'DOMElement' => &$form, 'fields' => array());
+				
+				foreach (array('input','textarea','select') as $tagName) {
+					$inputs = $form->getElementsByTagName($tagName);
+					for ($j=0; $j<$inputs->length; $j++) {
+						$field = $inputs->item($j);
+						$fieldName = preg_replace('/\[\]$/', '', $field->getAttribute('name'), -1, $multiple);
+						if ($fieldName != '') {
+							$type = ($tagName == 'input') ? $field->getAttribute('type') : $tagName;
+							$multiple = $multiple || $field->hasAttribute('multiple') || ($type == 'checkbox');
+							$nameAttribute = 'pc_' . md5($fieldName);
+							$field->setAttribute('name', $nameAttribute . ($multiple?'[]':''));
+							$pageForm['fields'][$fieldName]['multiple'] = $multiple;
+							//$element = array();
+							//$element['type'] = ($tagName == 'input' ? $field->getAttribute('type') : $tagName);
+							//$element['required'] = $field->hasAttribute('required');
+							//$element['DOMElement'] = &$field;
+							//$pageForm['fields'][$fieldName]['elements'][] = $element;
+							//if ($element['required']) {
+								//$pageForm['fields'][$fieldName]['hasRequired'] = true;
+							//}
+							//if (!array_key_exists('hasRequired', $pageForm['fields'][$fieldName])) {
+								//$pageForm['fields'][$fieldName]['hasRequired'] = false;
+							//}
+							$pageForm['fields'][$fieldName]['type'] = $type;
+							$pageForm['fields'][$fieldName]['name'] = $nameAttribute;
+							$pageForm['fields'][$fieldName]['required'] = $field->hasAttribute('required');
+							if ($pageForm['fields'][$fieldName]['required']) {
+								$field->setAttribute('data-msg-required', lang('form_field_required'));
+							}
+							$pageForm['fields'][$fieldName]['DOMElement'] = $field;
+							if ($pageForm['fields'][$fieldName]['type'] == 'file') {
+								$pageForm['fields'][$fieldName]['maxuploadsize'] = $field->getAttribute('data-maxuploadsize');
+								if ($pageForm['fields'][$fieldName]['maxuploadsize']) {
+									$field->setAttribute('data-msg-filetoobig', lang('form_file_too_big'));
+								}
+							}
+							if ($tagName == 'select') {
+								$fieldOptions = $field->getElementsByTagName('option');
+								$options = array();
+								for ($k=0; $k<$fieldOptions->length; $k++) {
+									$fieldOption = $fieldOptions->item($k);
+									$optionValue = $fieldOption->getAttribute('value');
+									if ($optionValue == '') {
+										// explicitly set value as empty
+										$fieldOption->setAttribute('value', '');
+									}
+									$options[] = array('value' => $optionValue, 'title' => $fieldOption->nodeValue, 'DOMElement' => $fieldOption);
+								}
+								$pageForm['fields'][$fieldName]['options'] = $options;
+							}
+						}
+					}
+				}
+				
+				$honeyPotField = $form->appendChild(new DOMElement('input'));
+				$honeyPotField->setAttribute('name', $formIdHash);
+				$honeyPotField->setAttribute('type', 'hidden');
+				$honeyPotField->setAttribute('value', $nextFormSubmitHash);
+				
+				$pageForms[] = $pageForm;
+			}
+			
+			/*
+			 * Process all forms in an array: check if each one has been
+			 * submitted and validate the data if so.
+			 */
+			foreach ($pageForms as &$pageForm) {
+				if (array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == $currentFormSubmitHash)) {
+					$pageForm['status']['status'] = 'submitted';
+					$values = array();
+					$files = array();
+					foreach ($pageForm['fields'] as $fieldName => &$field) {
+						if ($field['type'] == 'file') {
+							$error = false;
+							$errmsg = false;
+							if(array_key_exists($field['name'], $_FILES)) {
+								$file = $_FILES[$field['name']];
+								if(is_uploaded_file($file['tmp_name'])) {
+									if(is_numeric($field['maxuploadsize']) && ($field['maxuploadsize'] != 0) && (filesize($file['tmp_name']) > $field['maxuploadsize'])) {
+										$error = 'Uploaded file is too big.';
+										$errmsg = lang('form_file_too_big');
+									} else {
+										$files[$fieldName] = $file;
+									}
+								} else {
+									switch($file['error']) {
+										case UPLOAD_ERR_NO_FILE:
+											if ($field['required']) {
+												$error = 'Required field missing.';
+												$errmsg = lang('form_field_required');
+											}
+										break;
+										case UPLOAD_ERR_INI_SIZE:
+										case UPLOAD_ERR_FORM_SIZE:
+											$error = 'Uploaded file is too big (PHP settings).';
+											$errmsg = lang('form_file_too_big');
+										break;
+										default:
+											$error = 'File upload error.';
+											$errmsg = lang('form_file_upload_error');
+										break;
+									}
+								}
+							} elseif ($field['required']) {
+								$error = 'Required field missing.';
+								$errmsg = lang('form_field_required');
+							}
+							if ($error) {
+								$field['DOMElement']->setAttribute('data-error', $errmsg);
+								$pageForm['status'] = array('status' => 'error', 'errors' => array($error));
+							}
+						} else {
+							if (array_key_exists($field['name'], $_POST)) {
+								$values[$fieldName] = $_POST[$field['name']];
+							}
+							// relevant for checkboxes, radios, hidden fields and buttons only
+							$defaultValue = $field['DOMElement']->getAttribute('value');
+							$defaultValueSubmitted = array_key_exists($fieldName, $values) && (($defaultValue == $values[$fieldName]) || ($field['multiple'] && is_array($values[$fieldName]) && in_array($defaultValue, $values[$fieldName])));
+							// relevant for freeform text inputs only
+							$nonEmptyValueSubmitted = array_key_exists($fieldName, $values) && ((is_string($values[$fieldName]) && (trim($values[$fieldName]) != '')) || (is_array($values[$fieldName]) && !empty($values[$fieldName])));
+							
+							switch ($field['type']) {
+								case 'checkbox':
+								case 'radio':
+									if ($defaultValueSubmitted) {
+										$field['DOMElement']->setAttribute('checked', 'checked');
+									} else {
+										$field['DOMElement']->removeAttribute('checked');
+										if ($field['required']) {
+											$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+										}
+									}
+								break;
+								case 'select':
+									if (array_key_exists($fieldName, $values)) {
+										$optionSelected = false;
+										if ($field['multiple']) {
+											if (is_array($values[$fieldName])) {
+												foreach ($field['options'] as $option) {
+													if (($option['value'] != '') && in_array($option['value'], $values[$fieldName])) {
+														$option['DOMElement']->setAttribute('selected', 'selected');
+														$optionSelected = true;
+													}
+												}
+											}
+										} else {
+											if (!is_array($values[$fieldName])) {
+												foreach($field['options'] as $option) {
+													if (($option['value'] != '') && $option['value'] == $values[$fieldName]) {
+														$option['DOMElement']->setAttribute('selected', 'selected');
+														$optionSelected = true;
+													}
+												}
+											}
+										}
+										if($field['required'] && !$optionSelected) {
+											$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+										}
+									} else {
+										if ($field['required']) {
+											$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+										}
+									}
+								break;
+								case 'hidden':
+								case 'reset':
+								case 'submit':
+								case 'button':
+									// if required, check if this value exists in the submitted array
+									if ($field['required'] && !$defaultValueSubmitted) {
+										$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+									}
+								break;
+								case 'password':
+									// same as above, but check for non-empty value
+									if ($field['required'] && !$nonEmptyValueSubmitted) {
+										$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+									}
+								break;
+								case 'textarea':
+									// same as text fields (below) but sets nodeValue instead of a 'value' attribute
+									if ($nonEmptyValueSubmitted) {
+										if (is_array($values[$fieldName])) {
+											$v = $values[$fieldName];
+											$field['DOMElement']->nodeValue = array_shift($v);
+										} else {
+											$field['DOMElement']->nodeValue = $values[$fieldName];
+										}
+									} elseif ($field['required']) {
+										$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+									}
+								break;
+								default:
+									// for text fields, we simply check if a value has been submitted and
+									// it is not an empty string or array. Not using empty() here, because
+									// '0' is a valid result.
+									if ($nonEmptyValueSubmitted) {
+										if (is_array($values[$fieldName])) {
+											$v = $values[$fieldName];
+											$field['DOMElement']->setAttribute('value', array_shift($v));
+										} else {
+											$field['DOMElement']->setAttribute('value', $values[$fieldName]);
+										}
+									} elseif ($field['required']) {
+										$pageForm['status'] = array('status' => 'error', 'errors' => array('Required field missing.'));
+									}
+								break;
+							}
+						}
+					}
+					if ($pageForm['status']['status'] == 'submitted') {
+						if (!empty($files)) {
+							$baseLocation = $this->cfg['path']['uploads'];
+							foreach ($files as $inputName => $fileInfo) {
+								$fileLocation = md5($pageForm['id']) . '/' . md5($inputName) . '/';
+								$fullLocation = $baseLocation . $fileLocation;
+								if(!is_dir($fullLocation) && !mkdir($fullLocation, 0777, true)) {
+									$pageForm['status'] = array('status' => 'error', 'errors' => array('mkdir'));
+									break;
+								}
+								$pathInfo = pathinfo($fileInfo['name']);
+								$filePath = $fileLocation . $pathInfo['basename'];
+								$fullPath = $baseLocation . $filePath;
+								// ensure there is no file with this name yet
+								for($i=0; file_exists($fullPath); $i++) {
+									$filePath = $fileLocation . $pathInfo['filename'] . '_' . $i;
+									if(array_key_exists('extension', $pathInfo)) {
+										$filePath .= '.' . $pathInfo['extension'];
+									}
+									$fullPath = $baseLocation . $filePath;
+								}
+								if(move_uploaded_file($fileInfo['tmp_name'], $fullPath)) {
+									$values[$inputName] = (object)array('name' => $fileInfo['name'], 'location' => $filePath, 'size' => $fileInfo['size']);
+								} else {
+									$pageForm['status'] = array('status' => 'error', 'errors' => array('move_uploaded_file'));
+									break;
+								}
+							}
+						}
+						if ($pageForm['status']['status'] == 'submitted') {
+							$r = $this->prepare("INSERT INTO {$this->db_prefix}forms (pid,form_id,data,time,ip) values(?,?,?,NOW(),?)");
+							$s = $r->execute(array($this->page_data['pid'], $pageForm['id'], json_encode($values), ip2long($_SERVER['REMOTE_ADDR'])));
+							if (!$s) {
+								$pageForm['status'] = array('status' => 'error', 'errors'=>array('database'));
+							} else {
+								$pageForm['status'] = array('status'=> 'saved');
+							}
+						}
+					}
+					if ($pageForm['status']['status'] == 'saved') {
+						if (!empty($pageForm['submitEmails'])) {
+							$mail = new PHPMailer();
+							$mail->SMTPDebug  = 1;
+							$mail->CharSet = "utf-8";
+							$mail->SetFrom($this->cfg['from_email']);
+							$mail->Subject = lang('form_submitted_subject', $pageForm['id']);
+							foreach ($pageForm['submitEmails'] as $submitEmail) {
+								$mail->AddAddress($submitEmail);
+							}
+							
+							$mailBodyDOM = new DOMDocument;
+							$mailBodyDOM->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body></body></html>');
+							$body = $mailBodyDOM->getElementsByTagName('body')->item(0);
+							
+							$body->appendChild(new DOMElement('p', lang('form_submitted_heading')));
+							$body->appendChild(new DOMElement('p', lang('form_submitted_text', $pageForm['id'], $this->page_data['name'])));
+							$textBody = lang('form_submitted_heading') . "\r\n\r\n" . lang('form_submitted_text', $pageForm['id'], $this->page_data['name']) . "\r\n\r\n";
+							$table = $body->appendChild(new DOMElement('table'));
+							foreach ($values as $fieldName => $value) {
+								$row = $table->appendChild(new DOMElement('tr'));
+								$headCell = $row->appendChild(new DOMElement('th', lang('form_submitted_field_name', $fieldName)));
+								$textBody .= lang('form_submitted_field_name', $fieldName)."\r\n";
+								switch(gettype($value)) {
+									case 'array':
+										$count = count($value);
+										$headCell->setAttribute('rowspan', $count);
+										$row->appendChild(new DOMElement('td', $value[0]));
+										$textBody .= '    '.$value[0]."\r\n";
+										for ($i=1; $i<$count; $i++) {
+											$row = $table->appendChild (new DOMElement('tr'));
+											$row->appendChild (new DOMElement('td', $value[$i]));
+											$textBody .= '    '.$value[0]."\r\n";
+										}
+										$textBody .= "\r\n";
+										break;
+									case 'object':
+										$row->appendChild (new DOMElement('td', lang('form_submitted_file', $value->name)));
+										$textBody .= '    ' . lang('form_submitted_file', $value->name) . "\r\n\r\n";
+										$mail->addAttachment($this->cfg['path']['uploads'].$value->location, $value->name);
+										break;
+									case 'string':
+									default:
+										$row->appendChild (new DOMElement('td', $value));
+										$textBody .= '    '.$value."\r\n\r\n";
+										break;
+								}
+							}
+							
+							$mail->Body = $mailBodyDOM->saveHTML();
+							$mail->AltBody = $textBody;
+							
+							if (!$mail->Send()) {
+								$pageForm['status'] = array('status' => 'error', 'errors'=>array('email'));
+								// echo 'Mailer error: ' . $mail->ErrorInfo;
+							} else {
+								$pageForm['status'] = array('status' => 'sent');
+							}
+						}
+						
+						if (!empty($pageForm['thankYouText'])) {
+							// The following two lines allow to use HTML in the thank you text
+							$thankYouDiv = $dom->createDocumentFragment();
+							@$thankYouDiv->appendXML('<div class="pc_form_thank_you">' . $pageForm['thankYouText'] . '</div>');
+							// The following two lines disallow use of HTML in the thank you text
+							//$thankYouDiv = $dom->createElement('div', $pageForm['thankYouText']);
+							//$thankYouDiv->setAttribute('class', 'pc_form_thank_you');
+							$pageForm['DOMElement']->parentNode->replaceChild($thankYouDiv, $pageForm['DOMElement']);
+						}
+					}
+				}
+			}
+			
+			// replace current source code with the generated
+			$body = $dom->getElementsByTagName('body')->item(0);
+			$output = '';
+			foreach ($body->childNodes as $child) {
+				$output .= $dom->saveXML($child);
+			}
+			$text = $output;
+			
+			// hook up the form validation script
+			$this->site->Add_script('media/jquery.PCFormValidation.js');
+			
+			// check if template for forms exists and include it if so
+			$templateFile = $this->core->Get_theme_path(null, false).'template_forms.php';
+			if (is_file($templateFile)) {
+				$this->core->Output_start();
+				include($templateFile);
+				$text = $this->core->Output_end();
+			}
+		}
+	}
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
+		// prevent double-submitting of forms. This goes here and not in Process_forms()
+		// because we run Process_forms() multiple times for each page load.
+		// This has a side-effect that if the user has multiple pages open in
+		// different tabs, submitting both of them from the first time becomes impossible.
+		$currentFormSubmitHash = null;
+		if(array_key_exists('formSubmitHash', $_SESSION)) {
+			$currentFormSubmitHash = $_SESSION['formSubmitHash'];
+		}
+		$nextFormSubmitHash = time();
+		$_SESSION['formSubmitHash'] = $nextFormSubmitHash;
+
 		//$this->page_data['pid']
 		//echo $t1;
 		$tc = 1;
@@ -231,6 +616,7 @@ final class PC_page extends PC_base {
 			#
 			$this->Replace_google_map_objects($text);
 			$this->Parse_gallery_files_requests($text);
+			$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
 			$this->core->Init_hooks('parse_html_output', array(
 				'text'=> &$text
 			));

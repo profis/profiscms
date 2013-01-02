@@ -14,6 +14,7 @@ plugins/*
 !plugins/backup/
 !plugins/domains/
 !plugins/dummy/
+!plugins/forms/
 !plugins/sites/
 !plugins/variables/
 !plugins/.htaccess
@@ -32,3 +33,6 @@ admin/excel_attr/
 # Cache
 cache/*
 !cache/.htaccess
+# Uploads
+upload/*
+!upload/.htaccess
