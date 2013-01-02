@@ -220,7 +220,7 @@ final class PC_page extends PC_base {
 		);
 		return $redirect;
 	}
-	public function Process_forms(&$text) {
+	public function Process_forms(&$text, $currentFormSubmitHash, $nextFormSubmitHash) {
 		$dom = new DOMDocument();
 		/* Create a fictional XHTML document with just the contents of $text in the body.
 		 * Both DOCTYPE and character set definition are necessary for all the magic to work properly.
@@ -309,7 +309,7 @@ final class PC_page extends PC_base {
 				$honeyPotField = $form->appendChild(new DOMElement('input'));
 				$honeyPotField->setAttribute('name', $formIdHash);
 				$honeyPotField->setAttribute('type', 'hidden');
-				$honeyPotField->setAttribute('value', '');
+				$honeyPotField->setAttribute('value', $nextFormSubmitHash);
 				
 				$pageForms[] = $pageForm;
 			}
@@ -319,7 +319,7 @@ final class PC_page extends PC_base {
 			 * submitted and validate the data if so.
 			 */
 			foreach ($pageForms as &$pageForm) {
-				if (array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == '')) {
+				if (array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == $currentFormSubmitHash)) {
 					$pageForm['status']['status'] = 'submitted';
 					$values = array();
 					$files = array();
@@ -371,7 +371,7 @@ final class PC_page extends PC_base {
 							$defaultValue = $field['DOMElement']->getAttribute('value');
 							$defaultValueSubmitted = array_key_exists($fieldName, $values) && (($defaultValue == $values[$fieldName]) || ($field['multiple'] && is_array($values[$fieldName]) && in_array($defaultValue, $values[$fieldName])));
 							// relevant for freeform text inputs only
-							$nonEmptyValueSubmitted = array_key_exists($fieldName, $values) && (trim($values[$fieldName]) != '') && ($values[$fieldName] != array());
+							$nonEmptyValueSubmitted = array_key_exists($fieldName, $values) && ((is_string($values[$fieldName]) && (trim($values[$fieldName]) != '')) || (is_array($values[$fieldName]) && !empty($values[$fieldName])));
 							
 							switch ($field['type']) {
 								case 'checkbox':
@@ -596,6 +596,17 @@ final class PC_page extends PC_base {
 	}
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
+		// prevent double-submitting of forms. This goes here and not in Process_forms()
+		// because we run Process_forms() multiple times for each page load.
+		// This has a side-effect that if the user has multiple pages open in
+		// different tabs, submitting both of them from the first time becomes impossible.
+		$currentFormSubmitHash = null;
+		if(array_key_exists('formSubmitHash', $_SESSION)) {
+			$currentFormSubmitHash = $_SESSION['formSubmitHash'];
+		}
+		$nextFormSubmitHash = time();
+		$_SESSION['formSubmitHash'] = $nextFormSubmitHash;
+
 		//$this->page_data['pid']
 		//echo $t1;
 		$tc = 1;
@@ -605,7 +616,7 @@ final class PC_page extends PC_base {
 			#
 			$this->Replace_google_map_objects($text);
 			$this->Parse_gallery_files_requests($text);
-			$this->Process_forms($text);
+			$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
 			$this->core->Init_hooks('parse_html_output', array(
 				'text'=> &$text
 			));
