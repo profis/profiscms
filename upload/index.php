@@ -17,7 +17,7 @@
 error_reporting(0); //ensure PHP won't output any error data and won't destroy structure
 //no gzip & don't output login form if there's no active session
 $cfg['core']['no_gzip'] = $cfg['core']['no_login_form'] = true;
-require_once('../../admin/admin.php'); //ensure the user is authorized, otherwise stop executing this script
+require_once('../admin/admin.php'); //ensure the user is authorized, otherwise stop executing this script
 $file = $_SERVER['REDIRECT_QUERY_STRING'];
 if (empty($file)) return;
 download_file(getcwd().'/'.$file);

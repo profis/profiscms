@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>{#advform_dlg.dialog_title}</title>
+	<script type="text/javascript" src="../../tiny_mce_popup.js"></script>
+	<script type="text/javascript" src="../../utils/mctabs.js"></script>
+	<script type="text/javascript" src="../../utils/form_utils.js"></script>
+	<script type="text/javascript" src="../../utils/validate.js"></script>
+	<script type="text/javascript" src="../../utils/editable_selects.js"></script>
+	<script type="text/javascript" src="js/form.js"></script>
+	<link href="css/advform.css" rel="stylesheet" type="text/css" />
+</head>
+<body id="advform" style="display: none">
+    <form onsubmit="FormDialog.insert();return false;" action="#"> 
+		<div class="tabs">
+			<ul>
+				<li id="general_tab" class="current"><span><a href="javascript:mcTabs.displayTab('general_tab','general_panel');" onmousedown="return false;">{#advform_dlg.tab_general}</a></span></li>
+				<li id="appearance_tab"><span><a href="javascript:mcTabs.displayTab('appearance_tab','appearance_panel');" onmousedown="return false;">{#advform_dlg.tab_appearance}</a></span></li>
+				<li id="advanced_tab"><span><a href="javascript:mcTabs.displayTab('advanced_tab','advanced_panel');" onmousedown="return false;">{#advform_dlg.tab_advanced}</a></span></li>
+			</ul>
+		</div>
+
+		<div class="panel_wrapper">
+			<div id="general_panel" class="panel current">
+				<fieldset>
+						<legend>{#advform_dlg.general}</legend>
+
+						<table class="properties">
+							<tr>
+								<td class="column1"><label id="srclabel" for="src">{#advform_dlg.src}</label></td>
+								<td colspan="2"><table border="0" cellspacing="0" cellpadding="0">
+									<tr> 
+									  <td><input name="src" type="text" id="src" value="" class="mceFocus" onchange="FormDialog.showPreviewForm(this.value);" /></td> 
+									  <td id="srcbrowsercontainer">&nbsp;</td>
+									</tr>
+								  </table></td>
+							</tr>
+							<tr>
+								<td><label for="src_list">{#advform_dlg.form_list}</label></td>
+								<td><select id="src_list" name="src_list" onchange="document.getElementById('src').value=this.options[this.selectedIndex].value;document.getElementById('alt').value=this.options[this.selectedIndex].text;document.getElementById('title').value=this.options[this.selectedIndex].text;FormDialog.showPreviewForm(this.options[this.selectedIndex].value);"><option value=""></option></select></td>
+							</tr>
+							<tr> 
+								<td class="column1"><label id="altlabel" for="alt">{#advform_dlg.alt}</label></td> 
+								<td colspan="2"><input id="alt" name="alt" type="text" value="" /></td> 
+							</tr> 
+							<tr> 
+								<td class="column1"><label id="titlelabel" for="title">{#advform_dlg.title}</label></td> 
+								<td colspan="2"><input id="title" name="title" type="text" value="" /></td> 
+							</tr>
+						</table>
+				</fieldset>
+
+				<fieldset>
+					<legend>{#advform_dlg.preview}</legend>
+					<div id="prev"></div>
+				</fieldset>
+			</div>
+
+			<div id="appearance_panel" class="panel">
+				<fieldset>
+					<legend>{#advform_dlg.tab_appearance}</legend>
+
+					<table border="0" cellpadding="4" cellspacing="0">
+						<tr> 
+							<td class="column1"><label id="alignlabel" for="align">{#advform_dlg.align}</label></td> 
+							<td><select id="align" name="align" onchange="FormDialog.updateStyle('align');FormDialog.changeAppearance();"> 
+									<option value="">{#not_set}</option> 
+									<option value="baseline">{#advform_dlg.align_baseline}</option>
+									<option value="top">{#advform_dlg.align_top}</option>
+									<option value="middle">{#advform_dlg.align_middle}</option>
+									<option value="bottom">{#advform_dlg.align_bottom}</option>
+									<option value="text-top">{#advform_dlg.align_texttop}</option>
+									<option value="text-bottom">{#advform_dlg.align_textbottom}</option>
+									<option value="left">{#advform_dlg.align_left}</option>
+									<option value="right">{#advform_dlg.align_right}</option>
+								</select> 
+							</td>
+							<td rowspan="6" valign="top">
+								<div class="alignPreview">
+									<img id="alignSampleImg" src="img/sample.gif" alt="{#advform_dlg.example_img}" />
+									Lorem ipsum, Dolor sit amet, consectetuer adipiscing loreum ipsum edipiscing elit, sed diam
+									nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.Loreum ipsum
+									edipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam
+									erat volutpat.
+								</div>
+							</td>
+						</tr>
+
+						<tr>
+							<td class="column1"><label id="widthlabel" for="width">{#advform_dlg.dimensions}</label></td>
+							<td class="nowrap">
+								<input name="width" type="text" id="width" value="" size="5" maxlength="5" class="size" onchange="FormDialog.changeHeight();" /> x 
+								<input name="height" type="text" id="height" value="" size="5" maxlength="5" class="size" onchange="FormDialog.changeWidth();" /> px
+							</td>
+						</tr>
+
+						<tr>
+							<td>&nbsp;</td>
+							<td><table border="0" cellpadding="0" cellspacing="0">
+									<tr>
+										<td><input id="constrain" type="checkbox" name="constrain" class="checkbox" /></td>
+										<td><label id="constrainlabel" for="constrain">{#advform_dlg.constrain_proportions}</label></td>
+									</tr>
+								</table></td>
+						</tr>
+
+						<tr>
+							<td class="column1"><label id="vspacelabel" for="vspace">{#advform_dlg.vspace}</label></td> 
+							<td><input name="vspace" type="text" id="vspace" value="" size="3" maxlength="3" class="number" onchange="FormDialog.updateStyle('vspace');FormDialog.changeAppearance();" onblur="FormDialog.updateStyle('vspace');FormDialog.changeAppearance();" />
+							</td>
+						</tr>
+
+						<tr> 
+							<td class="column1"><label id="hspacelabel" for="hspace">{#advform_dlg.hspace}</label></td> 
+							<td><input name="hspace" type="text" id="hspace" value="" size="3" maxlength="3" class="number" onchange="FormDialog.updateStyle('hspace');FormDialog.changeAppearance();" onblur="FormDialog.updateStyle('hspace');FormDialog.changeAppearance();" /></td> 
+						</tr>
+
+						<tr>
+							<td class="column1"><label id="borderlabel" for="border">{#advform_dlg.border}</label></td> 
+							<td><input id="border" name="border" type="text" value="" size="3" maxlength="3" class="number" onchange="FormDialog.updateStyle('border');FormDialog.changeAppearance();" onblur="FormDialog.updateStyle('border');FormDialog.changeAppearance();" /></td> 
+						</tr>
+
+						<tr>
+							<td><label for="class_list">{#class_name}</label></td>
+							<td colspan="2"><select id="class_list" name="class_list" class="mceEditableSelect"><option value=""></option></select></td>
+						</tr>
+
+						<tr>
+							<td class="column1"><label id="stylelabel" for="style">{#advform_dlg.style}</label></td> 
+							<td colspan="2"><input id="style" name="style" type="text" value="" onchange="FormDialog.changeAppearance();" /></td> 
+						</tr>
+
+						<!-- <tr>
+							<td class="column1"><label id="classeslabel" for="classes">{#advform_dlg.classes}</label></td> 
+							<td colspan="2"><input id="classes" name="classes" type="text" value="" onchange="selectByValue(this.form,'classlist',this.value,true);" /></td> 
+						</tr> -->
+					</table>
+				</fieldset>
+			</div>
+
+			<div id="advanced_panel" class="panel">
+				<fieldset>
+					<legend>{#advform_dlg.swap_form}</legend>
+
+					<input type="checkbox" id="onmousemovecheck" name="onmousemovecheck" class="checkbox" onclick="FormDialog.setSwapForm(this.checked);" />
+					<label id="onmousemovechecklabel" for="onmousemovecheck">{#advform_dlg.alt_form}</label>
+
+					<table border="0" cellpadding="4" cellspacing="0" width="100%">
+							<tr>
+								<td class="column1"><label id="onmouseoversrclabel" for="onmouseoversrc">{#advform_dlg.mouseover}</label></td> 
+								<td><table border="0" cellspacing="0" cellpadding="0"> 
+									<tr> 
+									  <td><input id="onmouseoversrc" name="onmouseoversrc" type="text" value="" /></td> 
+									  <td id="onmouseoversrccontainer">&nbsp;</td>
+									</tr>
+								  </table></td>
+							</tr>
+							<tr>
+								<td><label for="over_list">{#advform_dlg.form_list}</label></td>
+								<td><select id="over_list" name="over_list" onchange="document.getElementById('onmouseoversrc').value=this.options[this.selectedIndex].value;"><option value=""></option></select></td>
+							</tr>
+							<tr> 
+								<td class="column1"><label id="onmouseoutsrclabel" for="onmouseoutsrc">{#advform_dlg.mouseout}</label></td> 
+								<td class="column2"><table border="0" cellspacing="0" cellpadding="0"> 
+									<tr> 
+									  <td><input id="onmouseoutsrc" name="onmouseoutsrc" type="text" value="" /></td> 
+									  <td id="onmouseoutsrccontainer">&nbsp;</td>
+									</tr> 
+								  </table></td> 
+							</tr>
+							<tr>
+								<td><label for="out_list">{#advform_dlg.form_list}</label></td>
+								<td><select id="out_list" name="out_list" onchange="document.getElementById('onmouseoutsrc').value=this.options[this.selectedIndex].value;"><option value=""></option></select></td>
+							</tr>
+					</table>
+				</fieldset>
+
+				<fieldset>
+					<legend>{#advform_dlg.misc}</legend>
+
+					<table border="0" cellpadding="4" cellspacing="0">
+						<tr>
+							<td class="column1"><label id="idlabel" for="id">{#advform_dlg.id}</label></td> 
+							<td><input id="id" name="id" type="text" value="" /></td> 
+						</tr>
+
+						<tr>
+							<td class="column1"><label id="dirlabel" for="dir">{#advform_dlg.langdir}</label></td> 
+							<td>
+								<select id="dir" name="dir" onchange="FormDialog.changeAppearance();"> 
+										<option value="">{#not_set}</option> 
+										<option value="ltr">{#advform_dlg.ltr}</option> 
+										<option value="rtl">{#advform_dlg.rtl}</option> 
+								</select>
+							</td> 
+						</tr>
+
+						<tr>
+							<td class="column1"><label id="langlabel" for="lang">{#advform_dlg.langcode}</label></td> 
+							<td>
+								<input id="lang" name="lang" type="text" value="" />
+							</td> 
+						</tr>
+
+						<tr>
+							<td class="column1"><label id="usemaplabel" for="usemap">{#advform_dlg.map}</label></td> 
+							<td>
+								<input id="usemap" name="usemap" type="text" value="" />
+							</td> 
+						</tr>
+
+						<tr>
+							<td class="column1"><label id="longdesclabel" for="longdesc">{#advform_dlg.long_desc}</label></td>
+							<td><table border="0" cellspacing="0" cellpadding="0">
+									<tr>
+									  <td><input id="longdesc" name="longdesc" type="text" value="" /></td>
+									  <td id="longdesccontainer">&nbsp;</td>
+									</tr>
+								</table></td> 
+						</tr>
+					</table>
+				</fieldset>
+			</div>
+		</div>
+
+		<div class="mceActionPanel">
+			<input type="submit" id="insert" name="insert" value="{#insert}" />
+			<input type="button" id="cancel" name="cancel" value="{#cancel}" onclick="tinyMCEPopup.close();" />
+		</div>
+    </form>
+</body> 
+</html> 

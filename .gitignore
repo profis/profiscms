@@ -14,12 +14,16 @@ plugins/*
 !plugins/domains/
 !plugins/dummy/
 !plugins/sites/
+!plugins/forms/
 !plugins/variables/
 !plugins/.htaccess
 !plugins/index.php
 themes/
 !themes/default/
 !themes/index.php
+upload/
+!upload/.htaccess
+!upload/index.php
 backups/*
 !backups/.htaccess
 !backups/index.php

@@ -38,6 +38,26 @@ tinymce.create('tinymce.plugins.Profis', {
                     }});
                 });
                 return c;
+			case 'forms':
+				var meniuFunction = function ShowMeniu(){
+					var DOM = tinymce.DOM;
+					e = DOM.get(c.id);
+					p2 = DOM.getPos(e);
+					var qt = Ext.ux.form.Meniu;
+					if (qt.window) {
+						if (qt.window.isVisible()) qt.window.hide();
+						else qt.show(p2.x+15, p2.y+16, this);
+					}
+					else qt.show(p2.x+15, p2.y+16, this);
+				};
+				var c = cm.createSplitButton('forms', {
+					title: PC.i18n.forms,
+					image: 'images/forms.png',
+					onclick: meniuFunction
+					
+				});
+				c.showMenu = meniuFunction;
+				return c;
 			case 'changecase':
                 var c = cm.createSplitButton('changecase', {
                     title: PC.i18n.editor.change_case,
@@ -102,8 +122,8 @@ PC.ux.TinyMCE = function(config) {
 			language: PC.global.admin_ln,
 			theme: 'advanced',
 			skin: 'o2k7',
-			plugins: 'autolink,profis_search,profis_link,-insert_quotes,safari,style,layer,table,advhr,advimage,advlist,emotions,iespell,insertdatetime,preview,media,print,contextmenu,paste,directionality,noneditable,visualchars,nonbreaking,xhtmlxtras,template,save',
-			theme_advanced_buttons1: 'save,|,undo,redo,search,|,cut,copy,paste,|,link,unlink,anchor,|,table,|,hr,pc_pagebreak,charmap,insert_quotes,|,gallery,gmaps,media,|,code',
+			plugins: 'autolink,profis_search,profis_link,-insert_quotes,safari,style,layer,table,advhr,advimage,advlist,emotions,iespell,insertdatetime,preview,media,print,contextmenu,paste,directionality,noneditable,visualchars,nonbreaking,xhtmlxtras,template,save,advform',
+			theme_advanced_buttons1: 'save,|,undo,redo,search,|,cut,copy,paste,|,link,unlink,anchor,|,table,|,hr,pc_pagebreak,charmap,insert_quotes,|,gallery,gmaps,media,|,forms,|,code',
 			theme_advanced_buttons2: 'editstyles,styleselect,removeformat,|,bold,italic,underline,strikethrough,changecase,|,sub,sup,|,forecolor,backcolor,|,bullist,numlist,|,justifyleft,justifycenter,justifyright,justifyfull,|,outdent,indent',
 			theme_advanced_buttons3: '',
 			theme_advanced_toolbar_location: 'top',
@@ -112,14 +132,18 @@ PC.ux.TinyMCE = function(config) {
 			theme_advanced_resizing: false,
 			media_strict: false, //cms media works only in non-strict mode
 			//extended_valid_elements: 'object[id|style|width|height|classid|codebase],embed[src|type|width|height|flashvars|wmode],a[name|href|target|title|onclick|class],img[class|src|border=0|alt|title|hspace|vspace|width|height|align|onmouseover|onmouseout|name|style],hr[class|width|size|noshade],font[face|size|color|style],span[class|align|style],input[required|name|style|class|type|value|tabindex|maxlength|readonly|size|id],textarea[rows|cols|required|name|style|class|tabindex|readonly|id]',
-			extended_valid_elements: 'object[id|style|width|height|classid|codebase|marker_options],embed[src|type|width|height|flashvars|wmode],'
+			extended_valid_elements: '@[id|class|style|title|dir<ltr?rtl|lang|xml::lang|onclick|ondblclick|onmousedown|onmouseup|onmouseover|onmousemove|onmouseout|onkeypress|onkeydown|onkeyup],'
+				+'object[id|style|width|height|classid|codebase|marker_options],embed[src|type|width|height|flashvars|wmode],'
 				+'a[name|href|target|title|onclick|class|rel],'
 				+'img[class|src|border=0|alt|title|hspace|vspace|width|height|align|onmouseover|onmouseout|name|style],'
 				+'hr[class|width|size|noshade],font[face|size|color|style],span[class|align|style|title|id],'
-				+'input[required|name|style|class|type|value|tabindex|maxlength|readonly|size|id|checked|placeholder],'
-				+'textarea[rows|cols|required|name|style|class|tabindex|readonly|id|placeholder],'
+				+'input[required|name|style|class|type|value|tabindex|maxlength|readonly|size|id|checked|placeholder|src|data-maxuploadsize|onfocus|onblur|onchange|onselect],'
+				+'textarea[rows|cols|required|name|style|class|tabindex|readonly|id|placeholder|onfocus|onblur|onchange|onselect],'
 				+'iframe[width|height|src|frameborder|scrolling|marginheight|marginwidth],fb:like,'
-				+'select[size,class,id,style,title,name,required,multiple,disabled],'
+				+'label[for|onfocus|onblur],'
+				+'select[size|name|required|multiple|disabled|onfocus|onblur|onchange],'
+				+'option[disabled|label|selected|value=],'
+				+'form[action|accept|accept-charset|enctype|method|pcformsettings]'
 				+'noindex,',
 			invalid_elements : "script,style",
 			template_external_list_url: 'example_template_list.js',
@@ -192,6 +216,9 @@ PC.ux.TinyMCE = function(config) {
 					}
 					else if (e.target.nodeName == 'A') {
 						PC.dialog.links.show();
+					}
+					else if (/mceItemForm_.+/.test(target_class)) {
+						Ext.ux.form.Params.show(e.target);
 					}
 				});
 				//ed.addCommand('mceGalleryImage', function() {});
