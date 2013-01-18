@@ -782,6 +782,9 @@ PC.langs.lt = {
 			},
 			lock: 'Naudoti tą pačią reikšmę nepriklausomai nuo kalbos'
 		},
+		config: {
+			selfname: 'Nustatymai'//,
+		},
 		sites_langs: {
 			selfname: 'Svetainės ir kalbos',
 			theme: 'Šablonas',

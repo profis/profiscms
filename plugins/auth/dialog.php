@@ -71,45 +71,48 @@ PC.utils.localize('mod.auth', {
 		},
 		chars_required: 'characters required'
 	},
+	
 	ru: {
-		title: 'Users & permissions',
-		add: 'Add',
-		delete_selected: 'Delete',
-		form: {
-			name: 'Name',
-			password: 'Password',
-			re_password: 'Confirm password',
-			language: 'Language'
-		},
-		settings: 'Settings',
-		permissions: 'Permissions',
-		confirm: {
-			delete_additional: 'Are you sure?'
-		},
-		positions: {
-			title: 'Positions',
-			position: 'Position',
-			description: 'Description'
-		},
-		add_group: 'Add group',
-		add_user: 'Add user',
-		basic_information: 'Basic information',
-		additional_fields: 'Additional fields',
-		field: 'Field',
-		value: 'Value',
-		save: 'Save',
-		cancel: 'Cancel',
-		confirm_delete_msg: 'Are you sure you want to delete this item?',
-		invalid_fields_found: 'Changes hasn\'t been saved because some fields were marked as invalid.<br />Please correct them and try again.',
-		invalid: {
-			url: 'Example: http://www.PC.com',
-			mail: 'Example: info@PC.com',
-			jabber: 'Example: user@PC.com/office'
-		},
-		chars_required: 'characters required'
-	},
+        title: 'Пользователи и разрешения',
+        add: 'Добавить',
+        delete_selected: 'Удалить',
+        form: {
+            name: 'Логин',
+            password: 'Пароль',
+            re_password: 'Подтверждение пароля',
+            language: 'Язык'
+        },
+        settings: 'Установки',
+        permissions: 'Права доступа',
+        confirm: {
+            delete_additional: 'Вы уверены?'
+        },
+        positions: {
+            title: 'Позиции',
+            position: 'Позиция',
+            description: 'Описание'
+        },
+        add_group: 'Добавить группу',
+        add_user: 'Добавить пользователя',
+        basic_information: 'Основная информация',
+        additional_fields: 'Дополнительная информация',
+        field: 'Поле',
+        value: 'Значение',
+        save: 'Сохранить',
+        cancel: 'Отмена',
+        confirm_delete_msg: 'Вы уверены, что хотите удалить этот элемент?',
+        invalid_fields_found: 'Изменения не сохранены т.к. некоторые поля были помечены как недопустимые.<br />Исправьте их и попробуйте заново.',
+        invalid: {
+            url: 'Пример: http://www.PC.com',
+            mail: 'Пример: info@PC.com',
+            jabber: 'Пример: user@PC.com/office'
+        },
+        chars_required: 'необходимо символов'
+    },
+
+	
 	lt: {
-		title: 'Users & permissions',
+		title: 'Vartotojai ir teisės',
 		add: 'Add',
 		delete_selected: 'Delete',
 		form: {

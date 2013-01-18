@@ -32,9 +32,10 @@ if ($controller_data and $core->Count_hooks('core/page/parse-page-url/'.$control
 		'is_permalink'=> &$is_permalink,
 		'get_page_id' => true,
 		'id' => $controller_data['id'],
-		'ln' => $ln
+		'ln' => $ln,
+		'instant_debug_to_file' => $cfg['path']['logs'] . 'pc_shop/parse_page_url.html'
 	));
-	if (true and !empty($url)) {
+	if (false and !empty($url)) {
 		echo '<hr />';
 		echo $url;
 		echo '<hr />';
@@ -47,7 +48,7 @@ if ($controller_data and $core->Count_hooks('core/page/parse-page-url/'.$control
 
 if ($id < 1 || empty($ln)) {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
-	die($id . ' - You should specify both page ID and language.');
+	die($id . " - You should specify both page ID ($id ) and language ($ln).");
 }
 $r = $db->prepare("SELECT d.ln,d.mask,p.front,p.site, route"
 ." FROM {$cfg['db']['prefix']}pages p"
@@ -71,7 +72,7 @@ $page = $r->fetch();
 //print_pre($page);
 
 if (empty($url)) {
-	$url = ($page['front']?'':($ln==$page['ln']?'':$ln.'/').$page['route'].'/');
+	$url = ($page['front']?'':($ln==$page['ln']?'':$ln.'/').$page['route'] . v($cfg['trailing_slash']));
 }
 else {
 	if (false and !$is_permalink) {
@@ -86,4 +87,5 @@ if ($page['ln'] == $ln and strpos($url, $cfg['url']['base'] . $ln.'/') !== false
 }
 
 $location = $url;
+//exit;
 header('Location: '.$location);

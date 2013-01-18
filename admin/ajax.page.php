@@ -23,7 +23,7 @@ error_reporting(0); //ensure PHP won't output any error data and won't destroy J
 $cfg['core']['no_login_form'] = true; //don't output login form if there's no active session
 require_once('admin.php'); //ensure the user is authorized, otherwise stop executing this script
 $auth->debug = true;
-$auth->set_instant_debug_to_file($cfg['path']['base'] . 'logs/auth/auth_for_ajax_page_php.html', false, 5);
+$auth->set_instant_debug_to_file($cfg['path']['logs'] . 'auth/auth_for_ajax_page_php.html', false, 5);
 if (!$auth->Authorize_access_to_pages()) die('No access');
 //header('Content-Type: application/json');
 header('Cache-Control: no-cache');
@@ -247,8 +247,11 @@ elseif ($action == "update") {
 								));
 								//keep only latest 15 backups
 								//$r = $db->query("SELECT id FROM content_archive WHERE pid={$_page['id']} AND ln='$language' ORDER BY time DESC LIMIT 20,18446744073709551615");
-								$r = $db->prepare("SELECT count(id) FROM {$cfg['db']['prefix']}content_archive WHERE tree_id=? AND ln=? GROUP BY time ORDER BY time DESC");
-								$success = $r->execute(array($_page['id'], $language));
+								$query = "SELECT count(id) FROM {$cfg['db']['prefix']}content_archive WHERE tree_id=? AND ln=? ORDER BY time DESC";
+								$r = $db->prepare($query);
+								$query_params = array($_page['id'], $language);
+								//echo $logger->get_debug_query_string($query, $query_params);
+								$success = $r->execute($query_params);
 								if ($success) {
 									$count = $r->fetchColumn()-15;
 									if ($count > 0) {
@@ -318,6 +321,18 @@ elseif ($action == "update") {
 									}
 								}
 							}
+							
+							//print_pre($content);
+													
+							foreach ($content as $content_key => $content_value) {
+								if (v($cfg['seo']['max_' . $content_key]) > 0) {
+									if (mb_strlen($content[$content_key]) > $cfg['seo']['max_' . $content_key]) {
+										$content[$content_key] = mb_substr($content[$content_key], 0, $cfg['seo']['max_' . $content_key]);
+									}
+								}
+							}
+							
+							
 							
 							//all properties
 							foreach ($content as $field=>$content_value) {

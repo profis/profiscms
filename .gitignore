@@ -7,7 +7,6 @@ config/
 # Gallery
 gallery/*
 !gallery/.htaccess
-!gallery/index.php
 # Plugins
 plugins/*
 !plugins/auth/
@@ -21,13 +20,14 @@ plugins/*
 themes/
 !themes/default/
 !themes/index.php
-admin/backups/*
-!admin/backups/.htaccess
-!admin/backups/index.php
+backups/*
+!backups/.htaccess
+!backups/index.php
 config.php
 media/uppod/
 nbproject/
 logs/
+libs/
 admin/excel_attr/
 # Cache
 cache/

@@ -60,11 +60,14 @@ if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
 	}
 }
 $files = array_unique($files);
+//print_pre($files);
+//echo "i >= $pluginsStart && i < $pluginsEnd";
 foreach ($files as $i=>$file) {
 	if ($i == $localizeAt) echo "\n\nPC.utils.localize();\n\n";
 	//if ($i - $localizeAt > 15) break;
 	if ($i >= $pluginsStart && $i < $pluginsEnd) {
 		$plugin_name = preg_match("#/([^/]+)/PC_plugin.js$#i", $file, $m);
+		//print_pre($m);
 		echo "\nvar CurrentlyParsing = '".$m[1]."';\n";
 		//before opening plugins
 	}

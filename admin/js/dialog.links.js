@@ -43,7 +43,7 @@ PC.dialog.links = {
 									}
 								});
 							}
-						}, true);
+						}, {get_route:true});
 					},
 					trigger2Class: 'x-form-link-trigger',
 					onTrigger2Click: function() {

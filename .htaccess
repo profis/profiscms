@@ -5,11 +5,15 @@ RewriteEngine on
 RewriteCond %{REQUEST_URI} ^/admin$
 RewriteRule ^(.*)$ /admin/ [R=301,L]
 
+# robots
+#RewriteCond %{REQUEST_URI} ^.*/robots\.txt/
+#RewriteRule ^(.*)/$ /$1 [R=301,L]
+
 # api
 RewriteCond %{REQUEST_URI} admin/api/(.*)
-RewriteRule ^(.+)$ api/admin/$1
+RewriteRule ^(.+)$ core/api/admin/$1 [QSA]
 RewriteCond %{REQUEST_URI} api/(.*)
-RewriteRule ^(.+)$ api.php?$1 [L]
+RewriteRule ^(.+)$ core/api.php?$1 [QSA,L]
 
 # public page
 RewriteCond %{REQUEST_URI} !admin/(.*)
@@ -18,9 +22,7 @@ RewriteCond %{REQUEST_FILENAME} !-f
 #RewriteCond %{REQUEST_URI} /$
 
 #Everything goes to site.php
-RewriteRule ^(.*)$ site.php [L]
-
-
+RewriteRule ^(.*)$ site.php
 
 
 <Files PC_errors.txt>

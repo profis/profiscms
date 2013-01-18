@@ -176,3 +176,16 @@ background: url('../images/eye.png') no-repeat !important;
 position: absolute;
 top: 4px; left: 4px;
 }
+
+.pc_gallery_body .x-table-layout{
+	width: 100%;
+	height: 100%;
+}
+
+.pc_gallery_body .x-table-layout-cell{
+	vertical-align: top;
+}
+
+.gallery_files_view{
+	height: 100%;
+}

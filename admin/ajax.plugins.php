@@ -14,8 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 $cfg['core']['no_login_form'] = true;
 require_once 'admin.php';
+
+$logger = new PC_debug();
+$logger->debug = true;
+$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'plugins/auth.plugins.html', false, 5);
+
+$plugins->absorb_debug_settings($logger);
 
 $action = isset($_GET['action'])?$_GET['action']:(isset($_POST['action'])?$_POST['action']:'');
 if ($action == 'update') {
@@ -83,7 +90,26 @@ if ($action == 'update') {
 }
 
 chdir($cfg['path']['system']);
-$_plugins = glob('plugins/*/dialog.php');
+$_plugins = glob($cfg['path']['plugins'] . '*/dialog.php');
+$_core_plugins = glob(CORE_PLUGINS_ROOT . '*/dialog.php');
+
+//$logger->debug('$_plugins:', 1);
+//$logger->debug($_plugins, 1);
+//
+//$logger->debug('$_core_plugins:', 1);
+//$logger->debug($_core_plugins, 1);
+
+if ($_core_plugins) {
+	$_plugins = array_merge($_plugins, $_core_plugins);
+	//$_plugins = array_merge($_core_plugins, $_plugins);
+}
+
+$logger->debug('$_plugins:', 1);
+$logger->debug($_plugins, 1);
+
+$logger->debug('Active plugins:', 5);
+$logger->debug($cfg['active_plugins'], 5);
+
 $mods = array();
 $adminAuthorized = $auth->Authorize('core', 'admin');
 foreach ($_plugins as &$p) {
@@ -93,18 +119,32 @@ foreach ($_plugins as &$p) {
 		'name'=> $k[2],
 		'path'=> $p
 	);
+	$logger->debug('<hr />', 5);
+	$logger->debug($p, 5);
 	//check if plugin is activated
-	if (!$plugins->Is_active($p['name'])) continue;
-	if (!$adminAuthorized) if (!$auth->Authorize('core', 'plugins', $p['name'])) continue;
+	if (!$plugins->Is_active($p['name'])) {
+		$logger->debug(":( Plugin {$p['name']} is not active");
+		continue;
+	};
+	if (!$adminAuthorized) if (!$auth->Authorize('core', 'plugins', $p['name'])) {
+		$logger->debug(":( Plugin {$p['name']} is not accessible (authorization failed)");
+		continue;
+	}
 	//unset previously included plugin configuration & include new plugin
 	unset($mod);
 	$plugins->setCurrentlyParsing($p['name']);
-	chdir($cfg['path']['plugins'].$p['name']);
-	include $cfg['path']['system'].$p['path'];
+	$plugin_dir = $cfg['path']['plugins'].$p['name'];
+	$plugin_dir = $p['type'].'/'.$p['name'];
+	$logger->debug("chdir($plugin_dir)", 2);
+	chdir($plugin_dir);
+	include $p['path'];
 	chdir($cfg['path']['system']);
 	$plugins->clearCurrentlyParsing();
 	//check if plugin configuration is defined, if not - continue to the other plugin
-	if (!isset($mod) || !is_array($mod)) continue;
+	if (!isset($mod) || !is_array($mod)) {
+		$logger->debug(":( Mod is not an array");
+		continue;
+	};
 	//default plugin name
 	if (!isset($mod['name'])) $mod['name'] = $p['name'];
 	// find plugin icon
@@ -127,6 +167,8 @@ foreach ($_plugins as &$p) {
 		$mod['icon'] = 'images/plugin.default.png';
 	} while(0);
 	//assign plugin
+	$logger->debug('mod:', 2);
+	$logger->debug($mod, 2);
 	$mods[$p['name']] = $mod;
 }
 

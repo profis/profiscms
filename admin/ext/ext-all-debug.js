@@ -36303,7 +36303,6 @@ Ext.extend(Ext.tree.TreeDragZone, Ext.dd.DragZone, {
 
     
     onBeforeDrag : function(data, e){
-      console.log('onBeforeDrag');
         var n = data.node;
         return n && n.draggable && !n.disabled;
     },

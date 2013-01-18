@@ -119,7 +119,8 @@ PC.ux.TinyMCE = function(config) {
 				+'input[required|name|style|class|type|value|tabindex|maxlength|readonly|size|id|checked|placeholder],'
 				+'textarea[rows|cols|required|name|style|class|tabindex|readonly|id|placeholder],'
 				+'iframe[width|height|src|frameborder|scrolling|marginheight|marginwidth],fb:like,'
-				+'select[size,class,id,style,title,name,required,multiple,disabled],',
+				+'select[size,class,id,style,title,name,required,multiple,disabled],'
+				+'noindex,',
 			invalid_elements : "script,style",
 			template_external_list_url: 'example_template_list.js',
 			content_css: PC.global.BASE_URL+'themes/'+ Get_site()[2] +'/custom.css?'+new Date().getTime(),

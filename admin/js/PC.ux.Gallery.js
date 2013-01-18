@@ -213,11 +213,19 @@ PC.ux.gallery.files.actions = {
 			id: 'gallery_preview_menu',
 			iconCls: 'gallery-eye-icon',
 			view: null,
-			handler: function() {
+			handler: function(a1, a2, a3, a4, a5) {
 				this.view.el.frame();
 				if (!this.view) this.setView(PC.dialog.gallery.files_view);
 				var selected_files = this.view.getSelectedIndexes();
 				var record = this.view.store.getAt(selected_files[0]);
+				/*
+				var number = 0;
+				var cc = Ext.get(a2.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.id);
+				while(cc = cc.prev()) {
+					number++;
+				}
+				*/
+				var record =  this.view.store.getAt(selected_files[0]);
 				if (record.data.filetype == 'image')
 				  PC.dialog.gallery.preview_image(selected_files[0]);
 				else

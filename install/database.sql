@@ -131,13 +131,15 @@ CREATE TABLE `pc_content` (
   `pid` int(11) NOT NULL DEFAULT '0',
   `ln` varchar(2) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `custom_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `info` text COLLATE utf8_unicode_ci NOT NULL,
   `info2` text COLLATE utf8_unicode_ci NOT NULL,
   `info3` text COLLATE utf8_unicode_ci NOT NULL,
   `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `keywords` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `description` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `keywords` text COLLATE utf8_unicode_ci NOT NULL,
+  `description` text COLLATE utf8_unicode_ci NOT NULL,
   `route` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `permalink` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `text` longtext COLLATE utf8_unicode_ci NOT NULL,
   `last_update` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `update_by` int(10) unsigned NOT NULL,
@@ -292,7 +294,7 @@ CREATE TABLE `pc_gallery_thumbnail_types` (
 INSERT INTO `pc_gallery_thumbnail_types` (`thumbnail_type`, `thumbnail_max_w`, `thumbnail_max_h`, `thumbnail_quality`, `use_adaptive_resize`) VALUES 
 ('thumbnail', 75, 55, 76, 1),
 ('small', 160, 120, 76, 0),
-('large', 640, 480, 76, 1);
+('large', 640, 480, 76, 0);
 
 -- --------------------------------------------------------
 
@@ -305,6 +307,7 @@ CREATE TABLE `pc_languages` (
   `ln` varchar(2) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `name` tinytext COLLATE utf8_unicode_ci NOT NULL,
   `nr` int(11) NOT NULL DEFAULT '0',
+  `disabled` smallint(1) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`site`,`ln`),
   KEY `nr` (`nr`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

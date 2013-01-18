@@ -7,7 +7,7 @@ PC.dialog.gallery = {
 		// if gallery window is already created, just show it and return
 		dialog.params = (typeof params == 'object'?params:{});
 		if (this.window) {
-			if (typeof dialog.params.save_fn == 'function') {
+			if (typeof dialog.params.save_fn == 'function' && !dialog.params.show_insert) {
 				PC.ux.gallery.files.actions.Get('Insert', this.files_view).hide();
 			}
 			else {
@@ -1132,7 +1132,7 @@ PC.dialog.gallery = {
 		this.window.pc_temp_window_children['change_template_split_button'] = 'change_template_split_button';
 		this.window.pc_temp_window_children['sorting_split_button'] = 'sorting_split_button';
 		
-		if (typeof dialog.params.save_fn == 'function') {
+		if (typeof dialog.params.save_fn == 'function' && !dialog.params.show_insert) {
 			PC.ux.gallery.files.actions.Get('Insert', this.files_view).hide();
 		}
 		else {
@@ -1142,6 +1142,7 @@ PC.dialog.gallery = {
 		this.window.show();
 		
 		this.files.body.setStyle('overflow', 'auto');
+		//this.files.body.setStyle('height', '100%');
 		this.files.body.addClass('pc_gallery_body');
 		/*
 		var files_view_el = Ext.get(this.files_view.id);
@@ -1313,17 +1314,23 @@ PC.dialog.gallery = {
 	},*/
 	show_uploader: function() {
 		var dialog = this;
+		var extraPostData = {
+			action: 'upload_file',
+			category_id: PC.ux.gallery.SelectedCategory,
+			//needs edit: session cookie name should be returned by php's function session_name()
+			phpsessid: PC.utils.getCookie(PC.global['session.name'])
+		};
+		if (dialog.params) {
+			if (dialog.params.type) {
+				extraPostData['dialog_type'] = dialog.params.type;
+			}
+		}
 		this.awesome_uploader = {
 			xtype: 'awesomeuploader',
 			standardUploadUrl: 'ajax.gallery.php?action=upload_file&category_id=' + PC.ux.gallery.SelectedCategory,
 			flashUploadUrl: 'ajax.gallery.php?action=upload_file&category_id=' + PC.ux.gallery.SelectedCategory,
 			xhrUploadUrl: 'ajax.gallery.php?action=upload_file&category_id=' + PC.ux.gallery.SelectedCategory,
-			extraPostData: {
-				action: 'upload_file',
-				category_id: PC.ux.gallery.SelectedCategory,
-				//needs edit: session cookie name should be returned by php's function session_name()
-				phpsessid: PC.utils.getCookie(PC.global['session.name'])
-			},
+			extraPostData: extraPostData,
 			listeners: {
 				//scope: this,
 				/*render: function(){
@@ -1397,24 +1404,35 @@ PC.dialog.gallery = {
 		}
 		if (typeof dialog.params.save_fn == 'function') {
 			//record = dialog.files_view.store.getAt(selected_files[0]);
-			record = selected_files[0];
-			if (record.data.filetype != 'image') {
-				var file_src = 'gallery/'+ PC.global.ADMIN_DIR +'/id/'+ record.data.id;
-			}
-			else {
-				//var file_src = PC.global.BASE_URL +'gallery/'+record.data.path +'large/'+ record.data.name;
-				var file_src = 'gallery/'+ PC.global.ADMIN_DIR +'/id/';
-				if (typeof dialog.params.thumbnail_type!='undefined') {
-					if (dialog.params.thumbnail_type != null) {
-						if (dialog.params.thumbnail_type != '') {
-							file_src += dialog.params.thumbnail_type + '/';
+			
+			var number_of_files = selected_files.length;
+			 
+			for (var a=0; a < number_of_files; a++) {
+				record = selected_files[a];
+				if (record.data.filetype != 'image') {
+					var file_src = 'gallery/'+ PC.global.ADMIN_DIR +'/id/'+ record.data.id;
+				}
+				else {
+					//var file_src = PC.global.BASE_URL +'gallery/'+record.data.path +'large/'+ record.data.name;
+					var file_src = 'gallery/'+ PC.global.ADMIN_DIR +'/id/';
+					if (typeof dialog.params.thumbnail_type!='undefined') {
+						if (dialog.params.thumbnail_type != null) {
+							if (dialog.params.thumbnail_type != '') {
+								file_src += dialog.params.thumbnail_type + '/';
+							}
 						}
 					}
+					else file_src += 'small/';
+					file_src += record.data.id;
 				}
-				else file_src += 'small/';
-				file_src += record.data.id;
+				if (a == number_of_files - 1 || !dialog.params.show_insert) {
+					dialog.params.save_fn(file_src, record, callbackAfterInsert, dialog.params);
+					return;
+				}
+				else {
+					dialog.params.save_fn(file_src, record, null, dialog.params);
+				}
 			}
-			dialog.params.save_fn(file_src, record, callbackAfterInsert, dialog.params);
 			return;
 		}
 		callbackAfterInsert();

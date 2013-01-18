@@ -15,6 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
 require_once 'admin.php';
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -28,6 +29,7 @@ require_once 'admin.php';
 	<style type="text/css">html,body{height:95%;}#loading-mask {z-index:1000000;position: absolute; top: 0;left: 0;width: 100%;height: 100%;background: #fff url(images/ajax-loader.gif) 49% 49% no-repeat;}</style>
 	<!-- Styles -->
 	<link rel="stylesheet" type="text/css" href="ext/resources/css/ext-all.css" />
+	<link rel="stylesheet" type="text/css" href="ext/resources/css/debug.css" />
 	<!--<link rel="stylesheet" type="text/css" href="ext/resources/css/xtheme-gray.css" />-->
 	<link rel="stylesheet" type="text/css" href="css/pack.styles.php" />
 </head>
@@ -37,9 +39,10 @@ require_once 'admin.php';
 	<script type="text/javascript" src="ext/adapter/ext/ext-base.js"></script>
 	<?php
 	//local ip testing instead of false:
-	if ($_SERVER['REMOTE_ADDR'] == '192.168.1.228') {
+	if (isset($_GET['debug'])) {
 	?>
 		<script type="text/javascript" src="ext/ext-all-debug.js"></script>
+		<script type="text/javascript" src="ext/src/debug.js"></script>
 	<?php
 	} else {
 	?>

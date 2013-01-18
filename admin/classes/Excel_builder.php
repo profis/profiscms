@@ -76,9 +76,19 @@ class Excel_builder extends PC_debug{
 	protected function _write_rows($sheet, &$rows, $idy = 1) {
 		for ($index = 0; $index < count($rows); $index++) {
 			$idx = 0;
+			$headerStyle = false;
+			if (isset($rows[$index]['_meta'])) {
+				if (v($rows[$index]['_meta']['background_color'])) {
+					$headerFill = $this->_wb->addFill("solid", $rows[$index]['_meta']['background_color']);
+					$headerStyle = $this->_wb->addStyle(null, $headerFill, null);
+				}
+				unset($rows[$index]['_meta']);
+			}
 			foreach($rows[$index] as $key => $value ) {
 				$this->_wb->setCellValue($sheet, $idx, $idy, $value);
-				//$this->_wb->setCellStyle($sheet, $idx, $idy, $headerStyle);
+				if ($headerStyle) {
+					$this->_wb->setCellStyle($sheet, $idx, $idy, $headerStyle);
+				}
 				$idx++;
 			}
 			$idy++;

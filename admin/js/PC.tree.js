@@ -98,7 +98,7 @@ PC.tree.actions = {
 				var field = Ext.getCmp('db_fld_redirect');
 				Show_redirect_page_window(function(value){
 					field.setValue(value);
-				}, undefined, field.getValue());
+				}, {select_node_path:field.getValue()});
 				return;
 			}
 			save_prompt(function() {
@@ -110,13 +110,13 @@ PC.tree.actions = {
 				var field = Ext.getCmp('db_fld_redirect');
 				Show_redirect_page_window(function(value){
 					field.setValue(value);
-				}, undefined, field.getValue());
+				}, {select_node_path: field.getValue()});
 			});
 		}
 	}),
 	CreatePage: new Ext.Action({
 		text: PC.i18n.menu.new_page,
-		icon: 'images/add.gif',
+		icon: 'images/folder_add.png',
 		handler: PC.pages.Create
 	}),
 	CreateSubpage: new Ext.Action({

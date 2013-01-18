@@ -19,7 +19,7 @@ require_once 'admin.php';
 $full_access = true;
 /* @var $auth PC_auth */ 
 $auth->debug = true;
-$auth->set_instant_debug_to_file($cfg['path']['base'] . 'logs/auth/auth_for_ajax_pagetree_php.html', false, 5);
+$auth->set_instant_debug_to_file($cfg['path']['logs'] . 'auth/auth_for_ajax_pagetree_php.html', false, 5);
 if (!$auth->Authorize_access_to_pages()) {
 	die('No access');
 	$full_access = false;

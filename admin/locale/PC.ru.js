@@ -781,6 +781,9 @@ PC.langs.ru = {
 			},
 			lock: 'Блокировка одного значения для всех языков'
 		},
+		config: {
+			selfname: 'Настройки'//,
+		},
 		sites_langs: {
 			selfname: 'Сайты и языки',
 			theme: 'Шаблон',

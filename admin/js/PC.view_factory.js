@@ -1,7 +1,22 @@
 Ext.ns('PC.view_factory', 'PC.view_factory');
 PC.view_factory = {
 	
-	get_shortcut_field: function(config) {
+	get_shortcut_field: function(config, params) {
+		
+		var shortcut_field_callback = false;
+		if (params) {
+			if (params.callback) {
+				shortcut_field_callback = params.callback;
+			}
+		}
+		
+		var callback = function(value){
+			field.setValue(value);
+			if (shortcut_field_callback) {
+				shortcut_field_callback(value, field);
+			}
+		};
+		
 		var field_config = {
 			fieldLabel: PC.i18n.menu.shortcut_to.replace(/\s/, '&nbsp;'),
 			ref: '../../../../../../_fld_redirect',
@@ -11,9 +26,14 @@ PC.view_factory = {
 			onTrigger1Click: function() {
 				//console.log(PC.admin._editor_ln_select.get('db_fld_redirect'));
 				var field = this;
-				Show_redirect_page_window(function(value){
-					field.setValue(value);
-				}, undefined, this.getValue());
+				var page_selector_params = {
+					callback: callback,
+					select_node_path: this.getValue()
+				}
+				if (params && params.page_selector_params) {
+					Ext.apply(page_selector_params, params.page_selector_params);
+				}
+				Show_redirect_page_window(callback, page_selector_params);
 			},
 			trigger2Class: 'x-form-remove-trigger',
 			listeners: {

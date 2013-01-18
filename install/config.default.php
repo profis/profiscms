@@ -27,58 +27,6 @@ $cfg['db']['collation'] = 'utf8_general_ci';
 //timezone
 $cfg['timezone'] = 'Europe/Vilnius';
 
-//development
-$cfg['debug_mode'] = false;
-
 //languages
-$cfg['languages'] = array(
-	'lt'=> 'Lietuvių',
-	'en'=> 'English',
-	'ru'=> 'Русский'
-);
 $cfg['admin_ln'] = 'en';
 
-//directories
-$cfg['directories'] =  array(
-	'admin' => 'admin',
-	'themes' => 'themes',
-	'classes' => 'classes',
-	'plugins' => 'plugins',
-	'gallery' => 'gallery',
-	'config' => 'config'
-);
-
-//core variables defaults
-$cfg['core_defaults'] = array(
-	'no_gzip' => false,
-	'no_login_form' => false,
-	'demo_mode' => false
-);
-
-// caching
-$cfg["cache"] = array(
-	'class' => 'PC_file_cache',
-	'defaultExpireTime' => 600, // 10 minutes
-	'options' => array('folder' => 'cache'), // PC_file_cache specific options
-);
-
-//if custom value is not set then set this by its configured (default) value
-foreach ($cfg['core_defaults'] as $key=>$value) {
-	if (!isset($cfg['core'][$key])) $cfg['core'][$key] = $value;
-}
-unset($key, $value);
-
-//static regexp patterns
-$cfg['patterns'] = array(
-	'plugin_name'=> "[A-Za-z][A-Za-z_]{0,48}[A-Za-z]",
-	'email'=> '([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})'
-);
-
-//don't change following settings if you're not sure what you're doing!
-$cfg['core_plugins'] = array('core','page', 'backup', 'domains', 'sites', 'variables', 'auth');
-$cfg['salt'] = '#%4#%F3456fsg34%#13as97$^g1';
-
-$cfg['valid_page_fields'] = array(
-	'name', 'info', 'info2', 'info3', 'title', 'keywords', 'description', 'route', 'permalink', 'text',
-	'redirect', 'controller', 'route_lock', 'published', 'hot', 'nomenu', 'date_from', 'date_to', 'date', 'reference_id'
-);

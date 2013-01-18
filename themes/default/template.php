@@ -20,6 +20,9 @@
 		#location a {color: #aaa;}
 		img.pc_icon{vertical-align:-3px;margin-right:2px;}
 	</style>
+	
+	<?php echo PC_controller_rss::Get_header_addon_html(); ?>
+	
 </head>
 <body style="background:#eee">
 	<div style="width:800px;margin:0 auto;background:#fff">
@@ -50,7 +53,16 @@
 			?>
 		</div>
 		<div style="padding:10px;" class="pc_content">
-			<?php echo $site->Get_text(); ?>
+			<?php 
+			//echo $site->Get_text(); 
+			
+			if($site->Is_front_page() and file_exists($core->Get_theme_path().'template_frontpage.php')){
+				include $core->Get_theme_path().'template_frontpage.php';
+			}else{
+				echo $site->Get_text();
+			}
+			
+			?>
 			<div style="clear:both"></div>
 		</div>
 		<div style="background:#aaa;padding:3px 5px;">

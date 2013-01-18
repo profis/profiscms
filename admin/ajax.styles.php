@@ -57,7 +57,7 @@ if (isset($_POST['styles'])) {
 	}
 }
 //return json stylesheet to cms
-require("../classes/CSSParser.php");
+require(CORE_ROOT . "classes/CSSParser.php");
 $out = array();
 if (is_file($stylesheet)) {
 	$sheet = new CSSParser(file_get_contents($stylesheet));

@@ -18,7 +18,8 @@ $cfg['core']['no_login_form'] = true;
 require_once '../../admin/admin.php';
 
 $backup_folder = 'backups';
-$bkpdir = '../../admin/'.$backup_folder.'/';
+//$bkpdir = '../../admin/'.$backup_folder.'/';
+$bkpdir = $cfg['path']['backups'];
 $MAX_QUERY_LENGTH = 20000;
 
 function bkpfn_encode($f) {
@@ -512,7 +513,7 @@ function mod_backup_click() {
 				menuDisabled: true,
 				width: 240,
 				renderer: function(value, metaData, record, rowIndex, colIndex, store) {
-					return '<a href="' + Ext.util.Format.htmlEncode(PC.global.BASE_URL + PC.global.ADMIN_DIR + '/<?php echo $backup_folder; ?>/' + encodeURIComponent(value)) + '" target="_blank">' + value + '</a>';
+					return '<a href="' + Ext.util.Format.htmlEncode(PC.global.BASE_URL + '<?php echo $backup_folder; ?>/' + encodeURIComponent(value)) + '" target="_blank">' + value + '</a>';
 				}
 			}
 		],

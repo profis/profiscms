@@ -86,7 +86,7 @@ PC.auth.perms.editors.Register('core', 'page_nodes', {
 	},
 	window: {
 		Get: function(perm_data) {
-			var window_params = {
+			var tree_params = {
 				additionalBaseParams: {
 					//plugin_only: 'pc_shop',
 					pc_shop: {
@@ -94,8 +94,7 @@ PC.auth.perms.editors.Register('core', 'page_nodes', {
 					}
 				}
 			};
-			window_params.return_only_window_config = true;
-			var window_config = Show_redirect_page_window(window_params);
+			var window_config = Show_redirect_page_window(false, {return_only_window_config: true, tree_params: tree_params});
 			return window_config;
 		}
 	}

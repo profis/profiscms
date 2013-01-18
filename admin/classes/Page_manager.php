@@ -34,6 +34,17 @@ class Page_manager extends PC_base{
 		$this->_site_id = $site_id;
 		$this->_root_node = $node_id;
 		$this->_page_tree_params = $page_tree_params;
+		if (is_numeric($node_id) and $node_id == 0 and !empty($page_tree_params['additional']) and !empty($page_tree_params['additional']['default_ref'])) {
+			$default_ref = $page_tree_params['additional']['default_ref'];
+			$new_node_id = $this->page->Get_page_id_by_reference($default_ref);
+			if ($new_node_id) {
+				$node_id = $new_node_id;
+				$page_data = $this->page->Get_page_data($node_id);
+				$this->_page_tree_params['plugin'] = $page_data['controller'];
+				$this->debug('node_id changed to ' . $node_id, 1);
+			}
+			
+		}
 		
 		if ($node_id == -1) {
 			$this->debug("   pages for recycle bin");
@@ -364,14 +375,25 @@ class Page_manager extends PC_base{
 	public function get_page_node_children($node_id) {
 		$this->debug("get_page_node_children($node_id)");
 		$plugin = v($this->_page_tree_params['plugin']);
+		$children = array();
 		if (!empty($plugin)) {
 			$children = $this->_get_controller_page_children($node_id, $plugin, $this->_page_tree_params);
-			if ($children) {
-				return $children;
+			if (is_array($children) and $this->_plugin_was_not_empty or $children) {
+				$allow_pages = false;
+				$this->core->Init_hooks('core/tree/get-childs/allow_pages/'.$plugin, array(
+					'result'=> &$allow_pages
+				));
+				$this->_plugin_was_not_empty = true;
+				if (!$allow_pages) {
+					return $children;
+				}
 			}
 		}
-	
-		$children = Get_tree_childs($node_id, $this->_site_id, v($this->_page_tree_params['deleted']), v($this->_page_tree_params['search']), v($this->_page_tree_params['date']), v($this->_page_tree_params['additional']), $this->_page_tree_params, $this);
+		if (!is_array($children)) {
+			$children = array();
+		}
+		
+		$children = array_merge(Get_tree_childs($node_id, $this->_site_id, v($this->_page_tree_params['deleted']), v($this->_page_tree_params['search']), v($this->_page_tree_params['date']), v($this->_page_tree_params['additional']), $this->_page_tree_params, $this), $children);
 		$this->debug("  number of children got by Get_tree_childs() - " . count($children));
 		
 		if ($node_id == 0 and (strlen($node_id)) == 1 and !v($this->_page_tree_params['search'])) {
@@ -395,7 +417,7 @@ class Page_manager extends PC_base{
 			}
 			$node_id = $controller_data['data'];
 		}
-		
+		$this->_plugin_was_not_empty = false;
 		if (!empty($plugin)) {
 			if ($this->core->Count_hooks('core/tree/get-childs/'.$plugin) >= 1) {
 				//init renderer hooks to generate output results
@@ -404,6 +426,7 @@ class Page_manager extends PC_base{
 					'additional'=> &$page_tree_params['additional'],
 					'data'=> &$children
 				));
+				$this->_plugin_was_not_empty = true;
 				return $children;
 			}
 		}

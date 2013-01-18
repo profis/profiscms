@@ -1319,6 +1319,9 @@ function Preview_page(n) {
 function Get_active_editor() {
 	return tinymce.activeEditor;
 }
+function Get_active_page_id() {
+	return PC.tree.component.selModel.getSelectedNode().id;
+}
 function is_function(func) {
 	return (typeof func == 'function');
 }
@@ -1880,25 +1883,30 @@ function Logout() {
 		}
 	});
 }
-function Show_redirect_page_window(return_callback, get_route, select_node_path, init_value) {
+function Show_redirect_page_window(return_callback, page_selector_params) {
+	var get_route = false;
+	var select_node_path = false;
+	var init_value = false;
+	var enable_ok_button = false;
 	var additionalBaseParams = false;
-	var function_params = {};
-	var ok_disabled = true;
-	if (typeof return_callback == 'object') {
-		function_params = return_callback;
-		if (function_params.additionalBaseParams) {
-			additionalBaseParams = function_params.additionalBaseParams;
-		}
-		if (function_params.enable_ok_button) {
-			ok_disabled = false;
+	var callback_ok = false;
+	if (page_selector_params) {
+		get_route = page_selector_params.get_route;
+		select_node_path = page_selector_params.select_node_path;
+		init_value = page_selector_params.init_value;
+		enable_ok_button = page_selector_params.enable_ok_button;
+		callback_ok = page_selector_params.callback_ok;
+		if (page_selector_params.tree_params) {
+			additionalBaseParams = page_selector_params.tree_params.additionalBaseParams;
 		}
 	}
 	
-	var callback_ok;
-	if (function_params.callback_ok && typeof function_params.callback_ok == 'function') {
-		callback_ok = function_params.callback_ok;
+	var ok_disabled = true;
+	if (enable_ok_button) {
+			var ok_disabled = false;
 	}
-	else {
+	
+	if (!callback_ok) {
 		callback_ok = function(w) {
 			var n = w._tree.getSelectionModel().getSelectedNode();
 			if (n) {
@@ -1996,6 +2004,63 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 		}
 	}
 	
+	var tree_config = {	xtype: 'profis_pagetree',
+		additionalBaseParams: additionalBaseParams,
+		enableDD: false,
+		ref: '_tree',
+		selModel: new Ext.tree.DefaultSelectionModel({
+			listeners: {
+				selectionchange: function(sm, n) {
+					w.ok_btn.enable();
+				}
+			}
+		}),
+		listeners: {
+			load: function(node){
+				if (node.id != '0') return;
+				if (select_node_path == undefined) return;
+				if (!select_node_path.length) {
+					node.ownerTree.selectPath(PC.tree.component.getNodeById(PC.global.page.id.originalValue).getPath());
+					return;
+				}
+				if (select_node_path.substring(0, 1) == '/') {
+					node.ownerTree.selectPath(select_node_path);
+				}
+				else {
+					var path_node = PC.tree.component.getNodeById(select_node_path);
+					if (path_node != undefined) {
+						var path = path_node.getPath();
+						node.ownerTree.selectPath(path);
+					}
+					else {
+						Get_page_path(select_node_path, function(path){
+							node.ownerTree.selectPath(path);
+						});
+					}
+				}
+			},
+			beforeappend: function(tr, prnt, n) {
+				if (n.id < 0 || n.id == 'create' || n.attributes.controller == 'search' || n.attributes._front > 0) {
+					//function_params.allow_front
+					if (n.attributes._front > 0) {
+
+					}
+					else {
+						return false;
+					}
+				}
+			},
+			beforeclick: function(n, e) {
+				if (n.attributes.controller == 'menu') return false;
+			}
+		},
+		_sid: (init_value!=undefined?init_value:undefined)
+	};
+	
+	if (page_selector_params && page_selector_params.tree_config) {
+		Ext.apply(tree_config, page_selector_params.tree_config);
+	}
+	
 	var window_config = {
 		items: [
 			{
@@ -2043,58 +2108,7 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 					}
 				]
 			},
-			{	xtype: 'profis_pagetree',
-				additionalBaseParams: additionalBaseParams,
-				enableDD: false,
-				ref: '_tree',
-				selModel: new Ext.tree.DefaultSelectionModel({
-					listeners: {
-						selectionchange: function(sm, n) {
-							w.ok_btn.enable();
-						}
-					}
-				}),
-				listeners: {
-					load: function(node){
-						if (node.id != '0') return;
-						if (select_node_path == undefined) return;
-						if (!select_node_path.length) {
-							node.ownerTree.selectPath(PC.tree.component.getNodeById(PC.global.page.id.originalValue).getPath());
-							return;
-						}
-						if (select_node_path.substring(0, 1) == '/') {
-							node.ownerTree.selectPath(select_node_path);
-						}
-						else {
-							var path_node = PC.tree.component.getNodeById(select_node_path);
-							if (path_node != undefined) {
-								var path = path_node.getPath();
-								node.ownerTree.selectPath(path);
-							}
-							else {
-								Get_page_path(select_node_path, function(path){
-									node.ownerTree.selectPath(path);
-								});
-							}
-						}
-					},
-					beforeappend: function(tr, prnt, n) {
-						if (n.id < 0 || n.id == 'create' || n.attributes.controller == 'search' || n.attributes._front > 0) {
-							//function_params.allow_front
-							if (n.attributes._front > 0) {
-								
-							}
-							else {
-								return false;
-							}
-						}
-					},
-					beforeclick: function(n, e) {
-						if (n.attributes.controller == 'menu') return false;
-					}
-				},
-				_sid: (init_value!=undefined?init_value:undefined)
-			}
+			tree_config
 		],
 		width: 300,
 		height: 350,
@@ -2105,7 +2119,7 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 		}
 	};
 	
-	if (function_params.return_only_window_config) {
+	if (page_selector_params.return_only_window_config) {
 		return window_config
 	}
 	
@@ -2129,8 +2143,8 @@ function Show_redirect_page_window(return_callback, get_route, select_node_path,
 	});
 	
 	var w = new Ext.Window(window_config);
-	if (function_params.window_config) {
-		Ext.apply(w, function_params.window_config);
+	if (page_selector_params.window_config) {
+		Ext.apply(w, page_selector_params.window_config);
 	}
 	w.show();
 	w._tree.root.expand();
@@ -2184,7 +2198,7 @@ function Render_page_actions(controller) {
 	if (PC.global.page.front != undefined) front = PC.global.page.front.value;
 	var could_be_enabled_or_disabled = 'controller|name_container|custom_name_container|title_container|keywords_container|description_container|route_container|permalink_container|redirect|redirect_container|published|route_lock_container|hot|nomenu|date_container|name_title|custom_name_title|route_title|permalink_title|title_title|description_title|keywords_title|date|time|reference_id';
 	if (front > 0) {
-		var disabled = 'controller|route_container|permalink_container|route_title|permalink_title|published|route_lock_container|hot|nomenu|date_container|date|time|reference_id';
+		var disabled = 'route_container|permalink_container|route_title|permalink_title|published|route_lock_container|hot|nomenu|date_container|date|time|reference_id';
 	}
 	else if (controller == 'menu') {
 		//console.log(controller);

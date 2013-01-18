@@ -782,6 +782,9 @@ PC.langs.en = {
 			},
 			lock: 'Lock one value for all languages'
 		},
+		config: {
+			selfname: 'Settings'//,
+		},
 		sites_langs: {
 			selfname: 'Sites & Languages',
 			theme: 'Theme',

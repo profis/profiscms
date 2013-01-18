@@ -14,10 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+require_once dirname(__FILE__) . '/../core/path_constants.php';
+
 $_twd = getcwd();
 chdir(dirname(__FILE__));
-if (!class_exists('PC_base')) require_once '../base.php';
+
+
+
+if (!class_exists('PC_base')) require_once CORE_ROOT . 'base.php';
+
+
 require_once 'auth.php';
+
+
 
 if (!is_null($cache)) {
 	$core->Register_hook('core/cache/clear', 'PC_clear_cache');
@@ -26,6 +36,8 @@ if (!is_null($cache)) {
 	$core->Register_hook_observer('after_page_save', 'core/cache/clear');
 }
 
+
+
 function PC_clear_cache() {
 	global $cache;
 	$cache->flush();
@@ -33,9 +45,18 @@ function PC_clear_cache() {
 
 function get_plugin_icon($fn=false) {
 	global $cfg;
+	//global $logger;
+	//$logger->debug('get_plugin_icon()');
 	if (!$fn) {
 		$dbt = debug_backtrace();
+		//$logger->debug($dbt[0]['file'], 1);
+		$dn = dirname(dirname($dbt[0]['file']));
+		$dn_rel = str_replace(CMS_ROOT, '', $dn);
 		$fn = basename(dirname($dbt[0]['file']));
+		
+		//$logger->debug("dn: $dn", 1);
+		//$logger->debug("fn: $fn", 1);
+		
 		//file_put_contents('debug_backtrace.dump.txt', print_r($dbt, true));
 		//$fn = preg_replace('#^.*[\\\\/]#', '', $dbt[0]['file']);
 	}
@@ -43,9 +64,9 @@ function get_plugin_icon($fn=false) {
 	$noext = $fn;
 	$rv = $cfg['url']['base'].$cfg['directories']['admin'].'/images/plugin.default.png';
 	foreach (array('jpg', 'gif', 'png') as $ext) {
-		$path = $cfg['path']['plugins'].$noext.'/'.$noext.'.'.$ext;
+		$path = $dn . '/' . $noext.'/'.$noext.'.'.$ext;
 		if (file_exists($path)) {
-			$rv = $cfg['url']['base'].$cfg['directories']['plugins'].'/'.$noext.'/'.$noext.'.'.$ext;
+			$rv = $cfg['url']['base'] . $dn_rel . '/'.$noext.'/'.$noext.'.'.$ext;
 		}
 	}
 	return $rv;
@@ -90,3 +111,5 @@ function hex_hmac_md5($k, $d) {
 }
 
 chdir($_twd);
+
+//echo 'a'; exit;
