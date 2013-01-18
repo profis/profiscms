@@ -327,9 +327,9 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 Ext.ComponentMgr.registerType('profis_pagetree', PC.ux.PageTree);
 
 (function() {
-  var originalRender = Ext.tree.AsyncTreeNode.prototype.render;
+	var originalRender = Ext.tree.TreeNode.prototype.render;
 
-  Ext.override(Ext.tree.AsyncTreeNode, {
+  Ext.override(Ext.tree.TreeNode, {
 	  
 	render: function() {
 		var node_id = this.id;

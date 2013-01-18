@@ -233,7 +233,7 @@ final class PC_page extends PC_base {
 		/* Create a fictional XHTML document with just the contents of $text in the body.
 		 * Both DOCTYPE and character set definition are necessary for all the magic to work properly.
 		 */
-		$dom->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body>'.$text.'</body></html>');
+		@$dom->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body>'.$text.'</body></html>');
 		
 		/*
 		 * Generate informational array about all forms on the page
