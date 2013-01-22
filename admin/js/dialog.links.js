@@ -119,6 +119,10 @@ PC.dialog.links = {
 				{	ref: '../../_target',
 					boxLabel: this.ln.open_in_new_window,
 					xtype: 'checkbox'
+				},
+				{	ref: '../../_lightbox',
+					boxLabel: this.ln.open_in_lightbox,
+					xtype: 'checkbox'
 				}
 			]
 		};
@@ -411,6 +415,7 @@ PC.dialog.links = {
 			this.setFormValue('onkeydown', inst.dom.getAttrib(elm, 'onkeydown'));
 			this.setFormValue('onkeyup', inst.dom.getAttrib(elm, 'onkeyup'));
 			this.setFormValue('target', (inst.dom.getAttrib(elm, 'target')=='_blank'));
+			//this.setFormValue('rel', (inst.dom.getAttrib(elm, 'rel')=='lightbox'));
 			this.setFormValue('class', inst.dom.getAttrib(elm, 'class'));
 
 			if (href.charAt(0) == '#') {
@@ -420,6 +425,7 @@ PC.dialog.links = {
 			}
 			w._class.setValue(inst.dom.getAttrib(elm, 'class'));
 			w._target.setValue((inst.dom.getAttrib(elm, 'target') == '_blank'));
+			w._lightbox.setValue((inst.dom.getAttrib(elm, 'rel') == 'lightbox'));
 		}
 		else {
 			//addClassesToList('classlist', 'advlink_styles');
@@ -505,10 +511,17 @@ PC.dialog.links = {
 		var w = this.window;
 		var href = w._href.getValue();
 		var target = w._target.getValue();
+		var lightbox = w._lightbox.getValue();
 
 		this.setAttrib(elm, 'href', href);
 		this.setAttrib(elm, 'title');
 		this.setAttrib(elm, 'target', target?'_blank':'');
+		if (lightbox) {
+			this.setAttrib(elm, 'rel', 'lightbox');
+		}
+		else {
+			this.setAttrib(elm, 'rel', '');
+		}
 		this.setAttrib(elm, 'id');
 		this.setAttrib(elm, 'style');
 		this.setAttrib(elm, 'class', w._class.getValue());

@@ -131,10 +131,17 @@ abstract class PC_model extends PC_base{
 		if (isset($params['where'])) {
 			$additional_where = '';
 			if (is_array($params['where'])) {
+				$where_strings = array();
 				foreach ($params['where'] as $key => $value) {
-					
+					if (!is_array($value)) {
+						$where_strings[] = $value;
+					}
+					else {
+						$where_strings[] = " $key " . $this->sql_parser->in($value);
+						$query_params = array_merge($query_params, $value);
+					}
 				}
-				$additional_where = implode(' AND ', $params['where']);
+				$additional_where = implode(' AND ', $where_strings);
 			}
 			else {
 				$additional_where = $params['where'];
@@ -200,6 +207,27 @@ abstract class PC_model extends PC_base{
 		return $items;
 	}
 	
+	protected function _get_where_clause($where) {
+		$where_clause = '';
+		if (is_array($where)) {
+			$where_strings = array();
+			foreach ($where as $key => $value) {
+				if (!is_array($value)) {
+					$where_strings[] = $value;
+				}
+				else {
+					$where_strings[] = " $key " . $this->sql_parser->in($value);
+					$query_params = array_merge($query_params, $value);
+				}
+			}
+			$where_clause = implode(' AND ', $where_strings);
+		}
+		else {
+			$where_clause = $where;
+		}
+		return $where_clause;
+	}
+	
 	public function get_parent_id($id) {
 		$params = array();
 		$data = $this->get_data($id, $params, 1);
@@ -207,6 +235,39 @@ abstract class PC_model extends PC_base{
 			return $data[$this->_table_parent_col];
 		}
 		return false;
+	}
+	
+	public function update(array $data, $params = array()) {
+		$query_params = array_values($data);
+		$sets = array();
+		foreach ($data as $key => $value) {
+			$sets[] = "$key = ?";
+		}
+				
+		$limit_s = '';
+		if (v($params['limit'])) {
+			$limit_s = ' LIMIT ' . $params['limit'];
+		}
+		
+		$where_s = '';
+		if (v($params['where'])) {
+			if ($params['query_params'] and is_array($params['query_params'])) {
+				$query_params = array_merge($query_params, $params['query_params']);
+			}
+			$where_s = $this->_get_where_clause($params['where']);
+		}
+		
+		if (!empty($where_s)) {
+			$where_s = ' WHERE ' . $where_s;
+		}
+		$sets_s = implode(',', $sets);
+		$query = "UPDATE {$this->db_prefix}{$this->_table} SET $sets_s
+			$where_s $limit_s";
+		$r = $this->prepare($query);
+
+		$this->debug_query($query, $query_params, 1);
+		
+		$r->execute($query_params);
 	}
 	
 }

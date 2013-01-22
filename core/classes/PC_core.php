@@ -117,7 +117,7 @@ final class PC_core extends PC_base {
 		if ($this->routes) {
 			//$this->debug($this->routes->Get_request());
 		}
-		$this->debug($this->routes->Get_request());
+		//$this->debug($this->routes->Get_request());
 		$this->debug($_GET);
 		$this->debug("Redirect($location $type)", 2);
 		

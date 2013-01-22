@@ -661,6 +661,7 @@ PC.langs.en = {
 			href: 'Link URL',
 			anchor: 'Anchor',
 			open_in_new_window: 'Open link in new window',
+			open_in_lightbox: 'Open link in Lightbox',
 			t_self: 'Self',
 			t_blank: 'Blank',
 			t_parent: 'Parent',

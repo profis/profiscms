@@ -1170,6 +1170,9 @@ final class PC_site extends PC_base {
 		arsort($this->_scripts);
 		if (!count($this->_scripts)) return false;
 		$html = '';
+		$html .= "<script type=\"text/javascript\">
+			var PC_base_url = '".$this->Get_home_link()."';
+		</script>\n";
 		foreach ($this->_scripts as $script=>$priority)
 		$html .= "<script type=\"text/javascript\" src=\"$script\"></script>\n";
 		return $html;

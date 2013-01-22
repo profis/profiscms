@@ -356,6 +356,11 @@ class PC_utils {
 		
 	}
 	
+	static function filterArray($fields, $data) {
+		$fields = array_flip($fields);
+		return array_intersect_key($data, $fields);
+	}
+	
 	
 	static function sendEmail($recipient, $message, $params, $tags = array()) {
 		global $cfg;
@@ -371,7 +376,6 @@ class PC_utils {
 		}
 		$message .= "</p>";
 		}  
-		
 		
 		require_once $cfg['path']['classes'] . 'class.phpmailer.php';
 		

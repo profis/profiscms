@@ -602,6 +602,7 @@ PC.langs.ru = {
 			href: 'Ссылка',
 			anchor: 'Якорь',
 			open_in_new_window: 'Oткрыть ссылку в новом окне',
+			open_in_lightbox: 'Oткрыть ссылку в Lightbox окне',
 			t_self: 'Не определена',
 			t_blank: 'Новое окно',
 			t_parent: 'Родительская категория',

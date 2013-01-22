@@ -8,6 +8,16 @@ $logger->debug = true;
 $logger->set_instant_debug_to_file($cfg['path']['logs'] . 'api.html');
 
 error_reporting(E_ALL);
+
+if (isset($site->route[1]) and strlen($site->route[1]) == 2) {
+	$site->Identify();	
+	if(isset($site->data['languages'][$site->route[1]])) {
+		$site->Set_language($site->route[1]);
+		$logger->debug('ln first route: Site language now is ' . $site->ln, 1);
+		$routes->Shift();
+	}
+}
+
 if ($routes->Get(1) == 'admin') {
 	$ln = v($_GET['ln']);
 	if (!empty($ln)) {

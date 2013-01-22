@@ -12,6 +12,8 @@ RewriteRule ^(.*)$ /admin/ [R=301,L]
 # api
 RewriteCond %{REQUEST_URI} admin/api/(.*)
 RewriteRule ^(.+)$ core/api/admin/$1 [QSA]
+RewriteCond %{REQUEST_URI} (\w\w)/api/(.*)
+RewriteRule ^(.+)$ api/$1/$2 [QSA]
 RewriteCond %{REQUEST_URI} api/(.*)
 RewriteRule ^(.+)$ core/api.php?$1 [QSA,L]
 

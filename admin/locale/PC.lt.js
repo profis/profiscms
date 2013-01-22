@@ -603,6 +603,7 @@ PC.langs.lt = {
 			href: 'Nuoroda',
 			anchor: 'Žymė',
 			open_in_new_window: 'Nuorodą atidaryti naujame lange',
+			open_in_lightbox: 'Nuorodą atidaryti Lightbox lange',
 			t_self: 'Tame pačiame lange',
 			t_blank: 'Naujame lange',
 			t_parent: 'Parent',
