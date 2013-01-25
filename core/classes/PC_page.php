@@ -516,10 +516,7 @@ final class PC_page extends PC_base {
 							$mail->CharSet = "utf-8";
 							$mail->SetFrom(v($this->cfg['from_email']));
 							$mail->Subject = lang('form_submitted_subject', $pageForm['id']);
-							foreach ($pageForm['submitEmails'] as $submitEmail) {
-								$mail->AddAddress($submitEmail);
-							}
-							
+														
 							$mailBodyDOM = new DOMDocument;
 							$mailBodyDOM->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body></body></html>');
 							$body = $mailBodyDOM->getElementsByTagName('body')->item(0);
@@ -557,10 +554,17 @@ final class PC_page extends PC_base {
 										break;
 								}
 							}
+							$message = $mailBodyDOM->saveHTML();
 							
-							$mail->Body = $mailBodyDOM->saveHTML();
+							PC_utils::debugEmail($pageForm['submitEmails'], $message, $textBody);
+							
+							foreach ($pageForm['submitEmails'] as $submitEmail) {
+								$mail->AddAddress($submitEmail);
+							}
+							
+							$mail->Body = $message;
 							$mail->AltBody = $textBody;
-							
+													
 							if (!$mail->Send()) {
 								$pageForm['status'] = array('status' => 'error', 'errors'=>array('email'));
 								// echo 'Mailer error: ' . $mail->ErrorInfo;

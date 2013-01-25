@@ -27,6 +27,10 @@ if ((isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && $_SERVER['HTTP_IF_MODIFIED_SIN
 // Output file for admin
 $galleryRequest = (isset($_GET['r'])?$_GET['r']:'');
 
+if (substr($galleryRequest, 0, 4) == 'new/') {
+	$galleryRequest = substr($galleryRequest, 4);
+}
+
 if (substr($galleryRequest, 0, 6) == 'admin/') {
 	$cfg['core']['no_login_form'] = true;//don't output login form if there's no active session
 	require_once('../admin/admin.php'); //ensure the user is authorized, otherwise stop executing this script

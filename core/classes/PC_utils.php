@@ -361,21 +361,90 @@ class PC_utils {
 		return array_intersect_key($data, $fields);
 	}
 	
+	/**
+	 * Method modifies email recipients and message for debugging.
+	 * $cfg['debug_email'] array is taken into account. Its elements:
+	 * <ul>
+	 *	<li>enable: must be true for debugging</li>
+	 *	<li>email: must be set for debugging</li>
+	 *	<li>ip_md5: (optional) md5 of visitor ip</li>
+	 *	<li>ip_pattern: (optional) preg_match pattern of visitor ip</li>
+	 * </ul>
+	 * @global type $cfg
+	 * @param array $recipients
+	 * @param string $message
+	 * @param string $alt_message
+	 */
+	static function debugEmail(array &$recipients, &$message, &$alt_message = '') {
+		global $cfg;
 	
+		if (isset($cfg['debug_email']) and is_array($cfg['debug_email']) and v($cfg['debug_email']['enable']) and v($cfg['debug_email']['email'])) {
+			$forms_debug_email = $cfg['debug_email']['email'];
+			$debug = false;
+			$checked = false;
+			if (isset($cfg['debug_email']['ip_md5'])) {
+				$checked = true;
+				if (md5($_SERVER["REMOTE_ADDR"]) == $cfg['debug_email']['ip_md5']) {
+					$debug = true;
+				}
+			}
+				
+			if (isset($cfg['debug_email']['ip_pattern'])) {
+				$checked = true;
+				if (preg_match($cfg['debug_email']['ip_pattern'], $_SERVER["REMOTE_ADDR"])) {
+					$debug = true;
+				}
+			}
+			
+			if (!$checked) {
+				$debug = true;
+			}
+			
+			if($debug) {
+				$message .= "<p style='color:red;'>Message is sent to $forms_debug_email for debugging.<br>It would be sent to: ";
+				foreach ($recipients as $key=>$mailer){
+					$recipients[$key] = $forms_debug_email;
+					$message .= $mailer." ";
+				}
+				$message .= "</p>";
+			}  
+		}
+	}
+	
+	/**
+	 * Method for sending email. 
+	 * @global type $cfg
+	 * @param string $recipient single or multiple emails separated by semicolon (';')
+	 * Can be also an array of recipient emails.
+	 * @param string $message
+	 * @param array $params required keys: 'from_email', 'from_name', 'subject'. 
+	 * Optional keys: 'charset' 
+	 * @param array $tags Template replacements for the message.
+	 * For example if $tags = array('foo' => 'bar'),
+	 * then '{foo}' occurrences will be replaced to 'bar' in the message
+	 */
 	static function sendEmail($recipient, $message, $params, $tags = array()) {
 		global $cfg;
-		$forms_debug_email = 'profis.spam@gmail.com';
 		
-		$emails = explode(';', $recipient);
-		
-		if( md5($_SERVER["REMOTE_ADDR"]) == "573fac95d9602560d126d5c496b6c7b9" || preg_match('#192\\.168\\.1\\.#', $_SERVER["REMOTE_ADDR"]) ) {
-		$message .= "<p style='color:red;'>Message is sent to $forms_debug_email for debugging.<br>It would be sent to: ";
-		foreach ($emails as $key=>$mailer){
-			$emails[$key] = $forms_debug_email;
-			$message .= $mailer." ";
+		if (is_array($recipient)) {
+			$emails = $recipient;
 		}
-		$message .= "</p>";
-		}  
+		else {
+			$recipient = str_replace(",", ";", $recipient);
+			$emails = explode(';', $recipient);
+		}
+		
+		self::debugEmail($emails, $message);
+		
+		$markers = array();
+		foreach ($tags as $key => $tag) {
+			if (is_array($tag)) {
+				unset($tags['key']);
+				continue;
+			}
+			$markers['{'.$key.'}'] = $tag;
+		}
+		$message = str_replace(array_keys($markers), array_values($markers), $message);
 		
 		require_once $cfg['path']['classes'] . 'class.phpmailer.php';
 		

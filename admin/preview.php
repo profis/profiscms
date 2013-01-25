@@ -50,10 +50,11 @@ if ($id < 1 || empty($ln)) {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 	die($id . " - You should specify both page ID ($id ) and language ($ln).");
 }
-$r = $db->prepare("SELECT d.ln,d.mask,p.front,p.site, route"
+$r = $db->prepare("SELECT d.ln,d.mask,p.front,p.site, route, s.active"
 ." FROM {$cfg['db']['prefix']}pages p"
 ." JOIN {$cfg['db']['prefix']}content c ON pid=p.id and ln=:ln"
 ." JOIN {$cfg['db']['prefix']}domains d ON d.site=p.site"
+." JOIN {$cfg['db']['prefix']}sites s ON s.id=p.site"
 ." WHERE p.id=:id");
 $success = $r->execute(array(
 	'id'=> $id,
@@ -80,10 +81,16 @@ else {
 	}
 }
 
-$url = $cfg['url']['base'] . $url;
+$base = $cfg['url']['base'];
 
-if ($page['ln'] == $ln and strpos($url, $cfg['url']['base'] . $ln.'/') !== false) {
-	$url = str_replace($cfg['url']['base'] . $ln.'/', $cfg['url']['base'], $url);
+if (!$page['active']) {
+	$base .= 'new/';
+}
+
+$url = $base . $url;
+
+if ($page['ln'] == $ln and strpos($url, $base . $ln.'/') !== false) {
+	$url = str_replace($base . $ln.'/', $base, $url);
 }
 
 $location = $url;
