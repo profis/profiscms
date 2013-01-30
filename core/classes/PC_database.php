@@ -62,7 +62,7 @@ final class PC_database extends PDO {
 	}
 	
 	
-	public function get_flag_query_condition($flag, &$query_params = array(), $col = 'flags', $table = '') {
+	public function get_flag_query_condition($flag, &$query_params = array(), $col = 'flags', $table = '', $op = '=') {
 		$flag_number = $flag;
 		if (strpos($flag, '0x') !== false) {
 			$flag_number = substr($flag_number, 2);
@@ -70,7 +70,7 @@ final class PC_database extends PDO {
 		if (!empty($table)) {
 			$table .= '.';
 		}
-		$cond = "({$table}$col & ?) = ?";
+		$cond = "({$table}$col & ?) $op ?";
 		$query_params[] = $flag_number;
 		$query_params[] = $flag_number;
 		return $cond;

@@ -709,7 +709,7 @@ PC.dialog.media = {
 			return source;
 		}
 		else if (extension == 'swf') {
-			console.log(full_src);
+			//console.log(full_src);
 			var generate_source = function() {
 				var source = '<object';
 				var attributesStr = '';

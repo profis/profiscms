@@ -9,6 +9,9 @@ abstract class PC_model extends PC_base{
 	protected $_content_table_ln_col = 'ln'; 
 	protected $_content_table_name_col = 'name';
 	
+	protected $_where = array();
+	protected $_query_params = array();
+	
 	abstract protected function _set_tables();
 	
 	
@@ -16,6 +19,22 @@ abstract class PC_model extends PC_base{
 		$this->_set_tables();
 	}
 	
+	public function clear_scope() {
+		$this->_where = array();
+		$this->_query_params = array();
+	}
+	
+	public function get_scope() {
+		return array(
+			'where' => $this->_where,
+			'query_params' => $this->_query_params
+		);
+	}
+	
+	public function set_scope(array $scope) {
+		$this->_where = $scope['where'];
+		$this->_query_params = $scope['query_params'];
+	}
 	
 	public function get_id_from_content($name, $value, $ln = '', $limit = 1) {
 		$join = '';
@@ -83,10 +102,14 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function get_all($params = array()) {
+		$this->debug('get_all()');
+		$this->debug($params, 1);
 		return $this->get_data(null, $params);
 	}
 	
 	public function get_data($id = null, $params = array(), $limit = 0) {
+		$this->debug('get_data()');
+		$this->debug($params, 1);
 		$select = 't.*';
 		$join_cc = '';
 		$select_cc = '';
@@ -110,6 +133,8 @@ abstract class PC_model extends PC_base{
 			$query_params[] = $ln;
 		}
 		
+		$query_params = array_merge($query_params, $this->_query_params);
+		
 		$where_s = '';
 		
 		if (!is_null($id)) {
@@ -123,13 +148,20 @@ abstract class PC_model extends PC_base{
 				$query_params = array_merge($query_params, $id);
 			}
 		}
-		
+				
 		if (v($params['query_params']) and is_array($params['query_params'])) {
 			$query_params = array_merge($query_params, $params['query_params']);
 		}
 		
+		if (!isset($params['where'])) {
+			$params['where'] = array();
+		}
 		if (isset($params['where'])) {
 			$additional_where = '';
+			if (!is_array($params['where'])) {
+				$params['where'] = array($params['where']);
+			}
+			$params['where'] = array_merge($this->_where, $params['where']);
 			if (is_array($params['where'])) {
 				$where_strings = array();
 				foreach ($params['where'] as $key => $value) {
@@ -142,9 +174,6 @@ abstract class PC_model extends PC_base{
 					}
 				}
 				$additional_where = implode(' AND ', $where_strings);
-			}
-			else {
-				$additional_where = $params['where'];
 			}
 			if (!empty($additional_where)) {
 				if (!empty($where_s)) {
@@ -267,7 +296,7 @@ abstract class PC_model extends PC_base{
 
 		$this->debug_query($query, $query_params, 1);
 		
-		$r->execute($query_params);
+		return $r->execute($query_params);
 	}
 	
 }

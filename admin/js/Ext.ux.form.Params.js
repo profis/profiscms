@@ -211,7 +211,7 @@ Ext.ux.form.Params = {
 									var val = this.menu.picker.rawValue;
 								} else {
 									var pcol = PC.utils.color2Hex(this.value);
-									if (console && console.log) console.log(pcol);
+									//if (console && console.log) console.log(pcol);
 									if (pcol) {
 										var val = [
 											parseInt(pcol.slice(0, 2), 16),

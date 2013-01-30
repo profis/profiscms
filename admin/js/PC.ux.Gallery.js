@@ -345,7 +345,7 @@ PC.ux.gallery.files.actions = {
 					icon: 'images/arrow-down.gif',
 					handler: function(button){
 						PC.dialog.gallery.filesStore.sort('short_name', 'ASC');
-						console.log(this);
+						//console.log(this);
 						this.activate();
 					},
 					active: true,

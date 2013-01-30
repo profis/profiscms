@@ -173,7 +173,7 @@ function mod_forms_click() {
 		activeTab: 0,
 		flex: 1,
 		items: [],
-		border: false,
+		border: false
 	});
 
 	var w = new Ext.Window({
@@ -283,7 +283,7 @@ function mod_forms_click() {
 											var cell = grid.getView().getCell(rowIndex, colIndex);
 											mytab.detailPanel.body.update(cell.textContent.replace(/\n/g, '<br />'));
 										}
-									},
+									}
 								},
 								{
 									flex: 1,
@@ -301,7 +301,7 @@ function mod_forms_click() {
 									text: PC.i18n.del,
 									handler: function(field, event) {
 										deleteRecords(mytab);
-									},
+									}
 								},
 								{xtype:'tbfill'},
 								{	xtype: 'textfield',

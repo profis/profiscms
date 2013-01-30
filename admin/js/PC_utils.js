@@ -237,6 +237,14 @@ PC.utils.escape = function(text) {
   });
 }
 
+PC.utils.getComboArrayFromObject = function(object) {
+	var array = [];
+	Ext.iterate(object, function(value, index) {
+		array.push([index, value]);
+	})
+	return array;
+}
+
 /**
  * Clone Function
  * @param {Object/Array} o Object or array to clone
