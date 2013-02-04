@@ -642,7 +642,8 @@ final class PC_page extends PC_base {
 			$this->_decode_links($text);
 			
 			//append prefix to the links from editor
-			if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
+			//if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
+			if (isset($this->route[1])) $text = preg_replace("/href=\"(?!mailto:)/ui", "href=\"".$this->site->link_prefix,  $text);
 						
 			//page break
 			$text = str_replace('╬', '<span style="display:none" id="pc_page_break">&nbsp;</span>', $text);
@@ -1279,7 +1280,7 @@ final class PC_page extends PC_base {
 		if (!$s) return 0;
 		return $r->fetchColumn();
 	}
-	public function Get_submenu($id, $fields=array(), $limit=false, $include_content=true, $include_nomenu=false) {
+	public function Get_submenu($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr") {
 		if (!empty($fields) and !in_array('permalink', $fields)) {
 			$fields[] = 'permalink';
 		}
@@ -1329,7 +1330,20 @@ final class PC_page extends PC_base {
 				}
 			}
 		}
-		$query = "SELECT ".(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
+		
+		$order_by = '';
+		if (!empty($order)) {
+			$order_by = ' ORDER BY ' . $order;
+		}
+		$limit_s = $limit;
+		$paging = false;
+		if (is_array($limit) and isset($limit['perPage'])) {
+			$paging = true;
+			$limit = new PC_paging(v($limit['page'], 1), v($limit['perPage'], 20), v($limit['start'], null));
+			$limit_s = " {$limit->Get_offset()},{$limit->Get_limit()}";			
+		}
+		
+		$query = "SELECT ".($paging?'SQL_CALC_FOUND_ROWS ':'').(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'h.id', 'h.front'), array('separator'=>'▓'))." redirects_from"
 		." FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
@@ -1340,7 +1354,7 @@ final class PC_page extends PC_base {
 		." WHERE mp.id ".(is_array($id)?'in('.implode(',', $id).')':'=?')." and p.published=1"
 		." and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')"
 		." GROUP BY p.id"
-		." ORDER BY mp.nr,p.nr".(($limit)?" limit $limit":"");
+		." $order_by ".(($limit_s)?" limit $limit_s":"");
 		
 
 		$r = $this->prepare($query);
@@ -1349,6 +1363,12 @@ final class PC_page extends PC_base {
 		if (is_array($id) && !count($id)) return false;
 		$success = $r->execute($params);
 		if (!$success) return false;
+		
+		if ($paging) {
+			$rTotal = $this->query("SELECT FOUND_ROWS()");
+			if ($rTotal) $limit->Set_total($total = $rTotal->fetchColumn());
+		}
+		
 		$items = array();
 		if ($r->rowCount() >= 1) while ($menu = $r->fetch()) {
 			if (isset($menu['pid'])) if ($menu['pid'] == v($this->site->loaded_page['pid'])) {

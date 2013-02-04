@@ -9,6 +9,10 @@ RewriteRule ^(.*)$ /admin/ [R=301,L]
 #RewriteCond %{REQUEST_URI} ^.*/robots\.txt/
 #RewriteRule ^(.*)/$ /$1 [R=301,L]
 
+# gallery
+#RewriteCond %{REQUEST_URI} new/gallery/(.*)
+#RewriteRule ^(.*)new/gallery/(.*) $1gallery/$2 [L,R=301]
+
 # api
 RewriteCond %{REQUEST_URI} admin/api/(.*)
 RewriteRule ^(.+)$ core/api/admin/$1 [QSA]

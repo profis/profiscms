@@ -144,8 +144,9 @@ PC.ux.TinyMCE = function(config) {
 				+'select[size|name|required|multiple|disabled|onfocus|onblur|onchange],'
 				+'option[disabled|label|selected|value=],'
 				+'form[action|accept|accept-charset|enctype|method|pcformsettings]'
-				+'noindex,',
-			invalid_elements : "script,style",
+				+'noindex,div[*]',
+			//invalid_elements : "script,style",
+			invalid_elements : "",
 			template_external_list_url: 'example_template_list.js',
 			content_css: PC.global.BASE_URL+'themes/'+ Get_site()[2] +'/custom.css?'+new Date().getTime(),
 			//custom editor css by theme: PC.global.BASE_URL+'media/editor.css, '+ 

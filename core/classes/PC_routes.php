@@ -67,26 +67,36 @@ final class PC_routes extends PC_debug{
 		else $this->request = $request;
 		
 		//echo $this->request . '<hr />';
-		$page_match = preg_match('/'.$cfg['patterns']['page_get_var'].'/ui', $this->request, $matches);
 				
-		if ($page_match and $matches[1] and $matches[2]) {
-			//print_r($matches);
-			if (v($cfg['router']['no_trailing_slash']) and !empty($this->request) and substr($this->request, -1) == '/') {
-				$url = rtrim($this->request, '/');
-				$core->Redirect_local($url, 301);
-			}
-			elseif (!v($cfg['router']['no_trailing_slash']) and !empty($this->request) and substr($this->request, -1) != '/') {
-				$url = $this->request;
-				$url = pc_add_trailing_slash($url);
-				$core->Redirect_local($url, 301);
-			}
-			$this->request = $matches[1];
-			if (v($cfg['router']['no_trailing_slash'])) {
-				pc_remove_trailing_slash($this->request);
-			}
-			$_GET['page'] = $matches[2];
-		}
+		$get_vars = array(
+			'ppage_get_var' => 'ppage',
+			'page_get_var' => 'page'
+		);
 		
+		foreach ($get_vars as $pattern => $get_var) {
+			if (!isset($cfg['patterns'][$pattern])) {
+				continue;
+			}
+			$page_match = preg_match('/'.$cfg['patterns'][$pattern].'/ui', $this->request, $matches);
+		
+			if ($page_match and $matches[1] and $matches[2]) {
+				//print_r($matches);
+				if (v($cfg['router']['no_trailing_slash']) and !empty($this->request) and substr($this->request, -1) == '/') {
+					$url = rtrim($this->request, '/');
+					$core->Redirect_local($url, 301);
+				}
+				elseif (!v($cfg['router']['no_trailing_slash']) and !empty($this->request) and substr($this->request, -1) != '/') {
+					$url = $this->request;
+					$url = pc_add_trailing_slash($url);
+					$core->Redirect_local($url, 301);
+				}
+				$this->request = $matches[1];
+				if (v($cfg['router']['no_trailing_slash'])) {
+					pc_remove_trailing_slash($this->request);
+				}
+				$_GET[$get_var] = $matches[2];
+			}
+		}
 		
 		return true;
 	}

@@ -351,9 +351,12 @@ elseif ($action == "update") {
 									//Remove empty <a></a> tags (except anchors):
 									$patterns = array(
 										 '/(<(a)(?![^>]*name\s*=)[^>]*>)(\s*)(<\/a>)/ui',
-										'/<script[^>]*?>[\s\S]*?<\/script>/ui',
-										'/<style[^>]*?>[\s\S]*?<\/style>/ui'
 									);
+									
+									if (strpos($content_value, 'ymaps.Map') === false) {
+										$patterns[] = '/<script[^>]*?>[\s\S]*?<\/script>/ui';
+										$patterns[] = '/<style[^>]*?>[\s\S]*?<\/style>/ui';
+									}
 
 									$replacement = '';
 									$content_value = preg_replace($patterns, $replacement, $content_value);
