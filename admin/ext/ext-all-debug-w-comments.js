@@ -37469,7 +37469,6 @@ myStore.reload(lastOptions);
         if (this.isDestroyed === true) {
             return;
         }
-        console.log('1');
         if(!o || success === false){
             if(success !== false){
                 this.fireEvent('load', this, [], options);
