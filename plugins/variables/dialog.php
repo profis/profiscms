@@ -24,9 +24,9 @@ if (isset($_POST['ajax'])) {
 	if (isset($_POST['deleted'])) {
 		$j = json_decode($_POST['deleted'], true);
 		if (is_array($j)) {
+			$r = $db->prepare("DELETE FROM {$cfg['db']['prefix']}variables WHERE vkey=? and controller=? and site=?");
 			foreach ($j as $k) {
 				if (empty($k['site'])) $k['site'] = 0;
-				$r = $db->prepare("DELETE FROM {$cfg['db']['prefix']}variables WHERE vkey=? and controller=? and site=?");
 				$r->execute(array($k['key'], $k['controller'], $k['site']));
 			}
 		}
@@ -72,9 +72,10 @@ if (isset($_POST['ajax'])) {
 	$r = $db->query("SELECT * FROM {$cfg['db']['prefix']}variables");
 	while ($f = $r->fetch()) {
 		if (!empty($f['controller']) && !$plugins->Is_active($f['controller'])) continue;
-		$k =& $f['vkey'];
+		$clean_k = & $f['vkey'];
+		$k = $f['vkey'] . $f['controller'];
 		if (!isset($out[$k])) {
-			$out[$k][0] = $k;
+			$out[$k][0] = $clean_k;
 			$out[$k][1] = $f['controller'];
 			$out[$k][2] = array();
 		}

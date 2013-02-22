@@ -263,9 +263,6 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 	
 	if ($success) {
 		$list = $r->fetchAll();
-		if (false and $_SERVER['REMOTE_ADDR'] == '192.168.1.228') {
-			print_r($list);
-		}
 		foreach ($list as &$data) {
 			if (v($page_tree_params['check_page_children_access']) == true and !$auth->Authorize_access_to_site_page($site_id, $data['id'])) {
 				continue;
@@ -380,6 +377,10 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 				$node['children'] = array();
 				$node['allowDrag'] = false;
 				$node['draggable'] = false;
+			}
+			
+			if (v($additional['checkboxes'])) {
+				$node['checkbox'] = true;
 			}
 			$nodes[] = $node;
 		}
@@ -1269,6 +1270,7 @@ function pc_append_route($url, $route = '') {
 	if (empty($route)) {
 		return $url;
 	}
+	$route = rtrim($route, '/');
 	global $cfg;
 	if (!empty($url) and substr($url, -1) != '/') {
 		$url .= '/';

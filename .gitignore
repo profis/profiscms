@@ -3,6 +3,7 @@ PC_errors.txt
 .DS_Store
 Thumbs.db
 _dev/
+_restore_trink_jei_nieko_netruksta/
 config/
 # Gallery
 gallery/*
@@ -33,6 +34,8 @@ nbproject/
 logs/
 libs/
 admin/excel_attr/
+admin/ext_3_3/
+admin/ext_3_4/
 # Cache
 cache/*
 !cache/.htaccess

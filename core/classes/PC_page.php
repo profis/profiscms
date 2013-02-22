@@ -730,13 +730,14 @@ final class PC_page extends PC_base {
 			//print_pre($matches);
 			if (count($matches[6])) {
 				//print_pre($matches);
-				$r = $this->query("SELECT f.id,filename,"
-				.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true,'separator'=>'/'))." path
-				FROM {$this->db_prefix}gallery_files f
-				LEFT JOIN {$this->db_prefix}gallery_categories category ON category.id = category_id
-				LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft between path.lft and path.rgt
-				WHERE f.id in(".implode(',', $matches[6]).")
-				GROUP BY f.id,f.filename");
+				$query = "SELECT f.id,filename,"
+					.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true,'separator'=>'/'))." path
+					FROM {$this->db_prefix}gallery_files f
+					LEFT JOIN {$this->db_prefix}gallery_categories category ON category.id = category_id
+					LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft between path.lft and path.rgt
+					WHERE f.id in(".implode(',', $matches[6]).")
+					GROUP BY f.id,f.filename";
+				$r = $this->query($query);
 				if ($r) {
 					while ($data = $r->fetch()) {
 						$this->gallery->Sort_path($data['path']);
@@ -744,11 +745,15 @@ final class PC_page extends PC_base {
 						$files[$data['id']] = $data;
 					}
 					//print_pre($files);
+					//print_pre($matches);
 					for ($a=0; isset($matches[0][$a]); $a++) {
 						$m_id = $matches[6][$a];
 						$m_type = $matches[5][$a];
 						$m_type_pre = $matches[4][$a];
 						$m_full = $matches[2][$a];
+						if (!isset($files[$m_id])) {
+							continue;
+						}
 						$to = ''.$this->cfg['directories']['gallery'].'/'.$files[$m_id]['path'].$m_type_pre.$m_type.$files[$m_id]['filename'].'';
 						$this->gallery_request_map[$files[$m_id]['path'].$files[$m_id]['filename']] = $m_id;
 						//echo $to.'<br />';

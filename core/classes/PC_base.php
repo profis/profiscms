@@ -113,7 +113,7 @@ abstract class PC_base extends PC_debug{
 		$args = func_get_args();
 		call_user_func_array(array($this->core, 'Output_start'), $args);
 	}
-	protected function Output_end(&$var=null) {
-		$this->core->Output_end($var);
+	protected function Output_end(&$var=null, $flush = false) {
+		$this->core->Output_end($var, $flush);
 	}
 }

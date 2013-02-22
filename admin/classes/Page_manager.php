@@ -34,15 +34,34 @@ class Page_manager extends PC_base{
 		$this->_site_id = $site_id;
 		$this->_root_node = $node_id;
 		$this->_page_tree_params = $page_tree_params;
-		if (is_numeric($node_id) and $node_id == 0 and !empty($page_tree_params['additional']) and !empty($page_tree_params['additional']['default_ref'])) {
-			$default_ref = $page_tree_params['additional']['default_ref'];
-			$new_node_id = $this->page->Get_page_id_by_reference($default_ref);
-			if ($new_node_id) {
-				$node_id = $new_node_id;
-				$page_data = $this->page->Get_page_data($node_id);
-				$this->_page_tree_params['plugin'] = $page_data['controller'];
-				$this->debug('node_id changed to ' . $node_id, 1);
+		if (is_numeric($node_id) and $node_id == 0 and !empty($page_tree_params['additional'])) {
+			if (!empty($page_tree_params['additional']['default_ref'])) {
+				$default_ref = $page_tree_params['additional']['default_ref'];
+				$new_node_id = $this->page->Get_page_id_by_reference($default_ref);
+				if ($new_node_id) {
+					$node_id = $new_node_id;
+					$page_data = $this->page->Get_page_data($node_id);
+					if ($page_data['controller']) {
+						$this->_page_tree_params['plugin'] = $page_data['controller'];
+					}
+					$this->debug('node_id changed to ' . $node_id, 1);
+				}
 			}
+			
+			if (!empty($page_tree_params['additional']['default_controller'])) {
+				$default_ctrl = $page_tree_params['additional']['default_controller'];
+				$page_model = $this->core->Get_object('PC_page_model');
+				$node_ids =$page_model->get_all(array(
+					'where' => array('controller = ?'),
+					'query_params' => array($default_ctrl)
+				));
+				if (!empty($node_ids) and count($node_ids) == 1) {
+					$node_id = $node_ids[0];
+					//$this->_page_tree_params['plugin'] = $default_ctrl;
+					$this->debug('node_id changed to ' . $node_id, 1);
+				}
+			}
+			
 			
 		}
 		

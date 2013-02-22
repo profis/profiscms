@@ -27,17 +27,29 @@ abstract class PC_controller extends PC_base {
 		$tpl_prefix = 'PC_template';
 		$tpl_file = '';
 		if (!empty($tpl)) $tpl_file .= '_'.(string)$tpl;
+		$ln_tpl_file = $tpl_file . '.' . $this->site->ln . '.php';
 		$tpl_file .= '.php';
-		$tpl_path = $this->core->Get_theme_path(null, false).$tpl_prefix.'_'.$this->name.$tpl_file;
+		$tpl_path = $this->core->Get_theme_path(null, false).$tpl_prefix.'_'.$this->name . $ln_tpl_file;
 		if (!is_file($tpl_path)) {
-			$tpl_path = $this->Get_path().$tpl_prefix.$tpl_file;
+			$tpl_path = $this->core->Get_theme_path(null, false).$tpl_prefix.'_'.$this->name . $tpl_file;
+			if (!is_file($tpl_path)) {
+				$tpl_path = $this->Get_path().$tpl_prefix.$ln_tpl_file;
+				if (!is_file($tpl_path)) {
+					$tpl_path = $this->Get_path().$tpl_prefix.$tpl_file;
+				}
+			}
 		}
 		$this->debug('$tpl_path:', 2);
 		$this->debug($tpl_path, 2);
-		$this->Output_start();
-		require($tpl_path);
+		if ($return_only !== null) {
+			$this->Output_start();
+		}
+		@require($tpl_path);
+		if ($return_only === null) {
+			return;
+		}
 		if ($return_only) {
-			$this->Output_end($text, true);
+			$this->Output_end($text);
 			return $text;
 		}
 		else {
@@ -46,7 +58,11 @@ abstract class PC_controller extends PC_base {
 		}
 	}
 	/* Also include specified template while calling $this->Render() */
-	final public function Include_template($tpl, $where) {
-		//$where - after, before
+	final public function Include_template($tpl) {
+		$this->Render($tpl, null);
+	}
+	
+	final public function Get_variable($key, $ln = null) {
+		return $this->core->Get_variable($key, $ln, $this->name);
 	}
 }

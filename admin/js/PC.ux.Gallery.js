@@ -526,8 +526,10 @@ PC.ux.gallery.files.actions = {
 								if (success) {
 									var json_result = Ext.util.JSON.decode(result.responseText);
 									//if (json_result.success) {}
-									PC.ux.gallery.files.Store.reload();
-									dialog.files_view.refresh();
+									//PC.ux.gallery.files.Store.reload();
+									//dialog.files_view.refresh();
+									PC.dialog.gallery.files_view.store.reload();
+									PC.dialog.gallery.files_view.refresh();
 								}
 								else {
 									PC.dialog.gallery.show_connection_error();

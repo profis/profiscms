@@ -41,7 +41,8 @@ require_once 'admin.php';
 	//local ip testing instead of false:
 	if (isset($_GET['debug'])) {
 	?>
-		<script type="text/javascript" src="ext/ext-all-debug.js"></script>
+<!--		<script type="text/javascript" src="ext/ext-all-debug.js"></script>-->
+		<script type="text/javascript" src="ext/ext-all-debug-w-comments.js"></script>
 		<script type="text/javascript" src="ext/src/debug.js"></script>
 	<?php
 	} else {

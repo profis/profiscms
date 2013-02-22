@@ -24,18 +24,57 @@ $files[] = 'BigInt.js';
 $files[] = 'jsaes.js';
 $files[] = 'PC_utils.js';
 $localizeAt = count($files);
+
 $files = array_merge($files, glob('Ext.ux.*.js'), glob('PC.ux.*.js'));
 $files = array_merge($files, glob('PC.*.js'));
-//$files = array_merge($files, glob('Ext.ux.*.js'), glob('ProfisCMS.*.js'), glob('PC.*.js'));
+////////$files = array_merge($files, glob('Ext.ux.*.js'), glob('ProfisCMS.*.js'), glob('PC.*.js'));
 
 $files = array_merge($files, glob('dialog.*.js'));
 
-$pluginsStart = count($files);
+
 
 //load custom plugins js
+$pre_all_plugin_files = array();
+$plugin_files = array();
+if (isset($_GET['debug'])) {
+	print_pre($plugins->loaded_plugins);
+}
 foreach ($plugins->loaded_plugins as $plugin) {
 	$plugin_file = $core->Get_path('plugins', 'PC_plugin.js', $plugin);
-	if (is_file($plugin_file)) $files[] = $plugin_file;
+	if (is_file($plugin_file)) $plugin_files[] = $plugin_file;
+	
+	$plugin_path = $core->Get_path('plugins', '', $plugin);
+	$this_plugin_files = glob($plugin_path . 'PC_plugin.*.js');
+	
+	if (is_array($this_plugin_files)) {
+		$plugin_files = array_merge($plugin_files, $this_plugin_files);
+	}
+	
+	if (isset($_GET['debug'])) {
+		echo "\n\n" . $plugin_file;
+		echo "\n" . $plugin_path;
+	}
+	
+	$this_pre_all_plugin_files = glob($plugin_path . 'PC_plugin_pre_all.*.js');
+	
+	if (is_array($this_pre_all_plugin_files)) {
+		$pre_all_plugin_files = array_merge($pre_all_plugin_files, $this_pre_all_plugin_files);
+	}
+}
+if (isset($_GET['debug'])) {
+	print_pre($pre_all_plugin_files);
+	print_pre($plugin_files);
+	print_pre($files);
+}
+
+if (is_array($pre_all_plugin_files)) {
+	$files = array_merge($files, $pre_all_plugin_files);
+}
+
+$pluginsStart = count($files);
+
+if (is_array($plugin_files)) {
+	$files = array_merge($files, $plugin_files);
 }
 
 $pluginsEnd = count($files);
@@ -60,6 +99,9 @@ if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
 	}
 }
 $files = array_unique($files);
+if (isset($_GET['debug'])) {
+	print_pre($files);
+}
 //print_pre($files);
 //echo "i >= $pluginsStart && i < $pluginsEnd";
 foreach ($files as $i=>$file) {
@@ -68,7 +110,10 @@ foreach ($files as $i=>$file) {
 	if ($i >= $pluginsStart && $i < $pluginsEnd) {
 		$plugin_name = preg_match("#/([^/]+)/PC_plugin.js$#i", $file, $m);
 		//print_pre($m);
-		echo "\nvar CurrentlyParsing = '".$m[1]."';\n";
+		if ($plugin_name) {
+			echo "\nvar CurrentlyParsing = '".$m[1]."';\n";
+		}
+		
 		//before opening plugins
 	}
 	if (v($cfg['debug_mode'])) echo "\n\n/***** $file *****/\n\n";

@@ -442,7 +442,7 @@ AwesomeUploader = Ext.extend(Ext.Panel, {
 			if (match[0] && match[1] && serverData != match[1]) {
 				serverData = match[1];
 			}
-			//console.log(serverData);
+			console.log(serverData);
 			var result = Ext.util.JSON.decode(serverData);//throws a SyntaxError.
 		}catch(e){
 			Ext.MessageBox.show({

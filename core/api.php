@@ -256,7 +256,7 @@ else {
 			//*/
 			$page->Load_menu();
 			$list = array();
-			print_pre($page->menus);
+			//print_pre($page->menus);
 			//break;
 			foreach ($page->menus as $menu) {
 				foreach ($menu as $p) {

@@ -235,6 +235,9 @@ abstract class PC_model extends PC_base{
 		$order_s = '';
 		if (isset($params['order'])) {
 			$order_s = 'ORDER BY ' . $params['order'];
+			if (isset($params['order_dir'])) {
+				$order_s .= ' ' . $params['order_dir'];
+			}
 		}
 		
 		if (!empty($where_s)) {
@@ -256,6 +259,10 @@ abstract class PC_model extends PC_base{
 		$items = array();
 		$first_key = false;
 		while ($d = $r_categories->fetch()) {
+			if (!$first_key) {
+				$first_key = 0;
+			}
+			
 			if (!empty($explode_fields)) {
 				foreach ($explode_fields as $key => $value) {
 					$this->core->Parse_data_str($d[$value], '▓', '░');
@@ -270,7 +277,7 @@ abstract class PC_model extends PC_base{
 			
 		}
 		
-		if ($first_key and $limit == 1 and count($items) == 1) {
+		if ($limit == 1 and count($items) == 1) {
 			return $items[0];
 		}
 		return $items;

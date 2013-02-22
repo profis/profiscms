@@ -117,7 +117,8 @@ abstract class PC_plugin_admin_api extends PC_base{
 					$this->$before_method();
 				}
 				//$this->$method();
-				call_user_func_array(array($this, $method), func_get_args());
+				$args = func_get_args();
+				call_user_func_array(array($this, $method), $args);
 				$after_method = '_after_action';
 				if (method_exists($this, $after_method)) {
 					$this->$after_method();

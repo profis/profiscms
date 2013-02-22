@@ -10,10 +10,10 @@ PC.view_factory = {
 			}
 		}
 		
-		var callback = function(value){
+		var callback = function(value, lang, node_id){
 			field.setValue(value);
 			if (shortcut_field_callback) {
-				shortcut_field_callback(value, field);
+				shortcut_field_callback(value, lang, node_id);
 			}
 		};
 		

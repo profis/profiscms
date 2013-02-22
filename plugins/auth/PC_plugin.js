@@ -89,8 +89,10 @@ PC.auth.perms.editors.Register('core', 'page_nodes', {
 			var tree_params = {
 				additionalBaseParams: {
 					//plugin_only: 'pc_shop',
+					checkboxes: true,
 					pc_shop: {
-						categories_only: true
+						categories_only: true,
+						checkbox_for: 'category'
 					}
 				}
 			};

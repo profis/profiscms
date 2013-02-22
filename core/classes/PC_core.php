@@ -264,11 +264,21 @@ final class PC_core extends PC_base {
 		$r = $this->prepare("SELECT * FROM {$this->db_prefix}variables WHERE (site=0 or site=?) and ln=?");
 		$r->execute(array($this->site->data['id'], $ln));
 		$variables = array();
+		$plugin_variables = array();
 		while ($d = $r->fetch()) {
-			if (!empty($d['controller']) && !$this->plugins->Is_active($d['controller'])) continue;
+			if (!empty($d['controller'])) {
+				if (!$this->plugins->Is_active($d['controller'])) {
+					continue;
+				}
+				if (!isset($plugin_variables[$d['controller']])) {
+					$plugin_variables[$d['controller']] = array();
+				}
+				$plugin_variables[$d['controller']][$d['vkey']] = $d['value'];
+			}
 			$variables[$d['vkey']] = $d['value'];
 		}
 		$this->variables[$ln] = $variables;
+		$this->plugin_variables[$ln] = $plugin_variables;
 		return $variables;
 	}
 	/**
@@ -279,10 +289,18 @@ final class PC_core extends PC_base {
 	* @ln string $ln given language name string. Using $key and $ln keys in the $variables array concrete vairiable should be found; default null.
 	* @return mixed; if variable does not exist-false, otherwise $variable returned.
 	*/
-	public function Get_variable($key, $ln=null) {
+	public function Get_variable($key, $ln=null, $controller = "") {
 		if (is_null($ln)) $ln = $this->site->ln;
 		if (!isset($this->site->data['languages'][$ln])) {
 			return false;
+		}
+		if (!empty($controller)) {
+			if (!isset($this->plugin_variables[$ln])) {
+				if (!$this->Get_variables($ln)) return false;
+			}
+			if (!isset($this->plugin_variables[$ln][$controller])) return false;
+			if (!isset($this->plugin_variables[$ln][$controller][$key])) return false;
+			return $this->plugin_variables[$ln][$controller][$key];
 		}
 		if (!isset($this->variables[$ln])) {
 			if (!$this->Get_variables($ln)) return false;

@@ -412,9 +412,22 @@ Ext.ux.data.PagingDirectStore = Ext.extend(Ext.ux.data.PagingStore, {
 });
 Ext.reg('pagingdirectstore', Ext.ux.data.PagingDirectStore);
 
+/*
 Ext.ux.data.PagingJsonStore = Ext.extend(Ext.ux.data.PagingStore, {
     constructor: Ext.data.JsonStore.prototype.constructor
 });
+*/
+
+///*
+Ext.ux.data.PagingJsonStore = Ext.extend(Ext.ux.data.PagingStore, {
+    constructor: function(config) {
+        Ext.ux.data.PagingJsonStore.superclass.constructor.call(this, Ext.apply(config, {
+            reader: new Ext.data.JsonReader(config)
+        }));
+    }
+});
+//*/
+
 Ext.reg('pagingjsonstore', Ext.ux.data.PagingJsonStore);
 
 Ext.ux.data.PagingXmlStore = Ext.extend(Ext.ux.data.PagingStore, {

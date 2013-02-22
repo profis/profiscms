@@ -1050,8 +1050,24 @@ final class PC_site extends PC_base {
 			}
 		}
 		else if (substr($link, -1) != '/') $link .= $this->cfg['trailing_slash'];
-		return $link.$suffix;
+		
+		if (is_null($route) and isset($this->url_suffix_callback_object) and is_object($this->url_suffix_callback_object) and method_exists($this->url_suffix_callback_object, $this->url_suffix_callback_method)) {
+			$args = $this->url_suffix_callback_args;
+			$args[] = $ln;
+			//echo '<hr />';
+			$suffix_from_callback = call_user_func_array(array($this->url_suffix_callback_object, $this->url_suffix_callback_method), $args);
+			$link = pc_append_route($link, $suffix_from_callback);
+		}
+		
+		return pc_append_route($link, $suffix);
 	}
+	
+	public function Set_url_suffix_callback($object, $method, $args = array()) {
+		$this->url_suffix_callback_object = $object;
+		$this->url_suffix_callback_method = $method;
+		$this->url_suffix_callback_args = $args;
+	}
+	
 	/**
 	* Method used to get current link. In this method used PC_routes::Get_request();
 	* @param string $suffix given to append at end of link.

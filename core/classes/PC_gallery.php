@@ -2053,6 +2053,7 @@ final class PC_gallery extends PC_base {
 	* @return mixed array with key "success" on success, or array with key "errors" otherwise.
 	*/
 	public function Move_file($file_id, $category_id) {
+		$this->debug($file_id, $category_id);
 		$file_id = (int)$file_id;
 		if ($file_id < 1) $response['errors'][] = "file_id";
 		$category_id = (int)$category_id;
@@ -2194,7 +2195,7 @@ final class PC_gallery extends PC_base {
 			return $r;
 		}
 		//debug: echo $old_full_path."\n\n"; echo $full_path; return;
-		if (!rename($old_full_path, $full_path)) {
+		if (!@rename($old_full_path, $full_path)) {
 			$r['errors'][] = "rename_file";
 			return $r;
 		}
@@ -2202,12 +2203,12 @@ final class PC_gallery extends PC_base {
 		$r = $db->prepare("UPDATE {$this->db_prefix}gallery_files SET filename=?, date_modified=? WHERE id=?");
 		$success = $r->execute(array($name, $now, $id));
 		if (!$success) {
-			rename($full_path, $old_full_path);
+			@rename($full_path, $old_full_path);
 			$r['errors'][] = "database";
 			return $r;
 		}
 		if ($r->rowCount() != 1) {
-			rename($full_path, $old_full_path);
+			@rename($full_path, $old_full_path);
 			$r['errors'][] = "database";
 			return $r;
 		}

@@ -282,7 +282,8 @@ Ext.extend(PC.ux.PageTree, Ext.tree.TreePanel, {
 				node: n
 			});
 			//additional
-			loader.baseParams.additional = this.additionalParams;
+			loader.baseParams.additional = {};
+			Ext.apply(loader.baseParams.additional, this.additionalParams);
 			
 			//custom tree renderers
 			/*var renderer = '';
@@ -342,7 +343,7 @@ Ext.ComponentMgr.registerType('profis_pagetree', PC.ux.PageTree);
 					//this.ui.toggleCheck();
 					this.attributes.checked = true;
 				}
-				else {
+				else if (typeof this.attributes.checkbox != 'undefined') {
 					this.attributes.checked = false;
 				}
 			}

@@ -10,6 +10,7 @@ PC_acl_manager = {
 
 
 Ext.onReady(function(){
+	
 	// write your application here
 	Ext.QuickTips.init();
 	// Copy strings from PC.langs[admin_ln] to PC.i18n
@@ -1919,14 +1920,37 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 
 					var lang = w._ln_sel.getValue();
 
-					var set_url_callback = function(url) {
+					var set_url_callback = function(url, node_id) {
 						if (typeof return_callback == 'function') {
-							return_callback(url, lang, n.id);
+							return_callback(url, lang, node_id);
 						}
 						w.close();
 					}
 
 					var url = false;
+					
+					
+					if (page_selector_params && page_selector_params.return_type == 'name_path') {
+						url = n.attributes._names[lang];
+						if (url == '') {
+							Ext.iterate(n.attributes._names, function(ln_key, ln_name) {
+								if (ln_name != '') {
+									url = ln_name;
+									return false;
+								}
+							})
+						}
+						var n_parent = n.parentNode;
+						var ln_name = '';
+						while(n_parent && n_parent.attributes && n_parent.attributes._names) {
+							ln_name = n_parent.attributes._names[lang];
+							if (ln_name != '') {
+								url = ln_name + ' / ' + url;
+							}
+							n_parent = n_parent.parentNode;
+						}	
+					}
+					
 					if (get_route) {
 						
 						if (url === false) {
@@ -1990,7 +2014,7 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 						url = n.id;
 					}
 
-					set_url_callback(url);
+					set_url_callback(url, n.id);
 
 					/*
 					if (typeof return_callback == 'function') {
@@ -2118,14 +2142,19 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 			pack: 'start'
 		}
 	};
-	
+
 	if (page_selector_params.return_only_window_config) {
 		return window_config
 	}
 	
+	var title = PC.i18n.sel_redir_dst;
+	if (page_selector_params.title) {
+		title = page_selector_params.title;
+	}
+	
 	Ext.apply(window_config, {
 		modal: true,
-		title: PC.i18n.sel_redir_dst,
+		title: title,
 		buttons: [
 			{	ref: '../ok_btn',
 				text: Ext.Msg.buttonText.ok,
