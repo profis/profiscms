@@ -453,19 +453,28 @@ elseif ($action == "move_category") {
 elseif ($action == "get_resize_ratio_for_cropping_image") {
 	$image_path = $gallery->config['gallery_path'].$_POST['image_path'];
 	$image_name = $_POST['image_name'];
-	$thumbnail_type = $_POST['thumbnail_type'];
+	$original_thumbnail_type = $thumbnail_type = $_POST['thumbnail_type'];
 	if (!preg_match('/^'.$gallery->patterns['thumbnail_type'].'$/', $thumbnail_type)) {
 		$output['errors'][] = 'thumbnail_type';
 	} else {
 		$thumbnail_type = 'thumb-'.$thumbnail_type;
+		//$output['img_path'] = $image_path.$image_name;
 		if (is_file($image_path.$image_name)) {
 			$size = getimagesize($image_path.$image_name);
+			$output['size'] = serialize($size);
 			if ($size) {
 				$ratio = $gallery->config['image_for_croping_max_dimensions'] / max($size[0], $size[1]);
 				$crop_data_path = $image_path.$thumbnail_type.'/'.$image_name.'.txt';
+				//$output['crop_data_path'] = $crop_data_path;
 				if (is_file($crop_data_path)) {
 					$crop_data = file_get_contents($crop_data_path);
 					$output['crop_data'] = explode('|', $crop_data);
+				}
+				else {
+					$output['crop_data'] = $gallery->Get_crop_data($image_path . '/'.$image_name, $original_thumbnail_type);
+					if ($output['crop_data']) {
+						$output['crop_data'] = array_values($output['crop_data']);
+					}
 				}
 				if ($ratio > 1) $ratio = 1;
 				$output['success'] = true;

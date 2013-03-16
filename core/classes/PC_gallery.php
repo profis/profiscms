@@ -67,6 +67,7 @@ final class PC_gallery extends PC_base {
 		$this->config['gallery_path'] = $this->path['gallery'];
 		// config
 		$this->config['image_for_croping_max_dimensions'] = 600;
+		//$this->config['image_for_croping_max_dimensions_height'] = 450;
 		$this->config['max_category_name_length'] = 50;
 		$this->config['max_filename_length'] = 255;
 		$this->config['max_thumbnail_type_length'] = 20;
@@ -1145,6 +1146,7 @@ final class PC_gallery extends PC_base {
 	* @see PhpThumbFactory::show()
 	*/
 	public function Output_image_for_cropping($filename, $category_path) {
+		$this->debug("Output_image_for_cropping($filename, $category_path)");
 		try {
 			$file_path = '';
 			if (!empty($category_path))
@@ -1157,6 +1159,7 @@ final class PC_gallery extends PC_base {
 			echo $currentDimensions['width'] * $ratio.'<br />';
 			return;*/
 			//$ratio = max($currentDimensions['width'], $currentDimensions['height']) / $this->config['image_for_croping_max_dimensions'];
+			$this->debug($this->config);
 			$thumb->resize($this->config['image_for_croping_max_dimensions'], $this->config['image_for_croping_max_dimensions']);
 			$thumb->show();
 			return array("success"=>true);
@@ -1343,6 +1346,103 @@ final class PC_gallery extends PC_base {
 		);
 	}
 	
+	public function Get_crop_data($file_path, $thumb_type) {
+		$this->debug("Get_crop_data($file_path, $thumb_type)");
+		if (is_array($thumb_type)) {
+			$type = $thumb_type;
+		}
+		else {
+			$type = $this->Get_thumbnail_type($thumb_type);
+		}
+		
+		$this->debug($type, 1);
+		$this->debug('creating: ' . $file_path, 1);
+		$this->last_thumb = $thumb = PhpThumbFactory::create($file_path, array('resizeUp' => true, 'jpegQuality'=>$type['thumbnail_quality']));
+		$this->debug('Current dimensions before resizing:', 3);
+		$this->debug($thumb->currentDimensions, 4);
+		if ($type['thumbnail_type'] == "thumbnail" || $type['use_adaptive_resize']) {
+			$resize_to_w = $type['thumbnail_max_w'];
+			$resize_to_h = $type['thumbnail_max_h'];
+			if ($resize_to_w > $thumb->currentDimensions['width']) {
+				$this->debug('Original width is smaller. Reducing resize_to dimmensions:', 3);
+				$ratio = $resize_to_w / $thumb->currentDimensions['width'];
+				$this->debug("Resize ratio: $resize_to_w / {$thumb->currentDimensions['width']} = " . $ratio, 4);
+				$resize_to_h = round($resize_to_h / $ratio);
+				$resize_to_w = $thumb->currentDimensions['width'];
+				$dimensions_were_reduced = true;
+				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
+			}
+			if ($resize_to_h > $thumb->currentDimensions['height']) {
+				$this->debug('Original height is smaller. Reducing resize_to dimensions:', 3);
+				$ratio = $resize_to_h / $thumb->currentDimensions['height'];
+				$this->debug("Resize ratio: $resize_to_h / {$thumb->currentDimensions['height']} = " . $ratio, 4);
+				$resize_to_w = round($resize_to_w / $ratio);
+				$resize_to_h = $thumb->currentDimensions['height'];
+				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
+			}
+			$this->debug("thumb->adaptiveResize($resize_to_w, $resize_to_h)", 2);
+			$thumb->adaptiveResize($resize_to_w, $resize_to_h);
+		}
+		else {
+			$resize_to_w = $type['thumbnail_max_w'];
+			$resize_to_h = $type['thumbnail_max_h'];
+			if ($resize_to_w > $thumb->currentDimensions['width']) {
+				$this->debug('Original width is smaller. Reducing resize_to dimmensions:', 3);
+				$resize_to_w = $thumb->currentDimensions['width'];
+				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
+			}
+			if ($resize_to_h > $thumb->currentDimensions['height']) {
+				$this->debug('Original height is smaller. Reducing resize_to dimensions:', 3);
+				$resize_to_h = $thumb->currentDimensions['height'];
+				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
+			}
+			$this->debug("thumb->resize($resize_to_w, $resize_to_h)", 2);
+			$thumb->resize($resize_to_w, $resize_to_h);
+		}
+		$crop_data['x'] = ($thumb->originalImageInfo[0]/2)-($thumb->currentDimensions['width']/2);
+		$crop_data['y'] = ($thumb->originalImageInfo[1]/2)-($thumb->currentDimensions['height']/2);
+		$crop_data['w'] = $thumb->currentDimensions['width'];
+		$crop_data['h'] = $thumb->currentDimensions['height'];
+		
+		$this->debug('$crop_data:', 3);
+		$this->debug($crop_data, 4);
+		
+		$this->debug('newDimensions:', 3);
+		$this->debug($thumb->getNewDimensions(), 4);
+
+		$this->debug('Current dimensions after resizing:', 3);
+		$this->debug($thumb->currentDimensions, 4);
+		$this->debug('imagecopyresampled_params:', 3);
+		//$this->debug($thumb->imagecopyresampled_params, 4);
+		/*if ($thumbnail_type == "thumbnail" || $thumbnail_type == "large") {
+			if ($type['use_adaptive_resize']) {
+				$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
+			}
+			else $thumb->resize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
+			//$crop_data['x'] = $thumb->originalImageInfo[0]/$thumb->currentDimensions['width'];
+			$crop_data['x'] = ($thumb->originalImageInfo[0]/2)-($thumb->currentDimensions['width']/2);
+			//$crop_data['y'] = $thumb->originalImageInfo[1]/$thumb->currentDimensions['height'];
+			$crop_data['y'] = ($thumb->originalImageInfo[1]/2)-($thumb->currentDimensions['height']/2);
+			$crop_data['w'] = $thumb->currentDimensions['width'];
+			$crop_data['h'] = $thumb->currentDimensions['height'];
+
+		}
+		else {
+			$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
+			$crop_data['x'] = 0;
+			$crop_data['y'] = 0;
+			$crop_data['w'] = $thumb->originalImageInfo[0];
+			$crop_data['h'] = $thumb->originalImageInfo[1];
+		}
+		*/
+		/*print_pre($crop_data);
+		print_pre($thumb->originalImageInfo);
+		print_pre($thumb->currentDimensions);
+		die;*/
+		return $crop_data;
+	}
+	
+	
 	/**
 	* Method  used to output given file to request side. This method uses PhpThumbFactory class.
 	* @param string $filename given file to name to get.
@@ -1395,85 +1495,11 @@ final class PC_gallery extends PC_base {
 						if (!empty($category_path) && $category_path != '/')
 							$file_path .= $category_path.'/';
 						$file_path .= $filename;
-						$this->debug('creating: ' . $file_path, 1);
-						$thumb = PhpThumbFactory::create($file_path, array('resizeUp' => true, 'jpegQuality'=>$type['thumbnail_quality']));
-						$this->debug('Current dimensions before resizing:', 3);
-						$this->debug($thumb->currentDimensions, 4);
-						if ($thumbnail_type == "thumbnail" || $type['use_adaptive_resize']) {
-							$resize_to_w = $type['thumbnail_max_w'];
-							$resize_to_h = $type['thumbnail_max_h'];
-							if ($resize_to_w > $thumb->currentDimensions['width']) {
-								$this->debug('Original width is smaller. Reducing resize_to dimmensions:', 3);
-								$ratio = $resize_to_w / $thumb->currentDimensions['width'];
-								$this->debug("Resize ratio: $resize_to_w / {$thumb->currentDimensions['width']} = " . $ratio, 4);
-								$resize_to_h = round($resize_to_h / $ratio);
-								$resize_to_w = $thumb->currentDimensions['width'];
-								$dimensions_were_reduced = true;
-								$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
-							}
-							if ($resize_to_h > $thumb->currentDimensions['height']) {
-								$this->debug('Original height is smaller. Reducing resize_to dimensions:', 3);
-								$ratio = $resize_to_h / $thumb->currentDimensions['height'];
-								$this->debug("Resize ratio: $resize_to_h / {$thumb->currentDimensions['height']} = " . $ratio, 4);
-								$resize_to_w = round($resize_to_w / $ratio);
-								$resize_to_h = $thumb->currentDimensions['height'];
-								$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
-							}
-							$this->debug("thumb->adaptiveResize($resize_to_w, $resize_to_h)", 2);
-							$thumb->adaptiveResize($resize_to_w, $resize_to_h);
-						}
-						else {
-							$resize_to_w = $type['thumbnail_max_w'];
-							$resize_to_h = $type['thumbnail_max_h'];
-							if ($resize_to_w > $thumb->currentDimensions['width']) {
-								$this->debug('Original width is smaller. Reducing resize_to dimmensions:', 3);
-								$resize_to_w = $thumb->currentDimensions['width'];
-								$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
-							}
-							if ($resize_to_h > $thumb->currentDimensions['height']) {
-								$this->debug('Original height is smaller. Reducing resize_to dimensions:', 3);
-								$resize_to_h = $thumb->currentDimensions['height'];
-								$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
-							}
-							$this->debug("thumb->resize($resize_to_w, $resize_to_h)", 2);
-							$thumb->resize($resize_to_w, $resize_to_h);
-						}
-						$crop_data['x'] = ($thumb->originalImageInfo[0]/2)-($thumb->currentDimensions['width']/2);
-						$crop_data['y'] = ($thumb->originalImageInfo[1]/2)-($thumb->currentDimensions['height']/2);
-						$crop_data['w'] = $thumb->currentDimensions['width'];
-						$crop_data['h'] = $thumb->currentDimensions['height'];
-						$this->debug('newDimensions:', 3);
-						$this->debug($thumb->getNewDimensions(), 4);
 						
-						$this->debug('Current dimensions after resizing:', 3);
-						$this->debug($thumb->currentDimensions, 4);
-						$this->debug('imagecopyresampled_params:', 3);
-						$this->debug($thumb->imagecopyresampled_params, 4);
-						/*if ($thumbnail_type == "thumbnail" || $thumbnail_type == "large") {
-							if ($type['use_adaptive_resize']) {
-								$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
-							}
-							else $thumb->resize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
-							//$crop_data['x'] = $thumb->originalImageInfo[0]/$thumb->currentDimensions['width'];
-							$crop_data['x'] = ($thumb->originalImageInfo[0]/2)-($thumb->currentDimensions['width']/2);
-							//$crop_data['y'] = $thumb->originalImageInfo[1]/$thumb->currentDimensions['height'];
-							$crop_data['y'] = ($thumb->originalImageInfo[1]/2)-($thumb->currentDimensions['height']/2);
-							$crop_data['w'] = $thumb->currentDimensions['width'];
-							$crop_data['h'] = $thumb->currentDimensions['height'];
+						$crop_data = $this->Get_crop_data($file_path, $type);
 						
-						}
-						else {
-							$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
-							$crop_data['x'] = 0;
-							$crop_data['y'] = 0;
-							$crop_data['w'] = $thumb->originalImageInfo[0];
-							$crop_data['h'] = $thumb->originalImageInfo[1];
-						}
-						*/
-						/*print_pre($crop_data);
-						print_pre($thumb->originalImageInfo);
-						print_pre($thumb->currentDimensions);
-						die;*/
+						$thumb = $this->last_thumb;
+						
 						$thumb_path = $thumbnail_path.'/'.$filename;
 						$thumb->save($thumb_path);
 						$crop_data = $crop_data['x'].'|'.$crop_data['y'].'|'.$crop_data['w'].'|'.$crop_data['h'];
@@ -2232,6 +2258,15 @@ final class PC_gallery extends PC_base {
 			}
 		}
 		return $this->thumbnail_types;
+	}
+	
+	public function Get_thumbnail_type($type, $refresh=0) {
+		$this->Get_thumbnail_types($refresh);
+		if (isset($this->thumbnail_types) and isset($this->thumbnail_types[$type])) {
+			return $this->thumbnail_types[$type];
+		}
+		return false;
+		
 	}
 	
 	/**

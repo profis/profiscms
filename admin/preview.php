@@ -94,5 +94,7 @@ if ($page['ln'] == $ln and strpos($url, $base . $ln.'/') !== false) {
 }
 
 $location = $url;
-//exit;
+if (isset($_GET['debug'])) {
+	echo $location; exit;
+}
 header('Location: '.$location);

@@ -6,26 +6,29 @@ PC.dialog.multilnedit = {
 		var dialog = this;
 		if (!PC.dialog.styles.multilnedit) {
 			var flds = [];
-			PC.global.ln_select.getStore().each(function(rec) {
-				var ln = rec.get('ln_id');
-				var i = {
-					_ln: ln,
-					//fieldLabel: ln.toUpperCase(),
-					fieldLabel: rec.get('ln_name'),
-					ref: '../_'+ln,
-					anchor: '100%',
-					value: (params.values!=undefined?(params.values.hasOwnProperty(ln) ? params.values[ln] : ''):''),
-					listeners: {
-						specialkey: function(fld, e) {
-							if (e.getKey() == e.ENTER) {
-								dialog.Save();
+			if (!this.params.no_ln_fields) {
+				PC.global.ln_select.getStore().each(function(rec) {
+					var ln = rec.get('ln_id');
+					var i = {
+						_ln: ln,
+						//fieldLabel: ln.toUpperCase(),
+						fieldLabel: rec.get('ln_name'),
+						ref: '../_'+ln,
+						anchor: '100%',
+						value: (params.values!=undefined?(params.values.hasOwnProperty(ln) ? params.values[ln] : ''):''),
+						listeners: {
+							specialkey: function(fld, e) {
+								if (e.getKey() == e.ENTER) {
+									dialog.Save();
+								}
 							}
 						}
-					}
-				};
-				if (ln == PC.global.ln) flds.unshift(i);
-				else flds.push(i);
-			});
+					};
+					if (ln == PC.global.ln) flds.unshift(i);
+					else flds.push(i);
+				});
+			}
+			
 			if (typeof params.fields == 'object') if (params.fields != null) {
 				var flds = flds.concat(params.fields);
 			}
@@ -90,10 +93,19 @@ PC.dialog.multilnedit = {
 				}
 				if (i._fld != undefined) {
 					//identify type of getting value
+					var val;
 					if (typeof i.getFieldValue == 'function') {
-						var val = i.getFieldValue();
+						val = i.getFieldValue();
 					}
-					else var val = i.getValue();
+					else {
+						if (i._get_raw_value) {
+							val = i.getRawValue();
+						}
+						else {
+							val = i.getValue();
+						}
+						
+					}
 					//identify field and save values
 					if (i._subfld != undefined) {
 						data['other'][i._fld][i._subfld] = val;

@@ -167,36 +167,7 @@ if (isset($_POST['ajax'])) {
 			return;
 		}
 	}
-	if (isset($_POST['delete'])) {
-		$errors = false;
-		if (empty($_POST['delete'])) $errors = true;
-		else {
-			$r = $db->prepare("DELETE FROM {$cfg['db']['prefix']}site_users WHERE email=?");
-			$s = $r->execute(array($_POST['delete']));
-			if (!$s) $errors = true;
-		}
-		if ($errors) {
-			echo 'errors';
-			return;
-		}
-	}
 	
-	$r = $db->query("SELECT * FROM {$cfg['db']['prefix']}site_users");
-	if ($r) {
-		while ($d = $r->fetch()) {
-			$out[] = array(
-				'id'=>$d['id'],
-				'email'=>$d['email'],
-				'login'=>$d['login'],
-				'name'=>$d['name'],
-				'date_registered'=>$d['date_registered'],
-				'last_seen'=>$d['last_seen'],
-				'confirmation'=>$d['confirmation'],
-				'banned'=>$d['banned'],
-				'flags'=>$d['flags']
-			);
-		}
-	}
 	echo json_encode($out);
 	return;
 }
@@ -476,6 +447,12 @@ function mod_site_users_click() {
 					if (banned != node.data.banned) {
 						rqparams.new_banned = banned;
 					}
+					
+					
+					Ext.iterate(dialog.w._f.items, function(item, index) {
+						debugger;
+					});
+					debugger;
 					Ext.Ajax.request({
 						url: dialog.plugin_file,
 						params: rqparams,
@@ -561,6 +538,12 @@ function mod_site_users_click() {
 			}
 		]
 	};
+	var hook_params = {};
+	PC.hooks.Init('plugin/site_users/form_fields', hook_params);
+	if (hook_params.items) {
+		dialog.form.items = dialog.form.items.concat(hook_params.items);
+	}
+	
 	var grd = dialog.grid;
 	var stor = dialog.store;
 	var add_fn = function() {
@@ -582,7 +565,7 @@ function mod_site_users_click() {
 	};
 	
 	dialog.w = new PC.ux.Window({
-		modal: true,
+		//modal: true,
 		title: PC.i18n.mod.site_users.selfname,
 		width: 810,
 		height: 400,
@@ -590,22 +573,17 @@ function mod_site_users_click() {
 		layoutConfig: {
 			align: 'stretch'
 		},
-		items: [
-			dialog.grid,
-			dialog.form
-		],
+		items: //[
+			new Plugin_site_users_crud({
+				ln: ln
+			}),
+			//dialog.form
+		//],
 		buttons: [
 			{	text: PC.i18n.close,
 				handler: function() {
 					dialog.w.close();
 				}
-			}
-		],
-		tbar: [
-			{
-				iconCls: 'icon-add',
-				text: PC.i18n.add,
-				handler: add_fn
 			}
 		]
 	});

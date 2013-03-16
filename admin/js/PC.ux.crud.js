@@ -56,6 +56,11 @@ PC.utils.localize('pc_ux_crud', ln);
 PC.ux.crud = Ext.extend(Ext.Panel, {
 	api_url: '',
 	per_page: false,
+	auto_load: true,
+	base_params: {},
+	no_ln_fields: false,
+
+	layout: 'fit',
 
     constructor: function(config) {
 		this.ln = this.get_ln();
@@ -70,15 +75,18 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		}
 
 		config = Ext.apply({
-			layout: 'fit',
 			tbar: this.get_tbar(),
-			items: this.get_grid()
+			items: this.get_items()
         }, config);
 
         PC.ux.crud.superclass.constructor.call(this, config);
 		
 		this.set_titles();
     },
+	
+	get_items: function() {
+		return this.get_grid();
+	},
 	
 	get_ln: function() {
 		return PC.i18n.pc_ux_crud;
@@ -92,14 +100,17 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		this.store = new Ext.data.JsonStore({
 			url: this.api_url +'get',
 			method: 'POST',
-			autoLoad: true,
-			remoteSort: true,
+			autoLoad: this.auto_load,
+			remoteSort: (this.per_page)?true:false,
 			root: 'list',
 			totalProperty: 'total',
 			idProperty: 'id',
 			fields: this.get_store_fields(),
 			perPage: this.per_page
 		});
+		if (this.per_page) {
+			this.store.setBaseParam('limit', this.per_page);
+		}
 		return this.store;
 	},
 	
@@ -129,14 +140,33 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		
 	},
 	
+	get_grid_config: function() {
+		return {};
+	},
+	
 	get_grid: function () {
-		this.grid = new Ext.grid.GridPanel({
-			store: this.get_store(),
+		var store =  this.get_store();
+		var config = {
+			store: store,
 			sm: this.get_grid_selection_model(),
 			//plugins: dialog.expander,
 			columns: this.get_grid_columns(),
 			listeners: this.get_grid_listeners()
-		});
+		};
+		Ext.apply(config, this.get_grid_config());
+		if (this.grid_id) {
+			config.id = this.grid_id;
+		}
+		if (this.per_page) {
+			config.bbar = new Ext.PagingToolbar({
+				store: store,
+				displayInfo: true,
+				pageSize: this.per_page,
+				prependButtons: true
+			});
+		}
+		this.grid = new Ext.grid.GridPanel(config);
+		this.grid.pc_crud = this;
 		return this.grid;
 	},
 	
@@ -172,11 +202,13 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 	
 	get_edit_form_fields: function(data) {
 		var fields = this.get_add_form_fields();
-		Ext.each(fields, function(field) {
-			if (data[field._fld]) {
-				field.value = data[field._fld];
-			}
-		})
+		if (data) {
+			Ext.each(fields, function(field) {
+				if (data[field._fld]) {
+					field.value = data[field._fld];
+				}
+			})
+		}
 		return fields;
 	},
 	
@@ -193,8 +225,9 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 			var n = new store.recordType(data);
 			store.addSorted(n);
 			n.set('name', PC.utils.extractName(data.names));
-			//refresh attribute selection store
-			//PC.plugin.pc_shop.attributes.Store.reload();
+			if (this.per_page) {
+				store.reload();
+			}
 		}
 		
 		this.ajax_add_respone_handler = Ext.createDelegate(function(opts, success, response) {
@@ -224,16 +257,17 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 			Ext.Ajax.request({
 				url: this.api_url + 'create',
 				method: 'POST',
-				params: {data: Ext.util.JSON.encode(data)},
+				params: Ext.apply({data: Ext.util.JSON.encode(data)}, this.base_params),
 				callback: this.ajax_add_respone_handler
 			});
 			return true;
 		}, this);
 		return Ext.createDelegate(function() {
 			PC.dialog.multilnedit.show({
-				title: PC.i18n.menu.rename,
+				title: PC.i18n.menu.addNew,
 				fields: this.get_add_form_fields(),
-				Save: save_handler
+				Save: save_handler,
+				no_ln_fields: this.no_ln_fields
 			});
 		}, this);
 	},
@@ -253,6 +287,12 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 				this.edit_record.set('name', PC.utils.extractName(form_data.names));
 			}
 			this.edit_record.commit();
+			if (!this.per_page) {
+				var ss = this.store.getSortState();
+				if (ss) {
+					this.store.sort(ss.field, ss.direction);
+				}
+			}
 		}
 		
 		this.ajax_edit_respone_handler = Ext.createDelegate(function(opts, success, response) {
@@ -291,13 +331,13 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 				callback: this.ajax_edit_respone_handler
 			});
 		}, this);
-		
 		PC.dialog.multilnedit.show({
 			title: PC.i18n.menu.rename,
 			values: record.data.names,
 			pageX: xy[0], pageY: xy[1],
 			fields: this.get_edit_form_fields(record.data),
-			Save: save_handler
+			Save: save_handler,
+			no_ln_fields: this.no_ln_fields
 		});
 	},
 	
@@ -307,8 +347,16 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 	
 	get_button_handler_for_delete: function() {
 		var ln = this.ln;
+		var selected_records = false;
 		this.ajax_del_response_success_handler = function (data) {
-			this.grid.store.reload();
+			if (this.per_page) {
+				this.grid.store.reload();
+			}
+			else {
+				if (selected_records) {
+					this.store.remove(selected_records);
+				}
+			}
 		}
 		
 		this.ajax_del_respone_handler = Ext.createDelegate(function(opts, success, response) {
@@ -337,6 +385,7 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		var delete_handler_confirmed = Ext.createDelegate(function(btn_id) {
 			if (btn_id == 'yes') {
 				var ids = this.get_selected_ids();
+				selected_records = this.grid.getSelectionModel().getSelected();
 				if (!ids.length) {
 					return;
 				}
@@ -385,7 +434,7 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		return this.grid.ownerCt;
 	},
 	
-	update_buttons: function(enable) {
+	update_buttons: function(select_length, sel_model) {
 		var button_container = this.get_button_container();
 		var buttons = [
 			button_container.action_del
@@ -394,7 +443,7 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 			if (!button) {
 				return;
 			}
-			if (enable) {
+			if (select_length) {
 				button.enable();
 			}
 			else {
@@ -405,7 +454,7 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 	
 	on_grid_selection_change: function(selModel) {
 		var selected = selModel.getSelections();
-		this.update_buttons(selected.length);
+		this.update_buttons(selected.length, selModel);
 	}
 	
 });

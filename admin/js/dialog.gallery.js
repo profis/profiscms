@@ -2121,7 +2121,8 @@ PC.dialog.gallery = {
 							var imgLoad = image;
 							imgLoad.onload = (function(){
 								//cropper.window.setSize(Math.max(imgLoad.width, thumbnailType.width) + 15, imgLoad.height + 60);
-								cropper.window.doLayout();
+								//cropper.window.doLayout();
+								cropper.window.setSize(Math.max(imgLoad.width + 15, 300), Math.max(imgLoad.height + 60, 200));
 								if (typeof cropper.crop == 'object') cropper.crop.destroy();
 								if (cropper.cropping_image_ratio < 1) {
 									var min_thumb_width = thumbnail_type_record.data.thumbnail_max_w * cropper.cropping_image_ratio;

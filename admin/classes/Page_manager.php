@@ -53,11 +53,11 @@ class Page_manager extends PC_base{
 				$page_model = $this->core->Get_object('PC_page_model');
 				$node_ids =$page_model->get_all(array(
 					'where' => array('controller = ?'),
-					'query_params' => array($default_ctrl)
+					'query_params' => array($default_ctrl),
 				));
 				if (!empty($node_ids) and count($node_ids) == 1) {
-					$node_id = $node_ids[0];
-					//$this->_page_tree_params['plugin'] = $default_ctrl;
+					$node_id = $node_ids[0]['id'];
+					$this->_page_tree_params['plugin'] = $default_ctrl;
 					$this->debug('node_id changed to ' . $node_id, 1);
 				}
 			}
@@ -110,6 +110,10 @@ class Page_manager extends PC_base{
 	 * @return type
 	 */
 	public function is_node_accessible($node_id, $wanted_site_id = null) {
+		if (v($this->auth->Authorize('core', 'admin'))) {
+			$this->debug(':) superadmin');
+			return true;
+		}
 		if (v($this->allow_access)) {
 			//return true;
 		}

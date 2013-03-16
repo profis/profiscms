@@ -15,10 +15,23 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
  
 if (phpversion() < 5.2) die('ProfisCMS requires at least PHP 5.2 version.');
-define('PC_VERSION', '4.4.1');
 
-//error handling
-require('error_handling.php');
+global $cfg, $db, $sql_parser;
+
+if (!defined('PC_VERSION')) {
+	define('PC_VERSION', '4.4.1');
+
+	class PC_app {
+		static $cfg;
+	}
+	//error handling
+	require('error_handling.php');
+}
+
+
+
+
+
 
 
 //other settings
@@ -42,8 +55,25 @@ $config_files = array(
 
 foreach ($config_files as $key => $filename) {
 	if (file_exists($filename)) {
-		@require_once($filename);
+		@require($filename);
 	}
+}
+
+if (defined('PC_TEST_MODE')) {
+	//Do not use production db in test mode:
+	$cfg['db']['host'] = '';
+	$cfg['db']['user'] = '';
+	$cfg['db']['pass'] = '';
+	$cfg['db']['name'] = '';
+	$test_config_file = CMS_ROOT . 'config_test.php';
+	if (file_exists($test_config_file)) {
+		@require($test_config_file);
+	}
+}
+
+if (empty($cfg['db']['name'])) {
+	header('Location: install/'); 
+	exit();
 }
 
 require_once('functions.php');
@@ -76,7 +106,7 @@ foreach ($cfg['directories'] as $k=>$d) {
 }
 
 
-
+global $class_autoload;
 $class_autoload = array(
 	'PhpThumbFactory'=> $cfg['path']['classes'].'phpthumb'.'/'.'ThumbLib.inc.php',
 	'PHPMailer'=> $cfg['path']['classes'].'class.phpmailer.php'
@@ -87,23 +117,33 @@ $class_autoload = array(
 * @param mixed $cls.
 */
 
-function PC_autoload($cls) {
-	global $class_autoload;
-	if (!isset($class_autoload[$cls])) {
-		if (preg_match("#^PC_[a-z0-9_]+$#i", $cls)) {
-			global $cfg;
-			$path = $cfg['path']['classes'].$cls.'.php';
+PC_app::$cfg = $cfg;
+
+if (!function_exists('PC_autoload')) {
+	function PC_autoload($cls) {
+		global $class_autoload;
+		if (!isset($class_autoload[$cls])) {
+			if (preg_match("#^PC_[a-z0-9_]+$#i", $cls)) {
+				global $cfg;
+				$sub_folder = '';
+				if ($cls != 'PC_model' and substr($cls, -6) == '_model') {
+					$sub_folder = 'models/';
+				}
+				$path = PC_app::$cfg['path']['classes'].$sub_folder.$cls.'.php';
+			}
+			else return false;
 		}
-		else return false;
+		else $path =& $class_autoload[$cls];
+		if (!is_file($path)) return false;
+		require_once($path);
 	}
-	else $path =& $class_autoload[$cls];
-	if (!is_file($path)) return false;
-	require_once($path);
+
+	spl_autoload_register('PC_autoload');
 }
-spl_autoload_register('PC_autoload');
 
 
-require("database.php");
+
+
 
 chdir($cfg['cwd']);
 
@@ -113,31 +153,17 @@ $cfg += get_dir_url_info();
 //print_pre($cfg);
 
 session_name('PHPSESSID_' . md5($cfg['url']['base']));
-session_start();
+if (!defined('PC_TEST_MODE') or !PC_TEST_MODE) {
+	session_start();
+}
 
 
 $HTTPS = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS'])!='off';
 $PROTOCOL = $HTTPS ? 'https://' : 'http://';
 
-$memstore = new PC_memstore; // used only to store values temporarily within process memory (previously was $cache = new PC_cache;)
-$cache = isset($cfg["cache"]["class"]) ? new $cfg["cache"]["class"] : new PC_cache;
-
-$core = new PC_core;
-
-$auth = new PC_auth;
-
-$plugins = new PC_plugins;
-
-$plugins->debug = true;
-$plugins->set_instant_debug_to_file($cfg['path']['logs'] . 'base/plugins.html');
-
-$plugins->Scan();
 
 
-
-$routes = new PC_routes;
-
-$site = new PC_site;
-$page = new PC_page;
-$gallery = new PC_gallery;
-
+if (!defined('PC_TEST_MODE') or !PC_TEST_MODE) {
+	require("database.php");
+	include 'components.php';
+}

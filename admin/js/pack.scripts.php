@@ -102,7 +102,6 @@ $files = array_unique($files);
 if (isset($_GET['debug'])) {
 	print_pre($files);
 }
-//print_pre($files);
 //echo "i >= $pluginsStart && i < $pluginsEnd";
 foreach ($files as $i=>$file) {
 	if ($i == $localizeAt) echo "\n\nPC.utils.localize();\n\n";

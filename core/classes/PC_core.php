@@ -480,7 +480,13 @@ final class PC_core extends PC_base {
 					if ($this->site instanceof PC_site) if (!$this->site->Page_is_loaded()) return false;
 					$path .= $this->site->plugin.'/';
 				}
-				else $path .= (string)$param.'/';
+				else {
+					$path .= (string)$param.'/';
+					if (!file_exists($path)) {
+						$path = $this->cfg['path']['core_plugins'];
+						$path .= (string)$param.'/';
+					}
+				}
 				break;
 			case 'themes':
 				if (is_null($param)) {

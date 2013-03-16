@@ -194,7 +194,7 @@ final class PC_plugins extends PC_base {
 		//load plugin configuration
 		$configuration_file = $path.'PC_config.php';
 		if (is_file($configuration_file)) {
-			require($configuration_file);
+			require_once($configuration_file);
 			if (isset($configuration)) {
 				$cfg =& $configuration;
 				if (isset($cfg['requires'])) {
@@ -212,7 +212,7 @@ final class PC_plugins extends PC_base {
 		$this->debug($plugin_init_file, 3);
 		//$this->site->Add_stylesheet('plugin_custom.css');
 		if (is_file($plugin_init_file)) {
-			require($plugin_init_file);
+			require_once($plugin_init_file);
 		}
 		$this->clearCurrentlyParsing();
 		$this->sorted_plugins[] = $plugin;
@@ -393,6 +393,16 @@ final class PC_plugins extends PC_base {
 		if (!class_exists($ctr_cls)) {
 			$ctr_file = $this->Get_controller_path($ctr);
 			require_once($ctr_file);
+			$extend_controller_class = '';
+			$extend_controller_path = '';
+			$this->core->Init_hooks('plugin/'.$ctr.'/extend-controller', array(
+				'class'=> &$extend_controller_class,
+				'path'=> &$extend_controller_path
+			));
+			if (!empty($extend_controller_class)) {
+				require_once $extend_controller_path . '/' . $extend_controller_class . '.php';
+				$ctr_cls = $extend_controller_class;
+			}
 			if (!class_exists($ctr_cls)) return false;
 		}
 		if (!is_subclass_of($ctr_cls, 'PC_controller')) {

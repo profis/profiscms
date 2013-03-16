@@ -74,7 +74,13 @@ if ($routes->Get(1) == 'admin') {
 			break;
 		case 'plugin':
 			$pluginName = str_replace('-', '_', $routes->Get(2));
-			$pluginName_up = strtoupper(substr($pluginName, 0, 2)) . substr($pluginName, 2);
+			if (strpos($pluginName, 'pc_') === 0) {
+				$pluginName_up = strtoupper(substr($pluginName, 0, 2)) . substr($pluginName, 2);
+			}
+			else {
+				$pluginName_up = strtoupper(substr($pluginName, 0, 1)) . substr($pluginName, 1);
+			}
+			
 			$logger->debug('Plugin ' . $pluginName, 1);
 			if (!empty($pluginName)) {
 				if ($plugins->Is_active($pluginName)) {
@@ -90,7 +96,8 @@ if ($routes->Get(1) == 'admin') {
 					}
 					else {
 						$plugin_api_path = $cfg['path']['plugins'] . $pluginName . '/admin_api/';
-				
+						$plugin_api_path = $core->Get_path('plugins', '', $pluginName) . 'admin_api/';
+						
 						$class_name = $pluginName_up . '_' . v($routes->Get(1)) . '_admin_api';
 						$file_name = $plugin_api_path . "$class_name.php";
 
@@ -104,6 +111,7 @@ if ($routes->Get(1) == 'admin') {
 							$page_manager->set_debug(true);
 							
 							require_once $cfg['path']['admin'] . 'classes/PC_plugin_admin_api.php';
+							require_once $cfg['path']['admin'] . 'classes/PC_plugin_crud_admin_api.php';
 							
 							$plugin_common_api_class_path = $plugin_api_path . $pluginName_up . '_admin_api.php';
 							$logger->debug('common filename: ' . $plugin_common_api_class_path, 2);

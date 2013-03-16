@@ -17,13 +17,15 @@
 abstract class PC_controller extends PC_base {
 	public function Init() {
 		$this->text =& $this->site->text;
-		$this->name = substr(get_class($this), strlen('PC_controller_'));
+		$this_class = get_class($this);
+		$offset = intval(strpos($this_class, 'pc_controller_'));
+		$this->name = substr($this_class, $offset + strlen('PC_controller_'));
 	}
 	abstract public function Process($data);
 	final public function Get_path() {
 		return $this->core->path['plugins'].$this->name.'/';
 	}
-	final public function &Render($tpl=null, $return_only=false) {
+	final public function &Render($tpl=null, $return_only=false, $vars = array()) {
 		$tpl_prefix = 'PC_template';
 		$tpl_file = '';
 		if (!empty($tpl)) $tpl_file .= '_'.(string)$tpl;
@@ -44,6 +46,12 @@ abstract class PC_controller extends PC_base {
 		if ($return_only !== null) {
 			$this->Output_start();
 		}
+		//print_pre();
+		if (!empty($vars)) {
+			foreach ($vars as $key => $var) {
+				$$key = $var;
+			}
+		}
 		@require($tpl_path);
 		if ($return_only === null) {
 			return;
@@ -58,11 +66,18 @@ abstract class PC_controller extends PC_base {
 		}
 	}
 	/* Also include specified template while calling $this->Render() */
-	final public function Include_template($tpl) {
-		$this->Render($tpl, null);
+	final public function Include_template($tpl, $vars = array()) {
+		$this->Render($tpl, null, $vars);
 	}
 	
-	final public function Get_variable($key, $ln = null) {
-		return $this->core->Get_variable($key, $ln, $this->name);
+	final public function Get_variable($key, $ln = null, $default = '') {
+		$variable = $this->core->Get_variable($key, $ln, $this->name);
+		if (empty($variable)) {
+			$variable = $this->core->Get_variable($this->name . '_' . $key, $ln);
+		}
+		if (empty($variable)) {
+			$variable = $default;
+		}
+		return $variable;
 	}
 }

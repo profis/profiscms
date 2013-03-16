@@ -46,6 +46,9 @@ if (isset($_POST['styles'])) {
 		if (in_array($tag , array('tr','td')) and $locked) {
 			$tag = 'table';
 		}
+		if (strpos($class, ' ' . $tag) !== false) {
+			$tag = '';
+		}
 		$key = (!empty($tag)?$tag:'').".$class";
 		$sheet .= $key.'{'.$styles.'}';
 	}

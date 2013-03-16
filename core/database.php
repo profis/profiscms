@@ -15,26 +15,32 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
  
 //init sql parser
+global $sql_parser;
 $sql_parser = new PC_sql_parser;
 //pdo fallback class if native extension is not enabled
 if (!class_exists('PDO')) require_once(CORE_ROOT . "classes/pdo/PDO.class.php");
 //connect to the database
 try {
+	$port = '';
+	if (!empty($cfg['db']['port'])) {
+		$port = 'port='.$cfg['db']['port'].';';
+	}
 	switch ($cfg['db']['type']) {
 		case 'mssql':
-			$db = new PC_database("mssql:host=".$cfg['db']['host'].";dbname=".$cfg['db']['name'], $cfg['db']['user'], $cfg['db']['pass']);
+			$db = new PC_database("mssql:host=".$cfg['db']['host'].";".$port."dbname=".$cfg['db']['name'], $cfg['db']['user'], $cfg['db']['pass']);
 			break;
 		case 'pgsql':
-			$db = new PC_database("pgsql:host=".$cfg['db']['host'].";dbname=".$cfg['db']['name'], $cfg['db']['user'], $cfg['db']['pass']);
+			$db = new PC_database("pgsql:host=".$cfg['db']['host'].";".$port."dbname=".$cfg['db']['name'], $cfg['db']['user'], $cfg['db']['pass']);
 			$db->query("SET search_path TO ".$cfg['db']['name']);
 			$db->query("SET NAMES '".$cfg['db']['charset']."'");
 			break;
 		case 'sqlite3':
 		case 'mysqli':
 		default:
-			$db = new PC_database("mysql:host=".$cfg['db']['host'].";dbname=".$cfg['db']['name'], $cfg['db']['user'], $cfg['db']['pass'], array(
+			$db = new PC_database("mysql:host=".$cfg['db']['host'].";".$port."dbname=".$cfg['db']['name'], $cfg['db']['user'], $cfg['db']['pass'], array(
 				PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true
 			));
+			
 			$db->query("SET NAMES '".$cfg['db']['charset']."'");
 			$db->query("SET group_concat_max_len=10000");
 	}

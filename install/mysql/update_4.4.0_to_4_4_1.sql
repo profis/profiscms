@@ -9,7 +9,7 @@ ALTER TABLE `pc_config` ADD `site` TINYINT( 3 ) UNSIGNED NOT NULL DEFAULT '0' AF
 -- Table structure for table `pc_forms`
 -- 
 
-CREATE TABLE `pc_forms` (
+CREATE TABLE IF NOT EXISTS `pc_forms` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `pid` int(11) NOT NULL,
   `form_id` varchar(255) COLLATE utf8_unicode_ci NOT NULL,

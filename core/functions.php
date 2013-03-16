@@ -668,7 +668,7 @@ function Is_secure_protocol() {
 * @return mixed array containing requested page base path and url.
 */
 function get_dir_url_info() {
-	$ru = $_SERVER['REQUEST_URI'];
+	$ru = v($_SERVER['REQUEST_URI']);
 	$url = explode('/', dirname($_SERVER['PHP_SELF']));
 	$_tmp = $url; $url = array(); foreach ($_tmp as $li) { if ($li) { $url[] = $li; } } unset($_tmp);
 	$url = array_map('strtolower', $_url = $url);
@@ -690,7 +690,7 @@ function get_dir_url_info() {
 	$URL_REL_BASE = ($idxc == 0) ? '/' : ('/'.implode('/', array_slice($_url, 0, $idxc)));
 	if ($URL_REL_BASE != '/') $URL_REL_BASE .= '/';
 	$httpProtocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && mb_strtolower($_SERVER['HTTPS']) != 'off') ? 'https' : 'http';
-	$URL_BASE = $httpProtocol.'://'.$_SERVER['HTTP_HOST'].$URL_REL_BASE;
+	$URL_BASE = $httpProtocol.'://'.v($_SERVER['HTTP_HOST']).$URL_REL_BASE;
 	
 	$out = array(
 		'url' => array('base'=> $URL_BASE),

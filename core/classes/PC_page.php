@@ -42,7 +42,7 @@ final class PC_page extends PC_base {
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'router/route.html', false, 25);
 		$this->debug("Get_route_data($route)");
 		$now = time();
-		$r = $this->prepare("SELECT p.date,p.front,p.id pid,p.idp,c.*,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,"
+		$r = $this->prepare("SELECT p.date,p.front,p.id pid,p.idp,c.*,p.hot,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,"
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.route'), array('separator'=>'▓'))." routes"
 		.', ' . $this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.permalink'), array('separator'=>'▓'))." permalinks"
 		.(is_null($route)?
@@ -515,6 +515,10 @@ final class PC_page extends PC_base {
 							$mail->SMTPDebug  = 1;
 							$mail->CharSet = "utf-8";
 							$mail->SetFrom(v($this->cfg['from_email']));
+							if (isset($this->cfg['from_name']) and !empty($this->cfg['from_name'])) {
+								$mail->FromName = $this->cfg['from_name'];
+							}
+							
 							$mail->Subject = lang('form_submitted_subject', $pageForm['id']);
 														
 							$mailBodyDOM = new DOMDocument;
@@ -626,25 +630,26 @@ final class PC_page extends PC_base {
 		$text =& $$var;
 		while (isset($text)) {
 			#
+			$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
 			$this->Replace_google_map_objects($text);
 			$this->Parse_gallery_files_requests($text);
-			$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
 			$this->core->Init_hooks('parse_html_output', array(
 				'text'=> &$text
 			));
 			
 			$this->Replace_media_objects($text);
 			//fix hash links
-			if (isset($this->route[1])) $text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1])."$1\"",  $text);
+			if (isset($this->route[1])) $text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1], null, false)."$1\"",  $text);
 			//remove default language code from links
 			
+						
 			$text = preg_replace("/href=\"".$this->site->default_ln."\//", "href=\"",  $text);
 			$this->_decode_links($text);
 			
 			//append prefix to the links from editor
 			//if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
 			if (isset($this->route[1])) $text = preg_replace("/href=\"(?!mailto:)/ui", "href=\"".$this->site->link_prefix,  $text);
-						
+			
 			//page break
 			$text = str_replace('╬', '<span style="display:none" id="pc_page_break">&nbsp;</span>', $text);
 			//prevent bots from seeing raw email addresses
@@ -774,11 +779,27 @@ final class PC_page extends PC_base {
 	public function Replace_google_map_objects(&$text) {
 		//<object width="100%" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"> <param name="map_data" value="%7B%22latitude%22%3A55.710803%2C%22longitude%22%3A21.13180699999998%2C%22zoom%22%3A12%2C%22map_type%22%3A%22satellite%22%7D" /> <param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="100%" height="240px">&nbsp;</embed> </object>
 		//<object width="500" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"><param name="map_data" value="%7B%22latitude%22%3A43.635515820871454%2C%22longitude%22%3A51.17217413757328%2C%22zoom%22%3A15%2C%22map_type%22%3A%22hybrid%22%7D" /><param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="500" height="240">&nbsp;</embed></object>
-		$google_map_object = '/<object( style="(.+?)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase=".+?">'."\s*".'<param name="map_data" value="(.+?)" \/>'."\s*".'<param name="src" value=".+?" \/><embed src=".+?" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
+		$google_map_object = '/<object( style="(.+?)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase=".+?">'."\s*".'(?:<param name="map_type" value="(.+?)" \/>)?'."\s*".'<param name="map_data" value="(.+?)" \/>'."\s*".'<param name="src" value=".+?" \/><embed src=".+?" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
+		//htmlspecialchars($text);
 		if (!empty($text)) if (preg_match_all($google_map_object, $text, $gmaps)) {
-			$this->site->Add_script('http://maps.google.com/maps/api/js?sensor=false');
+			//echo 'Martynas';
+			//print_pre($gmaps);
+			//exit;
+			$map_types = array();
+			
 			for ($a=0; isset($gmaps[0][$a]); $a++) {
-				$json_data = urldecode($gmaps[5][$a]);
+				$map_type = '';
+				if (!isset($gmaps[6])) {
+					$json_data = urldecode($gmaps[5][$a]);
+				}
+				else {
+					$map_type = $gmaps[5][$a];
+					$json_data = urldecode($gmaps[6][$a]);
+				}
+				if (empty($map_type)) {
+					$map_type = 'google';
+				}
+				$map_types[$map_type] = $map_type;
 				$data = json_decode($json_data);
 				//print_pre($data);
 				$map_custom_options = v($data->map_options);
@@ -794,26 +815,67 @@ final class PC_page extends PC_base {
 					$marker_custom_options = ', ' . $marker_custom_options;
 				}
 				$marker_image = v($data->marker_image);
+				$y_marker_image = '';
 				if (!empty($marker_image)) {
-					
-					//echo $marker_image = $this->Parse_gallery_file_request($marker_image);
-					//print_pre($marker_image);
-					$marker_image = ', icon:"' . $this->core->Absolute_url($marker_image) .'"';
+					$absolute_image_path = $this->core->Absolute_url($marker_image);
+					$marker_image = ', icon:"' . $absolute_image_path .'"';
+					$y_marker_image = 'iconImageHref: "'.$absolute_image_path.'"';
 				}
 				
 				$id = 'gmap_'.$this->_gmap_counter++;
 				$w = $gmaps[3][$a];
 				$h = $gmaps[4][$a];
-				$google_map_frame = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
-				.'<script type="text/javascript">'
-					.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false'.(isset($data->scrollwheel)?',scrollwheel:'.$data->scrollwheel:''). $map_custom_options . '};'
-					.'var '.$id.'=null;'
-					.'$(function(){'
-						.$id.'=new google.maps.Map(document.getElementById(\''.$id.'\'),options_'.$id.');'
-						.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
-					.'});'
-				.'</script></div>';
-				$text = preg_replace('#'.preg_quote($gmaps[0][$a], "#").'#m', $google_map_frame, $text, 1);
+				if ($map_type == 'google') {
+					$map_frame = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
+					.'<script type="text/javascript">'
+						.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false'.(isset($data->scrollwheel)?',scrollwheel:'.$data->scrollwheel:''). $map_custom_options . '};'
+						.'var '.$id.'=null;'
+						.'$(function(){'
+							.$id.'=new google.maps.Map(document.getElementById(\''.$id.'\'),options_'.$id.');'
+							.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
+						.'});'
+					.'</script></div>';
+				}
+				if ($map_type == 'yandex') {
+					$map_frame = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
+					.'<script type="text/javascript">'
+					.'
+						ymaps.ready(yandex_map_init_'.$id.');
+
+						function yandex_map_init_'.$id.' () {
+							var myMap = new ymaps.Map("'.$id.'", {
+								center: ['.$data->latitude.', '.$data->longitude.'],
+								zoom: ' . $data->zoom . ',
+								type: "' . $data->map_type . '", 
+								behaviors: ["default", "scrollZoom"]
+							});
+							myMap.controls
+							.add("zoomControl")
+							.add("typeSelector");
+							myPlacemark = new ymaps.Placemark(['.$data->latitude.', '.$data->longitude.'], {},
+								{
+									'.$y_marker_image.'
+								}
+							);
+							myMap.geoObjects.add(myPlacemark);
+						}
+						'
+					.'</script></div>';
+				}
+				
+				$text = preg_replace('#'.preg_quote($gmaps[0][$a], "#").'#m', $map_frame, $text, 1);
+			}
+			foreach ($map_types as $key => $map_type) {
+				switch ($map_type) {
+					case 'google':
+						$this->site->Add_script('http://maps.google.com/maps/api/js?sensor=false');
+						break;
+					case 'yandex':
+						$this->site->Add_script('http://api-maps.yandex.ru/2.0/?load=package.full&lang=ru-RU');	
+						break;
+					default:
+						break;
+				}
 			}
 		}
 		return true;
@@ -1184,17 +1246,20 @@ final class PC_page extends PC_base {
 	
 	public function Load_menu() {
 		$now = time();
-		$r = $this->prepare("SELECT mp.id idp,p.id pid,c.id cid,c.name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id FROM {$this->db_prefix}pages mp"
+		$query = "SELECT mp.id idp,p.id pid,c.id cid,c.name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
 		." AND p.controller!='menu' AND p.nomenu<1"
 		." LEFT JOIN {$this->db_prefix}content c ON pid=p.id AND ln='{$this->site->ln}'"
 		//check if home page rediects to this page
 		." LEFT JOIN {$this->db_prefix}pages h ON h.front=1 and h.redirect=".$this->sql_parser->cast('p.id', 'text')
 		." WHERE mp.controller='menu' and p.site=? and p.published=1 and p.deleted=0"
-		." and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')"
+		." and c.name <> '' and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')"
 		." GROUP BY p.id"
-		." ORDER BY mp.nr,p.nr");
-		$s = $r->execute(array($this->site->data['id']));
+		." ORDER BY mp.nr,p.nr";
+		$r = $this->prepare($query);
+		$query_params = array($this->site->data['id']);
+		//echo $this->get_debug_query_string($query, $query_params);
+		$s = $r->execute($query_params);
 		if (!$s) return false;
 		//if there's no menu, just leave empty menus array and return
 		if ($r->rowCount() < 1) return true;
@@ -1241,15 +1306,30 @@ final class PC_page extends PC_base {
 		$this->_menu_shift++;
 		return $menu;
 	}
-	public function Get_html_menu($shift=0) {
+	public function Get_html_menu($shift=0, $params = array()) {
 		$menu = $this->Get_menu($shift);
-		$html = '<ul>';
+		$ul_class_full = '';
+		if (isset($params['ul_class'])) {
+			$ul_class_full = ' class = "'.$params['ul_class'].'"';
+		}
+		$html = '<ul'.$ul_class_full.'>';
 		//print_pre($menu);
 		foreach ($menu as $item) {
 			//print_pre($item);
-			$html .= '<li '.($item['hot']?'class="hot"':'').'><a href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.$item['pid'].'</i>').'</a>';
-			//if this item is opened - submenu should be displayed
+			$classes = array();
+			$class_full = '';
 			if ($this->site->Is_opened($item['pid'])) {
+				$classes[] = v($params['li_active_class'], 'active');
+			}
+			if ($item['hot']) {
+				$classes[] = 'hot';
+			}
+			if (!empty($classes)) {
+				$class_full = ' class = "'.implode(' ', $classes).'"';
+			}
+			$html .= '<li ' . $class_full . '><a href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.$item['pid'].'</i>').'</a>';
+			//if this item is opened - submenu should be displayed
+			if (v($params['level'], 1) > 1 and $this->site->Is_opened($item['pid'])) {
 				$submenu = $this->Get_submenu($item['pid'], array('pid','name','route','info'));
 				$html .= '<ul style="padding-left:15px;">';
 				foreach ($submenu as $item) {
@@ -1285,7 +1365,12 @@ final class PC_page extends PC_base {
 		if (!$s) return 0;
 		return $r->fetchColumn();
 	}
-	public function Get_submenu($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr") {
+	
+	public function Get_submenu($id, $fields=array(), $limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr") {
+		return $this->Get_submenu_part($id, $fields, $limit, $include_content, $include_nomenu, $order);
+	}
+	
+	public function Get_submenu_part($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr") {
 		if (!empty($fields) and !in_array('permalink', $fields)) {
 			$fields[] = 'permalink';
 		}

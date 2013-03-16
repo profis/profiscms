@@ -74,6 +74,7 @@ Ext.onReady(function(){
 				beforeselect: function(cmbbox, rec, ndx) {
 					if (PC.global.site == rec.get('id')) return;
 					return save_prompt(function() {
+						//debugger;
 						PC.global.site = rec.get('id');
 						PC.global.site_select.setValue(PC.global.site);
 						PC.global.page = {};
@@ -88,6 +89,13 @@ Ext.onReady(function(){
 							if (lnr) {
 								PC.global.tree_ln = lnr.get('ln_id');
 								PC.tree.component.setLn(PC.global.tree_ln);
+							}
+						}
+						if (!PC.global.ln_select.getStore().getById(PC.global.ln)) {
+							var lnr = PC.global.ln_select.getStore().getAt(0);
+							if (lnr) {
+								PC.global.ln = lnr.get('ln_id');
+								PC.admin._editor_ln_select.topToolbar.items.items[0].pressed = true;
 							}
 						}
 						PC.global.ln_select.setValue(PC.global.tree_ln);

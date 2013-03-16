@@ -312,6 +312,7 @@ final class PC_site extends PC_base {
 	* @todo edit: function now checks if site is active, otherwise it shows default under construction template from formatted text.
 	*/
 	public function Load_site_data($site, $forceActive=false) {
+		$this->debug("Load_site_data()");
 		$this->data = $site;
 		//if domain default language is not set then use sites first set language
 		if (!empty($this->data['ln'])) {
@@ -332,16 +333,22 @@ final class PC_site extends PC_base {
 		preg_match("#^".$pattern."$#i", $_SERVER['REQUEST_URI'], $m);*/
 		$site_mask_pos = strpos($site['mask'], '/');
 		if ($site_mask_pos) {
+			$this->debug("Site has mask", 5);
 			//define request
-			$request =& $_SERVER['REQUEST_URI'];
+			$new_request = $request =& $_SERVER['REQUEST_URI'];
+			$this->debug("new request is: " . $new_request, 5);
 			$pos = strpos($request, '?');
-			if ($pos) $request = substr($request, 0, $pos);
+			if ($pos) $new_request = $request = substr($request, 0, $pos);
+			$this->debug("new request is: " . $new_request, 5);
 			//define entry request
 			$pattern = str_replace('%', '', substr($site['mask'], $site_mask_pos));
 			$old_base_url = preg_replace('#^https?://#ui', '', $this->cfg['url']['base']);
 			$old_base_url = substr($old_base_url, strpos($old_base_url, '/'));
 			$this->link_prefix = substr($pattern, mb_strlen($old_base_url));
-			$this->routes->Parse_request(mb_substr($request, mb_strlen($pattern)));
+			$new_request = mb_substr($request, mb_strlen($pattern));
+			$this->debug(" mb_substr($request, mb_strlen($pattern))", 5);
+			$this->debug("So, new request will be: " . $new_request, 6);
+			$this->routes->Parse_request($new_request);
 		}
 		//check if site theme exists
 		$this->data['tpl'] = $this->core->Get_theme_path(null, false).'template.php';
@@ -492,20 +499,26 @@ final class PC_site extends PC_base {
 	* @return mixed array containing data about site.
 	*/
 	public function Get_by_domain($entry_address=null) {
+		$this->debug("Get_by_domain($entry_address)");
 		global $cfg;
 		if (is_null($entry_address)) {
 			$request =& $_SERVER['REQUEST_URI'];
+			$this->debug("Request is: " . $request, 1);
 			$pos = strpos($request, '?');
-			$entry_address = rtrim($_SERVER['HTTP_HOST'].($pos?substr($request, 0, $pos):$request), '/');
+			//$entry_address = rtrim($_SERVER['HTTP_HOST'].($pos?substr($request, 0, $pos):$request), '/');
+			$entry_address = $_SERVER['HTTP_HOST'].($pos?substr($request, 0, $pos):$request);
 			//$entry_address = preg_replace("#^http://(.+)$#", "$1", $cfg['url']['base']);
 		}
+		$this->debug("Entry address is: " . $entry_address, 1);
 		$query = "SELECT s.id,s.name,s.theme,d.ln,".$this->sql_parser->group_concat($this->sql_parser->concat_ws("░", 'l.nr', 'l.ln', 'l.name', 'l.disabled', 'l.name'), array('order'=>array('by'=>'l.nr'),'separator'=>'▓'))." languages, mask, active"
 			." FROM {$this->db_prefix}domains d"
 			." LEFT JOIN {$this->db_prefix}sites s ON id=d.site"
 			." LEFT JOIN {$this->db_prefix}languages l ON l.site=s.id AND l.disabled = 0"
 			." WHERE ? LIKE mask GROUP BY s.id,s.name,s.theme,d.ln,d.nr,d.mask ORDER BY d.nr,length(mask) desc LIMIT 1";
 		$r = $this->prepare($query);
-		$s = $r->execute(array($entry_address));
+		$query_params = array($entry_address);
+		$this->debug_query($query, $query_params, 2);
+		$s = $r->execute($query_params);
 		if (!$s) die('Get_site_by_domain error.');
 		if ($r->rowCount() < 1) return false;
 		$d = $r->fetch();
@@ -528,6 +541,7 @@ final class PC_site extends PC_base {
 	* @see PC_site::Get_all()
 	*/
 	public function &Get($id, $cache=true, $get_all_simultaneously=false) {
+		$this->debug("Get()");
 		if ($cache) {
 			$cached =& $this->memstore->Get('sites', $id);
 			if ($cached) return $cached;
@@ -566,6 +580,7 @@ final class PC_site extends PC_base {
 	* @see PC_memstore::Get()
 	*/
 	public function Get_all($cache=true) {
+		$this->debug("Get_all()");
 		if ($cache && $this->memstore->Is_cached('sites')) {
 			return $this->memstore->Get('sites');
 		}
@@ -947,20 +962,41 @@ final class PC_site extends PC_base {
 			return $this->data['languages'];
 		}
 	}
+	
+	
+	public function Get_all_languages() {
+		$lang_model = $this->core->Get_object('PC_language_model');
+		$lang_model->absorb_debug_settings($this);
+		return $lang_model->get_all(array(
+			'where' => array('NOT disabled'),
+			'key' => 'ln',
+			'order' => 'site, nr'
+		));
+	}
+	
 	/**
 	* Method used to get HTML markup in unordered list notation with installed languages.
 	* @return mixed array of installed languages.
 	* @see PC_site::Get_languages()
 	* @see PC_site::Get_link()
 	*/
-	public function Get_html_languages() {
+	public function Get_html_languages($params = array()) {
+		$this->debug("Get_html_languages()");
 		$lns = $this->Get_languages();
 		if (!$lns) return false;
-		$html = '<ul>';
+		$ul_class_full = '';
+		if (isset($params['ul_class'])) {
+			$ul_class_full = ' class = "'.$params['ul_class'].'"';
+		}
+		$html = '<ul'.$ul_class_full.'>';
 		global $cfg;
 		foreach ($lns as $code=>$ln) {
+			$class_full = '';
+			if ($code == $this->ln) {
+				$class_full = ' class = "'.v($params['li_active_class'], 'active').'"';
+			}
 			//$html .= '<li><a href="'.($code == $this->data['ln']?$cfg['url']['base']:$code.'/');
-			$html .= '<li><a href="'.$this->Get_link(null, $code);
+			$html .= '<li'.$class_full.'><a href="'.$this->Get_link(null, $code);
 			/*if (isset($this->loaded_page['routes'][$code])) {
 				$html .= $this->loaded_page['routes'][$code].'/';
 			}*/
@@ -1028,9 +1064,43 @@ final class PC_site extends PC_base {
 	* @see PC_site::Is_front_page()
 	*/
 	public function Get_link($route=null, $ln=null, $prepend_prefix=true, $suffix='') {
+		$this->debug("Get_link($route, $ln)");
 		if (empty($ln)) $ln = $this->ln;
 		//get language prefix
-		$link = $this->Get_link_prefix($ln, true, $prepend_prefix);
+		$ln_domain = '';
+		if (false and is_null($route) and $this->ln != $ln) {
+			$this->debug('ln differs!', 1);
+			$cache_key = 'ln_domain_' . $ln;
+			$ln_domain = $this->memstore->Get($cache_key);
+			if ($ln_domain === false) {
+				$domain_model = $this->core->Get_object('PC_domain_model');
+				$domain_model->absorb_debug_settings($this, 1);
+				$ln_domain_data = $domain_model->get_all(array(
+					'select' => 'mask',
+					'where' => array(
+						'site' => $this->get_id(),
+						'ln' => $ln
+					),
+					'order' => 'nr ASC',
+					'limit' => 1
+				)); 
+				if ($ln_domain_data) {
+					$ln_domain = trim($ln_domain_data['mask'], '%');
+				}
+				else {
+					$ln_domain = '';
+				}
+				$this->memstore->Cache($cache_key, $ln_domain);
+			}
+			$this->debug($ln_domain, 2);
+		}
+		$pre_ln = $ln;
+		if (!empty($ln_domain)) {
+			$pre_ln = '';
+			$ln_domain = 'http://' . $ln_domain;
+		}
+		$link = $this->Get_link_prefix($pre_ln, true, $prepend_prefix);
+		$this->debug('link after prefix: ' . $link, 1);
 		//append route
 		if (!empty($route)) {
 			$link .= $route;
@@ -1042,8 +1112,12 @@ final class PC_site extends PC_base {
 				$link_to_append = $this->loaded_page['permalinks'][$ln];
 			}
 			$link .= $link_to_append;
+			$this->debug('link after routes+permalinks: ' . $link, 1);
 		}
-		elseif (empty($link)) $link = $this->cfg['url']['base'].$this->link_prefix;
+		elseif (empty($link)) {
+			$link = $this->cfg['url']['base'].$this->link_prefix;
+			$this->debug('link after base: ' . $link, 1);
+		}
 		if (strrpos($link, '?')) {
 			if (substr($link, (strrpos($link, '?')-1), 1) != '/') {
 				$link = substr($link, 0, strrpos($link, '?')) . $this->cfg['trailing_slash'] . substr($link, strrpos($link, '?'));
@@ -1051,15 +1125,21 @@ final class PC_site extends PC_base {
 		}
 		else if (substr($link, -1) != '/') $link .= $this->cfg['trailing_slash'];
 		
-		if (is_null($route) and isset($this->url_suffix_callback_object) and is_object($this->url_suffix_callback_object) and method_exists($this->url_suffix_callback_object, $this->url_suffix_callback_method)) {
-			$args = $this->url_suffix_callback_args;
-			$args[] = $ln;
-			//echo '<hr />';
-			$suffix_from_callback = call_user_func_array(array($this->url_suffix_callback_object, $this->url_suffix_callback_method), $args);
-			$link = pc_append_route($link, $suffix_from_callback);
-		}
+		$this->debug('link after ?: ' . $link, 1);
 		
-		return pc_append_route($link, $suffix);
+		if (is_null($route) ) {
+			if (isset($this->url_suffix_callback_object) and is_object($this->url_suffix_callback_object) and method_exists($this->url_suffix_callback_object, $this->url_suffix_callback_method)) {
+				$args = $this->url_suffix_callback_args;
+				$args[] = $ln;
+				//echo '<hr />';
+				$suffix_from_callback = call_user_func_array(array($this->url_suffix_callback_object, $this->url_suffix_callback_method), $args);
+				$link = pc_append_route($link, $suffix_from_callback);
+				$this->debug('link after suffix callback: ' . $link, 1);
+			}
+		}
+		$link = $ln_domain . pc_append_route($link, $suffix);
+		$this->debug($link, 5);
+		return $link;
 	}
 	
 	public function Set_url_suffix_callback($object, $method, $args = array()) {

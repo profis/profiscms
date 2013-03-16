@@ -70,6 +70,9 @@ function PC_log_error($e, $str) {
 	if( $e["type"] & (E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR) ) $type = "EXCEPTION";
 	// PC_firebug_log($type, $str, $e["file"], $e["line"]);
 	if (isset($cfg['debug_mode']) && $cfg['debug_mode']) echo $str;
+	if (defined('PC_TEST_MODE') and PC_TEST_MODE) {
+		return;
+	}
 	file_put_contents(rtrim(dirname(dirname(__FILE__)), "/\\").'/PC_errors.txt', @date('Y-m-d H:i:s').' - '.$str."\n", FILE_APPEND);
 }
 

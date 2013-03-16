@@ -162,27 +162,20 @@ abstract class PC_model extends PC_base{
 		
 		$query_params = array_merge($query_params, $this->_query_params);
 		
-		$where_s = '';
-		
+		if (!isset($params['where'])) {
+			$params['where'] = array();
+		}
+		//$this->debug($params['where']);
 		if (!is_null($id)) {
-			if (!is_array($id)) {
-			$where_s .= ' t.id = ? ';
-				$query_params[] = $id;
-				$limit = 1;
-			}
-			else {
-				$where_s .= ' t.id ' . $this->sql_parser->in($id);
-				$query_params = array_merge($query_params, $id);
-			}
+			$params['where'] = array_merge(array('t.id' => $id), $params['where']);
 		}
 				
 		if (v($params['query_params']) and is_array($params['query_params'])) {
 			$query_params = array_merge($query_params, $params['query_params']);
 		}
 		
-		if (!isset($params['where'])) {
-			$params['where'] = array();
-		}
+		
+		/*
 		if (isset($params['where'])) {
 			$additional_where = '';
 			if (!is_array($params['where'])) {
@@ -209,6 +202,8 @@ abstract class PC_model extends PC_base{
 				$where_s .= $additional_where;
 			}
 		}
+		*/
+		$where_s = $this->_get_where_clause($params['where'], $query_params);
 		
 		$limit_s = '';
 		if (v($params['limit'])) {
@@ -244,11 +239,22 @@ abstract class PC_model extends PC_base{
 			$where_s = ' WHERE ' . $where_s;
 		}
 		
-		$query = "SELECT {$select}{$select_cc} FROM {$this->db_prefix}{$this->_table} t $join_cc $join
+		$paging = false;
+		if (isset($params['paging']) and is_array($params['paging']) and isset($params['paging']['perPage'])) {
+			$paging = true;
+			$params['paging'] = new PC_paging(v($params['paging']['page'], null), v($params['paging']['perPage'], 20), v($params['paging']['start'], null));
+			$limit_s = " LIMIT {$params['paging']->Get_offset()},{$params['paging']->Get_limit()}";			
+		}
+		
+		$query = "SELECT " . ($paging?'SQL_CALC_FOUND_ROWS ':'') . "{$select}{$select_cc} FROM {$this->db_prefix}{$this->_table} t $join_cc $join
 			$where_s $group_s $order_s $limit_s";
 		$r_categories = $this->prepare($query);
 
 		$this->debug_query($query, $query_params, 1);
+		
+		if (isset($params['query_only']) and $params['query_only']) {
+			return $this->get_debug_query_string($query, $query_params);	;
+		}
 		
 		//echo "\n";
 		//echo $this->get_debug_query_string($query, $query_params);
@@ -256,6 +262,11 @@ abstract class PC_model extends PC_base{
 		$s = $r_categories->execute($query_params);
 		if (!$s) return false;
 
+		if ($paging) {
+			$rTotal = $this->query("SELECT FOUND_ROWS()");
+			if ($rTotal) $params['paging']->Set_total($total = $rTotal->fetchColumn());
+		}
+		
 		$items = array();
 		$first_key = false;
 		while ($d = $r_categories->fetch()) {
@@ -267,6 +278,10 @@ abstract class PC_model extends PC_base{
 				foreach ($explode_fields as $key => $value) {
 					$this->core->Parse_data_str($d[$value], '▓', '░');
 				}
+			}
+			if (isset($params['formatter'])) {
+				//call_user_func_array(array($this, $params['formatter']), array($d));
+				$this->$params['formatter']($d);
 			}
 			if (isset($params['key']) and isset($d[$params['key']]) and !empty($d[$params['key']])) {
 				$items[$d[$params['key']]] = $d;
@@ -287,6 +302,7 @@ abstract class PC_model extends PC_base{
 		$where_clause = '';
 		if (is_array($where)) {
 			$where_strings = array();
+			//$this->debug($where);
 			foreach ($where as $key => $value) {
 				if (!is_array($value)) {
 					if (is_string($key)) {
@@ -431,6 +447,11 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function delete($params = array()) {
+		if (!is_array($params) and $params) {
+			$params = array('where' => array(
+				'id' => $params
+			));
+		}
 		$query_params = array();
 		
 		$limit_s = '';

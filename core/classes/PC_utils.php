@@ -162,12 +162,17 @@ class PC_utils {
 		$ru = rtrim($site->Get_current_link(), '/');
 		$path = $path ? $path : $ru;
 		if ($params) {
+			if (isset($params['page']) and $params['page'] > 1) {
+				$path .= '/page' . $params['page'];
+				unset($params['page']);
+			}
 			if (!is_array($params)) $params = self::urlParamsToArray($params);
 		} else {
 			$params = array();
 		}
 		if (!$stripGet) {
 			$params = array_merge($_GET, $params);
+			unset($params['page']);
 		}
 		
 		$url = self::getUrl($path, $params, $lang);

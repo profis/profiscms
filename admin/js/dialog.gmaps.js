@@ -1,32 +1,37 @@
 Ext.ns('PC.dialog');
+
+PC.utils.is_array = function(value) {
+   return typeof(input)=='object'&&(input instanceof Array);
+};
+
 PC.dialog.gmaps = {
 	edit_mode: false,
 	
-	load_google: function (after_show_callback) {
-		var dialog = this;
-		if (typeof google != 'object' || typeof google.maps != 'object' || typeof google.maps.LatLng != 'function') {
-			var callback_for_google = function() {
-				var callback_for_maps = function() {
-					dialog.show_when_js_loaded();
-					if (after_show_callback && typeof(after_show_callback) == "function") {
-						after_show_callback();
-					}
-				}
-				google.load("maps", "3", {"callback" : callback_for_maps, "other_params": "sensor=false"});
-			};
-			PC.utils.loadScript('https://www.google.com/jsapi/?sensor=false', callback_for_google);
-		}
-		else {
-			dialog.show_when_js_loaded();
-			if (after_show_callback && typeof(after_show_callback) == "function") {
-				after_show_callback();
-			}
-		}
+	//map_type: 'yandex',
+	map_type: 'google',
+	
+	load_library: function (after_show_callback) {
+		PC.dialog.maps[this.map_type].load_library.defer(0, this, [after_show_callback]);
 	},
 	
 	
-	show: function(after_show_callback) {
-		this.load_google(after_show_callback);
+	show: function(after_show_callback, el) {
+		var original_callback = after_show_callback;
+		if (el) {
+			var attributes = Ext.util.JSON.decode('{'+el.title+'}');
+			if (attributes.map_type) {
+				if (this.panel && this.map_type != attributes.map_type) {
+					after_show_callback = Ext.createDelegate(function() {
+						PC.dialog.maps[this.map_type].load_library(
+							Ext.createDelegate(PC.dialog.maps[this.map_type].after_render, PC.dialog.gmaps.panel, [false, original_callback]),
+							true
+						);
+					}, this)					
+				}
+				this.map_type = attributes.map_type;
+			}
+		}
+		this.load_library(after_show_callback);
 	},
 	show_when_js_loaded: function() {
 		this.ln = PC.i18n.dialog.gmaps;
@@ -40,12 +45,7 @@ PC.dialog.gmaps = {
 			}
 			return;
 		}
-        this.default_options = {
-			center: new google.maps.LatLng(55.17804878976065, 23.910986328124977),
-			zoom: 7,
-			mapTypeId: google.maps.MapTypeId.ROADMAP,
-			streetViewControl: false
-		};
+        this.default_options = PC.dialog.maps[this.map_type].get_default_options();
 		this.options = this.default_options;
 		var options = this.options;
 		this.panel = new Ext.Panel({
@@ -53,29 +53,57 @@ PC.dialog.gmaps = {
 			plain: true,
 			border: false,
 			flex: 1,
+			autoHeight: true,
+			ref: '../../../_map_panel',
 			afterRender: function() {
-				this.map = new google.maps.Map(this.container.dom, options);
-				this.marker = new google.maps.Marker({
-				  map: this.map,
-				  draggable: true,
-				  animation: google.maps.Animation.DROP,
-				  position: options.center
-				});
-				this.updatePosition();
-				google.maps.event.addListener(this.marker, 'dragend', this.updatePosition);
+				//debugger;
 			},
-			updatePosition: function() {
-				var pos = PC.dialog.gmaps.panel.marker.getPosition();
-				PC.dialog.gmaps.panel.map.setCenter(pos);
+			afterRender_: function() {
+				PC.dialog.maps[dialog.map_type].after_render.defer(0, this, [options]);
+			},
+			listeners: {
+				afterrender: function(panel) {
+							
+				},
+				afterlayout: function(panel, layout) {
+					debugger;
+				},
+				afterLayout: function(panel, layout) {
+					debugger;
+				},
+				resize: function(panel, adjWidth, adjHeight, rawWidth, rawHeight) {
+					debugger;
+				},
+				expand: function() {
+					debugger;
+				},
+				bodyresize: function() {
+					debugger;
+				}
+			},
+			updatePosition: function(e) {
+				var pos = PC.dialog.maps[dialog.map_type].get_marker_position(this.marker);
+				this.map.setCenter(pos);
 				var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
-				toolbar.get('marker_position_latitude').setValue(Math.round(pos.lat()*1000000)/1000000);
-				toolbar.get('marker_position_longitude').setValue(Math.round(pos.lng()*1000000)/1000000);
+				toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos)*1000000)/1000000);
+				toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
+			},
+			get_default_options: function() {
+				return PC.dialog.maps[dialog.map_type].get_default_options();
+			},
+			get_default_options_when_library_loaded: function() {
+				return PC.dialog.maps[dialog.map_type].get_default_options_when_library_loaded();
+			},
+			get_position: function(latitude, longitude) {
+				return PC.dialog.maps[dialog.map_type].get_position(latitude, longitude);
 			}
 		});
 		
+		var panel = this.panel;
+		
 		this.map_tab = {
 			title: 'Map',
-
+			layout: 'vbox',
 			items: [
 				this.panel
 			]
@@ -147,15 +175,58 @@ PC.dialog.gmaps = {
 			closeAction: 'hide',
 			//items: this.panel,
 			items: this.tabs,
+			listeners: {
+				afterrender: function(window) {
+					PC.dialog.maps[dialog.map_type].after_render.defer(0, panel, [options]);
+					panel.updatePosition();
+				}
+			},
 			bbar: new Ext.Toolbar({
 				items: [
+					{	
+						width: 65,
+						xtype: 'combo',
+						mode: 'local',
+						ref: 'map_type_select',
+						store: {
+							xtype: 'arraystore',
+							fields: ['value', 'name'],
+							idIndex: 0,
+							data: [
+								['google', 'Google'],
+								['yandex', 'Yandex']
+							]
+						},
+						displayField: 'name',
+						//tpl: '<tpl for="."><div class="x-combo-list-item" style="text-align:{align}">{[values.display ? values.display : "&nbsp;"]}</div></tpl>',
+						valueField: 'value',
+						value: dialog.map_type,
+						triggerAction: 'all',
+						listeners:	{
+							select: function(combo, record, index) {
+								if (PC.dialog.gmaps.map_type != record.id) {
+									PC.dialog.gmaps.map_type = record.id;
+									var new_options = panel.get_default_options();
+									new_options.zoom = PC.dialog.gmaps.panel.map.getZoom();
+									var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
+									new_options.latitude = toolbar.get('marker_position_latitude').getValue();
+									new_options.longitude = toolbar.get('marker_position_longitude').getValue();
+									//new_options.center = PC.dialog.maps[dialog.map_type].get_position(latitude, longitude);
+									PC.dialog.maps[dialog.map_type].load_library(
+										Ext.createDelegate(PC.dialog.maps[dialog.map_type].after_render, panel, [new_options]),
+										true
+									);
+								}
+							}
+						}
+					},
 					{	icon: 'images/gmaps_marker.png',
 						handler: function() {
 							var pos = PC.dialog.gmaps.panel.map.getCenter();
-							PC.dialog.gmaps.panel.marker.setPosition(pos);
+							PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
 							var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
-							toolbar.get('marker_position_latitude').setValue(Math.round(pos.lat()*1000000)/1000000);
-							toolbar.get('marker_position_longitude').setValue(Math.round(pos.lng()*1000000)/1000000);
+							toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos)*1000000)/1000000);
+							toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
 						}
 					},
 					{xtype:'tbseparator'},
@@ -166,19 +237,26 @@ PC.dialog.gmaps = {
 					},
 					{	icon: 'images/Search.png',
 						handler: function() {
-							var geocoder = new google.maps.Geocoder();
 							var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
 							var address = toolbar.get('marker_position_geocoder').getValue();
-							geocoder.geocode({'address': address}, function(results, status) {
-								if (status == google.maps.GeocoderStatus.OK) {
-									PC.dialog.gmaps.panel.marker.setPosition(results[0].geometry.location);
-									PC.dialog.gmaps.panel.map.setCenter(results[0].geometry.location);
-									toolbar.get('marker_position_latitude').setValue(Math.round(results[0].geometry.location.lat()*1000000)/1000000);
-									toolbar.get('marker_position_longitude').setValue(Math.round(results[0].geometry.location.lng()*1000000)/1000000);
-								} else {
-									alert(dialog.ln.geocoder_error + status);
+							
+							var callback = function(pos) {
+								if (pos) {
+									if (typeof(pos) != 'string') {
+										PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
+										panel.map.setCenter(pos);
+										toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos)*1000000)/1000000);
+										toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
+									}
 								}
-							});
+							}
+							
+							var error_callback = function(err) {
+								alert(dialog.ln.geocoder_error + pos);
+							}
+							
+							PC.dialog.maps[dialog.map_type].search_address(address, callback, error_callback);
+							
 						}
 					},
 					{xtype:'tbseparator'},
@@ -186,7 +264,7 @@ PC.dialog.gmaps = {
 					{	xtype: 'textfield',
 						id: 'marker_position_latitude',
 						value: PC.dialog.gmaps.options.latitude,
-						width: 65,
+						width: 55,
 						selectOnFocus: true
 					},
 					{	xtype:'tbtext',
@@ -195,7 +273,7 @@ PC.dialog.gmaps = {
 					{	xtype: 'textfield',
 						id: 'marker_position_longitude',
 						value: PC.dialog.gmaps.options.longitude,
-						width: 65,
+						width: 55,
 						selectOnFocus: true
 					},
 					{	icon: 'images/Search.png',
@@ -204,16 +282,16 @@ PC.dialog.gmaps = {
 							var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
 							var latitude = toolbar.get('marker_position_latitude').getValue();
 							var longitude = toolbar.get('marker_position_longitude').getValue();
-							var pos = new google.maps.LatLng(latitude, longitude);
+							var pos = PC.dialog.maps[dialog.map_type].get_position(latitude, longitude);
 							PC.dialog.gmaps.panel.map.setCenter(pos);
-							PC.dialog.gmaps.panel.marker.setPosition(pos);
+							PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
 						}
 					},
 					{xtype:'tbfill'},
 					{xtype:'tbtext', text: this.ln.width+': '},
 					{	xtype: 'textfield',
 						id: 'map_width', value: '320',
-						width: 45,
+						width: 40,
 						selectOnFocus: true
 					},
 					{	id: 'w_unit',
@@ -229,7 +307,7 @@ PC.dialog.gmaps = {
 					{xtype:'tbtext', text: '&nbsp;'+this.ln.height+': ', style: 'margin-left:3px'},
 					{	xtype: 'textfield',
 						id: 'map_height', value: '240',
-						width: 45,
+						width: 40,
 						selectOnFocus: true
 					},
 					{	id: 'h_unit',
@@ -259,10 +337,10 @@ PC.dialog.gmaps = {
 							}
 							var pos = PC.dialog.gmaps.panel.map.getCenter();
 							var map_data = {
-								latitude: pos.lat(),
-								longitude: pos.lng(),
+								latitude: PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos),
+								longitude: PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos),
 								zoom: PC.dialog.gmaps.panel.map.getZoom(),
-								map_type: PC.dialog.gmaps.panel.map.getMapTypeId(),
+								map_type: PC.dialog.maps[dialog.map_type].get_map_type(PC.dialog.gmaps.panel.map),
 								map_options: PC.dialog.gmaps.window._gmap_map_options.getValue(),
 								marker_options: PC.dialog.gmaps.window._gmap_marker_options.getValue(),
 								marker_image: PC.dialog.gmaps.window._gmap_marker_image.getValue()
@@ -271,7 +349,8 @@ PC.dialog.gmaps = {
 							if (!PC.dialog.gmaps.edit_mode) {
 								//insert new map
 								var map_object = '<object classid="clsid:google-map" width="'+width+'" height="'+height+'" codebase="http://maps.google.com/">'
-												   +'<param name="map_data" value="'+json_data+'" />'
+												   +'<param name="map_type" value="'+dialog.map_type+'" />'
+												  +'<param name="map_data" value="'+json_data+'" />'
 												  +'<embed src="maps.google.com" type="application/google-map" width="'+width+'" height="'+height+'" map_data="'+json_data+'"></embed>'
 												   +'</object>';
 								tinyMCE.execInstanceCommand(tinymce.activeEditor.id,"mceInsertContent", false, map_object);
@@ -296,12 +375,11 @@ PC.dialog.gmaps = {
 		return this.load_options(options);
 	},
 	load_options: function(options) {
-		PC.dialog.gmaps.panel.map.setOptions(options);
-		PC.dialog.gmaps.panel.marker.setPosition(options.center);
+		PC.dialog.maps[this.map_type].set_options(PC.dialog.gmaps.panel.map, PC.dialog.gmaps.panel.marker, options);
 		var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
 		var pos = PC.dialog.gmaps.panel.map.getCenter();
-		toolbar.get('marker_position_latitude').setValue(Math.round(pos.lat()*1000000)/1000000);
-		toolbar.get('marker_position_longitude').setValue(Math.round(pos.lng()*1000000)/1000000);
+		toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[this.map_type].get_lat_from_pos(pos)*1000000)/1000000);
+		toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[this.map_type].get_lng_from_pos(pos)*1000000)/1000000);
 		PC.dialog.gmaps.window._gmap_map_options.setValue(options.map_options);
 		PC.dialog.gmaps.window._gmap_marker_options.setValue(options.marker_options);
 		PC.dialog.gmaps.window._gmap_marker_image.setValue(options.icon);
@@ -322,9 +400,9 @@ PC.dialog.gmaps = {
 		};
 		var settings = Ext.util.JSON.decode(unescape(this.edit_data.title.map_data));
 		var options = {
-			center: new google.maps.LatLng(settings.latitude, settings.longitude),
+			center: PC.dialog.maps[this.map_type].get_position(settings.latitude, settings.longitude),
 			zoom: settings.zoom,
-			mapTypeId: eval('google.maps.MapTypeId.'+settings.map_type.toUpperCase()),
+			//mapTypeId: eval('google.maps.MapTypeId.'+settings.map_type.toUpperCase()),
 			streetViewControl: false,
 			map_options: settings.map_options,
 			marker_options: settings.marker_options,
@@ -333,6 +411,10 @@ PC.dialog.gmaps = {
 		this.load_options(options);
 		//w x h
 		var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
+		
+		if (toolbar.map_type_select.getValue() != this.map_type) {
+			toolbar.map_type_select.setValue(this.map_type);
+		}
 		
 		//width
 		var w = (el.getAttribute('width')+'').split(/^([0-9]+)([a-z%]*)$/i);
