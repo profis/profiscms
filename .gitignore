@@ -5,7 +5,7 @@ Thumbs.db
 _dev/
 _tests/
 _restore_trink_jei_nieko_netruksta/
-config/
+#config/
 # Gallery
 gallery/*
 !gallery/.htaccess
@@ -29,7 +29,7 @@ upload/
 backups/*
 !backups/.htaccess
 !backups/index.php
-config.php
+config_real.php
 config_test.php
 media/uppod/
 nbproject/
