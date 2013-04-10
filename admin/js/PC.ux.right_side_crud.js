@@ -1,15 +1,32 @@
 PC.ux.right_side_crud = Ext.extend(PC.ux.crud, {
 	width: 810,
-	grid_width: 510,
+	form_width: 300,
 	layout: 'hbox',
 	layoutConfig: {
 		align: 'stretch'
+	},
+	
+	ajax_edit_response_success_handler: function (data, form_data) {
+		//PC.ux.right_side_crud.superclass.ajax_add_response_success_handler.call(data, this);
+		PC.ux.right_side_crud.superclass.ajax_edit_response_success_handler.defer(0, this, [data, form_data]);
+		if (this.ln.update && this.ln.update.success) {
+			Ext.MessageBox.show({
+				//title: new_email,
+				msg: this.ln.update.success,
+				buttons: Ext.MessageBox.OK,
+				icon: Ext.MessageBox.INFO
+			});
+		}
+		
 	},
 	
 	get_button_handler_for_save: function() {
 		var handler = Ext.createDelegate(function() {
 			if (!this.edit_record) {
 			   return;
+			}
+			if(!this.edit_form.getForm().isValid()){
+				return;
 			}
 			var data = {names: {}, other: {}};
 			data.other = this.edit_form.getForm().getValues();
@@ -18,7 +35,7 @@ PC.ux.right_side_crud = Ext.extend(PC.ux.crud, {
 				url: this.api_url + 'edit',
 				method: 'POST',
 				params: {id: this.edit_record.id, data: Ext.util.JSON.encode(data)},
-				callback: this.ajax_add_respone_handler
+				callback: this.get_ajax_edit_response_handler()
 			});
 		}, this);
 				
@@ -28,7 +45,7 @@ PC.ux.right_side_crud = Ext.extend(PC.ux.crud, {
 	get_edit_form: function() {
 		this.edit_form = new Ext.form.FormPanel({
 			ref: '_f',
-			flex: 1,
+			width: this.form_width,
 			layout: 'form',
 			padding: 6,
 			border: false,
@@ -63,9 +80,13 @@ PC.ux.right_side_crud = Ext.extend(PC.ux.crud, {
 		})
 	},
 	
+	get_cell_dblclick_handler: function() {
+		
+	},
+	
 	get_grid_config: function() {
 		var config = PC.ux.right_side_crud.superclass.get_grid_config.call();
-		config.width = this.grid_width;
+		config.flex = 1;
 		return config;
 	},
 	

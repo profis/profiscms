@@ -58,17 +58,25 @@ Plugin_site_users_crud = Ext.extend(PC.ux.right_side_crud, {
 		];
 	},
 	
-	get_add_form_fields: function() {
+	get_add_form_fields: function(edit_mode) {
+		var allow_blank_if_edit = false;
+		if (edit_mode) {
+			allow_blank_if_edit = true;
+		}
 		return [
 			{	_fld: 'email',
 				ref: '_email',
 				name: 'email',
-				fieldLabel: this.ln.email
+				fieldLabel: this.ln.email,
+				allowBlank: false,
+				vtype: 'email'
+				//vtypeText: this.ln.error_incorrect_email
 			},		
 			{	_fld: 'login',
 				ref: '_login',
 				name: 'login',
-				fieldLabel: this.ln.login
+				fieldLabel: this.ln.login,
+				minLength: 4
 			},
 			{	_fld: 'name',
 				ref: '_name',
@@ -76,16 +84,20 @@ Plugin_site_users_crud = Ext.extend(PC.ux.right_side_crud, {
 				fieldLabel: this.ln.name
 			},
 			{	_fld: 'password',
-				ref: '_pass1',
+				ref: '_password',
 				name: 'password',
 				fieldLabel: this.ln.pass_new,
-				inputType: 'password'
+				inputType: 'password',
+				allowBlank: allow_blank_if_edit
 			},
 			{	_fld: 'password2',
-				ref: '_pass2',
+				ref: '_password2',
 				name: 'password2',
 				fieldLabel: this.ln.pass_repeat,
-				inputType: 'password'
+				inputType: 'password',
+				allowBlank: allow_blank_if_edit,
+				vtype: 'password_match',
+				vtypeText : this.ln.passwords_doesnt_match
 			},
 			{	_fld: 'banned',
 				ref: '_banned',

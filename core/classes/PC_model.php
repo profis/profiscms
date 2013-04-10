@@ -1,6 +1,7 @@
 <?php
 
 abstract class PC_model extends PC_base{
+	protected $_id;
 	protected $_table = '';
 	protected $_table_id_col = 'id';
 	protected $_table_parent_col = 'pid';
@@ -12,11 +13,38 @@ abstract class PC_model extends PC_base{
 	protected $_where = array();
 	protected $_query_params = array();
 	
+	protected $_rules;
+	protected $_filters;
+	protected $_sanitize_filters;
+	
 	abstract protected function _set_tables();
 	
+	protected function _set_rules() {
+		$this->_rules = array();
+	}
 	
-	public function Init() {
+	protected function _set_filters() {
+		$this->_filters = array();
+	}
+	
+	protected function _set_sanitize_filters() {
+		$this->_sanitize_filters = array();
+	}
+	
+	public function Init($id = 0) {
+		$this->set_id($id);
 		$this->_set_tables();
+		$this->_set_rules();
+		$this->_set_filters();
+		$this->_set_sanitize_filters();
+	}
+	
+	public function get_id() {
+		return $this->_id;
+	}
+
+	public function set_id($id) {
+		$this->_id = $id;
 	}
 	
 	public function clear_scope() {
@@ -33,7 +61,7 @@ abstract class PC_model extends PC_base{
 	
 	public function set_scope(array $scope) {
 		$this->_where = $scope['where'];
-		$this->_query_params = $scope['query_params'];
+		$this->_query_params = v($scope['query_params'], array());
 	}
 	
 	public function get_id_from_content($name, $value, $ln = '', $limit = 1) {
@@ -161,7 +189,6 @@ abstract class PC_model extends PC_base{
 		}
 		
 		$query_params = array_merge($query_params, $this->_query_params);
-		
 		if (!isset($params['where'])) {
 			$params['where'] = array();
 		}
@@ -169,6 +196,8 @@ abstract class PC_model extends PC_base{
 		if (!is_null($id)) {
 			$params['where'] = array_merge(array('t.id' => $id), $params['where']);
 		}
+		
+		$params['where'] = array_merge($this->_where, $params['where']);
 				
 		if (v($params['query_params']) and is_array($params['query_params'])) {
 			$query_params = array_merge($query_params, $params['query_params']);
@@ -203,6 +232,11 @@ abstract class PC_model extends PC_base{
 			}
 		}
 		*/
+		
+		//print_r($params['where']);
+		//print_r($query_params);
+		
+		
 		$where_s = $this->_get_where_clause($params['where'], $query_params);
 		
 		$limit_s = '';
@@ -221,6 +255,10 @@ abstract class PC_model extends PC_base{
 			else {
 				$join = $params['join'];
 			}
+			if (isset($params['join_params'])) {
+				$query_params = array_merge($query_params, $params['join_params']);
+			}
+			
 		}
 		$group_s = '';
 		if (isset($params['group'])) {
@@ -336,6 +374,144 @@ abstract class PC_model extends PC_base{
 		return false;
 	}
 	
+	public function validate(array $data, &$validation_data = array()) {
+		$this->debug('validate()');
+		$valid = true;
+		foreach ($this->_rules as $rule_data) {
+			$this_valid = true;
+			if (!isset($data[$rule_data['field']])) {
+				$this->debug(':) not is set', 2);
+				continue;
+			}
+			$value = $data[$rule_data['field']];
+			if (!is_array($value)) {
+				if (v($rule_data['empty_allowed']) and empty($value)) {
+					$this->debug(':) empty allowed', 2);
+					continue;
+				}
+			}
+			$this->debug($rule_data, 1);
+			$this->debug('value is: ' . $value, 2);
+			$general_validation = Validate($rule_data['rule'], $value, v($rule_data['extra'], false), v($rule_data['params'], array()));
+			$this->debug("general_validation: " . $general_validation, 3);
+			if ($general_validation !== 0) {
+				$this->debug('validated by general function', 4);
+				$this_valid = $general_validation;
+			}
+			else {
+				switch ($rule_data['rule']) {
+					case 'required': 
+						$this_valid = !empty($value);
+						break;
+					case 'unique':
+						$unique_params = array(
+							'select' => 't.' . $this->_table_id_col,
+							'where' => array("{$rule_data['field']} = ?"),
+							'query_params' => array($value),
+							'limit' => 1
+						);
+						if ($this->_id != 0) {
+							$unique_params['where'][] = 't.' . $this->_table_id_col . ' <> ?';
+							$unique_params['query_params'][] = $this->_id;
+						}
+						$this->debug_level_offset += 4;
+						$duplicate_data = $this->get_all($unique_params);
+						$this->debug_level_offset -= 4;
+						if ($duplicate_data) {
+							$this_valid = false;
+						}
+						break;
+
+					default:
+						break;
+				}
+			}
+			
+			if (!$this_valid) {
+				$validation_data[] = array(
+					'field' => $rule_data['field'],
+					'error' => $rule_data['rule']
+				);
+				$valid = $this_valid;
+			}
+			
+		}
+		return $valid;
+	}
+	
+	public function filter_value_by_filters(&$value, &$filters) {
+		foreach ($filters as $filter) {
+			$this->filter_value_by_filter($value, $filter);
+		}
+	}
+	
+	public function filter_value_by_filter(&$value, $filter) {
+		$this->debug("filter_value_by_filter()", 8);
+		$this->debug($value, 9);
+		$this->debug($filter, 9);
+		if (is_array($filter)) {
+			$filter_name = $filter['filter'];
+		}
+		else {
+			$filter_name = $filter;
+		}
+		if (is_callable($filter_name)) {
+			$value = $filter_name($value);
+			return;
+		}
+		switch ($filter_name) {
+			case 'trim':
+				$value = trim($value);
+				break;
+
+			case 'md5':
+				$value = md5($value);
+				break;
+
+			case 'sha1':
+				$value= sha1($value);
+				break;
+
+			case 'strtotime':
+				$value = strtotime($value);
+				break;
+
+			default:
+				$this->debug('General Sanitize', 10);
+				$value = Sanitize($filter_name, $value,  v($filter['extra'], null));
+				break;
+		}
+	}
+	
+	public function filter_array(&$data, &$filters) {
+		foreach ($filters as $filter) {
+			if (!isset($data[$filter['field']])) {
+				continue;
+			}
+			
+			if (!isset($data[$filter['field']])) {
+				continue;
+			}
+			
+			if ($filter['filter'] == 'remove_empty') {
+				if (empty($data[$filter['field']])) {
+					unset($data[$filter['field']]);
+				}
+				continue;
+			}
+			$this->filter_value_by_filter($data[$filter['field']], $filter);
+		}
+	}
+	
+	public function filter(&$data, $sanitize = false) {
+		$filters = ($sanitize?$this->_sanitize_filters:$this->_filters);
+		$this->filter_array($data, $filters);
+	}
+	
+	public function sanitize(&$data) {
+		$this->filter($data, true);
+	}
+	
 	public function update(array $data, $params = array()) {
 		$this->debug('update()');
 		$this->debug($data, 1);
@@ -354,6 +530,7 @@ abstract class PC_model extends PC_base{
 			$content = $data['_content'];
 			unset($data['_content']);
 		}
+		$this->sanitize($data);
 		$query_params = array_values($data);
 		$sets = array();
 		foreach ($data as $key => $value) {
@@ -416,6 +593,7 @@ abstract class PC_model extends PC_base{
 		if (!$count) {
 			return false;
 		}
+		$this->sanitize($data);
 		$fields = implode(',', array_keys($data));
 		$values = implode(',', array_fill(0, $count, '?'));
 		$data = array_values($data);

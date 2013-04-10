@@ -61,6 +61,8 @@ final class PC_gallery extends PC_base {
 		// filetype: executable
 		$this->filetypes['exe'] = 'executable';
 		
+		$this->filetypes['dwg'] = $this->filetypes['dwf'] = 'autocad';
+		
 		// root directory for the categories and files to store
 		$this->config['gallery_directory'] = $this->cfg['directories']['gallery'];
 		// path to the root
@@ -1177,15 +1179,20 @@ final class PC_gallery extends PC_base {
 	* @return mixed array with keys "success", "filename", "category_path" and "thumbnail_type" on success, or array with key "errors" otherwise.
 	*/
 	public function Parse_file_request($request) {
+		//echo $request;
 		if (!preg_match('/^'.$this->patterns['file_request'].'$/ui', $request)) {
 			$response['errors'][] = "request";
 			return $response;
 		}
+		
 		$request_items = explode('/', $request);
 		$total_items = count($request_items);
 		$filename = $request_items[$total_items-1];
+		//echo preg_match("/^(thumbnail|small|large|(thumb-(".$this->patterns['thumbnail_type'].")))$/", $request_items[$total_items-($total_items>1?2:1)], $matches);
+		//echo $request_items[$total_items-2];
+		//echo !preg_match("/^thumb-(thumbnail|small|large)$/", $request_items[$total_items-2]);
 		if (preg_match("/^(thumbnail|small|large|(thumb-(".$this->patterns['thumbnail_type'].")))$/", $request_items[$total_items-($total_items>1?2:1)], $matches)
-		&& !preg_match("/^thumb-(thumbnail|small|large)$/", $request_items[$total_items-2])) {
+		/*&& !preg_match("/^thumb-(thumbnail|small|large)$/", $request_items[$total_items-2])*/) {
 			$thumbnail_type = isset($matches[3])?$matches[3]:$matches[0];
 			if ($total_items > 2) {
 				if ($total_items > 3) {
@@ -1202,6 +1209,16 @@ final class PC_gallery extends PC_base {
 				else $category_path = $request_items[0];
 			}
 		}
+		/*
+		print_pre(array(
+			'success'=>true,
+			'filename'=>$filename,
+			'category_path'=>v($category_path),
+			'thumbnail_type'=>v($thumbnail_type),
+		));
+		exit;
+		*/
+		
 		return array(
 			'success'=>true,
 			'filename'=>$filename,
@@ -2643,6 +2660,12 @@ final class PC_gallery extends PC_base {
 			}
 		}
 		return $m[1];
+	}
+	public function Get_image_thumbnail_type($src, $type=null) {
+		$r = $this->Parse_file_request($src);
+		print_pre($r);
+		if (isset($r['errors'])) if (count($r['errors'])) return $src;
+		return (!empty($r['category_path'])?$r['category_path'].'/':'').(is_null($type)?'':$type.'/').$r['filename'];
 	}
 	public function Get_image_thumbnail($src, $type=null) {
 		$r = $this->Parse_file_request($src);

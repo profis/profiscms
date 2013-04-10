@@ -1,7 +1,379 @@
 Ext.ns('PC.dialog');
 
+Dialog_categories_tree_crud = Ext.extend(PC.ux.LocalTreeCrud, {
+	
+	get_add_form_fields: function() {
+		return [
+			{	
+				fieldLabel: 'Category name',
+				name: 'name',
+				ref: '../_name'
+			},
+
+			{	fieldLabel: 'Icon image',
+				xtype:'trigger', 
+				ref: '../_image',
+				name: 'image',
+				triggerClass: 'x-form-search-trigger',
+				selectOnFocus: true,
+				onTriggerClick: function() {
+					var field = this;
+					var params = {
+						callee: 'image',
+						save_fn: function(url){
+							field.setValue(url);
+						}
+					};
+					var src = field.getValue();
+					if (/^gallery\//.test(src)) {
+						params.select_id = src.substring(src.lastIndexOf('/')+1);
+					}
+					PC.dialog.gallery.show(params);
+				}
+			},
+		];
+	}
+	
+});
+
+Dialog_markers_crud = Ext.extend(PC.ux.LocalCrud, {
+	no_ln_fields: true,
+	edit_window_width: 500,
+	
+	get_button_for_edit: function() {
+		var button = Dialog_markers_crud.superclass.get_button_for_edit.call(this);
+		button.text = '';
+		return button;
+	},
+	
+	get_button_for_del: function() {
+		var button = Dialog_markers_crud.superclass.get_button_for_del.call(this);
+		button.text = '';
+		return button;
+	},
+	
+	get_dynamic_buttons: function(button_container) {
+		if (!button_container) {
+			button_container = this;
+		}
+		var buttons = Dialog_markers_crud.superclass.get_dynamic_buttons.call(button_container, this);
+		buttons.push(button_container._action_center);
+		buttons.push(button_container._action_center_marker);
+		return buttons;
+	},
+	
+	get_button_for_center: function() {
+		return {	
+			disabled: true,
+			ref: '../_action_center',
+			text: '',
+			icon: 'images/eye.png',
+			handler: Ext.createDelegate(this.button_handler_for_center, this)
+		}
+	},
+	
+	button_handler_for_center: function() {
+		var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+		map_object.set_map_center_to_marker(PC.dialog.gmaps.panel.map, this.selected_record._marker);
+	},
+	
+	get_button_for_center_marker: function() {
+		return {	
+			disabled: true,
+			ref: '../_action_center_marker',
+			text: '',
+			icon: 'images/gmaps_marker.png',
+			handler: Ext.createDelegate(this.button_handler_for_center_marker, this)
+		}
+	},
+	
+	button_handler_for_center_marker: function() {
+		var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+		map_object.set_marker_position(this.selected_record._marker, PC.dialog.gmaps.panel.map.getCenter());
+		
+		var position = map_object.get_marker_position(this.selected_record._marker);
+		
+		this.selected_record.set('latitude', map_object.get_lat_from_pos(position));
+		this.selected_record.set('longitude', map_object.get_lng_from_pos(position));
+		this.selected_record.commit();
+	},
+	
+	get_tbar_buttons: function() {
+		var buttons = Dialog_markers_crud.superclass.get_tbar_buttons.call(this);
+		buttons.push(this.get_button_for_center());
+		buttons.push(this.get_button_for_center_marker());
+		return buttons;
+	},
+	
+	get_cell_dblclick_handler: function() {
+		return Ext.createDelegate(this.button_handler_for_center, this);
+	},
+	
+	get_store_fields: function() {
+		return [
+				'id', 'latitude', 'longitude', 'options', 'icon', 'category', 'text'
+		];
+	},
+	
+	get_add_form_fields: function() {
+		return [
+			{	
+				xtype: 'textarea',
+				anchor: '100%',
+				_fld: 'text',
+				fieldLabel: 'Text',//this.ln.bg_image,
+				ref: '../../_gmap_marker_text'
+			},
+			{	
+				xtype: 'textarea',
+				anchor: '100%',
+				_fld: 'options',
+				fieldLabel: 'Marker options (separated by comma)',//this.ln.bg_image,
+				ref: '../../_gmap_marker_options'
+			},
+			{	anchor: '100%',
+				fieldLabel: 'Icon image',
+				_fld: 'icon',
+				xtype:'trigger', 
+				ref: '../../_gmap_marker_image',
+				triggerClass: 'x-form-search-trigger',
+				selectOnFocus: true,
+				onTriggerClick: function() {
+					var field = this;
+					var params = {
+						callee: 'image',
+						save_fn: function(url){
+							field.setValue(url);
+						}
+					};
+					var src = field.getValue();
+					if (/^gallery\//.test(src)) {
+						params.select_id = src.substring(src.lastIndexOf('/')+1);
+					}
+					PC.dialog.gallery.show(params);
+				}
+			},
+			{	anchor: '100%',
+				fieldLabel: 'Category',
+				_fld: 'category',
+				xtype:'trigger', 
+				ref: '../../_gmap_marker_category',
+				triggerClass: 'x-form-search-trigger',
+				selectOnFocus: true,
+				onTriggerClick: function () {
+					PC.dialog.gmaps.markers_crud.open_category_select_window(this);
+				}
+			}
+
+		];
+	},
+	
+	open_category_select_window: function(field) {
+		this.marker_category_field = field;
+		if (true || !this.category_selector) {
+			var categories = [];
+						
+			var serializer = new Ext.tree.JsonTreeSerializer(PC.dialog.gmaps.categories_panel.tree);
+						
+			categories = Ext.util.JSON.decode(serializer.toString(true));
+
+			if (!categories.length) {
+				categories = PC.dialog.gmaps.options.categories;
+			}
+		
+			var tree = new Ext.tree.TreePanel( {
+				height: 300,
+				width: 200,
+				
+				animate:true,
+				enableDD: false,
+				loader: new Ext.tree.TreeLoader(), // Note: no dataurl, register a TreeLoader to make use of createNode()
+				root: new Ext.tree.AsyncTreeNode({
+					text: 'root',
+					draggable:false,
+					id:'source',
+					children: categories
+				}),
+				rootVisible:false,
+				listeners: {
+					afterrender: function() {
+						this.expandAll();
+					}
+				}
+			});
+			
+			var window = new PC.ux.Window({
+				modal: true,
+				items: tree,
+				width: 200,
+				layout: 'fit',
+				closeAction: 'hide',
+				bbar: [
+					{xtype:'tbfill'},
+					{	text: PC.i18n.save,
+						icon: 'images/disk.png',
+						handler: Ext.createDelegate(this.set_marker_category, this)
+					}
+				]
+			});
+			this.category_selector_tree = tree;
+			this.category_selector = window;
+					
+		}
+		this.category_selector.show();
+	},
+	
+	set_marker_category: function() {
+		var selected_node = this.category_selector_tree.selModel.getSelectedNode();
+		if (selected_node && this.marker_category_field) {
+			this.marker_category_field.setValue(selected_node.attributes._data.name + ' [' + selected_node.id + ']');
+			this.category_selector.hide();
+		}
+	},
+	
+	get_grid: function() {
+		var grid = Dialog_markers_crud.superclass.get_grid.call(this);
+		
+		grid.on('mouseover', function (e, t) {
+			var me = this;
+			var rowIndex = me.getView().findRowIndex(t);
+			var record = me.store.getAt(rowIndex);
+			if (record && record._marker) {
+				var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+				map_object.highlight_marker(record._marker);
+				}
+			
+		});
+		grid.on('mouseout', function (e, t) {
+			var me = this;
+			var rowIndex = me.getView().findRowIndex(t);
+			var record = me.store.getAt(rowIndex);
+			if (record && record._marker) {
+				var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+				map_object.unhighlight_marker(record._marker);
+			}
+			
+		});
+		return grid;
+	},
+	
+	get_button_handler_for_delete: function() {
+		return Ext.createDelegate(this.button_handler_for_del, this);
+	},
+		
+	button_handler_for_del: function() {
+		Ext.MessageBox.show({
+			buttons: Ext.MessageBox.YESNO,
+			title: this.ln._delete.confirm_title,
+			msg: this.ln._delete.confirm_message,
+			icon: Ext.MessageBox.WARNING,
+			maxWidth: 320,
+			fn: Ext.createDelegate(this.button_handler_for_del_submit, this)
+		});
+	},
+	
+	button_handler_for_del_submit: function(btn_id) {
+		if (btn_id == 'yes') {
+			var selected_records = this.grid.getSelectionModel().getSelections();
+			var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+			Ext.each(selected_records ,function(record, index) {
+				this.store.remove(record);
+				map_object.delete_marker(record._marker, PC.dialog.gmaps.panel.map);
+			}, this);
+		}
+	},
+	
+	get_button_for_add: function() {
+		return {	
+			ref: '../action_add',
+			text: this.ln.button._add?this.ln.button._add:PC.i18n.add,
+			icon: 'images/add.png',
+			handler: Ext.createDelegate(this.button_handler_for_add, this)
+		}
+	},
+	
+	button_handler_for_add: function() {
+		this.max_id++;
+		var marker_id = this.max_id;
+		var callback_args = [marker_id];
+		var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+		var pos = map_object.add_marker_to_map_center(this.map_panel.map, Ext.createDelegate(this.marker_drop, this), callback_args, Ext.createDelegate(this.marker_click, this), Ext.createDelegate(this.button_handler_for_edit, this));
+		
+		var new_record = new this.store.recordType({
+			id: this.max_id,
+			latitude: map_object.get_lat_from_pos(pos),
+			longitude: map_object.get_lng_from_pos(pos)
+		}, this.max_id);
+		new_record._marker = map_object.last_new_marker;
+		this.store.add([new_record]);
+	},
+	
+	clear_data: function() {
+		var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+		var records = this.store.getRange();
+		this.max_id = 0;
+		Ext.each(records, function(record, index) {
+			map_object.delete_marker(record._marker, PC.dialog.gmaps.panel.map);
+			this.store.remove(record);
+		}, this);
+	},
+	
+	add_markers_on_map: function() {
+		var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+		var records = this.store.getRange();
+		this.max_id = 0;
+		Ext.each(records, function(record, index) {
+			this.max_id++;
+			var callback_args = [this.max_id];
+			map_object.add_marker_to_lat_lng(this.map_panel.map, record.data.latitude, record.data.longitude, Ext.createDelegate(this.marker_drop, this), callback_args, Ext.createDelegate(this.marker_click, this),  Ext.createDelegate(this.button_handler_for_edit, this));
+			
+			record._marker =  map_object.last_new_marker;
+		}, this);
+	},
+		
+	load_data: function(data) {
+		
+		var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+		var markers = {};
+		Ext.each(data.list, function(marker_data, index) {
+			this.max_id++;
+			data.list[index].id = this.max_id;
+			var callback_args = [this.max_id];
+			map_object.add_marker_to_lat_lng(this.map_panel.map, marker_data.latitude, marker_data.longitude, Ext.createDelegate(this.marker_drop, this), callback_args, Ext.createDelegate(this.marker_click, this), Ext.createDelegate(this.button_handler_for_edit, this));
+			markers[this.max_id] =  map_object.last_new_marker;
+		}, this);
+		
+		Dialog_markers_crud.superclass.load_data.call(this, data);
+		
+		for (var i=1; i <= this.max_id; i++) { 
+			var record = this.store.getAt(i - 1);
+			if (record) {
+				record._marker = markers[i];
+			}
+		}
+	},
+	
+	marker_drop: function(id, marker) {
+		//debugger;
+		var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
+		var record = this.store.getById(id);
+		
+		var position = map_object.get_marker_position(marker);
+		
+		record.set('latitude', map_object.get_lat_from_pos(position));
+		record.set('longitude', map_object.get_lng_from_pos(position));
+		record.commit();
+	},
+	
+	marker_click: function (id, marker) {
+		var record = this.store.getById(id);
+		this.grid.selModel.selectRecords([record]);
+	}
+	
+});
+
 PC.utils.is_array = function(value) {
-   return typeof(input)=='object'&&(input instanceof Array);
+   return typeof(value)=='object'&&(value instanceof Array);
 };
 
 PC.dialog.gmaps = {
@@ -31,17 +403,24 @@ PC.dialog.gmaps = {
 				this.map_type = attributes.map_type;
 			}
 		}
+		else if (!after_show_callback) {
+			after_show_callback = Ext.createDelegate(this.reset_map_data, this);
+		}
 		this.load_library(after_show_callback);
 	},
 	show_when_js_loaded: function() {
 		this.ln = PC.i18n.dialog.gmaps;
 		var dialog = this;
 		//if gmaps window is already created, just show it and return
+		//debugger;
 		if (this.window) {
 			this.window.show();
 			if (this.edit_mode) {
 				this.edit_mode = false;
 				this.toggle_edit_mode();
+			}
+			else {
+				//debugger;
 			}
 			return;
 		}
@@ -50,7 +429,7 @@ PC.dialog.gmaps = {
 		var options = this.options;
 		this.panel = new Ext.Panel({
 			xtype: 'panel',
-			plain: true,
+			//plain: true,
 			border: false,
 			flex: 1,
 			autoHeight: true,
@@ -82,8 +461,9 @@ PC.dialog.gmaps = {
 				}
 			},
 			updatePosition: function(e) {
-				var pos = PC.dialog.maps[dialog.map_type].get_marker_position(this.marker);
-				this.map.setCenter(pos);
+				//var pos = PC.dialog.maps[dialog.map_type].get_marker_position(this.marker);
+				var pos = PC.dialog.maps[dialog.map_type].get_map_center_position(this.map);
+				//this.map.setCenter(pos);
 				var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
 				toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos)*1000000)/1000000);
 				toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
@@ -101,11 +481,30 @@ PC.dialog.gmaps = {
 		
 		var panel = this.panel;
 		
+		this.markers_crud = new Dialog_markers_crud({
+			width: 150
+		});
+		
+		this.markers_crud.map_panel = this.panel;
+		
+		this.panel_container = new Ext.Panel({
+			xtype: 'panel',
+			layout: 'fit',
+			//plain: true,
+			border: false,
+			flex: 1,
+			items: this.panel
+		});
+		
 		this.map_tab = {
 			title: 'Map',
-			layout: 'vbox',
+			layout: {
+				type: 'hbox',
+				align: 'stretch'
+			},
 			items: [
-				this.panel
+				this.panel_container,
+				this.markers_crud
 			]
 		}
 		
@@ -152,13 +551,30 @@ PC.dialog.gmaps = {
 			]
 		};
 		
+		var json = [];
+	
+		this.categories_panel = new Dialog_categories_tree_crud({
+			json: json
+			//height: 250
+		});
+	
+		
+		this.categories_tab = {
+			title: 'Categories',
+			layout: 'fit',
+			items: [
+				this.categories_panel
+				//tree
+			]
+		}
+		
 		this.tabs = {
 			xtype: 'tabpanel',
 			activeTab: 0,
 			//width: 700,
 			//height: 400,
 			flex: 1,
-			items: [this.map_tab, this.options_tab],
+			items: [this.map_tab, this.options_tab, this.categories_tab],
 			border: false
 		};
 		
@@ -213,7 +629,7 @@ PC.dialog.gmaps = {
 									new_options.longitude = toolbar.get('marker_position_longitude').getValue();
 									//new_options.center = PC.dialog.maps[dialog.map_type].get_position(latitude, longitude);
 									PC.dialog.maps[dialog.map_type].load_library(
-										Ext.createDelegate(PC.dialog.maps[dialog.map_type].after_render, panel, [new_options]),
+										Ext.createDelegate(PC.dialog.maps[dialog.map_type].after_render, panel, [new_options, Ext.createDelegate(PC.dialog.gmaps.markers_crud.add_markers_on_map, PC.dialog.gmaps.markers_crud)]),
 										true
 									);
 								}
@@ -252,7 +668,7 @@ PC.dialog.gmaps = {
 							}
 							
 							var error_callback = function(err) {
-								alert(dialog.ln.geocoder_error + pos);
+								alert(dialog.ln.geocoder_error + err);
 							}
 							
 							PC.dialog.maps[dialog.map_type].search_address(address, callback, error_callback);
@@ -336,6 +752,9 @@ PC.dialog.gmaps = {
 								height += h_unit;
 							}
 							var pos = PC.dialog.gmaps.panel.map.getCenter();
+							var serializer = new Ext.tree.JsonTreeSerializer(PC.dialog.gmaps.categories_panel.tree);
+							//serializer.jsonAttributes.push('text');
+							//debugger;
 							var map_data = {
 								latitude: PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos),
 								longitude: PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos),
@@ -343,7 +762,9 @@ PC.dialog.gmaps = {
 								map_type: PC.dialog.maps[dialog.map_type].get_map_type(PC.dialog.gmaps.panel.map),
 								map_options: PC.dialog.gmaps.window._gmap_map_options.getValue(),
 								marker_options: PC.dialog.gmaps.window._gmap_marker_options.getValue(),
-								marker_image: PC.dialog.gmaps.window._gmap_marker_image.getValue()
+								marker_image: PC.dialog.gmaps.window._gmap_marker_image.getValue(),
+								categories: Ext.util.JSON.decode(serializer.toString(true)),
+								markers: PC.dialog.gmaps.markers_crud.get_store_data()
 							};
 							var json_data = escape(Ext.util.JSON.encode(map_data));
 							if (!PC.dialog.gmaps.edit_mode) {
@@ -359,6 +780,7 @@ PC.dialog.gmaps = {
 								PC.dialog.gmaps.edit_data.element.setAttribute('width', width);
 								PC.dialog.gmaps.edit_data.element.setAttribute('height', height);
 								//update map data
+								PC.dialog.gmaps.edit_data.title.map_type = dialog.map_type;
 								PC.dialog.gmaps.edit_data.title.map_data = json_data;
 								PC.dialog.gmaps.edit_data.element.title = Ext.util.JSON.encode(PC.dialog.gmaps.edit_data.title).replace(/[{}]/g, '');
 							}
@@ -370,9 +792,22 @@ PC.dialog.gmaps = {
 		});
 		this.window.show();
 	},
+	
+	add_default_marker: function() {
+		var options = this.default_options;
+		if (!this.markers_crud.max_id) {
+			this.markers_crud.load_data({list:[{id:1, latitude:PC.dialog.maps[this.map_type].get_lat_from_pos(options.center), longitude:PC.dialog.maps[this.map_type].get_lng_from_pos(options.center)}]});
+		}
+	},
+	
+	
 	reset_map_data: function() {
 		var options = this.default_options;
-		return this.load_options(options);
+		options.markers = [];
+		options.categories = [];
+		
+		this.load_options(options);
+		this.add_default_marker();
 	},
 	load_options: function(options) {
 		PC.dialog.maps[this.map_type].set_options(PC.dialog.gmaps.panel.map, PC.dialog.gmaps.panel.marker, options);
@@ -383,6 +818,25 @@ PC.dialog.gmaps = {
 		PC.dialog.gmaps.window._gmap_map_options.setValue(options.map_options);
 		PC.dialog.gmaps.window._gmap_marker_options.setValue(options.marker_options);
 		PC.dialog.gmaps.window._gmap_marker_image.setValue(options.icon);
+		if (options.categories) {
+			PC.dialog.gmaps.categories_panel.set_children(options.categories);
+		}
+		if (!options.markers) {
+			var old_marker = {
+				id: 1,
+				latitude: PC.dialog.maps[this.map_type].get_lat_from_pos(pos),
+				longitude: PC.dialog.maps[this.map_type].get_lng_from_pos(pos),
+				options: '',
+				icon: '',
+				category: '',
+				text: ''
+			};
+			options.markers = [old_marker];
+		}
+		if (options.markers) {
+			PC.dialog.gmaps.markers_crud.clear_data();
+			PC.dialog.gmaps.markers_crud.load_data({list:options.markers});
+		}
 		this.options = options;
 		return true;
 	},
@@ -406,6 +860,8 @@ PC.dialog.gmaps = {
 			streetViewControl: false,
 			map_options: settings.map_options,
 			marker_options: settings.marker_options,
+			categories: settings.categories,
+			markers: settings.markers,
 			icon: settings.marker_image
 		};
 		this.load_options(options);

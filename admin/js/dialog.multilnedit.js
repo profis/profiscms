@@ -3,6 +3,10 @@ Ext.namespace('PC.dialog');
 PC.dialog.multilnedit = {
 	show: function(params) {
 		this.params = params;
+		var width = 300;
+		if (params.window_width) {
+			width = params.window_width;
+		}
 		var dialog = this;
 		if (!PC.dialog.styles.multilnedit) {
 			var flds = [];
@@ -33,7 +37,7 @@ PC.dialog.multilnedit = {
 				var flds = flds.concat(params.fields);
 			}
 			var cfg = {
-				width: 300,
+				width: width,
 				modal: true,
 				layout: 'form',
 				labelWidth: 70,
@@ -78,15 +82,28 @@ PC.dialog.multilnedit = {
 			};
 			Ext.apply(cfg, params);
 			PC.dialog.styles.multilnedit = new PC.ux.Window(cfg);
+			if (params.center_window) {
+				PC.dialog.styles.multilnedit.on('show',function(){
+					PC.dialog.styles.multilnedit.center();
+				});
+				//PC.dialog.styles.multilnedit.render();
+				//PC.dialog.styles.multilnedit.center();
+			}
 			PC.dialog.styles.multilnedit.show();
 		}
+		
 	},
 	Save: function() {
 		var d = PC.dialog.multilnedit;
 		var w = PC.dialog.styles.multilnedit;
 		if (typeof d.params.Save == 'function') {
 			var data = {names: {}, other: {}};
+			var form_is_valid = true;
 			w.items.each(function(i){
+				//debugger;
+				if (!i.isValid(false)) {
+					form_is_valid = false;
+				}
 				if (i._ln != undefined) {
 					data['names'][i._ln] = i.getValue();
 					return true;
@@ -115,7 +132,16 @@ PC.dialog.multilnedit = {
 					}
 				}
 			});
-			if (d.params.Save(data, w, d)) w.close();
+			//if (form_is_valid && d.params.Save(data, w, d)) w.close();
+			if (form_is_valid) {
+				if (d.params.Save && d.params.close_in_callback) {
+					d.params.Save(data, w, d, function() {w.close();});
+				}
+				else if (d.params.Save && d.params.Save(data, w, d)) {
+					w.close();
+				}
+				
+			}
 		}
 		else alert('No handler for data saving is defined');
 	}

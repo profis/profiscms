@@ -9,6 +9,26 @@ define('PC_INSTALL_DIR', CMS_ROOT . 'install/');
 define('PC_DEFAULT_ADMIN_USER', 'admin');
 define('PC_DEFAULT_ADMIN_PASSWORD', 'admin');
 
+
+
+$ln = '';
+session_start();
+if (isset($_GET['ln'])) {
+	$_SESSION['ln'] = $_GET['ln'];
+}
+if (isset($_SESSION['ln'])) {
+	$ln = $_SESSION['ln'];
+}
+
+if (!in_array($ln, array('en', 'ru_', 'lt'))) {
+	$ln = 'en';
+}
+
+global $t;
+include 'ln/' . 'install_'.$ln.'.php';
+
+$t = $titles;
+
 require_once 'PC_installer.php';
 $installer = new PC_installer();
 
@@ -18,7 +38,7 @@ $installer = new PC_installer();
 <html>
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-    <title>Profis CMS - Install routine</title>
+    <title><?php echo $t['meta_title']?></title>
     <link href="css/bootstrap.css" media="screen" rel="Stylesheet" type="text/css" />
 	<link href="css/install.css" media="screen" rel="Stylesheet" type="text/css" />
 </head>
@@ -26,9 +46,15 @@ $installer = new PC_installer();
 <div class="container">
 
 	<div class="masthead">
-		<h3 class="muted">Profis CMS installation</h3>
+		<ul class="nav nav-pills pull-right">
+			<li class="<?php echo ($ln=='en'?'active':'') ?>"><a href="?ln=en">English</a></li>
+<!--			<li class="<?php echo ($ln=='ru'?'active':'') ?>"><a href="?ln=ru">Русский</a></li>-->
+			<li class="<?php echo ($ln=='lt'?'active':'') ?>"><a href="?ln=lt">Lietuvių</a></li>
+		</ul>
 	</div>
 
+	<h1><? echo $t['title'] ?></h1>
+	
 <?php
 if ($installer->is_installed()) {
 	header('Location: ../'); exit();
@@ -46,7 +72,7 @@ else {
 ?>
 		
 		<footer>
-		<p>Powered by <a target="_blank" href="http://www.profiscms.com/">Profis CMS</a></p>
+		<p><? echo $t['footer'] ?></p>
       </footer>	
 
  </div> <!-- /container -->

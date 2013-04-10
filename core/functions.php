@@ -32,6 +32,12 @@ function v(&$var, $default=null, $if_empty='') {
 	else return $default;
 }
 
+function vv(&$var, $default=null) {
+	if (!isset($var)) {
+		$var = $default;
+	}
+}
+
 /**
 * Function used to simply append to runtime variable $cfg key "core" given key-value-pair.
 * @param mixed $key given key to be stored in array as key value.
@@ -781,7 +787,7 @@ function Validate($type, $input, $extra=false, $options=array()) {
 			//extra = minimum
 			if ((ctype_digit($input) || is_int($input)) && $input >= $extra) return true;
 			break;
-		default: return false;
+		default: return 0;
 	}
 	return false;
 }

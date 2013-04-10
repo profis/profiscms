@@ -344,9 +344,22 @@ final class PC_site extends PC_base {
 			$pattern = str_replace('%', '', substr($site['mask'], $site_mask_pos));
 			$old_base_url = preg_replace('#^https?://#ui', '', $this->cfg['url']['base']);
 			$old_base_url = substr($old_base_url, strpos($old_base_url, '/'));
-			$this->link_prefix = substr($pattern, mb_strlen($old_base_url));
-			$new_request = mb_substr($request, mb_strlen($pattern));
-			$this->debug(" mb_substr($request, mb_strlen($pattern))", 5);
+			
+			$pre_request = '';
+			$mask_pos = strpos($request, $pattern);
+			$this->debug("Mask pos:" . $mask_pos , 4);
+			if ($mask_pos) {
+				$pre_request = mb_substr($request, 0, $mask_pos);
+				$this->debug("pre_request: " . $pre_request , 4);
+				//$pre_request = ltrim($pre_request, '/');
+			}
+			
+			$this->link_prefix = substr($pre_request . $pattern, mb_strlen($old_base_url));
+			$this->debug("link_prefix = substr($pre_request . $pattern, mb_strlen($old_base_url));", 4);
+			$this->debug("Link prefix: " . $this->link_prefix, 5);
+			
+			$new_request = mb_substr($request, mb_strlen($pattern) + $mask_pos);
+			$this->debug("mb_substr($request, mb_strlen($pattern) + $mask_pos)", 5);
 			$this->debug("So, new request will be: " . $new_request, 6);
 			$this->routes->Parse_request($new_request);
 		}
@@ -638,6 +651,20 @@ final class PC_site extends PC_base {
 		}
 		return true;
 	}
+	
+	public function Get_controller_text($controller) {
+		if (!$this->plugins->controllers->Is_active($controller)) {
+			return false;
+		}
+		require_once $this->core->Get_path('plugins', '', $controller) . 'PC_controller.php';
+		$controller_object = $this->core->Get_object('PC_controller_poll', array(true));
+		if (!$controller_object) {
+			return false;
+		}
+		$controller_object->Process(false);
+		return $controller_object->text;
+	}
+	
 	//loaded page
 	/**
 	* Method used to retrieve page text by given page id. In this method is called PC_site::Get_text() method.
@@ -647,8 +674,12 @@ final class PC_site extends PC_base {
 	• @todo rewrite comment - second parameter was added
 	*/
 	public function Get_text($id=null, $force_headings=true) {
-		if ($id < 1) $text =& $this->text;
-		else $text =& $this->page->Get_text($id);
+		if ($id < 1) {
+			$text =& $this->text;
+		}
+		else {
+			$text =& $this->page->Get_text($id);
+		}
 		if (isset($this->force_headings)) $force_headings = $this->force_headings;
 		if ($force_headings) {
 			$h1_name = $this->loaded_page['custom_name'];
@@ -692,7 +723,12 @@ final class PC_site extends PC_base {
 			$$key = $value;
 		}
 		//$this->Start_output();
-		include(CMS_ROOT . $template);
+		
+		$full_path = $template;
+		if (strpos($full_path, CMS_ROOT) === false) {
+			$full_path = CMS_ROOT . $template;
+		}
+		include $full_path;
 		//require($this->Get_plugin_path()."PC_template_default.php");
 		//$this->End_output($this->text);
 	}
@@ -703,6 +739,18 @@ final class PC_site extends PC_base {
 		$s = '';
 		$this->Output_end($s);
 		return $s;
+	}
+	
+	public function Include_tpl($group, $template, $vars = array()) {
+		
+	}
+	
+	public function Get_tpl_content($group, $template = 'tpl', $vars = array()) {
+		if (is_array($template)) {
+			$vars = $template;
+			$template = 'tpl';
+		}
+		return $this->Get_template_content($this->core->Get_tpl_path($group, $template), $vars) ;
 	}
 	
 	/**
@@ -1213,8 +1261,10 @@ final class PC_site extends PC_base {
 	* Method used to get HTML markup with stylesheets.
 	* @return string stylesheets HTML markup.
 	*/
-	public function Get_stylesheets_html() {
-		arsort($this->_stylesheets);
+	public function Get_stylesheets_html($sort = true) {
+		if ($sort) {
+			arsort($this->_stylesheets);
+		}
 		if (!count($this->_stylesheets)) return false;
 		$html = '';
 		foreach ($this->_stylesheets as $sheet=>$priority)

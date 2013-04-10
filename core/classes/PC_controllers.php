@@ -29,7 +29,10 @@ final class PC_controllers extends PC_base {
 		
 	}
 	public function Is_active($plugin) {
-		
+		if (in_array($plugin, $this->_list['active'])) {
+			return true;
+		}
+		return false;
 	}
 	public function Set_option($plugin, $name, $value) {
 		$this->_options[$plugin][$name] = $value;
@@ -80,7 +83,6 @@ final class PC_controllers extends PC_base {
 		//call controller defined by this route
 		if ($route['controller'] != 'page') {
 			try {
-				print_pre($route);
 				if ($this->plugins->Is_active($route['controller'])) {
 					$this->controller = $this->plugins->Get_controller($route['controller']);
 					//---

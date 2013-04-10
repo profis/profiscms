@@ -26,6 +26,9 @@ final class PC_user extends PC_base {
 	public $Session_login, $Session_password;
 	
 	public function Init() {
+		$this->debug = true;
+		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'pc_user.html', null, 7);
+		
 		$this->Refresh();
 		if (v($_REQUEST['user_logout'])) {
 			$this->Logout();
@@ -36,6 +39,7 @@ final class PC_user extends PC_base {
 		else $this->Login();
 	}
 	public function Refresh() {
+		$this->debug("Refresh()");
 		$this->Current_secure = md5($_SERVER['REMOTE_ADDR'].$_SERVER['HTTP_USER_AGENT']);
 		$this->Post_login = v($_POST['user_login']);
 		$this->Post_password = $this->Sanitize('password', v($_POST['user_password']));
@@ -67,9 +71,16 @@ final class PC_user extends PC_base {
 		return true;
 	}
 	public function Login() {
+		$this->debug("Login()");
+		$login_field_in_select = 'login';
+		$login_field_in_clause = 'login';
+		if (isset($this->cfg['site_users']) and v($this->cfg['site_users']['email_as_login'])) {
+			$login_field_in_select = 'email as login';
+			$login_field_in_clause = 'email';
+		}
 		if (isset($this->Session_login, $this->Session_password) && $this->Session_secure == $this->Current_secure) {
 			//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
-			$r = $this->prepare("SELECT id,name FROM {$this->db_prefix}site_users WHERE login=? AND password=? AND (flags & ?)=0 and banned=0 LIMIT 1");
+			$r = $this->prepare("SELECT id,name FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password=? AND (flags & ?)=0 and banned=0 LIMIT 1");
 			$s = $r->execute(array($this->Session_login, $this->Session_password, PC_UF_MUST_ACTIVATE));
 			if (!$s) {
 				$this->Logout();
@@ -92,7 +103,7 @@ final class PC_user extends PC_base {
 			if( $cookie_code !== null ) {
 				$using_cookie = true;
 				if( $cookie_code !== false ) {
-					$r = $this->prepare("SELECT login, password, flags, banned FROM {$this->db_prefix}site_users WHERE MD5(CONCAT(login,id,password))=? LIMIT 1");
+					$r = $this->prepare("SELECT $login_field_in_select, password, flags, banned FROM {$this->db_prefix}site_users WHERE MD5(CONCAT(login,id,password))=? LIMIT 1");
 					$s = $r->execute(array($cookie_code));
 					if ($s && $r->rowCount() > 0) {
 						$data = $r->fetch();
@@ -107,17 +118,27 @@ final class PC_user extends PC_base {
 			}
 			
 			if (!empty($this->Post_login) && !empty($this->Post_password)) {
-				$r = $this->prepare("SELECT id,name FROM {$this->db_prefix}site_users WHERE login=? AND password=? AND (flags & ?)=0 and banned=0 LIMIT 1");
-				$s = $r->execute(array($this->Post_login, $this->Post_password, PC_UF_MUST_ACTIVATE));
+				$this->login_attempt = true;
+				$query = "SELECT id,name,password FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND (flags & ?)=0 and banned=0 LIMIT 1";
+				$query_params = array($this->Post_login, PC_UF_MUST_ACTIVATE);
+				$r = $this->prepare($query);
+				//echo $this->get_debug_query_string($query, $query_params);
+				$s = $r->execute($query_params);
 				if (!$s) {
 					if( $using_cookie ) $this->DelCookie();
+					$this->login_error = 'login';
 					return false;
 				}
 				if ($r->rowCount() != 1) {
 					if( $using_cookie ) $this->DelCookie();
+					$this->login_error = 'login';
 					return false;
 				}
 				$data = $r->fetch();
+				if ($data['password'] != $this->Post_password) {
+					$this->login_error = 'password';
+					return false;
+				}
 				$_SESSION['user_login'] = $this->Post_login;
 				$_SESSION['user_password'] = $this->Post_password;
 				$_SESSION['user_secure'] = $this->Current_secure;
@@ -133,6 +154,7 @@ final class PC_user extends PC_base {
 		}
 	}
 	public function Logout() {
+		$this->debug('Logout()');
 		unset($_SESSION['user_login'], $_SESSION['user_password'], $_SESSION['user_secure']);
 		$this->LoginName = '';
 		$this->Data = array();
@@ -253,8 +275,23 @@ final class PC_user extends PC_base {
 	public function Encode_password($pass) {
 		return md5(sha1($pass));
 	}
-	public function Create($email, $password, $retyped_password, $name, $terms_and_conditions, $captcha=NULL, $login, $meta=array()) {
+	public function Create($email, $password = '', $retyped_password = '', $name = '', $terms_and_conditions = 0, $captcha=NULL, $login = '', $meta=array()) {
+		$this->debug("Create()");
+		$this->debug($this->get_callstack(), 3);
 		//validate input
+		$login_after_create = false;
+		if (is_array($email)) {
+			$password = v($email['password']);
+			$retyped_password = v($email['retyped_password']);
+			$name = v($email['name']);
+			$terms_and_conditions = v($email['terms_and_conditions']);
+			$captcha = v($email['captcha']);
+			$login = v($email['login']);
+			$meta = v($email['meta'], array());
+			$login_after_create = v($email['login_after_create'], false);
+			
+			$email = v($email['email']);
+		}
 		if (!Validate('email', $email)) $r['errors'][] = 'email';
 		if (!Validate('password', $password)) $r['errors'][] = 'password';
 		if ($password != $retyped_password) $r['errors'][] = 'retyped_password';
@@ -262,7 +299,10 @@ final class PC_user extends PC_base {
 		if (!Validate('name', $login, true)) $r['errors'][] = 'login';
 		if (!$terms_and_conditions) $r['errors'][] = 'terms_and_conditions';
 		if ($captcha !== NULL && v($_SESSION["captcha_code"], microtime()) != $captcha) $r['errors'][] = 'captcha';
-		if (count(v($r['errors']))) return $r;
+		if (count(v($r['errors']))) {
+			$this->debug(":( Captha problems", 1);
+			return $r;
+		}
 		//prepare
 		$email = strtolower($email);
 		//delete not activatedd accounts first
@@ -272,12 +312,14 @@ final class PC_user extends PC_base {
 		$s = $r->execute(array($email, $login));
 		if (!$s) {
 			$res['errors'][] = 'database';
+			$this->debug($res,1);
 			return $r;
 		}
 		if ($r->rowCount() == 1) {
 			$d = $r->fetch();
 			if ($d['email'] == $email) $res['errors'][] = 'account_exists';
 			if ($d['login'] == $login) $res['errors'][] = 'login_exists';
+			$this->debug($res, 1);
 			return $res;
 		}
 		//prepare
@@ -286,16 +328,34 @@ final class PC_user extends PC_base {
 		$activation_code = md5($email.$this->cfg['salt'].time());
 		//create user
 		$r = $this->prepare("INSERT INTO {$this->db_prefix}site_users (email,password,name,date_registered,last_seen,confirmation,flags,login,banned) VALUES(?,?,?,?,?,?,?,?,0)");
-		$s = $r->execute(array($email, $encrypted_password, $name, $now, $now, $activation_code, PC_UF_MUST_ACTIVATE, $login));
+		$flag = PC_UF_MUST_ACTIVATE;
+		if (isset($this->cfg['site_users']) and v($this->cfg['site_users']['no_confirmation'])) {
+			$flag = PC_UF_DEFAULT;
+		}
+		$s = $r->execute(array($email, $encrypted_password, $name, $now, $now, $activation_code, $flag, $login));
 		if (!$s) {
 			$res['errors'][] = 'create_account';
+			$this->debug($res, 1);
 			return $res;
 		}
 		$account_id = $this->db->lastInsertId($this->sql_parser->Get_sequence('site_users'));
 		$this->Set_meta_data($meta, $account_id);
 		if( isset($_REQUEST["remember"]) && $account_id )
 			$this->SetCookie($account_id, $login, $encrypted_password);
-		$this->Send_activation_code($email, $activation_code);
+		if ($flag == PC_UF_MUST_ACTIVATE) {
+			$this->Send_activation_code($email, $activation_code);
+		}
+		elseif ($login_after_create) {
+			$login_string = $login;
+			if (isset($this->cfg['site_users']) and v($this->cfg['site_users']['email_as_login'])) {
+				$login_string = $email;
+			}
+			$_POST['user_login'] = $login_string;
+			$_POST['user_password'] = $password;
+			$this->Refresh()->Login();
+		}
+		$this->debug('User has been created', 1);
+		
 		return array(
 			'success'=> true,
 			'id'=> $account_id,
@@ -306,7 +366,21 @@ final class PC_user extends PC_base {
 		$mail = new PHPMailer();
 		$mail->SMTPDebug  = 1;
 		$mail->CharSet = "utf-8";
-		$mail->SetFrom('no-reply@gov39.ru', 'no-reply@gov39.ru');
+		
+		$from_email = $from_name = '';
+		
+		if (isset($this->cfg['site_users'])) {
+			$from_email = v($this->cfg['site_users']['email_sender_email']);
+			$from_name = v($this->cfg['site_users']['email_sender_name']);
+		}
+		if (empty($from_email)) {
+			$from_email = v($cfg['from_email']);
+		}
+		if (empty($from_name)) {
+			$from_name = v($cfg['from_email']);
+		}
+		
+		$mail->SetFrom($from_email, $from_name);
 		$mail->AddAddress($email);
 		$subject = lang('activation_code');
 		$mail->Subject = $subject;
@@ -344,26 +418,41 @@ final class PC_user extends PC_base {
 		$r = $this->prepare("UPDATE {$this->db_prefix}site_users SET confirmation=?, flags=flags | ? WHERE id=?");
 		$r->execute(Array($code, PC_UF_CONFIRM_PASS_CHANGE, $id));
 		
-		$mail = new PHPMailer();
-		$mail->SMTPDebug  = 1;
-		$mail->CharSet = "utf-8";
-		$mail->SetFrom('no-reply@gov39.ru', 'no-reply@gov39.ru');
-		$mail->AddAddress($email);
-		$subject = lang('pass_change_confirmation_code');
-		$mail->Subject = $subject;
+		$from_email = $from_name = '';
+		
+		if (isset($this->cfg['site_users'])) {
+			$from_email = v($this->cfg['site_users']['email_sender_email']);
+			$from_name = v($this->cfg['site_users']['email_sender_name']);
+		}
+		if (empty($from_email)) {
+			$from_email = v($this->cfg['from_email']);
+		}
+		if (empty($from_name)) {
+			$from_name = v($this->cfg['from_email']);
+		}
+		$subject = $this->core->Get_variable('pass_change_confirmation_code', null, 'site_users_pass_change');
 		
 		$style= '';
-		$body = lang('pass_change_confirmation_code').': '.$code;
+		$body = $this->core->Get_variable('pass_change_confirmation_code', null, 'site_users_pass_change').': '.$code;
+			
+		$params = array(
+			'subject' => $subject,
+			'from_email' => $from_email,
+			'from_name' => $from_name
+		);
 		
-		$mail->MsgHTML('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+		$message = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 			<html>
 				<head>
 					<title>' . $subject . '</title>
 					<meta http-equiv=Content-Type content="text/html; charset=utf-8">
 					' . ($style?"<style><!--\n$style\n--></style>\n\t\t":"") . '</head>
 				<body>' . $body . '</body>
-			</html>');
-		if (!$mail->Send()) return false;
+			</html>';
+		
+		
+		
+		if (!PC_utils::sendEmail($email, $message, $params)) return false;
 		return true;
 	}
 	public function Confirm_password_change($password, $retyped_password, $confirmation_code) {

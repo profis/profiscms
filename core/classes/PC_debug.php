@@ -192,7 +192,7 @@ class PC_debug {
 		if ($wait_seconds > 0 and @file_exists($this->file)) {
 			if (time() - filemtime($this->file) <= $wait_seconds) {
 				$append = true;
-				$this->debug('===================================================');
+				$this->debug('======================'. date('Y-m-d H:i:s') .'=============================');
 			}
 		}
 		$this->file_put_debug($this->file, $append);
@@ -215,8 +215,9 @@ class PC_debug {
 			$pre_s .= '<head>
 				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 			</head>
-			';
+			======================'. date('Y-m-d H:i:s') .'=============================';
 		}
+		
 		@file_put_contents($file_name, $pre_s . $this->get_debug_string(), $append);
 	}
 	
@@ -225,7 +226,10 @@ class PC_debug {
 		$this->group_time_data = array();
 	}
 	
-	public function get_callstack($backtrace) {
+	public function get_callstack($backtrace = null) {
+		if (is_null($backtrace)) {
+			$backtrace = debug_backtrace();
+		}
 		$s = '';
 		foreach ($backtrace as $key => $value) {
 			v($value['file']);

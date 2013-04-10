@@ -110,6 +110,7 @@ class PC_installer {
 	}
 	
 	public function get_validation_result($requirement) {
+		global $t;
 		$method = 'validate_' . $requirement;
 		$value = '';
 		$result =  $this->$method($value);
@@ -118,10 +119,10 @@ class PC_installer {
 		}
 		if (empty($value)) {
 			if ($result) {
-				$value = 'true';
+				$value = $t['yes'];
 			}
 			else {
-				$value = 'false';
+				$value =  $t['no'];
 			}
 		}
 		return'<span class="'.(($result) ? 'text-success' : 'text-error') . '">'.$value.'</span>';

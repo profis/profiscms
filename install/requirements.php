@@ -7,35 +7,37 @@ if (!defined('PC_INSTALL_SEQUENCE')) {
 
 $requirements = array(
 	'PHP ' . $installer->min_php_version => $installer->get_validation_result('php_version'),
-	'PDO supported' => $installer->get_validation_result('pdo'),
-	'PDO supports MySQL' => $installer->get_validation_result('pdo_mysql'),
-	'Mod rewrite enabled' => $installer->get_validation_result('mod_rewrite'),
+	$t['req_pdo'] => $installer->get_validation_result('pdo'),
+	$t['req_pdo_mysql'] => $installer->get_validation_result('pdo_mysql'),
+	$t['req_mod_rewrite'] => $installer->get_validation_result('mod_rewrite'),
 	'mbstring' => $installer->get_validation_result('mbstring'),
 	'mcrypt' => $installer->get_validation_result('mcrypt'),
-	'gd (version ' . $installer->min_gd_version . '+)' => $installer->get_validation_result('gd'),
+	'gd (' . $t['req_version'] . ' ' . $installer->min_gd_version . '+)' => $installer->get_validation_result('gd'),
 	'bcmath' => $installer->get_validation_result('bcmath'),
 	'iconv' => $installer->get_validation_result('iconv'),
-	'Config file exists' => $installer->get_validation_result('config_file_exists'),
-	'Config file is writable' => $installer->get_validation_result('config_file_writable'),
+	$t['req_config_file_exists']=> $installer->get_validation_result('config_file_exists'),
+	$t['req_config_file_writable'] => $installer->get_validation_result('config_file_writable'),
 );
 
+//phpinfo();
+//echo '<pre>';
+//print_r (mysql_get_client_info());
+//echo '</pre>';
+//$pdo = new PDO();
+//$pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+//echo PDO::getAttribute(PDO::ATTR_SERVER_VERSION);
 ?>
 
 
+<p>
+	<? echo $t['mysql_requirement'] ?>
+</p>
 
-<h1>Requirements check</h1>
-<p>
-	All of the items that are checked below, are <strong>required</strong>
-	for proper installation and operation of Profis CMS.
-</p>
-<p>
-	Please make sure you either have: MySQL <?php echo $installer->min_mysql_version?> upwards.
-</p>
 <table class="table">
 	<thead>
 		<tr>
-			<th id="requirement">Requirement</th>
-			<th>Available?</th>
+			<th id="requirement"><? echo $t['requirement'] ?></th>
+			<th><? echo $t['available'] ?>?</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -53,12 +55,12 @@ $requirements = array(
 </table>
 
 <p>
-	<form style="text-align: right;" action="" method="POST">
+	<form style="text-align: left;" action="" method="POST">
 	<?php
 	if (!$installer->requirements_passed) {
-		echo 'Please fix these problems and <button class="btn btn-success" type="submit">test again</button>';
+		echo '' . $t['fix_problems_and'] .' <button class="btn btn-success" type="submit">' . $t['button_test_again'] .'</button>';
 	} else {
-		echo '<button class="btn btn-success" name="install" type="submit" value="1">Continue to install</button>';
+		echo '<button class="btn btn-success" name="install" type="submit" value="1">' . $t['button_continue_to_install'] .'</button>';
 	}
 	?>
 	</form>

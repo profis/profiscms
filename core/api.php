@@ -121,8 +121,30 @@ if ($routes->Get(1) == 'admin') {
 							}
 							
 							require_once($file_name);
+							
+							$extend_api_hook = 'plugin/' . $pluginName . '/extend-admin-api/' . v($routes->Get(1));
+							$logger->debug('extend_api_hook: ' . $extend_api_hook, 4);
+							
+							$extend_admin_api_class = '';
+							$extend_admin_api_path = '';
+							$core->Init_hooks($extend_api_hook, array(
+								'class'=> &$extend_admin_api_class,
+								'path'=> &$extend_admin_api_path
+							));
+							if (!empty($extend_admin_api_class)) {
+								$extend_file_path = $extend_admin_api_path . '/' . $extend_admin_api_class . '.php';
+								$logger->debug('extend_file_path: ' . $extend_file_path, 5);
+								require_once $extend_admin_api_path . '/' . $extend_admin_api_class . '.php';
+								$class_name = $extend_admin_api_class;
+							}
+							
+							
 							/* @var $api PC_shop_admin_api */ 
-							$log_file = $cfg['path']['logs'] . $pluginName.'/admin_'.v($routes->Get(1)) . '_' . v($routes->Get(2)) .'_api.html';
+							$plugin_api_log_dir = $cfg['path']['logs'] . 'plugins_api/' . $pluginName . '';
+							if (!file_exists($plugin_api_log_dir)) {
+								@mkdir($plugin_api_log_dir);
+							}
+							$log_file = $plugin_api_log_dir . '/admin_'.v($routes->Get(1)) . '_' . v($routes->Get(2)) .'_api.html';
 							$logger->debug('Log file: ' . $log_file, 3);
 							$api = new $class_name($page_manager);
 							$api->debug = true;
@@ -222,11 +244,70 @@ else {
 			$pluginName = str_replace('-', '_', $routes->Get(2));
 			if (!empty($pluginName)) {
 				if ($plugins->Is_active($pluginName)) {
+					if (strpos($pluginName, 'pc_') === 0) {
+						$pluginName_up = strtoupper(substr($pluginName, 0, 2)) . substr($pluginName, 2);
+					}
+					else {
+						$pluginName_up = strtoupper(substr($pluginName, 0, 1)) . substr($pluginName, 1);
+					}
+					
+					if (!$site->Is_loaded()) {
+						$site->Identify();
+						$routes->Shift(1);
+					};
+					if (isset($_POST['ln'])) {
+						$site->Set_language($_POST['ln']);
+					}
+					$routes->Shift(1);
+					$more_shift = 1;
+					
+					$plugin_api_path = $core->Get_path('plugins', '', $pluginName) . 'api/';
+
+					
+					$common_class_name = $pluginName_up . '_api';
+					$common_file_name = $plugin_api_path . "$common_class_name.php";
+					
+					$class_name = $pluginName_up . '_' . v($routes->Get(2)) . '_api';
+					$file_name = $plugin_api_path . "$class_name.php";
+					
+					
+					$proccessed = false;
+					if (@file_exists($common_file_name)) {
+						require_once($common_file_name);
+						$api = new $common_class_name();
+						$proccessed = $api->process(v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)));
+						
+					}
+					if (!$proccessed and @file_exists($file_name)) {
+						$routes->Shift(1);
+						$more_shift--;
+						require_once($file_name);
+						$api = new $class_name();
+						$proccessed = $api->process(v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)));
+					}
+					
+					if ($proccessed) {
+						$output = $api->get_output();
+						if (is_array($output)) {
+							$content_type = 'application/json';
+							header('Content-Type: ' . $content_type);
+							header('Cache-Control: no-cache');
+							echo json_encode($output);
+						}
+						else {
+							header('Cache-Control: no-cache');
+							echo $output;
+						}
+						exit;
+					}
+					
+					if ($more_shift > 0) {
+						$routes->Shift($more_shift);
+					}
 					$apiPath = $core->Get_path('plugins', 'PC_api.php', $pluginName);
 					if (is_file($apiPath)) {
 						try {
-							$routes->Shift(2);
-							require($apiPath);
+							include($apiPath);
 						}
 						catch (exception $e) {
 							echo 'Plugin API thrown an uncaught exception: '.$e->getMessage();

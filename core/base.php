@@ -19,7 +19,7 @@ if (phpversion() < 5.2) die('ProfisCMS requires at least PHP 5.2 version.');
 global $cfg, $db, $sql_parser;
 
 if (!defined('PC_VERSION')) {
-	define('PC_VERSION', '4.4.1');
+	define('PC_VERSION', '4.4.2');
 
 	class PC_app {
 		static $cfg;
@@ -41,43 +41,7 @@ mb_internal_encoding('UTF-8');
 //force system to use submitted session id
 if (isset($_POST['phpsessid'])) session_id($_POST['phpsessid']);
 
-//play with working directories
-$cfg['path']['cwd'] = str_replace('\\', '/', getcwd()).'/';
-$cfg['cwd'] =& $cfg['path']['cwd'];
-chdir(dirname(__FILE__));
-
-$config_files = array(
-	CORE_ROOT . 'config/system_config.php',
-	CMS_ROOT . 'config.php',
-	CORE_ROOT . 'config/system_config_2.php',
-	CMS_ROOT . 'config_2.php'
-);
-
-foreach ($config_files as $key => $filename) {
-	if (file_exists($filename)) {
-		@require($filename);
-	}
-}
-
-if (defined('PC_TEST_MODE')) {
-	//Do not use production db in test mode:
-	$cfg['db']['host'] = '';
-	$cfg['db']['user'] = '';
-	$cfg['db']['pass'] = '';
-	$cfg['db']['name'] = '';
-	$test_config_file = CMS_ROOT . 'config_test.php';
-	if (file_exists($test_config_file)) {
-		@require($test_config_file);
-	}
-}
-
-if (empty($cfg['db']['name'])) {
-	header('Location: install/'); 
-	exit();
-}
-
-require_once('functions.php');
-
+include 'base_config.php';
 
 //print_pre($cfg);exit;
 //date_default_timezone_set(v($cfg['timezone'], "Europe/Vilnius"));
@@ -95,14 +59,6 @@ if (get_magic_quotes_gpc()) {
     array_walk_recursive($_GET, 'stripslashes_gpc');
     array_walk_recursive($_POST, 'stripslashes_gpc');
     array_walk_recursive($_COOKIE, 'stripslashes_gpc');
-}
-
-//define paths
-$cfg['path']['public'] = CMS_ROOT;
-$cfg['path']['base'] = str_replace('\\', '/', getcwd()).'/';
-$cfg['path']['system'] =& $cfg['path']['base'];
-foreach ($cfg['directories'] as $k=>$d) {
-	$cfg['path'][$k] = CMS_ROOT . $d.'/';
 }
 
 
@@ -145,17 +101,7 @@ if (!function_exists('PC_autoload')) {
 
 
 
-chdir($cfg['cwd']);
-
-$cfg += get_dir_url_info();
-
-//print_pre($_SERVER);
-//print_pre($cfg);
-
-session_name('PHPSESSID_' . md5($cfg['url']['base']));
-if (!defined('PC_TEST_MODE') or !PC_TEST_MODE) {
-	session_start();
-}
+include 'base_session.php';
 
 
 $HTTPS = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS'])!='off';

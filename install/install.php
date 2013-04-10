@@ -52,7 +52,7 @@ try {
 	$db = new PDO("mysql:host=".$config['db_host'] . ";" . $port . "dbname=".$config['db_name'], $config['db_user'], $config['db_pass']);
 	$db->query("SET NAMES '".$cfg['db']['charset']."'");
 } catch (PDOException $e) {
-	$error = '<strong>Profis CMS could not connect to the database and has not been installed.</strong><br />The following error has occured: <p><strong>'. $e->getMessage() ."</strong></p>";
+	$error = '<strong>' . $t['install_failed_db'] . '</strong><br />' . $t['install_error'] . ': <p><strong>'. $e->getMessage() ."</strong></p>";
 }
 	
 if (!$error) {
@@ -68,7 +68,7 @@ if (!$error) {
 
 if (!$error) {
 	if (!file_put_contents(PC_CONFIG_FILE, $cfg_content)) {
-		 $error = "Config file could not be written!";
+		 $error = $t['config_write_error'];
 	}
 }
 

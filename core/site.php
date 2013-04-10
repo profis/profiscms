@@ -40,7 +40,7 @@ $total_time = round($totaltime,3);
 
 if (v($cfg['debug_time_to_file'])) {
 	$width = round(100 * $total_time);
-	$time_log_file = $cfg['path']['base'] . 'logs/_time.html';
+	$time_log_file = $cfg['path']['logs'] . '_time.html';
 	$s = '';
 	if (!file_exists($time_log_file)) {
 		$s = '<head><meta http-equiv="Content-Type" content="text/html;charset=utf-8" /></head>';

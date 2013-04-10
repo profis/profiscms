@@ -55,10 +55,10 @@ $cfg['patterns'] = array(
 	'email'=> '([a-zA-Z0-9]+([\.+_-][a-zA-Z0-9]+)*)@(([a-zA-Z0-9]+((\.|[-]{1,2})[a-zA-Z0-9]+)*)\.[a-zA-Z]{2,6})',
 	
 	//1st match must be for new route, 2nd match will be for $_GET['page']
-	'page_get_var' => '((?:.)*\/)page(\d+)\/?$',
+	'page_get_var' => '((?:.)*\/?)'.$cfg['get_vars']['page_get_var'].'(\d+)\/?$',
 	
 	//1st match must be for new route, 2nd match will be for $_GET['ppage']
-	'ppage_get_var' => '((?:.)*\/)ppage(\d+)\/?$',
+	'ppage_get_var' => '((?:.)*\/?)'.$cfg['get_vars']['ppage_get_var'].'(\d+)\/?$',
 );
 
 //don't change following settings if you're not sure what you're doing!

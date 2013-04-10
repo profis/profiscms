@@ -31,8 +31,8 @@ final class PC_page extends PC_base {
 	 * @return int
 	 */
 	public function get_id() {
-		if (isset($this->page_data['pid'])) {
-			return $this->page_data['pid'];
+		if (isset($this->page_data['page_id'])) {
+			return $this->page_data['page_id'];
 		}
 		return false;
 	}
@@ -42,7 +42,7 @@ final class PC_page extends PC_base {
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'router/route.html', false, 25);
 		$this->debug("Get_route_data($route)");
 		$now = time();
-		$r = $this->prepare("SELECT p.date,p.front,p.id pid,p.idp,c.*,p.hot,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,"
+		$r = $this->prepare("SELECT p.date,p.front,p.id pid, p.id page_id,p.idp,c.*,p.hot,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,"
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.route'), array('separator'=>'▓'))." routes"
 		.', ' . $this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.permalink'), array('separator'=>'▓'))." permalinks"
 		.(is_null($route)?
@@ -229,6 +229,8 @@ final class PC_page extends PC_base {
 		return $redirect;
 	}
 	public function Process_forms(&$text, $currentFormSubmitHash, $nextFormSubmitHash) {
+		$this->_form_count = 0;
+		$this->debug("Process_forms($currentFormSubmitHash)");
 		$dom = new DOMDocument();
 		/* Create a fictional XHTML document with just the contents of $text in the body.
 		 * Both DOCTYPE and character set definition are necessary for all the magic to work properly.
@@ -241,6 +243,10 @@ final class PC_page extends PC_base {
 		 */
 		$formElements = $dom->getElementsByTagName('form');
 
+		$this->debug("length: " . $formElements->length, 1);
+		
+		$this->_form_count = $formElements->length;
+		
 		if ($formElements->length) {
 			$pageForms = array();
 			for ($i=0; $i<$formElements->length; $i++) {
@@ -327,7 +333,10 @@ final class PC_page extends PC_base {
 			 * submitted and validate the data if so.
 			 */
 			foreach ($pageForms as &$pageForm) {
+				$this->debug($_POST, 2);
+				$this->debug("pageForm['idHash']: {$pageForm['idHash']}, [$currentFormSubmitHash]", 2);
 				if (array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == $currentFormSubmitHash)) {
+					$this->debug("submited", 3);
 					$pageForm['status']['status'] = 'submitted';
 					$values = array();
 					$files = array();
@@ -500,16 +509,21 @@ final class PC_page extends PC_base {
 							}
 						}
 						if ($pageForm['status']['status'] == 'submitted') {
-							$r = $this->prepare("INSERT INTO {$this->db_prefix}forms (pid,form_id,data,time,ip) values(?,?,?,NOW(),?)");
-							$s = $r->execute(array($this->page_data['pid'], $pageForm['id'], json_encode($values), ip2long($_SERVER['REMOTE_ADDR'])));
+							$query = "INSERT INTO {$this->db_prefix}forms (pid,form_id,data,time,ip) values(?,?,?,NOW(),?)";
+							$r = $this->prepare($query);
+							$query_params = array($this->page_data['page_id'], $pageForm['id'], json_encode($values), ip2long($_SERVER['REMOTE_ADDR']));
+							$s = $r->execute($query_params);
+							$this->debug_query($query, $query_params, 4);
 							if (!$s) {
 								$pageForm['status'] = array('status' => 'error', 'errors'=>array('database'));
 							} else {
 								$pageForm['status'] = array('status'=> 'saved');
 							}
+							$this->debug($pageForm['status'], 3);
 						}
 					}
 					if ($pageForm['status']['status'] == 'saved') {
+						$this->debug("saved", 3);
 						if (!empty($pageForm['submitEmails'])) {
 							$mail = new PHPMailer();
 							$mail->SMTPDebug  = 1;
@@ -562,6 +576,8 @@ final class PC_page extends PC_base {
 							
 							PC_utils::debugEmail($pageForm['submitEmails'], $message, $textBody);
 							
+							$this->debug("sending to:" . $pageForm['submitEmails'], 4);
+							
 							foreach ($pageForm['submitEmails'] as $submitEmail) {
 								$mail->AddAddress($submitEmail);
 							}
@@ -572,8 +588,10 @@ final class PC_page extends PC_base {
 							if (!$mail->Send()) {
 								$pageForm['status'] = array('status' => 'error', 'errors'=>array('email'));
 								// echo 'Mailer error: ' . $mail->ErrorInfo;
+								$this->debug("error: " . $mail->ErrorInfo, 4);
 							} else {
 								$pageForm['status'] = array('status' => 'sent');
+								$this->debug(":) sent", 6);
 							}
 						}
 						
@@ -612,6 +630,7 @@ final class PC_page extends PC_base {
 	}
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
+		$this->debug("Parse_html_output()");
 		// prevent double-submitting of forms. This goes here and not in Process_forms()
 		// because we run Process_forms() multiple times for each page load.
 		// This has a side-effect that if the user has multiple pages open in
@@ -619,10 +638,11 @@ final class PC_page extends PC_base {
 		$currentFormSubmitHash = null;
 		if(array_key_exists('formSubmitHash', $_SESSION)) {
 			$currentFormSubmitHash = $_SESSION['formSubmitHash'];
+			$this->debug("currentFormSubmitHash = _SESSION['formSubmitHash'] [$currentFormSubmitHash]", 1);
 		}
-		$nextFormSubmitHash = time();
-		$_SESSION['formSubmitHash'] = $nextFormSubmitHash;
 		
+		$nextFormSubmitHash = time();
+						
 		//$this->page_data['pid']
 		//echo $t1;
 		$tc = 1;
@@ -631,12 +651,16 @@ final class PC_page extends PC_base {
 		while (isset($text)) {
 			#
 			$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
+			if ($this->_form_count) {
+				$_SESSION['formSubmitHash'] = $nextFormSubmitHash;
+				$this->debug("_SESSION['formSubmitHash'] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
+			}
+			
 			$this->Replace_google_map_objects($text);
 			$this->Parse_gallery_files_requests($text);
 			$this->core->Init_hooks('parse_html_output', array(
 				'text'=> &$text
 			));
-			
 			$this->Replace_media_objects($text);
 			//fix hash links
 			if (isset($this->route[1])) $text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1], null, false)."$1\"",  $text);
@@ -645,11 +669,12 @@ final class PC_page extends PC_base {
 						
 			$text = preg_replace("/href=\"".$this->site->default_ln."\//", "href=\"",  $text);
 			$this->_decode_links($text);
-			
 			//append prefix to the links from editor
 			//if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
-			if (isset($this->route[1])) $text = preg_replace("/href=\"(?!mailto:)/ui", "href=\"".$this->site->link_prefix,  $text);
 			
+			if (true or isset($this->route[1])) {
+				$text = preg_replace("/href=\"(?!(mailto:|gallery|http:\/\/|https:\/\/|www\.))/ui", "href=\"".$this->site->link_prefix,  $text);
+			}
 			//page break
 			$text = str_replace('╬', '<span style="display:none" id="pc_page_break">&nbsp;</span>', $text);
 			//prevent bots from seeing raw email addresses
@@ -671,7 +696,6 @@ final class PC_page extends PC_base {
 	}
 	
 	protected function _replace_link_match($matches) {
-		//print_pre($matches);
 		$full_match = $matches[1];
 		$full_match = rtrim($full_match,"/");
 		$full_match_parts = explode('[', $full_match);
@@ -759,6 +783,9 @@ final class PC_page extends PC_base {
 						if (!isset($files[$m_id])) {
 							continue;
 						}
+						if (empty($m_type_pre) and in_array($m_type, array('small/', 'large/'))) {
+							$m_type_pre = 'thumb-';
+						}
 						$to = ''.$this->cfg['directories']['gallery'].'/'.$files[$m_id]['path'].$m_type_pre.$m_type.$files[$m_id]['filename'].'';
 						$this->gallery_request_map[$files[$m_id]['path'].$files[$m_id]['filename']] = $m_id;
 						//echo $to.'<br />';
@@ -776,6 +803,139 @@ final class PC_page extends PC_base {
 		}
 		return true;
 	}
+	
+	protected function _get_marker_category($marker,&$categories) {
+		if(!empty($marker->category)) {
+			$cat_parts = explode('[' , $marker->category);
+			$cat_parts_count = count($cat_parts);
+			if ($cat_parts_count) {
+				$cat_id = rtrim($cat_parts[$cat_parts_count - 1], ']');
+				if (is_array($categories)) {
+					foreach ($categories as $key => $category) {
+						if($category->id == $cat_id) {
+							return $category;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	protected function _get_map_marker($map_id, $map_type, &$marker, &$categories, $data) {
+		$category = $this->_get_marker_category($marker, $categories);
+		if ($category) {
+			if (!isset($category->js)) {
+				$category->js = "category_markers['".$category->id."'] = [];";
+			}
+		}
+		if ($map_type == 'google') {
+			return $this->_get_google_map_marker($map_id, $marker, $category, $data);
+		}
+		elseif ($map_type == 'yandex') {
+			return $this->_get_yandex_map_marker($map_id, $marker, $category, $data);
+		}
+	}
+	
+	protected function _get_google_map_marker($map_id, &$marker, $category, $data) {
+		$marker_image = $this->_get_map_marker_icon($marker, $category, $data);
+		$marker_options = $this->_get_marker_options($marker, $data);
+		if (!empty($marker_image)) {
+			$marker_image = ', icon:"' . $marker_image .'"';
+		}
+		$marker_custom_options = '';
+		$marker_var = 'marker_'.$marker->id;
+		$new_marker = 'var ' . $marker_var . ' = new google.maps.Marker({map:'.$map_id.',animation:google.maps.Animation.DROP,position: new google.maps.LatLng('.$marker->latitude.','.$marker->longitude.')' . $marker_image . $marker_options . '});';
+		if (v($marker->text)) {
+			$new_marker .= '
+			google.maps.event.addListener(' . $marker_var . ', "click", function() {
+				infowindow.setContent(' . json_encode($marker->text) . ');
+				infowindow.open(' . $map_id . ','.$marker_var.');
+			});';
+		}
+		$category_id = 0;
+		if ($category) {
+			$category_id = $category->id;
+			$new_marker .= "category_markers['" . $category_id . "'].push(" . $marker_var . ');';
+		}
+		
+			
+		return $new_marker;
+					
+	}
+	
+	protected function _get_yandex_map_marker($map_id, $marker, $category, $data) {
+		$marker_image =  $this->_get_map_marker_icon($marker, $category, $data, $original_icon);
+		$marker_options = $this->_get_marker_options($marker, $data);
+		if (!empty($marker_image)) {
+			//$rr = $this->Parse_gallery_file_request($original_icon);
+			//print_pre($rr);
+			//$this->gallery->Get_image_thumbnail_type($original_icon);
+			$marker_image = 'iconImageHref: "'.$marker_image.'" ';
+		
+		}
+		$marker_custom_options = '';
+		$cat_js = '';
+		$category_id = 0;
+		if ($category) {
+			$category_id = $category->id;
+		}
+		if ($category_id) {
+			$cat_js = "category_markers['" . $category_id . "'].push(myPlacemark);";
+		}
+		$options_array = array();
+		if (v($marker->text)) {
+			$options_array[] = 'balloonContentBody: ' . json_encode($marker->text);
+		}
+		return '
+			myPlacemark = new ymaps.Placemark(['.$marker->latitude.', '.$marker->longitude.'], 
+				{
+					' . implode(',', $options_array) . '
+				},
+				{
+					'.$marker_image . '
+				}
+			);
+			'.$cat_js.'
+			myMap.geoObjects.add(myPlacemark);';
+	}
+	
+	protected function _get_map_marker_icon(&$marker, $category, $data, &$original_icon = '') {
+		$marker_image = v($marker->icon, '');
+		if (!empty($marker_image)) {
+			
+		}
+		elseif($category and !empty($category->_data->image)) {
+			$marker_image = $category->_data->image;
+		}
+		elseif (v($data->marker_image)) {
+			$marker_image = $data->marker_image;
+		}
+		$original_icon = $marker_image;
+		if (!empty($marker_image)) {
+			$marker_image = $this->core->Absolute_url($marker_image);
+		}
+		return $marker_image;
+	}
+	
+	protected function _get_marker_options(&$marker, $data) {
+		$marker_custom_options = v($marker->options);
+		$marker_custom_options = trim($marker_custom_options);
+		$marker_custom_options = trim($marker_custom_options, ',');
+		if (!empty($marker_custom_options)) {
+			$marker_custom_options = ', ' . $marker_custom_options;
+		}
+		else {
+			$marker_custom_options = v($data->marker_options);
+			$marker_custom_options = trim($marker_custom_options);
+			$marker_custom_options = trim($marker_custom_options, ',');
+			if (!empty($marker_custom_options)) {
+				$marker_custom_options = ', ' . $marker_custom_options;
+			}
+		}
+		return $marker_custom_options;
+	}
+	
 	public function Replace_google_map_objects(&$text) {
 		//<object width="100%" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"> <param name="map_data" value="%7B%22latitude%22%3A55.710803%2C%22longitude%22%3A21.13180699999998%2C%22zoom%22%3A12%2C%22map_type%22%3A%22satellite%22%7D" /> <param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="100%" height="240px">&nbsp;</embed> </object>
 		//<object width="500" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"><param name="map_data" value="%7B%22latitude%22%3A43.635515820871454%2C%22longitude%22%3A51.17217413757328%2C%22zoom%22%3A15%2C%22map_type%22%3A%22hybrid%22%7D" /><param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="500" height="240">&nbsp;</embed></object>
@@ -823,55 +983,151 @@ final class PC_page extends PC_base {
 				}
 				
 				$id = 'gmap_'.$this->_gmap_counter++;
+				
+				$markers = '';
+				if (!isset($data->markers)) {
+					$old_marker = new stdClass();
+					$old_marker->id = 1;
+					$old_marker->latitude = $data->latitude;
+					$old_marker->longitude = $data->longitude;
+					$old_marker->options = v($data->marker_options);
+					$old_marker->icon = v($data->marker_image);
+					$data->markers = array($old_marker);
+				}
+				if (isset($data->markers)) {
+					foreach ($data->markers as $key => $marker) {
+						$markers .= $this->_get_map_marker($id, $map_type, $marker, $data->categories, $data);
+					}
+				}
+				$filter = '';
+				$categories = 'var category_markers = {};
+					category_markers["0"] = [];
+				';
+				
+				$vars = array();
+				$vars['categories'] = array();
+				
+				$categories_exist = false;
+				if (isset($data->categories)) {
+					foreach ($data->categories as $key => $category) {
+						if (isset($category->js)) {
+							$categories_exist = true;
+							$vars['categories'][] = array(
+								'el_id' => $id.'_'.$category->id,
+								'id' => $category->id,
+								'data' => $category->_data
+							);
+							$categories .= $category->js;
+							$filter .= '<label for = "'.$id.'_'.$category->id.'">' . $category->_data->name . ':</label> <span><input type="checkbox" id = "'.$id.'_'.$category->id.'" rel = "' . $category->id . '" />&nbsp;</span>';
+						}
+					}
+				}
+				
+				$map_var_name = $id;
+				$map_manager = 'PC_google_maps';
+				if ($map_type == 'yandex') {
+					$map_var_name = 'myMap';
+					$map_manager = 'PC_yandex_maps';
+				}
+				
+				
+				$filter_js = 'var ready_callback = function (map, category_markers) {
+								return function() {
+									$(\'#map_filter_'.$id.' input\').on(\'click\', function() {
+										pc_maps_filter('.$map_manager.', map, $(\'#map_filter_'.$id.' input\'), category_markers, $(this).attr("rel"), this.checked)
+									});
+								};
+							};'
+							//. 'debugger;'
+							.'$(document).ready(ready_callback('.$map_var_name.', category_markers));';
+				
+				if (!$categories_exist) {
+					$filter_js = '';
+				}
+				
 				$w = $gmaps[3][$a];
 				$h = $gmaps[4][$a];
 				if ($map_type == 'google') {
-					$map_frame = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
-					.'<script type="text/javascript">'
-						.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false'.(isset($data->scrollwheel)?',scrollwheel:'.$data->scrollwheel:''). $map_custom_options . '};'
-						.'var '.$id.'=null;'
-						.'$(function(){'
-							.$id.'=new google.maps.Map(document.getElementById(\''.$id.'\'),options_'.$id.');'
-							.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
-						.'});'
-					.'</script></div>';
+					$vars = array_merge($vars, array(
+						'id' => $id,
+						'filter_el_id' => 'map_filter_' . $id,
+						'width' => $w,
+						'height' => $h,
+						'style' => $gmaps[2][$a],
+						'filter' => $categories_exist,
+						'js' => '<script type="text/javascript">'
+							.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false'.(isset($data->scrollwheel)?',scrollwheel:'.$data->scrollwheel:''). $map_custom_options . '};'
+							.'var '.$id.'=null;'
+							.'$(function(){'
+								.$id.'=new google.maps.Map(document.getElementById(\''.$id.'\'),options_'.$id.');'
+								.$categories
+								.'var infowindow = new google.maps.InfoWindow();'
+								.$markers
+								//.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
+								//.'debugger;'
+								. $filter_js
+							.'});'
+							.'
+							'
+						.'</script>',
+
+						
+					));
+					$map_frame = $this->site->Get_tpl_content('map', $vars);
+					$map_frame_ = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
+					.'</div>' 
+					. '<div  id="map_filter_'.$id.'">'. $filter . '</div>';
 				}
 				if ($map_type == 'yandex') {
-					$map_frame = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
-					.'<script type="text/javascript">'
-					.'
-						ymaps.ready(yandex_map_init_'.$id.');
+					$vars = array_merge($vars, array(
+						'id' => $id,
+						'filter_el_id' => 'map_filter_' . $id,
+						'width' => $w,
+						'height' => $h,
+						'style' => $gmaps[2][$a],
+						'filter' => $categories_exist,
+						'js' => '<script type="text/javascript">'
+							.'ymaps.ready(yandex_map_init_'.$id.');
+							function yandex_map_init_'.$id.' () {
+								var myMap = new ymaps.Map("'.$id.'", {
+									center: ['.$data->latitude.', '.$data->longitude.'],
+									zoom: ' . $data->zoom . ',
+									type: "' . $data->map_type . '", 
+									behaviors: ["default", "scrollZoom"]
+								});
+								myMap.controls
+								.add("zoomControl")
+								.add("typeSelector");
+								'
+								.$categories
+								.$markers
+								//.'debugger;'
+								.$filter_js
+								.'
+							}
+							'
+						.'</script>',
 
-						function yandex_map_init_'.$id.' () {
-							var myMap = new ymaps.Map("'.$id.'", {
-								center: ['.$data->latitude.', '.$data->longitude.'],
-								zoom: ' . $data->zoom . ',
-								type: "' . $data->map_type . '", 
-								behaviors: ["default", "scrollZoom"]
-							});
-							myMap.controls
-							.add("zoomControl")
-							.add("typeSelector");
-							myPlacemark = new ymaps.Placemark(['.$data->latitude.', '.$data->longitude.'], {},
-								{
-									'.$y_marker_image.'
-								}
-							);
-							myMap.geoObjects.add(myPlacemark);
-						}
-						'
-					.'</script></div>';
+						
+					));
+					$map_frame = $this->site->Get_tpl_content('map', $vars);
+					$map_frame_ = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
+					.'</div>'
+					. '<div  id="map_filter_'.$id.'">'. $filter . '</div>';
 				}
 				
 				$text = preg_replace('#'.preg_quote($gmaps[0][$a], "#").'#m', $map_frame, $text, 1);
 			}
+			$this->site->Add_script($this->cfg['directories']['media'] . '/maps.js');
 			foreach ($map_types as $key => $map_type) {
 				switch ($map_type) {
 					case 'google':
 						$this->site->Add_script('http://maps.google.com/maps/api/js?sensor=false');
+						$this->site->Add_script($this->cfg['directories']['media'] . '/maps.google.js');
 						break;
 					case 'yandex':
-						$this->site->Add_script('http://api-maps.yandex.ru/2.0/?load=package.full&lang=ru-RU');	
+						$this->site->Add_script('http://api-maps.yandex.ru/2.0/?load=package.full&lang=ru-RU');
+						$this->site->Add_script($this->cfg['directories']['media'] . '/maps.yandex.js');
 						break;
 					default:
 						break;
@@ -1370,7 +1626,7 @@ final class PC_page extends PC_base {
 		return $this->Get_submenu_part($id, $fields, $limit, $include_content, $include_nomenu, $order);
 	}
 	
-	public function Get_submenu_part($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr") {
+	public function Get_submenu_part($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr", $function_params = array()) {
 		if (!empty($fields) and !in_array('permalink', $fields)) {
 			$fields[] = 'permalink';
 		}
@@ -1433,6 +1689,17 @@ final class PC_page extends PC_base {
 			$limit_s = " {$limit->Get_offset()},{$limit->Get_limit()}";			
 		}
 		
+		$additional_where = '';
+		$additional_params = array();
+		if (isset($function_params['date_from'])) {
+			$additional_where .= ' AND p.date >= ? ';
+			$additional_params[] = $function_params['date_from'];
+		}
+		if (isset($function_params['date_to'])) {
+			$additional_where .= ' AND p.date <= ? ';
+			$additional_params[] = $function_params['date_to'];
+		}
+		
 		$query = "SELECT ".($paging?'SQL_CALC_FOUND_ROWS ':'').(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'h.id', 'h.front'), array('separator'=>'▓'))." redirects_from"
 		." FROM {$this->db_prefix}pages mp"
@@ -1443,6 +1710,7 @@ final class PC_page extends PC_base {
 		." LEFT JOIN {$this->db_prefix}pages h ON h.redirect=".$this->sql_parser->cast('p.id', 'text')
 		." WHERE mp.id ".(is_array($id)?'in('.implode(',', $id).')':'=?')." and p.published=1"
 		." and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')"
+		. $additional_where
 		." GROUP BY p.id"
 		." $order_by ".(($limit_s)?" limit $limit_s":"");
 		
@@ -1451,6 +1719,7 @@ final class PC_page extends PC_base {
 		$params = array();
 		if (!is_array($id)) $params[] = $id;
 		if (is_array($id) && !count($id)) return false;
+		$params = array_merge($params, $additional_params);
 		$success = $r->execute($params);
 		if (!$success) return false;
 		

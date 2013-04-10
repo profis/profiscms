@@ -50,16 +50,22 @@ if ($id < 1 || empty($ln)) {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 	die($id . " - You should specify both page ID ($id ) and language ($ln).");
 }
-$r = $db->prepare("SELECT d.ln,d.mask,p.front,p.site, route, s.active"
+$query = "SELECT d.ln,d.mask,p.front,p.site, route, s.active"
 ." FROM {$cfg['db']['prefix']}pages p"
-." JOIN {$cfg['db']['prefix']}content c ON pid=p.id and ln=:ln"
+." LEFT JOIN {$cfg['db']['prefix']}content c ON pid=p.id and ln=:ln"
 ." JOIN {$cfg['db']['prefix']}domains d ON d.site=p.site"
 ." JOIN {$cfg['db']['prefix']}sites s ON s.id=p.site"
-." WHERE p.id=:id");
-$success = $r->execute(array(
+." WHERE p.id=:id";
+$r = $db->prepare($query);
+$query_params = array(
 	'id'=> $id,
 	'ln'=> $ln
-));
+);
+if (isset($_GET['debug'])) {
+	echo $core->get_debug_query_string($query, $query_params);
+	echo '<hr />';
+}
+$success = $r->execute($query_params);
 if (!$success) {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 	die('Database error');

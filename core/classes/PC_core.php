@@ -70,6 +70,20 @@ final class PC_core extends PC_base {
 		else $path = $this->cfg['path']['themes'];
 		return $path.$theme.'/';
 	}
+	
+	public function Get_tpl_path($group, $template) {
+		$full_template = $template . '.php';
+		$tpl_directory = $this->Get_theme_path(null, false) . 'templates/' . $group . '/';
+		$tpl_path = $tpl_directory . $full_template;
+		if (file_exists($tpl_path)) {
+			return $tpl_path;
+		}
+		
+		$tpl_directory = CORE_ROOT . 'templates/' . $group . '/';
+		$tpl_path = $tpl_directory . $full_template;
+		return $tpl_directory . $full_template;
+	}
+	
 	/**
 	* Method used to redirect user to error page.
 	* @param mixed $err given error code to function to cope with. By error code function may display error page.
@@ -200,29 +214,56 @@ final class PC_core extends PC_base {
 	}
 	
 	/**
+	 * Sets config which hasn't been set previously (insert only)
+	 * @param type $key
+	 * @param type $value
+	 * @param type $plugin
+	 */
+	public function Set_config_if($key, $value, $plugin=null) {
+		$this->Set_config($key, $value, $plugin, true);
+	}
+	
+	/**
 	* Method used to update existing plugin or insert new one in database.
 	* @param string $key given plugin unique key.
 	* @param string $value given plugin value to be stored in database.
 	* @param string $plugin given plugin name; null by default.
 	* @return bool TRUE if UPDATE or INSERT succeeds; and FALSE if UPDATE or INSERT fails.
 	*/
-	public function Set_config($key, $value, $plugin=null) {
+	public function Set_config($key, $value, $plugin=null, $if_empty = false) {
+		global $cfg;
 		#prepare query params
 		$params = array(
 			'value'=> $value, 
 			'ckey'=> $key
 		);
 		if (!empty($plugin)) $params['plugin'] = $plugin;
+		
+				
 		#try to update existing record
-		$r = $this->prepare("UPDATE {$this->db_prefix}config SET value=:value WHERE ckey=:ckey".(!empty($plugin)?' and plugin=:plugin':''));
-		$s = $r->execute($params);
-		if (!$s) return false;
-		if ($r->rowCount()) return true; #record updated!
+		if (!$if_empty) {
+			$r = $this->prepare("UPDATE {$this->db_prefix}config SET value=:value WHERE ckey=:ckey".(!empty($plugin)?' and plugin=:plugin':''));
+			$s = $r->execute($params);
+			if (!$s) return false;
+			if ($r->rowCount()) return true; #record updated!
+		}
+		
 		#no records were updated, it means that we should do insert instead
-		$r = $this->prepare("INSERT INTO {$this->db_prefix}config (".(!empty($plugin)?'plugin,':'')."ckey,value) VALUES(".(!empty($plugin)?':plugin,':'').":ckey,:value)");
+		$r = $this->prepare("INSERT IGNORE INTO {$this->db_prefix}config (".(!empty($plugin)?'plugin,':'')."ckey,value) VALUES(".(!empty($plugin)?':plugin,':'').":ckey,:value)");
 		$s = $r->execute($params);
 		if (!$s) return false;
-		if ($r->rowCount()) return true;
+		if ($r->rowCount()) {
+			if ($cfg) {
+				if (is_null($plugin)) {
+					$cfg[$key] = $value;
+				}
+				else {
+					v($cfg[$plugin], array());
+					$cfg[$plugin][$key] = $value;
+				}
+			}
+			return true;
+		}
 		#neither update or insert were successful
 		return false;
 	}
@@ -244,6 +285,40 @@ final class PC_core extends PC_base {
 		#so we could say that config does not exist also (is deleted)
 		return true;
 	}
+	
+	
+	/**
+	 * Sets variable which hasn't been set previously (insert only)
+	 * @global type $cfg
+	 * @param type $ln
+	 * @param type $key
+	 * @param type $value
+	 * @param type $plugin
+	 * @param type $site
+	 * @return boolean
+	 */
+	public function Set_variable_if($ln, $key, $value, $plugin=null, $site = 0) {
+		global $cfg;
+	
+		$params = array(
+			'ln'=> $ln, 
+			'value'=> $value, 
+			'vkey'=> $key,
+			'site' => $site
+		);
+		if (!empty($plugin)) $params['plugin'] = $plugin;
+		
+		#no records were updated, it means that we should do insert instead
+		$r = $this->prepare("INSERT IGNORE INTO {$this->db_prefix}variables (".(!empty($plugin)?'controller,':'')."ln,vkey,value,site) VALUES(".(!empty($plugin)?':plugin,':'').":ln,:vkey,:value,:site)");
+		$s = $r->execute($params);
+		if (!$s) return false;
+		if ($r->rowCount()) {
+			return true;
+		}
+		return false;
+	}
+	
+	
 	#dictionary
 	/**
 	* Method used to obtain variables from the database by the site and the language. If variables already obtained earlier-no new

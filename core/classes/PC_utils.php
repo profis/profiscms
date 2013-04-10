@@ -430,6 +430,10 @@ class PC_utils {
 	 */
 	static function sendEmail($recipient, $message, $params, $tags = array()) {
 		global $cfg;
+		$logger = new PC_debug;
+		$logger->debug = true;
+		$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'send_mail.html');
+		$logger->debug('sendEmail');
 		
 		if (is_array($recipient)) {
 			$emails = $recipient;
@@ -463,13 +467,15 @@ class PC_utils {
 		$mail->CharSet = v($params['charset'], 'utf-8');
 		$mail->MsgHTML($message);
 		
+		$logger->debug($emails, 1);
+		
 		foreach ($emails as $key => $email) {
 			$email = trim($email);
 			if (!empty($email)) {
 				$mail->AddAddress($email);
 			}
 		}
-		$mail->Send(); 
+		return $mail->Send(); 
 	}
 	
 }

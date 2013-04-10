@@ -46,7 +46,31 @@ if ($action == 'update') {
 					if ($plugin_data[1]) {
 						if ($plugins->Activate($plugin_data[0])) {
 							$out['activated'][] = $plugin_data[0];
-							$plugin_setup_file = $cfg['path']['plugins'].$plugin_data[0].'/PC_setup.php';
+							$plugin_folder = $core->Get_path('plugins', '', $plugin_data[0]);
+							$plugin_setup_file = $plugin_folder . 'PC_setup.php';
+							
+							$sql_files = array(
+								'mysql'=> 'setup/mysql.sql',
+								'pgsql'=> 'setup/pgsql.sql'
+							);
+							$driver = $core->sql_parser->Get_default_driver();
+							if (isset($sql_files[$driver])) {
+								$sql = file_get_contents($core->plugins->Get_plugin_path($plugin_data[0]).$sql_files[$driver]);
+								if ($sql) {
+									$core->sql_parser->Replace_variables($sql);
+									$queries = explode(';', $sql);
+									foreach ($queries as $query) {
+										if (!empty($query)) {
+											$query = trim($query);
+											if (!empty($query)) {
+												$core->db->query($query);
+											}
+											
+										}
+									}
+								}
+							}
+							
 							if (file_exists($plugin_setup_file)) {
 								require($plugin_setup_file);
 								$plugin_install_function = $plugin_data[0].'_install';

@@ -58,6 +58,7 @@ final class PC_routes extends PC_debug{
 	* @return mixed TRUE if param $request was given and nothing otherwise.
 	*/
 	public function Set_request($request=null) {
+		$this->debug('Set_request()', 2);
 		global $cfg, $core;
 		if (is_null($request)) {
 			$request_uri = explode('?', $_SERVER['REQUEST_URI']);
@@ -67,19 +68,24 @@ final class PC_routes extends PC_debug{
 		else $this->request = $request;
 		
 		//echo $this->request . '<hr />';
-				
+			
+		$this->debug($request, 2);
+		
 		$get_vars = array(
-			'ppage_get_var' => 'ppage',
-			'page_get_var' => 'page'
+			'ppage_get_var' => $cfg['get_vars']['ppage_get_var'],
+			'page_get_var' => $cfg['get_vars']['page_get_var']
 		);
 		
-		foreach ($get_vars as $pattern => $get_var) {
+		foreach ($cfg['get_vars'] as $pattern => $get_var) {
 			if (!isset($cfg['patterns'][$pattern])) {
 				continue;
 			}
 			$page_match = preg_match('/'.$cfg['patterns'][$pattern].'/ui', $this->request, $matches);
 		
-			if ($page_match and $matches[1] and $matches[2]) {
+			$this->debug('preg_match( /'.$cfg['patterns'][$pattern].'/ui, ' . $this->request, 3);
+			$this->debug($matches, 4);
+			
+			if ($page_match and $matches[2]) {
 				//print_r($matches);
 				if (v($cfg['router']['no_trailing_slash']) and !empty($this->request) and substr($this->request, -1) == '/') {
 					$url = rtrim($this->request, '/');

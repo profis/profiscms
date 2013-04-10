@@ -15,8 +15,14 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
 abstract class PC_controller extends PC_base {
-	public function Init() {
-		$this->text =& $this->site->text;
+	public function Init($do_not_bind_to_site = false) {
+		if ($do_not_bind_to_site) {
+			$this->text = '';
+		}
+		else {
+			$this->text =& $this->site->text;
+		}
+		
 		$this_class = get_class($this);
 		$offset = intval(strpos($this_class, 'pc_controller_'));
 		$this->name = substr($this_class, $offset + strlen('PC_controller_'));

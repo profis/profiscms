@@ -93,8 +93,14 @@ if (isset($_POST['ajax'])) {
 			$out[$k][1] = $f['plugin'];
 			$out[$k][2] = array();
 		}
-		if (($f['site'] == 0) || isset($sites[$f['site']]))
+		if (($f['site'] == 0) || isset($sites[$f['site']])) {
+			//print_pre($f);
+			if (is_null($f['site'])) {
+				$f['site'] = 0;
+			}
 			$out[$k][2][] = array($f['site'], $f['value']);
+		}
+			
 	}
 	$output = array_values($out);
 	$logger->debug('<hr />', 1);

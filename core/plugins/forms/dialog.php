@@ -16,7 +16,7 @@
  */
 error_reporting(0);
 $cfg['core']['no_login_form'] = true;
-require_once '../../admin/admin.php';
+require_once '../../../admin/admin.php';
 
 if (isset($_POST['ajax'])) {
 	header('Content-Type: application/json');
@@ -132,7 +132,7 @@ function mod_forms_click() {
 					var del_records=[];
 					var del_ids=[];
 					tab.grid.getSelectionModel().each(function(rec) {
-						console.log(rec.data.id);
+						//console.log(rec.data.id);
 						if (rec.data.id != '') {
 							del_records.push(rec);
 							del_ids.push(rec.data.id);
@@ -143,7 +143,7 @@ function mod_forms_click() {
 						deleted: Ext.encode(del_ids)
 					};
 					Ext.Ajax.request({
-						url: '<?php echo $cfg['url']['base'].$cfg['directories']['plugins']; ?>/forms/<?php echo basename(__FILE__) ?>',
+						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/forms/<?php echo basename(__FILE__) ?>',
 						params: rqparams,
 						method: 'POST',
 						callback: function(opts, success, rspns) {
@@ -203,7 +203,7 @@ function mod_forms_click() {
 	w.show();
 	
 	Ext.Ajax.request({
-		url: '<?php echo $cfg['url']['base'].$cfg['directories']['plugins']; ?>/forms/<?php echo basename(__FILE__) ?>',
+		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/forms/<?php echo basename(__FILE__) ?>',
 		params: {
 			ajax: ''
 		},

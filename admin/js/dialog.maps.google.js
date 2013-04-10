@@ -52,16 +52,71 @@ PC.dialog.maps.google = {
 			options.center = this.get_position(options.latitude, options.longitude);
 		}
 		this.map = new google.maps.Map(this.container.dom, options);
-		this.marker = new google.maps.Marker({
-		  map: this.map,
-		  draggable: true,
-		  animation: google.maps.Animation.DROP,
-		  position: options.center
-		});
-		google.maps.event.addListener(this.marker, 'dragend',  Ext.createDelegate(this.updatePosition, this));
+		if (false) {
+			this.marker = new google.maps.Marker({
+				map: this.map,
+				draggable: true,
+				animation: google.maps.Animation.DROP,
+				position: options.center
+			});
+			google.maps.event.addListener(this.marker, 'dragend',  Ext.createDelegate(this.updatePosition, this));
+		}
 		if (callback) {
 			callback();
 		}
+	},
+	
+	add_marker_to_map_center: function(map, callback, callback_args, click_callback, double_click_callback) {
+		var pos = map.getCenter();
+		return this.add_marker_to_pos(map, pos, callback, callback_args, click_callback, double_click_callback);
+	},
+	
+	add_marker_to_lat_lng: function(map, lat, lng, callback, callback_args, click_callback, double_click_callback) {
+		var pos = this.get_position(lat, lng);
+		return this.add_marker_to_pos(map, pos, callback, callback_args, click_callback, double_click_callback)
+	},
+	
+	add_marker_to_pos: function(map, position, callback, callback_args, click_callback, double_click_callback) {
+		var marker = new google.maps.Marker({
+			map: map,
+			draggable: true,
+			animation: google.maps.Animation.DROP,
+			position: position
+		});
+		this.last_new_marker = marker;
+		if (callback) {
+			callback_args.push(marker);
+			google.maps.event.addListener(marker, 'dragend', callback.createDelegate(null, callback_args));
+			if (click_callback) {
+				google.maps.event.addListener(marker, 'click', click_callback.createDelegate(null, callback_args));
+			}
+			if (double_click_callback) {
+				google.maps.event.addListener(marker, 'dblclick', double_click_callback.createDelegate(null, callback_args));
+			}
+			
+		}
+		return position;
+	},
+	
+	delete_marker: function(marker) {
+		try {
+			marker.setMap(null);
+		}
+		catch(err) {
+		
+		}
+	},
+	
+	highlight_marker: function(marker) {
+		marker.setAnimation(google.maps.Animation.BOUNCE);
+	},
+	
+	unhighlight_marker: function(marker) {
+		marker.setAnimation(null);
+	},
+	
+	get_map_center_position: function(map) {
+		return map.getCenter();
 	},
 	
 	get_marker_position: function(marker) {
@@ -72,9 +127,15 @@ PC.dialog.maps.google = {
 		marker.setPosition(pos);
 	},
 	
+	set_map_center_to_marker: function (map, marker) {
+		map.setCenter(marker.getPosition());
+	},
+	
 	set_options: function(map, marker, options) {
 		map.setOptions(options);
-		marker.setPosition(options.center);
+		if (marker) {
+			marker.setPosition(options.center);
+		}
 	},
 	
 	get_lat_from_pos: function(pos) {

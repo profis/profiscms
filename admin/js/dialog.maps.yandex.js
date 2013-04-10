@@ -49,6 +49,7 @@ PC.dialog.maps.yandex = {
 		};
 	},
 	
+	
 	after_render: function (options, callback) {
 		if (!options) {
 			options = this.get_default_options();
@@ -64,19 +65,75 @@ PC.dialog.maps.yandex = {
 			.add('typeSelector');
 			//.add('mapTools');
 
-        this.marker = new ymaps.Placemark(options.center, { 
-			draggable: true
-            //content: 'Москва!', 
-            //balloonContent: 'Столица России' 
-        }, {
-			draggable: true
-		});
-		
-		this.map.geoObjects.add(this.marker);
-		this.marker.events.add('dragend', Ext.createDelegate(this.updatePosition, this));
+		if (false) {
+			this.marker = new ymaps.Placemark(options.center, { 
+				draggable: true
+				//content: 'Москва!', 
+				//balloonContent: 'Столица России' 
+			}, {
+				draggable: true
+			});
+
+			this.map.geoObjects.add(this.marker);
+			this.marker.events.add('dragend', Ext.createDelegate(this.updatePosition, this));
+		}
+      
 		if (callback) {
 			callback();
 		}
+	},
+	
+	add_marker_to_map_center: function(map, callback, callback_args, click_callback, double_click_callback) {
+		var pos = map.getCenter();
+		return this.add_marker_to_pos(map, pos, callback, callback_args, click_callback, double_click_callback);
+	},
+	
+	add_marker_to_lat_lng: function(map, lat, lng, callback, callback_args, click_callback, double_click_callback) {
+		var pos = this.get_position(lat, lng);
+		return this.add_marker_to_pos(map, pos, callback, callback_args, click_callback, double_click_callback)
+	},
+	
+	add_marker_to_pos: function(map, pos, callback, callback_args, click_callback, double_click_callback) {
+		var marker = new ymaps.Placemark(pos, { 
+			draggable: true
+        }, {
+			draggable: true
+		});
+		this.last_new_marker = marker;
+		map.geoObjects.add(marker);
+		
+		if (callback) {
+			callback_args.push(marker);
+			marker.events.add('dragend', callback.createDelegate(null, callback_args));
+			if (click_callback) {
+				marker.events.add('click', click_callback.createDelegate(null, callback_args));
+			}
+			if (double_click_callback) {
+				marker.events.add('dblclick', double_click_callback.createDelegate(null, callback_args));
+			}
+		}
+		return pos;
+	},
+	
+	delete_marker: function(marker, map) {
+		try {
+			map.geoObjects.remove(marker);
+		}
+		catch(err) {
+		
+		}
+	},
+	
+	highlight_marker: function(marker) {
+
+	},
+	
+	unhighlight_marker: function(marker) {
+
+	},
+	
+	get_map_center_position: function(map) {
+		return map.getCenter();
 	},
 	
 	get_marker_position: function(marker) {
@@ -87,10 +144,15 @@ PC.dialog.maps.yandex = {
 		marker.geometry.setCoordinates(pos);
 	},
 	
+	set_map_center_to_marker: function (map, marker) {
+		map.setCenter(this.get_marker_position(marker));
+	},
+	
 	set_options: function(map, marker, options) {
 		map.setCenter(options.center, options.zoom);
-		marker.geometry.setCoordinates(options.center);
-		//debugger;
+		if (marker) {
+			marker.geometry.setCoordinates(options.center);
+		}
 	},
 	
 	get_lat_from_pos: function(pos) {

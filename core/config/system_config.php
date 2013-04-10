@@ -70,3 +70,10 @@ $cfg['seo'] = array(
 	'max_description' => false,
 	'max_keywords' => false,
 );
+
+$cfg['get_vars'] = array(
+	'ppage_get_var' => 'ppage',
+	'page_get_var' => 'page'
+);
+
+

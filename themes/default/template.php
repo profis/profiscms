@@ -6,8 +6,9 @@
 	<base href="<?php echo htmlspecialchars($cfg['url']['base']); ?>" />
 	<?php
 	$site->Add_stylesheet($core->Get_theme_path() . 'css/bootstrap.css');
+	$site->Add_stylesheet($core->Get_theme_path() . 'css/style.css');
 	echo $site->Get_seo_html();
-	echo $site->Get_stylesheets_html();
+	echo $site->Get_stylesheets_html(false);
 	echo $site->Get_scripts_html();
 	echo $site->Get_favicon();
 	?>
@@ -107,8 +108,7 @@
 			</div>
 		  </div>
 		</div><!-- /.navbar -->
-		<?php
-		?>
+
 
 		<?php
 		$breadcrumbs = $site->Get_page_path();
@@ -147,7 +147,7 @@
 		</div>
 
 		<!-- <div style="color: #aaa; background: #eee;border:1px solid #aaa;padding:3px 5px;">
-			<?php echo $page->Get_info_block(1); ?>
+			<?php /*echo $page->Get_info_block(1); */?>
 		</div> -->
 		<div class="footer">
 			<p>&copy; 2013</p>

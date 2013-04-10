@@ -204,7 +204,7 @@ PC.ux.TinyMCE = function(config) {
 						var after_show_callback = function() {
 							PC.dialog.gmaps.edit_map(e.target);
 						}
-						PC.dialog.gmaps.show(after_show_callback);
+						PC.dialog.gmaps.show(after_show_callback, e.target);
 					}
 					else if (target_class == 'mceItemFlash') {
 						PC.dialog.media.show(e.target);
