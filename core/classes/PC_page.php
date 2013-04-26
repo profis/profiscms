@@ -245,9 +245,13 @@ final class PC_page extends PC_base {
 
 		$this->debug("length: " . $formElements->length, 1);
 		
-		$this->_form_count = $formElements->length;
+		//$this->_form_count = $formElements->length;
 		
 		if ($formElements->length) {
+			if ($this->debug) {
+				file_put_contents($this->cfg['path']['logs'] . 'text_2.html', $text);
+			}
+			
 			$pageForms = array();
 			for ($i=0; $i<$formElements->length; $i++) {
 				$form = $formElements->item($i);
@@ -333,6 +337,7 @@ final class PC_page extends PC_base {
 			 * submitted and validate the data if so.
 			 */
 			foreach ($pageForms as &$pageForm) {
+				$this->_form_count++;
 				$this->debug($_POST, 2);
 				$this->debug("pageForm['idHash']: {$pageForm['idHash']}, [$currentFormSubmitHash]", 2);
 				if (array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == $currentFormSubmitHash)) {
@@ -596,6 +601,7 @@ final class PC_page extends PC_base {
 						}
 						
 						if (!empty($pageForm['thankYouText'])) {
+							$this->debug('Thank you text', 3);
 							// The following two lines allow to use HTML in the thank you text
 							$thankYouDiv = $dom->createDocumentFragment();
 							@$thankYouDiv->appendXML('<div class="pc_form_thank_you">' . $pageForm['thankYouText'] . '</div>');
@@ -939,7 +945,9 @@ final class PC_page extends PC_base {
 	public function Replace_google_map_objects(&$text) {
 		//<object width="100%" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"> <param name="map_data" value="%7B%22latitude%22%3A55.710803%2C%22longitude%22%3A21.13180699999998%2C%22zoom%22%3A12%2C%22map_type%22%3A%22satellite%22%7D" /> <param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="100%" height="240px">&nbsp;</embed> </object>
 		//<object width="500" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"><param name="map_data" value="%7B%22latitude%22%3A43.635515820871454%2C%22longitude%22%3A51.17217413757328%2C%22zoom%22%3A15%2C%22map_type%22%3A%22hybrid%22%7D" /><param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="500" height="240">&nbsp;</embed></object>
-		$google_map_object = '/<object( style="(.+?)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase=".+?">'."\s*".'(?:<param name="map_type" value="(.+?)" \/>)?'."\s*".'<param name="map_data" value="(.+?)" \/>'."\s*".'<param name="src" value=".+?" \/><embed src=".+?" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
+		$google_map_object = '/<object( style="(.+?)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase=".+?">'."\s*".'(?:<param name="map_type" value="(.+?)" \/>)?'."\s*".'<param name="map_data" value="(.+?)" \/>'."\s*".'<param name="src" value=".+?" \/><embed( style="(.+?)")? src=".+?" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
+		$this->debug("google_map_object pattern:", 1);
+		$this->debug($google_map_object, 2);
 		//htmlspecialchars($text);
 		if (!empty($text)) if (preg_match_all($google_map_object, $text, $gmaps)) {
 			//echo 'Martynas';

@@ -131,7 +131,7 @@ class PC_utils {
 	 */
 	static function getUrl($path = null, $params = null, $lang = null) {
 		$slash = '/';
-		if (substr($path, -1) == '/') {
+		if (substr($path, -1) == '/' or strpos($path, '?') !== false) {
 			$slash = '';
 		}
 		$url =
@@ -140,7 +140,17 @@ class PC_utils {
 		if ($params) {
 			if (!is_array($params)) $params = self::urlParamsToArray($params);
 			$params = empty($params) ? '' : self::urlParamsToString($params);
-			$url .= $params ? ('?'.$params) : '';
+			$question = '?';
+			if (strpos($url, '?') !== false) {
+				if (substr($url, -1) == '?') {
+					$question = '';
+				}
+				else {
+					$question = '&';
+				}
+				
+			}
+			$url .= $params ? ($question . $params) : '';
 		}
 		
 		$url = $url;
@@ -380,7 +390,7 @@ class PC_utils {
 	 * @param string $message
 	 * @param string $alt_message
 	 */
-	static function debugEmail(array &$recipients, &$message, &$alt_message = '') {
+	static function debugEmail(&$recipients, &$message, &$alt_message = '') {
 		global $cfg;
 	
 		if (isset($cfg['debug_email']) and is_array($cfg['debug_email']) and v($cfg['debug_email']['enable']) and v($cfg['debug_email']['email'])) {
@@ -407,10 +417,18 @@ class PC_utils {
 			
 			if($debug) {
 				$message .= "<p style='color:red;'>Message is sent to $forms_debug_email for debugging.<br>It would be sent to: ";
-				foreach ($recipients as $key=>$mailer){
-					$recipients[$key] = $forms_debug_email;
-					$message .= $mailer." ";
+				if (is_array($recipients)) {
+					foreach ($recipients as $key=>$mailer){
+						$recipients[$key] = $forms_debug_email;
+						$message .= $mailer." ";
+					}
 				}
+				else {
+					$real_recipient = $recipients;
+					$recipients = $forms_debug_email;
+					$message .= $real_recipient." ";
+				}
+				
 				$message .= "</p>";
 			}  
 		}

@@ -101,7 +101,7 @@ class PC_debug {
 		}
 		
 		$wrap_begin = str_replace('#indent_string#', self::_get_indent_string($indent), $this->debug_entity_wrap_begin);
-		if (is_array($string)) {
+		if (is_array($string) or is_object($string)) {
 			$exported_var = '';
 			try {
 				$exported_var = var_export($string, true);

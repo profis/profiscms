@@ -71,17 +71,48 @@ final class PC_core extends PC_base {
 		return $path.$theme.'/';
 	}
 	
-	public function Get_tpl_path($group, $template) {
+	public function Get_group_tpl_path($group, $template) {
 		$full_template = $template . '.php';
 		$tpl_directory = $this->Get_theme_path(null, false) . 'templates/' . $group . '/';
 		$tpl_path = $tpl_directory . $full_template;
 		if (file_exists($tpl_path)) {
 			return $tpl_path;
 		}
+		if (strpos($group, '_plugin/') === 0) {
+			$group_parts = explode('/', $group);
+			if (count($group_parts) >= 3) {
+				array_shift($group_parts);
+				$plugin = array_shift($group_parts);
+				$plugin_path = $this->Get_path('plugins', '', $plugin);
+				$tpl_directory = $plugin_path . 'templates/' . implode('/', $group_parts) . '/';
+				$tpl_path = $tpl_directory . $full_template;
+				if (file_exists($tpl_path)) {
+					return $tpl_path;
+				}
+			}
+		}
+		else {
+			$tpl_directory = CORE_ROOT . 'templates/' . $group . '/';
+			$tpl_path = $tpl_directory . $full_template;
+			if (file_exists($tpl_path)) {
+				return $tpl_path;
+			}
+		}
 		
-		$tpl_directory = CORE_ROOT . 'templates/' . $group . '/';
-		$tpl_path = $tpl_directory . $full_template;
-		return $tpl_directory . $full_template;
+		
+		return false;
+	}
+	
+	public function Get_tpl_path($group, $template) {
+		$groups = explode(':', $group);
+		$groups = array_reverse($groups);
+		foreach ($groups as $key => $group) {
+			$tpl_path = $this->Get_group_tpl_path($group, $template);
+			if ($tpl_path) {
+				return $tpl_path;
+			}
+		}
+		return false;
 	}
 	
 	/**
@@ -374,7 +405,9 @@ final class PC_core extends PC_base {
 				if (!$this->Get_variables($ln)) return false;
 			}
 			if (!isset($this->plugin_variables[$ln][$controller])) return false;
-			if (!isset($this->plugin_variables[$ln][$controller][$key])) return false;
+			if (!isset($this->plugin_variables[$ln][$controller][$key])) {
+				return $this->Get_variable($controller . '_' . $key, $ln);
+			}
 			return $this->plugin_variables[$ln][$controller][$key];
 		}
 		if (!isset($this->variables[$ln])) {
@@ -383,6 +416,11 @@ final class PC_core extends PC_base {
 		if (!isset($this->variables[$ln][$key])) return false;
 		return $this->variables[$ln][$key];
 	}
+	
+	public function Get_plugin_variable($key, $controller) {
+		return $this->Get_variable($key, null, $controller);
+	}
+	
 	#database
 	/**
 	* Method used to convert string format like "lt:apie-mus-1,en:about-us-1" to array of {"lt" => "apie-mus-1", "en" => "about-us-1"}.

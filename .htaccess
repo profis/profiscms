@@ -1,5 +1,6 @@
 Options All -Indexes
 php_flag register_globals off
+php_flag display_errors on
 RewriteEngine on
 
 RewriteCond %{REQUEST_URI} ^/admin$

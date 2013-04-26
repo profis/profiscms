@@ -117,10 +117,10 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 	global $core, $cfg, $db, $plugins, $sql_parser, $auth;
 	
 	$logger = new PC_debug();
-	$logger->file = $cfg['path']['logs'] . 'tree/get_tree_childs.html';
+	//$logger->file = $cfg['path']['logs'] . 'tree/get_tree_childs.html';
 	$logger->debug = true;
 	
-	$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'tree/get_tree_childs_instant.html');
+	$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'tree/get_tree_childs_instant.html', null, 5);
 	
 	$logger->debug("Get_tree_childs($id, $site_id, $deleted, $search, $date)", 1);
 	$logger->debug($additional, 1);
@@ -180,6 +180,7 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 		$page_ids_query = $page_ids_select . $page_ids_from . $page_ids_join . $page_ids_where;
 		
 		//if (!empty($access_cond)) {
+		if (!$auth->Authorize_superadmin())
 			$accessible_pages_concat_query_for_search_hook = $page_ids_select . " FROM {$cfg['db']['prefix']}pages p" . $page_ids_where;
 			$accessible_pages_concat_query_params_for_search_hook = $page_ids_query_params;
 		//}
@@ -409,7 +410,7 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 		}
 	}
 	
-	$logger->file_put_debug();
+	//$logger->file_put_debug();
 	
 	return $nodes;
 }

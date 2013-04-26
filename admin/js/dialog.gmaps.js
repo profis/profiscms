@@ -142,6 +142,8 @@ Dialog_markers_crud = Ext.extend(PC.ux.LocalCrud, {
 					var field = this;
 					var params = {
 						callee: 'image',
+						close_after_insert_forced: true,
+						show_insert: true,
 						save_fn: function(url){
 							field.setValue(url);
 						}
@@ -537,6 +539,7 @@ PC.dialog.gmaps = {
 						var field = this;
 						var params = {
 							callee: 'image',
+							close_after_insert_forced: true,
 							save_fn: function(url){
 								field.setValue(url);
 							}
@@ -769,7 +772,7 @@ PC.dialog.gmaps = {
 							var json_data = escape(Ext.util.JSON.encode(map_data));
 							if (!PC.dialog.gmaps.edit_mode) {
 								//insert new map
-								var map_object = '<object classid="clsid:google-map" width="'+width+'" height="'+height+'" codebase="http://maps.google.com/">'
+								var map_object = '<object alt="'+dialog.map_type+'" title="'+dialog.map_type+'" classid="clsid:google-map" width="'+width+'" height="'+height+'" codebase="http://maps.google.com/">'
 												   +'<param name="map_type" value="'+dialog.map_type+'" />'
 												  +'<param name="map_data" value="'+json_data+'" />'
 												  +'<embed src="maps.google.com" type="application/google-map" width="'+width+'" height="'+height+'" map_data="'+json_data+'"></embed>'

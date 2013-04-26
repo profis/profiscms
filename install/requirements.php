@@ -30,14 +30,14 @@ $requirements = array(
 
 
 <p>
-	<? echo $t['mysql_requirement'] ?>
+	<? echo str_replace('{min_mysql_version}', $installer->min_mysql_version, $t['mysql_requirement']) ?>
 </p>
 
 <table class="table">
 	<thead>
 		<tr>
 			<th id="requirement"><? echo $t['requirement'] ?></th>
-			<th><? echo $t['available'] ?>?</th>
+			<th>&nbsp;</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -53,9 +53,9 @@ $requirements = array(
 		?>
 	</tbody>
 </table>
-
+<hr />
 <p>
-	<form style="text-align: left;" action="" method="POST">
+	<form style="text-align: left;" action="/" method="POST">
 	<?php
 	if (!$installer->requirements_passed) {
 		echo '' . $t['fix_problems_and'] .' <button class="btn btn-success" type="submit">' . $t['button_test_again'] .'</button>';

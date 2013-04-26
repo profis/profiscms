@@ -111,8 +111,12 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 	},
 	
 	get_store: function(){
+		var store_url =  this.api_url +'get/';
+		if (this.store_admin_ln) {
+			store_url += '?ln=' + PC.global.admin_ln
+		}
 		this.store = new Ext.data.JsonStore({
-			url: this.api_url +'get',
+			url: store_url,
 			method: 'POST',
 			autoLoad: this.auto_load,
 			remoteSort: (this.per_page)?true:false,

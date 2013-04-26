@@ -3,6 +3,7 @@ final class PC_database_tree extends PC_base {
 	public function Get_cols(&$params) {
 		return array(
 			'id'=> (!empty($params->cols['id'])?$params->cols['id']:'id'),
+			'pid'=> (!empty($params->cols['pid'])?$params->cols['pid']:'pid'),
 			'left'=> (!empty($params->cols['left'])?$params->cols['left']:'lft'),
 			'right'=> (!empty($params->cols['right'])?$params->cols['right']:'rgt'),
 			'parent'=> (!empty($params->cols['parent'])?$params->cols['parent']:'parent_id'),
@@ -194,7 +195,8 @@ final class PC_database_tree extends PC_base {
 		$rUpdateRight->execute(array($gap, $c['rgt']));
 		return true;
 	}
-	public function Debug($table, &$params=array()) {
+	public function Debug_tree($table, &$params=array()) {
+		$orig_params = $params;
 		$this->core->Init_params($params);
 		$cols = $this->Get_cols($params);
 		echo '<style type="text/css">'
@@ -202,7 +204,15 @@ final class PC_database_tree extends PC_base {
 			.'.pc_tree_debug span{font-size:8pt;color:#448CCB;}'
 			.'.pc_tree_debug span.id{font-size:6pt;color:#aaa;}'
 			.'</style>';
-		$r = $this->query("SELECT * FROM {$this->db_prefix}$table ORDER BY {$cols['left']}");
+		
+		$select = 't.*';
+		$join = '';
+		if (isset($orig_params['cols']['join_table']) and isset($orig_params['cols']['join_col'])) {
+			$select .= ', tt.' . $cols['name'];
+			$join = "LEFT JOIN {$this->db_prefix}{$orig_params['cols']['join_table']} tt ON tt.{$orig_params['cols']['join_col']} = t.{$cols['id']} AND tt.ln = 'lt'";
+		}
+		$query = "SELECT $select FROM {$this->db_prefix}$table t $join ORDER BY {$cols['left']}";
+		$r = $this->query($query);
 		if (!$r) return;
 		echo "<pre class=\"pc_tree_debug\">\n";
 		$level = 0;
@@ -215,7 +225,7 @@ final class PC_database_tree extends PC_base {
 				$level -= $d[$cols['left']]-1-$previous[$cols['right']];
 			}
 			echo str_repeat(".......\t", $level);
-			echo ' <span class="id">'.$d[$cols['id']].' ('.$d[$cols['parent']].')</span> '
+			echo ' <span class="id">id: '.$d[$cols['id']].' (parent_id: '.$d[$cols['parent']].')</span> '
 				.(isset($d[$cols['name']])?PC_translit($d[$cols['name']]):'no name')
 				.' <span>'.$d[$cols['left']].','.$d[$cols['right']].'</span>'
 				."\n";
@@ -224,6 +234,7 @@ final class PC_database_tree extends PC_base {
 		echo '</pre>';
 	}
 	public function Get_anchor($table, $parentId=0, $position=0, &$params=array()) {
+		$this->debug("Get_anchor($table, $parentId, $position)", 1);
 		$this->core->Init_params($params);
 		$cols = $this->Get_cols($params);
 		
@@ -244,10 +255,13 @@ final class PC_database_tree extends PC_base {
 					return false;
 				}
 				$anchor = $r->fetchColumn();
+				$this->debug("Max right:" . $anchor, 2);
+				
 			}
 			//first node
 			elseif ($position == -1) {
 				$anchor = 0;
+				$this->debug("Position -1:" . $anchor, 2);
 			}
 			else {
 				$params->errors->Add('position', 'Temporary unavailable');
@@ -283,6 +297,7 @@ final class PC_database_tree extends PC_base {
 			$parent = $r->fetch();
 			if ($parent[$cols['right']]-$parent[$cols['left']] == 1) {
 				$anchor = $parent[$cols['left']];
+				$this->debug("(Parent leaf) Parent left:" . $anchor, 2);
 			}
 			else {
 				if ($position == 0) {
@@ -293,9 +308,11 @@ final class PC_database_tree extends PC_base {
 						return false;
 					}
 					$anchor = $r->fetchColumn();
+					$this->debug("Max right (between)" . $anchor, 2);
 				}
 				elseif ($position == -1) {
 					$anchor = $parent[$cols['left']];
+					$this->debug("(Parent not leaf) Parent left" . $anchor, 2);
 				}
 				else {
 					$r = $this->prepare("SELECT {$cols['left']} FROM {$this->db_prefix}$table WHERE {$cols['parent']}=? ORDER BY {$cols['left']} LIMIT ".($position-1).",1");
@@ -306,9 +323,11 @@ final class PC_database_tree extends PC_base {
 					}
 					if ($r->rowCount() == 1) {
 						$anchor = $r->fetchColumn()-1;
+						$this->debug("Row count is one, left: " . $anchor, 2);
 					}
 					else {
 						$anchor = $parent[$cols['right']]-1;
+						$this->debug("Max right - 1: " . $anchor, 2);
 					}
 				}
 			}
@@ -317,62 +336,128 @@ final class PC_database_tree extends PC_base {
 		return $anchor;
 	}
 	public function Create_gap($table, $afterLeft) {
+		$this->debug("Create_gap($table, $afterLeft)", 3);
 		//update left values
-		$rUpdateLeft = $this->prepare("UPDATE {$this->db_prefix}$table SET lft=lft+? WHERE lft>?");
+		$query = "UPDATE {$this->db_prefix}$table SET lft=lft+? WHERE lft>?";
+		$rUpdateLeft = $this->prepare($query);
 		//create the gap for the node to move in
-		$rUpdateLeft->execute(array(2, $afterLeft));
+		$query_params = array(2, $afterLeft);
+		$this->debug_query($query, $query_params, 4);
+		$rUpdateLeft->execute($query_params);
 		if (!$rUpdateLeft) return false;
 		//update right values
-		$rUpdateRight = $this->prepare("UPDATE {$this->db_prefix}$table SET rgt=rgt+? WHERE rgt>?");
-		$rUpdateRight->execute(array(2, $afterLeft));
+		$query = "UPDATE {$this->db_prefix}$table SET rgt=rgt+? WHERE rgt>?";
+		$rUpdateRight = $this->prepare($query);
+		$query_params = array(2, $afterLeft);
+		$this->debug_query($query, $query_params, 4);
+		$rUpdateRight->execute($query_params);
 		if (!$rUpdateRight) {
-			$rUpdateLeft->execute(array(-2, $afterLeft));
+			$query_params = array(-2, $afterLeft);
+			$this->debug_query($query, $query_params, 5);
+			$rUpdateLeft->execute($query_params);
 			return false;
 		}
 		return true;
 	}
 	public function Delete_gap($table, $afterLeft, $gap=2) {
-		$rUpdateLeft = $this->prepare("UPDATE {$this->db_prefix}$table SET lft=lft-? WHERE lft>?");
-		$rUpdateLeft->execute(array((int)$gap, $afterLeft));
-		$rUpdateRight = $this->prepare("UPDATE {$this->db_prefix}$table SET rgt=rgt-? WHERE rgt>?");
-		$rUpdateRight->execute(array((int)$gap, $afterLeft));
+		$this->debug("Delete_gap($table, $afterLeft, $gap)", 3);
+		
+		$query = "DELETE FROM {$this->db_prefix}$table WHERE lft>? AND rgt<?";
+		$rUpdateLeft = $this->prepare($query);
+		$query_params = array($afterLeft + 1, $afterLeft + $gap);
+		$this->debug_query($query, $query_params, 4);
+		$rUpdateLeft->execute($query_params);
+		
+		$query = "UPDATE {$this->db_prefix}$table SET lft=lft-? WHERE lft>?";
+		$rUpdateLeft = $this->prepare($query);
+		$query_params = array((int)$gap, $afterLeft);
+		$this->debug_query($query, $query_params, 4);
+		$rUpdateLeft->execute($query_params);
+		
+		$query = "UPDATE {$this->db_prefix}$table SET rgt=rgt-? WHERE rgt>?";
+		$rUpdateRight = $this->prepare($query);
+		$query_params = array((int)$gap, $afterLeft);
+		$this->debug_query($query, $query_params, 4);
+		$rUpdateRight->execute($query_params);
 		return true;
 	}
+	
+	protected function _get_all($table, $cols, $where = '', $order = false) {
+		//$rList = $this->query("SELECT {$cols['pid']},{$cols['parent']},{$cols['id']} FROM {$this->db_prefix}".$table." ORDER BY {$cols['pid']} DESC, {$cols['parent']},{$cols['id']}");
+		if (!empty($where)) {
+			$where = " WHERE $where ";
+		}
+		$order_s = ' ORDER by ' . $cols['pid'] . ' ';
+		if ($order) {
+			$order_s = ' ORDER by ' . $cols['left'] . ' ';
+		}
+		$query = "SELECT {$cols['pid']},{$cols['parent']},{$cols['id']} FROM {$this->db_prefix}".$table. $where . $order_s;
+		$this->debug($query);
+		//echo '<hr />' . $query;
+		$rList = $this->query($query);
+		if ($rList) {
+			while($d = $rList->fetch()) {
+				$this->dd[$d[$cols['id']]] = $d;
+				$this->_get_all($table, $cols, "{$cols['parent']} = " . $d[$cols['id']], true);
+			}
+		}
+		
+	}
+	
 	public function Recalculate($table, &$params=array()) {
+		$this->debug = true;
+		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'tree_recalculate.html');
 		$this->core->Init_params($params);
 		$cols = $this->Get_cols($params);
 		//escape $table first!
 		$s = $this->query("UPDATE {$this->db_prefix}".$table." SET {$cols['left']}=0, {$cols['right']}=0");
 		if (!$s) return false;
-		$rUpdate = $this->prepare("UPDATE {$this->db_prefix}".$table." SET {$cols['left']}=?, {$cols['right']}=? WHERE {$cols['id']}=?");
-		$rList = $this->query("SELECT {$cols['id']},{$cols['parent']} FROM {$this->db_prefix}".$table." ORDER BY {$cols['id']},{$cols['parent']}");
+		$this->_update_query = $update_query = "UPDATE {$this->db_prefix}".$table." SET {$cols['left']}=?, {$cols['right']}=? WHERE {$cols['id']}=?";
+		$rUpdate = $this->prepare($this->_update_query);
 		$this->dd = array();
-		while($d = $rList->fetch()) {
-			$this->dd[$d[$cols['id']]] = $d;
-		}
+		$this->_get_all($table, $cols, "{$cols['pid']} != 0");
+		//print_pre($this->dd);
+		//exit;
 		$this->anchors = array();
 		foreach ($this->dd as $d) {
 			$this->_recalculate_item($table, $cols, $d, $rUpdate);
 		}
+		return;
+		$fantoms = array();
+		$query = "SELECT {$cols['pid']},{$cols['parent']},{$cols['id']} FROM {$this->db_prefix}".$table. " WHERE lft = 0 AND rgt = 0 ORDER by {$cols['id']}";
+		//echo '<hr />' . $query;
+		$rList = $this->query($query);
+		if ($rList) {
+			while($d = $rList->fetch()) {
+				$this->dd[$d[$cols['id']]] = $d;
+				$this->_get_all($table, $cols, "{$cols['parent']} = " . $d[$cols['id']], true);
+			}
+		}
+		
+		
 	}
 	
 	protected function _recalculate_item($table, $cols, $d, $rUpdate) {
 		if (isset($this->anchors[$d[$cols['id']]])) {
+			$this->debug(':( no anchor', 2);
 			return;
 		}
 		$my_parent_id = $d[$cols['parent']];
 		if ($my_parent_id != 0 and !isset($this->anchors[$my_parent_id])) {
 			$this->_recalculate_item($table, $cols, $this->dd[$my_parent_id], $rUpdate);
 		}
-		echo '<hr />';
-		print_pre($d);
+		$this->debug($d, 1);
 		$setAfter = $this->Get_anchor($table, $d[$cols['parent']]);
-		var_dump($setAfter);
+		$this->debug("setAfter: $setAfter ", 1);
 		$this->anchors[$d[$cols['id']]] = $setAfter;
 		if ($setAfter === false) return;
 		if ($this->Create_gap($table, $setAfter)) {
-			$s = $rUpdate->execute(array($setAfter+1, $setAfter+2, $d[$cols['id']]));
-			if (!$s) $this->Delete_gap($table, $setAfter);
+			$query_params = array($setAfter+1, $setAfter+2, $d[$cols['id']]);
+			$this->debug_query($this->_update_query, $query_params, 2);
+			$s = $rUpdate->execute($query_params);
+			if (!$s) {
+				$this->Delete_gap($table, $setAfter);
+			}
 		}
 	}
 	

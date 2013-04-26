@@ -80,8 +80,8 @@ final class PC_site extends PC_base {
 		if (!is_null($id)) {
 			$this->Load($id);
 		}
-		$this->debug = true;
-		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'site/site.html', false, 5);
+		//$this->debug = true;
+		//$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'site/site.html', false, 5);
 	}
 	
 	/**
@@ -332,7 +332,7 @@ final class PC_site extends PC_base {
 		/*$pattern = str_replace('%', '(.*?)', preg_quote(substr($site['mask'], strpos($site['mask'], '/'))));
 		preg_match("#^".$pattern."$#i", $_SERVER['REQUEST_URI'], $m);*/
 		$site_mask_pos = strpos($site['mask'], '/');
-		if ($site_mask_pos) {
+		if ($forceActive and $site_mask_pos) {
 			$this->debug("Site has mask", 5);
 			//define request
 			$new_request = $request =& $_SERVER['REQUEST_URI'];
@@ -665,6 +665,28 @@ final class PC_site extends PC_base {
 		return $controller_object->text;
 	}
 	
+	public function Get_widget_text($widget_name) {
+		$args = func_get_args();
+		array_shift($args);
+		$widget = $this->core->Get_object($widget_name, $args);
+		return $widget->get_text();
+	}
+	
+	public function Get_widget_text_from_data($widget_name, $data) {
+		$args = func_get_args();
+		array_shift($args);
+		$data = array_shift($args);
+		$widget = $this->core->Get_object($widget_name, $args);
+		return $widget->get_text($data);
+	}
+	
+	public function Get_widget_data($widget_name) {
+		$args = func_get_args();
+		array_shift($args);
+		$widget = $this->core->Get_object($widget_name, $args);
+		return $widget->get_data();
+	}
+	
 	//loaded page
 	/**
 	* Method used to retrieve page text by given page id. In this method is called PC_site::Get_text() method.
@@ -674,23 +696,30 @@ final class PC_site extends PC_base {
 	• @todo rewrite comment - second parameter was added
 	*/
 	public function Get_text($id=null, $force_headings=true) {
-		if ($id < 1) {
-			$text =& $this->text;
-		}
-		else {
-			$text =& $this->page->Get_text($id);
+		$this->text_without_headings = $this->text;
+		if ($id > 0 and $id == $this->page->get_id() and !empty($this->text_without_headings)) {
+			$id = null;
 		}
 		if (isset($this->force_headings)) $force_headings = $this->force_headings;
+		if ($id < 1) {
+			$text = $this->text_without_headings;
+		}
+		else {
+			$text = $this->page->Get_text($id);
+		}
+		$pre_text = '';
 		if ($force_headings) {
 			$h1_name = $this->loaded_page['custom_name'];
 			if (empty($h1_name)) {
 				$h1_name = $this->loaded_page['name'];
 			}
 			if (!preg_match("#^\s*<h1[^>]*>#", $text)) if (!empty($h1_name)) {
-				$text = "<h1>".$h1_name."</h1>\n".$text;
+				$pre_text = "<h1>".$h1_name."</h1>\n";
 			}
 		}
-		return $text;
+		//$this->text_without_headings = $text;
+		//$this->text = $pre_text . $text;
+		return $pre_text . $text;
 	}
 	
 	public function Get_title_for_text() {
@@ -750,6 +779,7 @@ final class PC_site extends PC_base {
 			$vars = $template;
 			$template = 'tpl';
 		}
+		$vars['tpl_group'] = $group;
 		return $this->Get_template_content($this->core->Get_tpl_path($group, $template), $vars) ;
 	}
 	

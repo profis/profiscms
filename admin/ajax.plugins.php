@@ -55,7 +55,7 @@ if ($action == 'update') {
 							);
 							$driver = $core->sql_parser->Get_default_driver();
 							if (isset($sql_files[$driver])) {
-								$sql = file_get_contents($core->plugins->Get_plugin_path($plugin_data[0]).$sql_files[$driver]);
+								$sql = @file_get_contents($core->plugins->Get_plugin_path($plugin_data[0]).$sql_files[$driver]);
 								if ($sql) {
 									$core->sql_parser->Replace_variables($sql);
 									$queries = explode(';', $sql);

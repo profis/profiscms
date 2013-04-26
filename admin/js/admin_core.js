@@ -1706,7 +1706,7 @@ function Content_dirty() {
 		//console.log('get field value: '+ field.getValue());
 		//console.log('store.value: '+ store.value);
 		if (!store) {
-			debugger;
+			//debugger;
 		}
 		if (fieldValue != store.value) {
 			dirty = true;
@@ -1899,12 +1899,18 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 	var enable_ok_button = false;
 	var additionalBaseParams = false;
 	var callback_ok = false;
+	var disable_ln_combo = false;
+	var site = false;
+	var ln = false;
 	if (page_selector_params) {
 		get_route = page_selector_params.get_route;
 		select_node_path = page_selector_params.select_node_path;
 		init_value = page_selector_params.init_value;
 		enable_ok_button = page_selector_params.enable_ok_button;
 		callback_ok = page_selector_params.callback_ok;
+		disable_ln_combo = page_selector_params.disable_ln_combo;
+		site = page_selector_params.site;
+		ln = page_selector_params.ln;
 		if (page_selector_params.tree_params) {
 			additionalBaseParams = page_selector_params.tree_params.additionalBaseParams;
 		}
@@ -2131,6 +2137,9 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 					},*/
 					{	xtype: 'profis_lncombo',
 						ref: '../_ln_sel',
+						site: site,
+						ln: ln,
+						disabled: disable_ln_combo,
 						listeners: {
 							select: function(self, rec, ndx) {
 								//w._tree.setLn(rec.get('ln_id'));

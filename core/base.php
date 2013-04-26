@@ -85,12 +85,17 @@ if (!function_exists('PC_autoload')) {
 				if ($cls != 'PC_model' and substr($cls, -6) == '_model') {
 					$sub_folder = 'models/';
 				}
+				if ($cls != 'PC_widget' and substr($cls, -7) == '_widget') {
+					$sub_folder = 'widgets/';
+				}
 				$path = PC_app::$cfg['path']['classes'].$sub_folder.$cls.'.php';
 			}
 			else return false;
 		}
 		else $path =& $class_autoload[$cls];
-		if (!is_file($path)) return false;
+		if (!is_file($path)) {
+			return false;
+		}
 		require_once($path);
 	}
 

@@ -703,6 +703,10 @@ final class PC_auth extends PC_base {
 		return true;
 	}
 	
+	public function Authorize_superadmin() {
+		return $this->Authorize('core', 'admin');
+	}
+	
 	public function Authorize_access_to_plugin($plugin) {
 		return $this->Authorize('core', 'admin') || $this->Authorize('core', 'plugins', $plugin);
 	}

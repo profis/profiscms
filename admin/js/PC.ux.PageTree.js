@@ -1,6 +1,10 @@
 Ext.namespace('PC.ux');
 
 PC.ux.PageTree = function(config) {
+	var ln = config.ln;
+	if (!ln) {
+		ln = PC.global.ln;
+	}
 	Ext.applyIf(config, {
 		flex: 1,
 		border: false,
@@ -15,7 +19,9 @@ PC.ux.PageTree = function(config) {
 			listeners: {
 				beforeload: function(loader, node, callback){
 					loader.baseParams.deleted = /^\/0\/-1\//.test(node.getPath());
-					loader.baseParams.site = PC.global.site;
+					if (!loader.baseParams.site) {
+						loader.baseParams.site = PC.global.site;
+					}
 					if (node.getOwnerTree().additionalBaseParams) {
 						Ext.apply(loader.baseParams.additional, node.getOwnerTree().additionalBaseParams);
 					}
@@ -34,7 +40,7 @@ PC.ux.PageTree = function(config) {
 			id: '0'
 		},
 		rootVisible: false,
-		_ln: PC.global.ln
+		_ln: ln
 	});
 	if (config._sid != undefined) config.loader.baseParams.site = config._sid;
 	// call parent constructor

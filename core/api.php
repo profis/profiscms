@@ -60,7 +60,11 @@ if ($routes->Get(1) == 'admin') {
 							'name'=> v($routes->Get(5))
 						)
 					);
-					$tree->Debug(v($routes->Get(3)), $params);
+					if (v($routes->Get(3)) == 'shop_categories') {
+						$params['cols']['join_table'] = 'shop_category_contents';
+						$params['cols']['join_col'] = 'category_id';
+					}
+					$tree->Debug_tree(v($routes->Get(3)), $params);
 					break;
 				case 'recalculate':
 					$params = array(
@@ -250,15 +254,14 @@ else {
 					else {
 						$pluginName_up = strtoupper(substr($pluginName, 0, 1)) . substr($pluginName, 1);
 					}
-					
 					if (!$site->Is_loaded()) {
 						$site->Identify();
-						$routes->Shift(1);
 					};
+					$routes->Shift(1);
 					if (isset($_POST['ln'])) {
 						$site->Set_language($_POST['ln']);
 					}
-					$routes->Shift(1);
+					
 					$more_shift = 1;
 					
 					$plugin_api_path = $core->Get_path('plugins', '', $pluginName) . 'api/';
@@ -274,6 +277,7 @@ else {
 					$proccessed = false;
 					if (@file_exists($common_file_name)) {
 						require_once($common_file_name);
+						//echo ' ' . $common_class_name;
 						$api = new $common_class_name();
 						$proccessed = $api->process(v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)));
 						
@@ -282,6 +286,7 @@ else {
 						$routes->Shift(1);
 						$more_shift--;
 						require_once($file_name);
+						//echo ' ' . $class_name;
 						$api = new $class_name();
 						$proccessed = $api->process(v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)));
 					}
@@ -300,10 +305,10 @@ else {
 						}
 						exit;
 					}
-					
 					if ($more_shift > 0) {
 						$routes->Shift($more_shift);
 					}
+					
 					$apiPath = $core->Get_path('plugins', 'PC_api.php', $pluginName);
 					if (is_file($apiPath)) {
 						try {

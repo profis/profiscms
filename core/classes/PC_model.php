@@ -52,6 +52,13 @@ abstract class PC_model extends PC_base{
 		$this->_query_params = array();
 	}
 	
+	public static function create_scope() {
+		return array(
+			'where' => array(),
+			'query_params' => array()
+		);
+	}
+	
 	public function get_scope() {
 		return array(
 			'where' => $this->_where,
@@ -62,6 +69,17 @@ abstract class PC_model extends PC_base{
 	public function set_scope(array $scope) {
 		$this->_where = $scope['where'];
 		$this->_query_params = v($scope['query_params'], array());
+	}
+	
+	public function absorb_scope_into_params(&$params, $scope = array()) {
+		vv($params['where'], array());
+		if (is_array($params['where']) and isset($scope['where'])) {
+			$params['where'] = array_merge($params['where'], $scope['where']);
+		}
+		vv($params['query_params'], array());
+		if (is_array($params['query_params']) and isset($scope['query_params'])) {
+			$params['query_params'] = array_merge($params['query_params'], $scope['query_params']);
+		}
 	}
 	
 	public function get_id_from_content($name, $value, $ln = '', $limit = 1) {
@@ -153,7 +171,7 @@ abstract class PC_model extends PC_base{
 		if (v($params['content'])) {
 			$join_cc_ln = '';
 			$select_cc = 'ct.*';
-			if (is_array($params['content']) and v($params['content']['select'])) {
+			if (is_array($params['content']) and isset($params['content']['select'])) {
 				$select_cc = $params['content']['select'];
 			}
 			$ln = $this->site->ln;
@@ -175,7 +193,14 @@ abstract class PC_model extends PC_base{
 					$select_cc_array = explode(',', $select_cc_array);
 				}
 				foreach ($select_cc_array as $key => $c_field) {
-					list ($table, $alias) = explode('.', $c_field);
+					$alias = '';
+					$table = $c_field;
+					if (strpos($c_field, '.')) {
+						list ($table, $alias) = explode('.', $c_field);
+					}
+					if (empty($alias)) {
+						$alias = $c_field;
+					}
 					$alias .= 's';
 					$explode_fields[] = $alias;
 					$select_cc_array[$key] = $this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'ct.ln', $c_field), array('separator'=>'▓', 'distinct'=> true))." " . $alias;
@@ -195,6 +220,7 @@ abstract class PC_model extends PC_base{
 		//$this->debug($params['where']);
 		if (!is_null($id)) {
 			$params['where'] = array_merge(array('t.id' => $id), $params['where']);
+			$params['limit'] = 1;
 		}
 		
 		$params['where'] = array_merge($this->_where, $params['where']);
@@ -321,8 +347,15 @@ abstract class PC_model extends PC_base{
 				//call_user_func_array(array($this, $params['formatter']), array($d));
 				$this->$params['formatter']($d);
 			}
+			$custom_key = false;
 			if (isset($params['key']) and isset($d[$params['key']]) and !empty($d[$params['key']])) {
-				$items[$d[$params['key']]] = $d;
+				$custom_key = $params['key'];
+			}
+			if (isset($params['value']) and isset($d[$params['value']])) {
+				$d = $d[$params['value']];
+			}
+			if ($custom_key) {
+				$items[$custom_key] = $d;
 			}
 			else {
 				$items[] = $d;
@@ -330,8 +363,14 @@ abstract class PC_model extends PC_base{
 			
 		}
 		
-		if ($limit == 1 and count($items) == 1) {
-			return $items[0];
+		if ($limit == 1) {
+			$count = count($items);
+			if ($count == 1) {
+				return $items[0];
+			}
+			if ($count == 0) {
+				return false;
+			}
 		}
 		return $items;
 	}
@@ -484,6 +523,9 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function filter_array(&$data, &$filters) {
+		if (!is_array($filters)) {
+			return;
+		}
 		foreach ($filters as $filter) {
 			if (!isset($data[$filter['field']])) {
 				continue;
@@ -519,7 +561,11 @@ abstract class PC_model extends PC_base{
 		$entity_id = false;
 		if (!is_array($params)) {
 			$entity_id = $params;
-			$params = array();
+			$params = array(
+				'where' => array(
+					'id' => $entity_id
+				)
+			);
 		}
 		elseif(isset($params['where']) and isset($params['where']['id']) and !is_array($params['where']['id'])) {
 			$entity_id = $params['where']['id'];
@@ -574,6 +620,9 @@ abstract class PC_model extends PC_base{
 				$sets = array();
 				foreach ($ln_values as $key => $value) {
 					$sets[] = "$key = ?";
+				}
+				if (empty($sets)) {
+					continue;
 				}
 				$sets_s = implode(',', $sets);
 				$query = "UPDATE {$this->db_prefix}{$this->_content_table} SET $sets_s WHERE $this->_content_table_relation_col = ? AND $this->_content_table_ln_col = ?";
@@ -671,6 +720,31 @@ abstract class PC_model extends PC_base{
 		}
 		return $deleted;
 	}
+	
+	public function get_unique_content_field($ln, $field, $value, $scope = array()) {
+		$this->debug("get_unique_content_field($field, $value)");
+		$orig_value = $value;
+		$params = array(
+			'select' => 't.id',
+			'content' => true,
+			'ln' => $ln,
+			'limit' => 1,
+		);
+		$this->absorb_scope_into_params($params, $scope);
+		$params['where'][$field] = $value;
+		
+		$item = $this->get_all($params);
+		$i = 0;
+		while ($item) {
+			$i++;
+			$value =  $orig_value . '-' . $i;
+			$params['where'][$field] = $value;
+			$item = $this->get_all($params);
+		}
+		$this->debug("unique_content_field: $value", 1);
+		return $value;
+	}
+	
 }
 
 ?>

@@ -47,27 +47,35 @@ abstract class PC_controller extends PC_base {
 				}
 			}
 		}
+		
 		$this->debug('$tpl_path:', 2);
 		$this->debug($tpl_path, 2);
 		if ($return_only !== null) {
+			$this->debug('Output_start', 3);
 			$this->Output_start();
 		}
+		
 		//print_pre();
 		if (!empty($vars)) {
 			foreach ($vars as $key => $var) {
 				$$key = $var;
 			}
 		}
+		$this->debug('including template', 2);
 		@require($tpl_path);
 		if ($return_only === null) {
+			$this->debug('return', 3);
 			return;
 		}
 		if ($return_only) {
+			$this->debug('Output end to $text', 3);
 			$this->Output_end($text);
 			return $text;
 		}
 		else {
+			$this->debug('Output end to $this->text', 3);
 			$this->Output_end($this->text);
+			//$this->debug($this->text, 5);
 			return $this->text;
 		}
 	}

@@ -1,9 +1,8 @@
 <?php
 $titles = array(
-	'meta_title' => 'Profis CMS - diegimas',
-	'title' => 'Profis CMS - diegimas',
-	'footer' => 'Palaikoma <a target="_blank" href="http://www.profiscms.com/lt/">Profis CMS</a>',
-	'mysql_requirement' => 'Reikalinga MySQL 5.1.x arba aukštesnė versija.',
+	'meta_title' => 'Profis CMS {version} diegimo vedlys',
+	'title' => 'Profis CMS {version} diegimo vedlys',
+	'mysql_requirement' => 'Reikalinga MySQL {min_mysql_version} arba aukštesnė versija.',
 	'requirement' => 'Reikalavimas',
 	'available' => 'Prieinamas',
 	'button_continue_to_install' => 'Tęsti diegimą',
@@ -35,12 +34,12 @@ $titles = array(
 	'db_name_expl' => 'Jūs turite sukurti duomenų bazę ir įvesti jos pavadinimą čia.',
 	'db_prefix_expl' => '',
 	
-	'other_info' => 'Kita informacija',
+	'other_info' => 'Vartotojo informacija',
 	'admin_name' => 'Administratoriaus vartotojo vardas',
 	'admin_pass' => 'Administratoriaus slaptažodis',
 	'admin_name_expl' => 'Pagal nutylėjimą: admin',
 	'admin_pass_expl' => 'Pagal nutylėjimą: admin',
-	'button_install' => 'Diegti!',
+	'button_install' => 'Diegti',
 	
 	'install_success' => 'Profis CMS sėkmingai įdiegta!',
 	'go_to_admin' => 'Administravimas',

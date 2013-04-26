@@ -1422,16 +1422,25 @@ PC.dialog.gallery = {
 							}
 						}
 					}
+					else if (type) {
+						file_src += type;
+					}
 					else file_src += 'small/';
 					file_src += record.data.id;
 				}
 				if (a == number_of_files - 1 || !dialog.params.show_insert) {
 					dialog.params.save_fn(file_src, record, callbackAfterInsert, dialog.params);
+					if (dialog.params.close_after_insert_forced) {
+						dialog.window.hide();
+					}
 					return;
 				}
 				else {
 					dialog.params.save_fn(file_src, record, null, dialog.params);
 				}
+			}
+			if (dialog.params.close_after_insert_forced) {
+				dialog.window.hide();
 			}
 			return;
 		}

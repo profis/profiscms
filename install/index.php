@@ -1,11 +1,15 @@
 <?php
 error_reporting(0);
 
+
+
 require_once '../core/path_constants.php';
 
 define('PC_INSTALL_SEQUENCE', true);
+define('PC_INSTALL_VERSION', '4.4.2');
 define('PC_CONFIG_FILE', CMS_ROOT . 'config.php');
-define('PC_INSTALL_DIR', CMS_ROOT . 'install/');
+define('PC_INSTALL_FOLDER', 'install/');
+define('PC_INSTALL_DIR', CMS_ROOT . PC_INSTALL_FOLDER);
 define('PC_DEFAULT_ADMIN_USER', 'admin');
 define('PC_DEFAULT_ADMIN_PASSWORD', 'admin');
 
@@ -38,22 +42,22 @@ $installer = new PC_installer();
 <html>
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-    <title><?php echo $t['meta_title']?></title>
+    <title><?php echo str_replace('{version}', PC_INSTALL_VERSION, $t['meta_title'])?></title>
     <link href="css/bootstrap.css" media="screen" rel="Stylesheet" type="text/css" />
 	<link href="css/install.css" media="screen" rel="Stylesheet" type="text/css" />
 </head>
 <body>
 <div class="container">
 
-	<div class="masthead">
-		<ul class="nav nav-pills pull-right">
+	<div class="masthead" style="margin-top: 20px;">
+		<ul class="nav nav-pills pull-right" style="margin-top: 5px;">
 			<li class="<?php echo ($ln=='en'?'active':'') ?>"><a href="?ln=en">English</a></li>
 <!--			<li class="<?php echo ($ln=='ru'?'active':'') ?>"><a href="?ln=ru">Русский</a></li>-->
 			<li class="<?php echo ($ln=='lt'?'active':'') ?>"><a href="?ln=lt">Lietuvių</a></li>
 		</ul>
 	</div>
 
-	<h1><? echo $t['title'] ?></h1>
+	<h1><? echo str_replace('{version}', PC_INSTALL_VERSION, $t['title']) ?></h1>
 	
 <?php
 if ($installer->is_installed()) {
@@ -71,9 +75,6 @@ else {
 }
 ?>
 		
-		<footer>
-		<p><? echo $t['footer'] ?></p>
-      </footer>	
 
  </div> <!-- /container -->
 

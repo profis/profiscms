@@ -133,7 +133,7 @@ PC.ux.TinyMCE = function(config) {
 			media_strict: false, //cms media works only in non-strict mode
 			//extended_valid_elements: 'object[id|style|width|height|classid|codebase],embed[src|type|width|height|flashvars|wmode],a[name|href|target|title|onclick|class],img[class|src|border=0|alt|title|hspace|vspace|width|height|align|onmouseover|onmouseout|name|style],hr[class|width|size|noshade],font[face|size|color|style],span[class|align|style],input[required|name|style|class|type|value|tabindex|maxlength|readonly|size|id],textarea[rows|cols|required|name|style|class|tabindex|readonly|id]',
 			extended_valid_elements: '@[id|class|style|title|dir<ltr?rtl|lang|xml::lang|onclick|ondblclick|onmousedown|onmouseup|onmouseover|onmousemove|onmouseout|onkeypress|onkeydown|onkeyup],'
-				+'object[id|style|width|height|classid|codebase|marker_options],embed[src|type|width|height|flashvars|wmode],'
+				+'object[id|title|alt|style|width|height|classid|codebase|marker_options],embed[src|type|width|height|flashvars|wmode],'
 				+'a[name|href|target|title|onclick|class|rel],'
 				+'img[class|src|border=0|alt|title|hspace|vspace|width|height|align|onmouseover|onmouseout|name|style],'
 				+'hr[class|width|size|noshade],font[face|size|color|style],span[class|align|style|title|id],'
