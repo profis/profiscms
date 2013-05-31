@@ -7,6 +7,33 @@
  * Copyright (c) 2010 Sitebase, http://www.sitebase.be
  * Copyright (c) 2012 Profis, http://www.profis.eu
  */
+ 
+function markInvalid(element, message, forced) {
+	try {
+		//debugger;
+		if (forced) {
+			 throw "forced";
+		}
+		element.setCustomValidity(message);
+	} catch(e) {
+		//debugger;
+		var $$ = $(element);
+		if(typeof $$.data('backupBackgroundColor') === 'undefined') {
+			$$.data('backupBackgroundColor', $$.css('backgroundColor'));
+		}
+		if(typeof $$.data('backupTitle') === 'undefined') {
+			var backupTitle = $$.attr('title');
+			if(!backupTitle) {
+				backupTitle = '';
+			}
+			$$.data('backupTitle', backupTitle);
+		}
+		$$.css('backgroundColor', '#ffcccc');
+		$$.attr('title', message);
+	}
+}
+ 
+ 
 $(document).ready(function(){
 	// Create input element to do tests
 	var input = document.createElement('input');
@@ -29,25 +56,7 @@ $(document).ready(function(){
 		}
 	}
 	
-	function markInvalid(element, message) {
-		try {
-			element.setCustomValidity(message);
-		} catch(e) {
-			var $$ = $(element);
-			if(typeof $$.data('backupBackgroundColor') === 'undefined') {
-				$$.data('backupBackgroundColor', $$.css('backgroundColor'));
-			}
-			if(typeof $$.data('backupTitle') === 'undefined') {
-				var backupTitle = $$.attr('title');
-				if(!backupTitle) {
-					backupTitle = '';
-				}
-				$$.data('backupTitle', backupTitle);
-			}
-			$$.css('backgroundColor', '#ffcccc');
-			$$.attr('title', message);
-		}
-	}
+
 	
 	// Validate an element
 	function validate(element, live){

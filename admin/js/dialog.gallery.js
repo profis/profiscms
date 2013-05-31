@@ -100,6 +100,42 @@ PC.dialog.gallery = {
 				PC.dialog.gallery.categories_editor.startEdit(PC.dialog.gallery.categories_context.contextNode.ui.textNode);
 			}
 		};
+		this.categories_context_items.clear_thumb_cache = {
+			text: PC.i18n.dialog.gallery.action.clear_thumb_cache, iconCls: 'gallery_clear_cache',
+			handler: function() {
+				Ext.Msg.show({
+					title: PC.i18n.dialog.gallery.clear_thumb_cache.category.confirmation.title,
+					msg: PC.i18n.dialog.gallery.clear_thumb_cache.category.confirmation.message,
+					buttons: {
+						ok: PC.i18n.dialog.gallery.button.ok,
+						cancel: PC.i18n.dialog.gallery.button.cancel
+					},
+					fn: function(bid) {
+						if (bid == 'ok') {
+							Ext.Ajax.request({
+								url: 'ajax.gallery.php?action=clear_thumb_cache',
+								method: 'POST',
+								params: {
+									category_id: PC.dialog.gallery.categories_context.contextNode.attributes.id
+								},
+								success: function(result){
+									var json_result = Ext.util.JSON.decode(result.responseText);
+									if (json_result.success) {
+									
+									}
+									else {
+										PC.dialog.gallery.show_request_errors(PC.i18n.dialog.gallery.clear_thumb_cache.category.error_title, json_result.errors);
+									}
+								},
+								failure: function(){
+									PC.dialog.gallery.show_connection_error();
+								}
+							});
+						}
+					}
+				});
+			}
+		};
 		this.categories_context_items._delete = {
 			text: PC.i18n.dialog.gallery.action._delete, iconCls: 'gallery_delete',
 			handler: function() {
@@ -160,6 +196,7 @@ PC.dialog.gallery = {
 				PC.dialog.gallery.categories_context_items.paste,
 				{xtype: 'menuseparator'},*/
 				PC.dialog.gallery.categories_context_items.rename,
+				PC.dialog.gallery.categories_context_items.clear_thumb_cache,
 				PC.dialog.gallery.categories_context_items._delete
 			]
 		});
@@ -302,9 +339,10 @@ PC.dialog.gallery = {
 			items: [
 				PC.dialog.gallery.categories_context_items.open,
 				{xtype: 'menuseparator'},
-				PC.dialog.gallery.categories_context_items.new_category_inside
+				PC.dialog.gallery.categories_context_items.new_category_inside,
 				/*{xtype: 'menuseparator'},
 				PC.dialog.gallery.categories_context_items.paste*/
+				PC.dialog.gallery.categories_context_items.clear_thumb_cache
 			]
 		});
 		

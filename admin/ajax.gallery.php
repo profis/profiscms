@@ -295,9 +295,11 @@ elseif ($action == "trash_file") {
 elseif ($action == "trash_files") {
 	$file_ids = $_POST['file_ids'];
 	$files = explode(',', $file_ids);
+	$succeeded = 0;
+	$failed = 0;
 	for ($a=0; isset($files[$a]); $a++) {
 		$result = $gallery->Trash_file($files[$a]);
-		if (v($result['success'])) {
+		if ($result && v($result['success'])) {
 			$succeeded++;
 			$output['results']['items'][] = array('succeeded'=> true, 'title'=> 'file id '.$files[$a]);
 		}
@@ -427,6 +429,11 @@ elseif ($action == "edit_thumbnail_type") {
 elseif ($action == "delete_thumbnail_type") {
 	$thumbnail_type = $_POST['thumbnail_type'];
 	$result = $gallery->Delete_thumbnail_type($thumbnail_type);
+	$output = $result;
+}
+elseif ($action == "clear_thumb_cache") {
+	$category_id = $_POST['category_id'];
+	$result = $gallery->Delete_thumbnails($category_id);
 	$output = $result;
 }
 elseif ($action == "move_files") {

@@ -1,5 +1,5 @@
 <?php
-
+require_once CORE_ROOT . 'functions.php';
 if (!defined('PC_INSTALL_SEQUENCE')) {
     echo '<p>Illegal call. Terminating.</p>';
     exit();
@@ -31,6 +31,12 @@ if ($cfg['db']['prefix'] != $config['table_prefix']) {
 	$new_config_lines[] = "\$cfg['db']['prefix'] = '{$config['table_prefix']}';";
 }
 
+$salt = random_string(30, '#%$^ABCDEFGHIJKLMNOQPRTSZYXWabcdefghijklmnoqprtszyxw1234567890');
+
+$new_config_lines[] = "";
+$new_config_lines[] = "//Generaded by install wizard. Be very carefull to change this:";
+$new_config_lines[] = "\$cfg['salt'] = '".$salt."';";
+
 $cfg_content = file_get_contents(PC_CONFIG_FILE);
 $cfg_content = rtrim($cfg_content);
 $php_end = '?>';
@@ -56,10 +62,12 @@ try {
 }
 	
 if (!$error) {
+	require_once CORE_ROOT . 'classes/PC_auth_users_base.php';
+	$auth_users = new PC_auth_users_base();
 	$replacements = array(
 		'{prefix}' =>  trim($db->quote($config['table_prefix']), "'"),
 		'{admin_username}' => trim($db->quote($config['admin_username']), "'"),
-		'{admin_password}' => trim($db->quote($config['admin_password']), "'"),
+		'{admin_password}' => trim($db->quote($auth_users->Encode_password($config['admin_password'], $salt)), "'"),
 	);
 	if (!$installer->import_sql_file(PC_INSTALL_DIR . 'mysql/mysql.sql', $replacements)) {
 		//$error = "Database could not be imported!";

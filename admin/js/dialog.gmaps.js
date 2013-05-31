@@ -639,6 +639,7 @@ PC.dialog.gmaps = {
 							}
 						}
 					},
+					/*
 					{	icon: 'images/gmaps_marker.png',
 						handler: function() {
 							var pos = PC.dialog.gmaps.panel.map.getCenter();
@@ -648,6 +649,7 @@ PC.dialog.gmaps = {
 							toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
 						}
 					},
+					*/
 					{xtype:'tbseparator'},
 					{	xtype: 'textfield',
 						id: 'marker_position_geocoder',
@@ -662,7 +664,7 @@ PC.dialog.gmaps = {
 							var callback = function(pos) {
 								if (pos) {
 									if (typeof(pos) != 'string') {
-										PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
+										//PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
 										panel.map.setCenter(pos);
 										toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos)*1000000)/1000000);
 										toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
@@ -703,7 +705,7 @@ PC.dialog.gmaps = {
 							var longitude = toolbar.get('marker_position_longitude').getValue();
 							var pos = PC.dialog.maps[dialog.map_type].get_position(latitude, longitude);
 							PC.dialog.gmaps.panel.map.setCenter(pos);
-							PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
+							//PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
 						}
 					},
 					{xtype:'tbfill'},

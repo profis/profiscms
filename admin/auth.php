@@ -158,6 +158,7 @@ $error = $auth->Get_error();
 				},
 				{	allowBlank: false,
 					fieldLabel: PC.i18n.auth.password,
+					name: 'auth_pass',
 					style: {marginTop: '1px'},
 					inputType: 'password',
 					width: 125,
@@ -165,7 +166,7 @@ $error = $auth->Get_error();
 					<?php if (core_get('demo_mode')) { ?>
 					value: 'demo',
 					<?php } ?>
-					submitValue: false,
+					//submitValue: false,
 					listeners: {specialkey: submit_on_enter}
 				},
 				/*{	fieldLabel: PC.i18n.language,

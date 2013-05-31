@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}config` (
 -- 
 
 INSERT INTO `{prefix}config` (`plugin`, `ckey`, `value`) VALUES 
-('', 'active_plugins', '');
+('', 'active_plugins', 'backup,domains,sites,variables,auth,config,forms');
 
 -- --------------------------------------------------------
 

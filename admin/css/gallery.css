@@ -132,6 +132,9 @@ background: url('../images/add.gif') no-repeat !important;
 .gallery_edit {
 background: url('../images/edit.gif') no-repeat !important;
 }
+.gallery_clear_cache {
+background: url('../images/clear_cache.png') no-repeat !important;
+}
 .gallery_paste {
 background: url('../images/Paste.png') no-repeat !important;
 }

@@ -20,8 +20,6 @@ require_once dirname(__FILE__) . '/../core/path_constants.php';
 $_twd = getcwd();
 chdir(dirname(__FILE__));
 
-
-
 if (!class_exists('PC_base')) require_once CORE_ROOT . 'base.php';
 
 

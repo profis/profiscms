@@ -18,6 +18,9 @@
 * Class used to manage images and other types of media.
 */
 final class PC_gallery extends PC_base {
+	
+	const PERM = 0777;
+	const UMASK = 0;
 	/**
 	* Field used as gallery's working path.
 	*/
@@ -121,6 +124,12 @@ final class PC_gallery extends PC_base {
 		$name = preg_replace($patterns, $replacements, $name);
 		return $name;
 	}
+	
+	public function get_original_file_path($file_path) {
+		$file_path_parts = pathinfo($file_path);
+		return  $file_path_parts['dirname'] . '/' . $file_path_parts['filename'] . '._pc_original_.' . $file_path_parts['extension'];
+	}	
+	
 	/**
 	* Method used to copy given file or folder recursivelly to given file or folder.
 	* @param string $source given source file or folder.
@@ -131,13 +140,13 @@ final class PC_gallery extends PC_base {
 		// Simple copy for a file
 		if (is_file($source)) {
 			$c = copy($source, $dest);
-			chmod($dest, 0777);
+			chmod($dest, self::PERM);
 			return $c;
 		}
 		// Make destination directory
 		if (!is_dir($dest)) {
-			$oldumask = umask(0);
-			mkdir($dest, 0777);
+			$oldumask = umask(self::UMASK);
+			mkdir($dest, self::PERM);
 			umask($oldumask);
 		}
 		// Loop through the folder
@@ -310,10 +319,17 @@ final class PC_gallery extends PC_base {
 			return $response;
 		}
 		$directory = $r['directory'];
-		if (!mkdir($full_path.$directory, 0777)) {
+		$this->debug("mkdir($full_path.$directory)");
+		$old_umask = umask(self::UMASK);
+		$this->debug("old_umask: $old_umask");
+		if (!mkdir($full_path.$directory)) {
 			$response['errors'][] = "create_directory";
+			umask($old_umask);
 			return $response;
+		}else {
+			umask($old_umask);
 		}
+		
 		return array("success"=>true,"directory"=>$directory);
 	}
 	/**
@@ -388,6 +404,7 @@ final class PC_gallery extends PC_base {
 	* @return mixed array with key "errors" on failure; or array with keys "success" and "categories" otherwise.
 	*/
 	public function Get_categories($parent=0, $trashed=false) {
+		$categories = array();
 		if ($parent != 'bin') {
 			$parent = (int)$parent;
 			if ($parent < 0)
@@ -1518,10 +1535,23 @@ final class PC_gallery extends PC_base {
 						$thumb = $this->last_thumb;
 						
 						$thumb_path = $thumbnail_path.'/'.$filename;
+						
+						
+						$old_umask = umask(self::UMASK);
+						$this->debug("old_umask: $old_umask");
+						
 						$thumb->save($thumb_path);
 						$crop_data = $crop_data['x'].'|'.$crop_data['y'].'|'.$crop_data['w'].'|'.$crop_data['h'];
-						file_put_contents($thumb_path.'.txt', $crop_data);
+						$crop_data_file = $thumb_path.'.txt';
+						file_put_contents($crop_data_file, $crop_data);
 						$thumb->show();
+						
+						$rr = chmod($crop_data_file, 0777);
+						$this->debug("$rr = chmod($crop_data_file, " . self::PERM, 3);
+						$rr = chmod($thumb_path, 0777);
+						$this->debug("$rr = chmod($thumb_path, " . self::PERM, 3);
+						
+						umask($old_umask);
 						return array("success"=>true);
 					}
 					catch (Exception $e) {
@@ -1766,7 +1796,7 @@ final class PC_gallery extends PC_base {
 	* @see PC_gallery::Sort_path()
 	*/
 	public function Get_files($category_id=0, $filter='', $tree=0) {
-		$tree = 0; //temporary disallow tree
+		//$tree = 0; //temporary disallow tree
 		$category_id = (int)$category_id;
 		if ($category_id < 0) $response['errors'][] = "category_id";
 		if ($tree != 0 && $tree != 1)
@@ -1792,32 +1822,68 @@ final class PC_gallery extends PC_base {
 		else {
 			//future edit: check if category exists
 			if ($category_id == 0) {
+				$cat_where = '';
 				if ($tree == 0) {
-					$r = $db->prepare("SELECT
-					files.*,
-					count(files_in_use.file_id) in_use
-					FROM {$this->db_prefix}gallery_files files
-					LEFT JOIN {$this->db_prefix}gallery_files_in_use files_in_use ON files_in_use.file_id=files.id
-					WHERE category_id=0 and date_trashed=0
-					GROUP BY files.id,files.filename,files.extension,files.category_id,files.size,files.date_added,files.date_modified,files.date_trashed");
-					/*$r = $db->query("SELECT
-					gallery_images.*,
-					#group_concat(distinct path.album_directory order by path.album_lft separator '/') path,#
-					sum(path.album_date_trashed) album_trashed
-					FROM gallery_images
-					LEFT JOIN {$this->db_prefix}gallery_albums album ON album.category_id = image_album_id
-					LEFT JOIN {$this->db_prefix}gallery_albums path ON album.album_lft BETWEEN path.album_lft and path.album_rgt
-					WHERE image_date_trashed=0$where
-					GROUP BY image_id
-					ORDER BY album.album_lft
-					LIMIT 30");*/
+					$cat_where = ' category_id=0 and ';
+					$query = "SELECT
+						files.*,
+						count(files_in_use.file_id) in_use
+						FROM {$this->db_prefix}gallery_files files
+						LEFT JOIN {$this->db_prefix}gallery_files_in_use files_in_use ON files_in_use.file_id=files.id
+						WHERE $cat_where date_trashed=0
+						GROUP BY files.id,files.filename,files.extension,files.category_id,files.size,files.date_added,files.date_modified,files.date_trashed";
+					$r = $db->prepare($query);
+						/*$r = $db->query("SELECT
+						gallery_images.*,
+						#group_concat(distinct path.album_directory order by path.album_lft separator '/') path,#
+						sum(path.album_date_trashed) album_trashed
+						FROM gallery_images
+						LEFT JOIN {$this->db_prefix}gallery_albums album ON album.category_id = image_album_id
+						LEFT JOIN {$this->db_prefix}gallery_albums path ON album.album_lft BETWEEN path.album_lft and path.album_rgt
+						WHERE image_date_trashed=0$where
+						GROUP BY image_id
+						ORDER BY album.album_lft
+						LIMIT 30");*/
+					//echo $this->get_debug_query_string($query, array());
 					$success = $r->execute();
 				}
-				else {}
+				else {
+					$query = "SELECT f.*,"
+						.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true,'separator'=>'/'))." path,"
+						." sum(path.date_trashed) category_trashed,
+						count(files_in_use.file_id) in_use
+						FROM {$this->db_prefix}gallery_categories category
+						LEFT JOIN {$this->db_prefix}gallery_files f ON f.category_id = category.id
+						LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft BETWEEN path.lft and path.rgt
+						LEFT JOIN {$this->db_prefix}gallery_files_in_use files_in_use ON files_in_use.file_id=f.id
+						WHERE $cat_where f.date_trashed=0
+						GROUP BY f.id,f.filename,f.extension,f.category_id,f.size,f.date_added,f.date_modified,f.date_trashed";
+					$r = $db->prepare($query);
+					//echo $this->get_debug_query_string($query, $cat_params);
+					$success = $r->execute(array());
+				}
+				
 			}
 			else {
+				$cat_where = '';
+				$cat_params = array();
 				if ($tree == 0) {
-					$r = $db->prepare("SELECT f.*,"
+					$cat_where = 'f.category_id=? and ';
+					$cat_params[] = $category_id;
+				}
+				else {
+					$category_model = new PC_gallery_category_model();
+					$category_model->debug = true;
+					$category_data = $category_model->get_data($category_id);
+					//echo $category_model->get_debug_string();
+				
+					if ($category_data) {
+						$cat_where = ' category.lft >= ? AND category.rgt <= ? AND ';
+						$cat_params[] = $category_data['lft'];
+						$cat_params[] = $category_data['rgt'];
+					}
+				}
+				$query = "SELECT f.*,"
 					.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true,'separator'=>'/'))." path,"
 					." sum(path.date_trashed) category_trashed,
 					count(files_in_use.file_id) in_use
@@ -1825,12 +1891,11 @@ final class PC_gallery extends PC_base {
 					LEFT JOIN {$this->db_prefix}gallery_files f ON f.category_id = category.id
 					LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft BETWEEN path.lft and path.rgt
 					LEFT JOIN {$this->db_prefix}gallery_files_in_use files_in_use ON files_in_use.file_id=f.id
-					WHERE f.category_id=?
-					and f.date_trashed=0
-					GROUP BY f.id,f.filename,f.extension,f.category_id,f.size,f.date_added,f.date_modified,f.date_trashed");
-					$success = $r->execute(array($category_id));
-				}
-				else {}
+					WHERE $cat_where f.date_trashed=0
+					GROUP BY f.id,f.filename,f.extension,f.category_id,f.size,f.date_added,f.date_modified,f.date_trashed";
+				$r = $db->prepare($query);
+				//echo $this->get_debug_query_string($query, $cat_params);
+				$success = $r->execute($cat_params);
 			}
 		}
 		//print_pre($this->db->errorInfo());
@@ -1847,6 +1912,69 @@ final class PC_gallery extends PC_base {
 			}
 		}
 		return array("success"=>true,"files"=>$files);
+	}
+	
+	public function get_category_data($category_id) {
+		global $db;
+		$query = "SELECT ".$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.directory'), array('distinct'=>true,'separator'=>'/'))." path"
+			." FROM {$this->db_prefix}gallery_categories category
+			LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft between path.lft and path.rgt
+			WHERE category.id=? LIMIT 1";
+		$query_params = array($category_id);
+		//echo $this->get_debug_query_string($query, $query_params);
+		$r = $db->prepare($query);
+		$success = $r->execute($query_params);
+		if (!$success) {
+			return false;
+		}
+		$data = false;
+		if ($category_id > 0) {
+			$data = $r->fetch();
+		}
+		return $data;
+	}
+	
+	public function get_category_watermark($data) {
+		$watermark = '';
+		$path_parts = array();
+		if ($data) {
+			$path_parts = explode('/', $data['path']);
+		}
+		array_unshift($path_parts, '');
+		foreach ($path_parts as $path_part) {
+			if (!empty($path_part)) {
+				$path_part .= '/';
+			}
+			$full_path = $this->config['gallery_path'] . $path_part;
+			if (file_exists($full_path . 'watermark.png')) {
+				$watermark = $full_path . 'watermark.png';
+			}
+			elseif (file_exists($full_path . 'watermark.jpg')) {
+				$watermark = $full_path . 'watermark.jpg';
+			}
+			elseif (file_exists($full_path . 'watermark.gif')) {
+				$watermark = $full_path . 'watermark.gif';
+			}
+			elseif (file_exists($full_path . 'watermark.bmp')) {
+				$watermark = $full_path . 'watermark.bmp';
+			}
+			if (!empty($watermark)) {
+				$this->debug('Watermark in gallery: ' . $watermark, 2);
+				continue;
+			}
+		}
+		return $watermark;
+	}
+	
+	public function add_watermark($file_path, $watermark) {
+		if (!empty($watermark)) {
+			$this->debug('Watermark: ' . $watermark, 2);
+			$this->debug('Will put watermark on ' . $file_path, 2);
+			$thumb = PhpThumbFactory::create($file_path);
+			$watermark_obj = PhpThumbFactory::create($watermark);
+			$thumb->addWatermark($watermark_obj, 'center', 100, 0, 0);
+			$thumb->save($file_path);
+		}
 	}
 	
 	/**
@@ -1899,6 +2027,7 @@ final class PC_gallery extends PC_base {
 			$response['errors'][] = "database";
 			return $response;
 		}
+		$data = false;
 		if ($category_id > 0) {
 			$data = $r->fetch();
 			if (empty($data['path'])) {
@@ -1930,13 +2059,20 @@ final class PC_gallery extends PC_base {
 			'watermark'=> &$watermark,
 		));
 		
+		if (empty($watermark)) {
+			$watermark = $this->get_category_watermark($data);
+		}
+		
+		$file_path_parts = pathinfo($uploaded_file_path);
+		if ($file_path_parts['filename'] == 'watermark') {
+			$watermark = '';
+		}
+		$original_file_path =  $file_path_parts['dirname'] . '/' . $file_path_parts['filename'] . '._pc_original_.' . $file_path_parts['extension'];
+		$this->debug("making original: copy('$uploaded_file_path', '$original_file_path')", 2);
+		copy($uploaded_file_path, $original_file_path);
+		
 		if (!empty($watermark)) {
-			$this->debug('Watermark: ' . $watermark, 2);
-			$this->debug('Will put watermark on ' . $uploaded_file_path, 2);
-			$thumb = PhpThumbFactory::create($uploaded_file_path);
-			$watermark_obj = PhpThumbFactory::create($watermark);
-			$thumb->addWatermark($watermark_obj, 'center', 100, 0, 0);
-			$thumb->save($uploaded_file_path);
+			$this->add_watermark($uploaded_file_path, $watermark);
 		}
 		
 		
@@ -1997,6 +2133,12 @@ final class PC_gallery extends PC_base {
 		}*/
 		@unlink($full_path.$data['filename']);
 		
+		$file_path_parts = pathinfo($full_path.$data['filename']);
+		$orig_full_path =  $file_path_parts['dirname'] . '/' . $file_path_parts['filename'] . '._pc_original_.' . $file_path_parts['extension'];
+		
+		
+		@unlink($orig_full_path);
+		
 		if ($this->filetypes[$data['extension']] == 'image') {
 			//delete all image thumbs found in the album path directory named thumb-*
 			//this enables to delete image with all its' thumbs that doesn't exist in the db anymore
@@ -2019,6 +2161,49 @@ final class PC_gallery extends PC_base {
 		$r = $db->prepare("DELETE FROM {$this->db_prefix}gallery_files_in_use WHERE file_id=?");
 		$r->execute(array($file_id));
 		return array("success"=>true, "filename"=>$data['filename']);
+	}
+	
+	public function Delete_thumbnails($category_id = 0) {
+		$files = $this->Get_files($category_id, '', true);
+		$thumb_types = $this->Get_thumbnail_types();
+		
+		$category_watermarks = array();
+		
+		//print_r($thumb_types);
+		//print_r($files);
+		//print_r($this->filetypes);
+		foreach ($files['files'] as $data) {
+			if ($this->filetypes[$data['extension']] == 'image') {
+				if (!isset($category_watermarks[$data['category_id']])) {
+					$category_watermarks[$data['category_id']] = $this->get_category_watermark($this->get_category_data($data['category_id']));
+				}
+				
+				
+				$full_path = $this->config['gallery_path'].$data['path'];
+				$file_full_path = $full_path . '/' . $data['filename'];
+				$orig_file_full_path = $this->get_original_file_path($file_full_path);
+				
+				if (file_exists($orig_file_full_path)) {
+					@unlink($file_full_path);
+					copy($orig_file_full_path, $file_full_path);
+					$this->add_watermark($file_full_path, $category_watermarks[$data['category_id']]);
+				}
+				
+				if (isset($data['path'])) $full_path .= '/';
+
+				//delete all image thumbs found in the album path directory named thumb-*
+				foreach (glob($full_path.'thumb-*') as $thumbnail_path) {
+					if (is_dir($thumbnail_path)) {
+						//delete thumb
+						$delete_thumb_path = $thumbnail_path.'/'.$data['filename'];
+						//echo "\n unlink(".$delete_thumb_path.")";
+						@unlink($delete_thumb_path);
+
+					}
+				}
+			}
+		}
+		return array("success"=>true);
 	}
 	
 	/**

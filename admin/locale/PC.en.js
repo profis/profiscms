@@ -384,6 +384,7 @@ PC.langs.en = {
 				copy: 'Copy',
 				paste: 'Paste',
 				rename: 'Rename',
+				clear_thumb_cache: 'Clear thumb cache',
 				_delete: 'Delete',
 				move_to_trash: 'Move to trash',
 				preview: 'Preview',
@@ -522,6 +523,15 @@ PC.langs.en = {
 					error_title: 'Trash was not purged'
 				}
 			},
+			clear_thumb_cache: {
+				category: {
+					confirmation: {
+						title: 'Clear category thumb cache',
+						message: 'Are you sure to clear category thumb cache?'
+					},
+					error_title: 'Category thumb cache was not cleared'
+				}
+			},
 			error: {
 				connection: {
 					title: 'Connection problem',
@@ -637,6 +647,7 @@ PC.langs.en = {
 			size: 'Size',
 			maxlength: 'Maxlength',
 			readonly: 'Readonly',
+			placeholder: 'Placeholder',
 			required: 'Required',
 			checked: 'Checked',
 			selected: 'Selected',

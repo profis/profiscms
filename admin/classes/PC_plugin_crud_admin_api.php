@@ -257,6 +257,33 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$this->_out['success'] = true;
 	}
 	
+	
+	public function get_for_combo() {
+		$this->_model = $this->_get_model();
+		$this->_model->absorb_debug_settings($this);
+		
+		$params = array(
+			'select' => 't.id',
+			'content' => array(
+				'select' => 'ct.name'
+			),
+			'ln' => false
+		);
+		$content_table = $this->_model->get_content_table();
+		if (empty($content_table)) {
+			unset($params['content']);
+			$params['select'] .= ',t.name';
+		}
+		
+		$this->_out = $this->_model->get_all($params);
+		if (isset($_GET['empty'])) {
+			array_unshift($this->_out, array(
+				'id' => 0,
+				'name' => ''
+			));	
+		}
+	}
+	
 }
 
 ?>

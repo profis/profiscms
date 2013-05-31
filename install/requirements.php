@@ -55,7 +55,7 @@ $requirements = array(
 </table>
 <hr />
 <p>
-	<form style="text-align: left;" action="/" method="POST">
+	<form style="text-align: left;" action="" method="POST">
 	<?php
 	if (!$installer->requirements_passed) {
 		echo '' . $t['fix_problems_and'] .' <button class="btn btn-success" type="submit">' . $t['button_test_again'] .'</button>';

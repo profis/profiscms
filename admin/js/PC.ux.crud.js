@@ -454,7 +454,9 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		var store = this.store;
 		var n = new store.recordType(data);
 		store.addSorted(n);
-		n.set('name', PC.utils.extractName(data.names));
+		if (!this.no_ln_fields) {
+			n.set('name', PC.utils.extractName(data.names));
+		}
 		if (this.per_page) {
 			store.reload();
 		}
@@ -523,7 +525,9 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 			}, this);
 			if (form_data.names) {
 				this.edit_record.set('names', form_data.names); 
-				this.edit_record.set('name', PC.utils.extractName(form_data.names));
+				if (!this.no_ln_fields) {
+					this.edit_record.set('name', PC.utils.extractName(form_data.names));
+				}
 			}
 			this.edit_record.commit();
 		}

@@ -39,7 +39,7 @@ abstract class PC_plugin_admin_api extends PC_base{
 	 * 
 	 * @param Page_manager $page_manager
 	 */
-	function Init(Page_manager $page_manager) {
+	function Init(Page_manager $page_manager = null) {
 		$this->_page_manager = $page_manager;
 		$this->_set_plugin_name();
 	}
@@ -58,7 +58,7 @@ abstract class PC_plugin_admin_api extends PC_base{
 	 * @throws PC_plugin_admin_api_page_access_exception
 	 */
 	protected function _check_page_access($page_id) {
-		if (!$this->_page_manager->is_node_accessible($page_id)) {
+		if (!is_null($this->_page_manager) and !$this->_page_manager->is_node_accessible($page_id)) {
 			throw new PC_plugin_admin_api_page_access_exception('Access to page ' . $page_id . ' denied!');
 		}
 	}

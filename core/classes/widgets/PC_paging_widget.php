@@ -10,6 +10,7 @@ class PC_paging_widget extends PC_widget {
 			'max_paging_items' => 5,
 			'total_items' => 1,
 			'base_url' => '',
+			'get_vars' => '_all',
 			'label_for_first_page' => '&laquo;',
 			'label_for_prev_page' => '&lt;',
 			'label_for_next_page' => '&gt;',

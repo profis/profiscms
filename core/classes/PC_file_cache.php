@@ -50,6 +50,9 @@
 		
 		public function flush() {
 			$files = glob($this->cacheFolder . "*");
+			if (!is_array($files)) {
+				return;
+			}
 			foreach( $files as $file ) {
 				$fname = basename($file);
 				if( $fname[0] != "." && strlen($fname) == 32 )

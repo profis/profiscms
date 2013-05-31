@@ -34,7 +34,7 @@ final class PC_page extends PC_base {
 		if (isset($this->page_data['page_id'])) {
 			return $this->page_data['page_id'];
 		}
-		return false;
+                return false;
 	}
 	
 	public function Get_route_data($route=null, $route_is_page_id=false, $path=array(), $internal_redirects=true) {
@@ -610,6 +610,7 @@ final class PC_page extends PC_base {
 							//$thankYouDiv->setAttribute('class', 'pc_form_thank_you');
 							$pageForm['DOMElement']->parentNode->replaceChild($thankYouDiv, $pageForm['DOMElement']);
 						}
+						$this->site->Register_data('saved_form', $pageForm);
 					}
 				}
 			}
@@ -850,7 +851,7 @@ final class PC_page extends PC_base {
 			$marker_image = ', icon:"' . $marker_image .'"';
 		}
 		$marker_custom_options = '';
-		$marker_var = 'marker_'.$marker->id;
+		$marker_var = 'marker_'.$map_id . '_' . $marker->id;
 		$new_marker = 'var ' . $marker_var . ' = new google.maps.Marker({map:'.$map_id.',animation:google.maps.Animation.DROP,position: new google.maps.LatLng('.$marker->latitude.','.$marker->longitude.')' . $marker_image . $marker_options . '});';
 		if (v($marker->text)) {
 			$new_marker .= '
@@ -865,6 +866,7 @@ final class PC_page extends PC_base {
 			$new_marker .= "category_markers['" . $category_id . "'].push(" . $marker_var . ');';
 		}
 		
+		$new_marker .= "map_markers_" . $map_id . ".push(" . $marker_var . ');';
 			
 		return $new_marker;
 					
@@ -945,9 +947,9 @@ final class PC_page extends PC_base {
 	public function Replace_google_map_objects(&$text) {
 		//<object width="100%" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"> <param name="map_data" value="%7B%22latitude%22%3A55.710803%2C%22longitude%22%3A21.13180699999998%2C%22zoom%22%3A12%2C%22map_type%22%3A%22satellite%22%7D" /> <param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="100%" height="240px">&nbsp;</embed> </object>
 		//<object width="500" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"><param name="map_data" value="%7B%22latitude%22%3A43.635515820871454%2C%22longitude%22%3A51.17217413757328%2C%22zoom%22%3A15%2C%22map_type%22%3A%22hybrid%22%7D" /><param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="500" height="240">&nbsp;</embed></object>
-		$google_map_object = '/<object( style="(.+?)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase=".+?">'."\s*".'(?:<param name="map_type" value="(.+?)" \/>)?'."\s*".'<param name="map_data" value="(.+?)" \/>'."\s*".'<param name="src" value=".+?" \/><embed( style="(.+?)")? src=".+?" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
+		$google_map_object = '/<object( style="(.+?)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase=".+?">'."\s*".'(?:<param name="map_type" value="(.+?)" \/>)?'."\s*".'<param name="map_data" value="(.+?)" \/>'."\s*".'<param name="src" value=".+?" \/>\s*(<param name="map_type" value="(.+?)" \/>)?\s*<embed( style="(.+?)")? src=".+?" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
 		$this->debug("google_map_object pattern:", 1);
-		$this->debug($google_map_object, 2);
+		$this->debug(htmlspecialchars($google_map_object), 2);
 		//htmlspecialchars($text);
 		if (!empty($text)) if (preg_match_all($google_map_object, $text, $gmaps)) {
 			//echo 'Martynas';
@@ -991,6 +993,8 @@ final class PC_page extends PC_base {
 				}
 				
 				$id = 'gmap_'.$this->_gmap_counter++;
+				
+				$map_markers = 'var map_markers_'.$id.' = [];';
 				
 				$markers = '';
 				if (!isset($data->markers)) {
@@ -1055,6 +1059,9 @@ final class PC_page extends PC_base {
 				
 				$w = $gmaps[3][$a];
 				$h = $gmaps[4][$a];
+				
+				$map_init_js = $this->site->Get_tpl_content('map', 'init.js', array('id' => $id));
+				
 				if ($map_type == 'google') {
 					$vars = array_merge($vars, array(
 						'id' => $id,
@@ -1064,6 +1071,7 @@ final class PC_page extends PC_base {
 						'style' => $gmaps[2][$a],
 						'filter' => $categories_exist,
 						'js' => '<script type="text/javascript">'
+							.$map_markers
 							.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false'.(isset($data->scrollwheel)?',scrollwheel:'.$data->scrollwheel:''). $map_custom_options . '};'
 							.'var '.$id.'=null;'
 							.'$(function(){'
@@ -1073,6 +1081,7 @@ final class PC_page extends PC_base {
 								.$markers
 								//.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
 								//.'debugger;'
+								.$map_init_js
 								. $filter_js
 							.'});'
 							.'
@@ -1095,6 +1104,7 @@ final class PC_page extends PC_base {
 						'style' => $gmaps[2][$a],
 						'filter' => $categories_exist,
 						'js' => '<script type="text/javascript">'
+							.$map_markers
 							.'ymaps.ready(yandex_map_init_'.$id.');
 							function yandex_map_init_'.$id.' () {
 								var myMap = new ymaps.Map("'.$id.'", {

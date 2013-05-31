@@ -3,6 +3,7 @@ PC_errors.txt
 .DS_Store
 Thumbs.db
 _dev/
+_import/
 _tests/
 _restore_trink_jei_nieko_netruksta/
 #config/

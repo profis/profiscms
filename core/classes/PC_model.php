@@ -13,12 +13,20 @@ abstract class PC_model extends PC_base{
 	protected $_where = array();
 	protected $_query_params = array();
 	
+	protected $_scope_where = array();
+	protected $_scope_query_params = array();
+	
+	
 	protected $_rules;
 	protected $_filters;
 	protected $_sanitize_filters;
 	
 	abstract protected function _set_tables();
 	
+	public function get_content_table() {
+		return $this->_content_table;
+	}
+		
 	protected function _set_rules() {
 		$this->_rules = array();
 	}
@@ -31,12 +39,18 @@ abstract class PC_model extends PC_base{
 		$this->_sanitize_filters = array();
 	}
 	
+	protected function _set_base_scope() {
+		
+	}
+	
 	public function Init($id = 0) {
 		$this->set_id($id);
 		$this->_set_tables();
 		$this->_set_rules();
 		$this->_set_filters();
 		$this->_set_sanitize_filters();
+		$this->_set_base_scope();
+		$this->clear_scope();
 	}
 	
 	public function get_id() {
@@ -48,8 +62,8 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function clear_scope() {
-		$this->_where = array();
-		$this->_query_params = array();
+		$this->_where = $this->_scope_where;
+		$this->_query_params = $this->_scope_query_params;
 	}
 	
 	public static function create_scope() {
@@ -71,7 +85,7 @@ abstract class PC_model extends PC_base{
 		$this->_query_params = v($scope['query_params'], array());
 	}
 	
-	public function absorb_scope_into_params(&$params, $scope = array()) {
+	public static function absorb_scope_into_params(&$params, $scope = array()) {
 		vv($params['where'], array());
 		if (is_array($params['where']) and isset($scope['where'])) {
 			$params['where'] = array_merge($params['where'], $scope['where']);
@@ -80,6 +94,24 @@ abstract class PC_model extends PC_base{
 		if (is_array($params['query_params']) and isset($scope['query_params'])) {
 			$params['query_params'] = array_merge($params['query_params'], $scope['query_params']);
 		}
+	}
+	
+	public static function change_scope($scope, $replace = array()) {
+		if (isset($scope['where']) and is_array($scope['where'])) {
+			$patterns = array();
+			$replacements = array();
+			foreach ($replace as $old_table => $new_table) {
+				$patterns[] = '/(?<!\w)'.$old_table.'./ui';
+				$replacements[] = $new_table . '.';
+			}
+			foreach ($scope['where'] as $key => $value) {
+				$value = preg_replace($patterns, $replacements, $value);
+				$scope['where'][$key] = $value;
+			}
+			
+		}
+		
+		return $scope;
 	}
 	
 	public function get_id_from_content($name, $value, $ln = '', $limit = 1) {
@@ -220,7 +252,10 @@ abstract class PC_model extends PC_base{
 		//$this->debug($params['where']);
 		if (!is_null($id)) {
 			$params['where'] = array_merge(array('t.id' => $id), $params['where']);
-			$params['limit'] = 1;
+			if (!is_array($id)) {
+				$params['limit'] = 1;
+			}
+			
 		}
 		
 		$params['where'] = array_merge($this->_where, $params['where']);
@@ -317,14 +352,23 @@ abstract class PC_model extends PC_base{
 		$this->debug_query($query, $query_params, 1);
 		
 		if (isset($params['query_only']) and $params['query_only']) {
-			return $this->get_debug_query_string($query, $query_params);	;
+			if (isset($params['get_query_params'])) {
+				$params['get_query_params'] = $query_params;
+				return $query;
+			}
+			return $this->get_debug_query_string($query, $query_params);
 		}
 		
 		//echo "\n";
 		//echo $this->get_debug_query_string($query, $query_params);
 		
 		$s = $r_categories->execute($query_params);
-		if (!$s) return false;
+		if (!$s) {
+			$this->debug($query, 2);
+			$this->debug($query_params, 2);
+			$this->debug('Query failed', 2);
+			return false;
+		}
 
 		if ($paging) {
 			$rTotal = $this->query("SELECT FOUND_ROWS()");
@@ -349,18 +393,19 @@ abstract class PC_model extends PC_base{
 			}
 			$custom_key = false;
 			if (isset($params['key']) and isset($d[$params['key']]) and !empty($d[$params['key']])) {
-				$custom_key = $params['key'];
+				$custom_key = $d[$params['key']];
 			}
+			
 			if (isset($params['value']) and isset($d[$params['value']])) {
 				$d = $d[$params['value']];
 			}
+			
 			if ($custom_key) {
 				$items[$custom_key] = $d;
-			}
-			else {
+			} else {
 				$items[] = $d;
 			}
-			
+					
 		}
 		
 		if ($limit == 1) {
@@ -402,6 +447,31 @@ abstract class PC_model extends PC_base{
 			$where_clause = $where;
 		}
 		return $where_clause;
+	}
+	
+	public static function boolean_full_text_filter($string) {
+		return str_replace(array('+', '-', '"', '~', '<', '>'), ' ', $string);
+	}
+	
+	/**
+	 * Add special operators to every word of the search string to make all words compulsory in the search.
+	 * @param string $string
+	 * @return string
+	 */
+	public static function add_all_words_fulltext_operators($string) {
+		$words = PC_utils::str_word_count_utf8($string, 1, true);
+		foreach ($words as $word) {
+			$prepared_search_string .= '+'.$word.' ';
+		}
+		return $prepared_search_string;
+	}
+	
+	public static function get_full_text_clause($field, $type) {
+		if (is_array($field)) {
+			$field = implode(', ', $field);
+		}
+		return "MATCH($field)
+			AGAINST (? IN BOOLEAN MODE)";
 	}
 	
 	public function get_parent_id($id) {

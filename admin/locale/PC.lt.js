@@ -383,6 +383,7 @@ PC.langs.lt = {
 				copy: 'Kopijuoti',
 				paste: 'Įklijuoti',
 				rename: 'Pervadinti',
+				clear_thumb_cache: 'Išvalyti kešą',
 				_delete: 'Ištrinti',
 				move_to_trash: 'Į šiukšlinę',
 				preview: 'Peržiūrėti',
@@ -520,6 +521,15 @@ PC.langs.lt = {
 						message: 'Ar tikrai norite išvalyti šiukšlinę?'
 					},
 					error_title: 'Nepavyko išvalyti šiukšlinės'
+				}
+			},
+			clear_thumb_cache: {
+				category: {
+					confirmation: {
+						title: 'Išvalyti kešą',
+						message: 'Ar tikrai norite išvalyti kešą?'
+					},
+					error_title: 'Nepavyko išvalyti kešo'
 				}
 			},
 			error: {

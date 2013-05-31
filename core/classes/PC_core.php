@@ -159,8 +159,8 @@ final class PC_core extends PC_base {
 		$this->debug = true;
 		$this->clear_debug_string();
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'router/redirect.html', false, 5);
-		if ($this->routes) {
-			//$this->debug($this->routes->Get_request());
+		if ($this->routes and is_object($this->routes) and method_exists($this->routes, 'Get_request')) {
+			$this->debug($this->routes->Get_request());
 		}
 		//$this->debug($this->routes->Get_request());
 		$this->debug($_GET);

@@ -32,6 +32,7 @@ Ext.ux.form.Params = {
 				break;
 				case 'text':
 					items.push({fieldLabel: this.ln.value, ref: '../../_value'});
+					items.push({fieldLabel: this.ln.placeholder, ref: '../../_placeholder'});
 //					items.push({fieldLabel: this.ln.size, ref: '../../_size'});
 					items.push({fieldLabel: this.ln.width, ref: '../../_width'});
 					items.push({fieldLabel: this.ln.maxlength, ref: '../../_maxlength'});
@@ -56,6 +57,7 @@ Ext.ux.form.Params = {
 				case 'textarea':
 //					items.push({fieldLabel: this.ln.cols, ref: '../../_cols'});
 //					items.push({fieldLabel: this.ln.rows, ref: '../../_rows'});
+					items.push({fieldLabel: this.ln.placeholder, ref: '../../_placeholder'});
 					items.push({fieldLabel: this.ln.width, ref: '../../_width'});
 					items.push({fieldLabel: this.ln.height, ref: '../../_height'});
 					items.push({fieldLabel: this.ln.value, ref: '../../_textContent',xtype: 'textarea', height: 32});
@@ -645,7 +647,7 @@ Ext.ux.form.Params = {
 				align: 'stretch'
 			},
 			width: 400,
-			height: 300,
+			height: 320,
 			resizable: false,
 			border: false,
 			items: this.tabs,

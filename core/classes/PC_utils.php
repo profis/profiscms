@@ -108,6 +108,47 @@ class PC_utils {
 		return $text;
 	}
 	
+	
+	/**
+	 * Utf-8 version of str_word_count().
+	 * @param string $string
+	 * @param integer $format Specify the return value of this function. The current supported values are:<br>
+	 * 0 - returns the number of words found<br>
+	 * 1 - returns an array containing all the words found inside the string<br>
+	 * 2 - returns an associative array, where the key is the numeric position of the word inside the string and the value is the actual word itself.
+	 * 
+	 * @param boolean $include_symbols - 
+	 * 	 if true, some specific symbols (Math, *, Number) can be allowed at the beginning and in the rest part of the words	 	 
+	 */
+	public static function str_word_count_utf8($string, $format = 0, $include_symbols = false) {
+		$word_count_mask = "/\p{L}[\p{L}\p{Mn}\p{Pd}'\x{2019}]*/u";
+
+		if ($include_symbols) {
+			$word_count_mask = "/[\p{L}\p{N}\*][\p{L}\p{Mn}\p{Pd}\p{N}\p{Sc}\p{So}\*'\x{2019}]*/u";
+		}
+
+		switch ($format) {
+			case 1: {
+				preg_match_all($word_count_mask, $string, $matches);
+				return $matches[0];
+			}
+			case 2: {
+				preg_match_all($word_count_mask, $string, $matches, PREG_OFFSET_CAPTURE);
+				$result = array();
+				foreach ($matches[0] as $match) {
+					//correct offsets for multi-byte characters (`PREG_OFFSET_CAPTURE` returns *byte*-offset)
+					//we fix this by recounting the text before the offset using multi-byte aware `strlen`
+					$correct_offset = mb_strlen(substr($string, 0, $match[1]), 'utf-8');
+					
+					$result[$correct_offset] = $match[0];
+				}
+				return $result;
+			}
+		}
+		return preg_match_all($word_count_mask, $string, $matches);
+	}
+	
+	
 	/**
 	 * Extrack id's from array of key value pair array by key 'pid'.
 	 * $param array $page array of key value pair arrays.
@@ -136,10 +177,15 @@ class PC_utils {
 		}
 		$url =
 			($path ? "$path" . $slash : '');
-		if (!$params || !is_array($params)) $params = array();
+		if (!$params || !is_array($params) && $params != '_all') $params = array();
 		if ($params) {
-			if (!is_array($params)) $params = self::urlParamsToArray($params);
-			$params = empty($params) ? '' : self::urlParamsToString($params);
+			if ($params == '_all') {
+				$params = $_SERVER["QUERY_STRING"];
+			}
+			else {
+				if (!is_array($params)) $params = self::urlParamsToArray($params);
+				$params = empty($params) ? '' : self::urlParamsToString($params);
+			}
 			$question = '?';
 			if (strpos($url, '?') !== false) {
 				if (substr($url, -1) == '?') {

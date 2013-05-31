@@ -382,6 +382,7 @@ PC.langs.ru = {
 				copy: 'Копировать',
 				paste: 'Вставить',
 				rename: 'Переименовать',
+				clear_thumb_cache: 'Очистить кэш',
 				_delete: 'Удалить',
 				move_to_trash: 'Удалить в мусорку',
 				preview: 'Просмотр',
@@ -519,6 +520,15 @@ PC.langs.ru = {
 						message: 'Вы действительно хотите очистить мусорку?'
 					},
 					error_title: 'Мусорка не была очищена'
+				}
+			},
+			clear_thumb_cache: {
+				category: {
+					confirmation: {
+						title: 'Очистить кэш',
+						message: 'Вы действительно хотите очистить кэш?'
+					},
+					error_title: 'Кэш не был очищен'
 				}
 			},
 			error: {

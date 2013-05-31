@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS `pc_config` (
 -- 
 
 INSERT INTO `pc_config` (`plugin`, `ckey`, `value`) VALUES 
-('', 'active_plugins', '');
+('', 'active_plugins', 'backup,domains,sites,variables,auth,config,forms');
 
 -- --------------------------------------------------------
 

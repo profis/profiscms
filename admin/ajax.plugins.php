@@ -115,6 +115,9 @@ if ($action == 'update') {
 
 chdir($cfg['path']['system']);
 $_plugins = glob($cfg['path']['plugins'] . '*/dialog.php');
+if (!is_array($_plugins)) {
+	$_plugins = array();
+}
 $_core_plugins = glob(CORE_PLUGINS_ROOT . '*/dialog.php');
 
 //$logger->debug('$_plugins:', 1);

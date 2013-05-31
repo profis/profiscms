@@ -383,6 +383,16 @@ final class PC_auth_groups extends PC_base {
 * Class used for user authentification management. This class contains functionality to add, remove, get, etc. users in appropriate DB tables.
 */
 final class PC_auth_users extends PC_base {
+	
+	public function Init() {
+		$this->auth_users_base = new PC_auth_users_base;
+	}
+	
+	public function Encode_password($pass) {
+		return $this->auth_users_base->Encode_password($pass, $this->cfg['salt']);
+	}
+	
+	
 	/**
 	* Method used retrieve user data from appropriate DB table by given user id.
 	* @param int $id given user id.
@@ -421,7 +431,7 @@ final class PC_auth_users extends PC_base {
 		$r = $this->prepare("UPDATE {$this->db_prefix}auth_users SET username=?".(!is_null($language)?", language=?":"").(!empty($password)?", pass=?":"")." WHERE id=?");
 		$params = array($name);
 		if (!is_null($language)) $params[] = $language;
-		if (!empty($password)) $params[] = $password;
+		if (!empty($password)) $params[] = $this->Encode_password($password);
 		$params[] = $id;
 		$s = $r->execute($params);
 		if ($s) {
@@ -472,7 +482,7 @@ final class PC_auth_users extends PC_base {
 		if (!$r->rowCount()) return false;
 		//create user
 		$r = $this->prepare("INSERT INTO {$this->db_prefix}auth_users (username,language,pass,group_id) VALUES(?,?,?,?)");
-		$params = array($name, $language, $password, $group_id);
+		$params = array($name, $language, $this->Encode_password($password), $group_id);
 		$s = $r->execute($params);
 		if ($s) {
 			return $this->db->lastInsertId($this->sql_parser->Get_sequence('auth_users'));
@@ -542,8 +552,10 @@ final class PC_auth extends PC_base {
 			$s = $r->execute(array($_POST['auth_user']));
 			if ($s) {
 				if ($f = $r->fetch()) {
-					$hash = hex_hmac_md5($_SESSION['auth_data']['salt'], $f['pass']);
-					if ($hash == $_POST['auth_hash']) {
+					//$hash = hex_hmac_md5($_SESSION['auth_data']['salt'], $f['pass']);
+					//if ($hash == $_POST['auth_hash']) {
+					if ($f['pass'] == $this->users->Encode_password($_POST['auth_pass'])) {
+						echo 'OK';
 						$this->Load_session($f);
 						$this->_is_authenticated = true;
 					}

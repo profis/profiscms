@@ -536,6 +536,18 @@ function random_filename($len = 8) {
 	return $rv;
 }
 
+
+function random_string($length = 6, $chars = '') {
+	if (empty($chars)) {
+		$chars = "ABCDEFGHKLMNPRT123456789";
+	}
+	$code = '';
+	for ($i = 0; $i < $length; $i++) {
+		$code .= $chars[rand(0, strlen($chars)-1)];
+	}
+	return $code;
+}
+
 if (!function_exists('hex2bin')) {
 	/**
 	* Function used to convert given hexadecimal encoded string to binary string.
