@@ -52,11 +52,17 @@ class PC_utils {
 	
 	/**
 	 * Gets list of images from text.
-	 * @param array|string content object as kay value pair array or text as string.
+	 * 
+	 * @param array|string $li content object as kay value pair array or text as string.
+	 * @param string $field field name to get images from when $li is gived as array.
+	 * @param array|string $size gallery thumbnail types to return.
+	 * @param bool $recursive if true then will try to get images recoursively from parents if no images was found in current item.
 	 * @return array image url list.
 	 */
-	static function getTextImages($li, $size = null, $extended = false) {
-		$text = is_array($li) ? (isset($li['text']) ? $li['text'] : '') : $li;
+	static function getTextImages($li, $field = 'text', $size = null, $extended = false, $recursive = false) {
+		global $page;
+		$text = is_array($li) ? (isset($li[$field]) ? $li[$field] : '') : $li;
+		$m = null;
 		if ($text && preg_match_all('#<img[^>]+src="([^"]+)"[^>]*>#i', $text, $m)) {
 			$list = $m[1];
 			foreach ($list as $idx => $img) {
@@ -72,6 +78,7 @@ class PC_utils {
 					}
 				}
 				if ($extended) {
+					$m1 = null;
 					$title = preg_match('#[^>]+title="([^"]+)"#i', $m[0][$idx], $m1) ? $m1[1] : '';
 					$alt = preg_match('#[^>]+alt="([^"]+)"#i', $m[0][$idx], $m1) ? $m1[1] : '';
 					$list[$idx] = array('src' => $img, 'title' => $title, 'alt' => $alt);
@@ -81,6 +88,12 @@ class PC_utils {
 				}
 			}
 			return $list;
+		} else if ($recursive && is_array($li) && isset($li['idp']) && $li['idp']) {
+			
+			if (($li_ = $page->Get_page($li['idp'])) || ($li_ = $page->Get_content($li['idp']))) {
+				return self::getTextImages($li_, $field, $size, $extended, $recursive);
+			}
+			
 		}
 		return array();
 	}
@@ -92,17 +105,20 @@ class PC_utils {
 	
 	/**
 	 * Get short text.
+	 * 
 	 * @param string $text text to be shortened.
 	 * @param int $maxLen maximum short text length in characters.
+	 * @param string $append string to append if text was shortened (default: "...").
 	 * @return string short text.
 	 */
-	static function shortText($text, $maxLen = 100) {
+	static function shortText($text, $maxLen = 100, $append = null) {
+		if (is_null($append)) $append = '...';
 		$text = strip_tags($text);
 		$textLen = mb_strlen($text);
 		if ($textLen > $maxLen) {
-			$text = mb_substr(strip_tags($text), 0, $maxLen);
-			$text = preg_replace('#[\ \.,:;\)\-"\'>\?\!][^\ \.,:;\)\-"\'>\?\!]*$#i', '', $text);
-			$text = trim($text, '.,:;- ').((!empty($text) && $textLen > $maxLen) ? '...' : '');
+			$_text = mb_substr(strip_tags($text), 0, $maxLen);
+			$text = preg_replace('#[\ \.,:;\)\-"\'>\?\!]+$#i', '', $_text);
+			$text = trim($text, '.,:;- ').((!empty($text) && $textLen > $maxLen) ? $append : '');
 		}
 		
 		return $text;
@@ -160,6 +176,25 @@ class PC_utils {
 			$list[] = $f['pid'];
 		}
 		return $list;
+	}
+	
+	/**
+	 * Hex encode string, useful for encoding email to protect from bots.
+	 * 
+	 * @param string $str string to be encoded.
+	 * @param bool $ent if true string will be encoded as html entities, if false string will be encoded as url.
+	 * @return string encoded string.
+	 */
+	static function hexEncode($str, $ent = false) {
+		$encoded = '';
+		$strlen =  function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
+		$substr =  function_exists('mb_substr') ? 'mb_substr' : 'substr';
+		$ch = $ent ? '&#x' : '%';
+		$length = $strlen($str);
+		for ($i = 0; $i < $length; $i++) {
+			$encoded .= $ch.wordwrap(bin2hex($substr($str, $i, 1)), 2, $ch, true).($ent ? ';' : '');
+		}
+		return $encoded;
 	}
 	
 	/**
@@ -238,16 +273,16 @@ class PC_utils {
 	
 	/**
 	 * Strips domain and protocol from url.
+	 * 
 	 * @param string $url url to be striped.
 	 * @param bool $stripFirstSlash if true result will not have begining slash.
 	 * @return string resulting url
 	 */
 	static function getUrlRequestUri($url, $stripFirstSlash = false) {
 		// strip protocol
-		$url = preg_replace('#^(http|https)://#i', '', trim($url));
+		$url0 = preg_replace('#^(http|https)://#i', '', trim($url));
 		// strip domain
-		$url = preg_replace('#^[^/]*/#i', '/', trim($url));
-		$url = trim($url, '/');
+		$url = trim(preg_replace('#^[^/]*/#i', '/', trim($url0)), '/');
 		return (!$stripFirstSlash ? '/' : '').$url;
 	}
 	
@@ -393,18 +428,391 @@ class PC_utils {
 	}
 	
 	/**
+	 * Write log to file.
+	 * 
+	 * Every new call appends message to the end of the file.
+	 * Every message is writen to new line.
+	 * Every message is prepended width current date and time.
+	 * 
+	 * @param string $msg message to log.
+	 * @param string $file path to file to write log to. If omited 'debug.log' is used.
+	 */
+	static function debugLog($msg, $file = null) {
+		if (!$file) {
+			$file = 'debug.log';
+		}
+		if (is_array($msg) || is_object($msg)) {
+			$msg = print_r($msg, true);
+		}
+		if (($fl = @fopen($file, 'at+'))) {
+			fputs($fl, "[".date('Y-m-d H:i:s')."] $msg\n");
+			fclose($fl);
+		}
+	}
+	
+	/**
+	 * Convert key value pair array to object.
+	 * 
+	 * @param array $arr key value pair array to convert.
+	 * @return object
+	 */
+	static function arrayToObject($arr) {
+		$obj = new stdClass();
+		foreach ($arr as $k => $v) {
+			if (!$k || is_numeric($k)) continue;
+			$obj->$k = $v;
+		}
+		return $obj;
+	}
+	
+	/**
 	 * Get file in a plugin path.
+	 * 
 	 * @param string plugin file (ex.: [plugin_folder]/[file_path_relative_to_plugin_folder]).
 	 * @return string path to plugin file.
 	 */
 	static function modPath($path) {
 		global $core;
+		$m = null;
 		$res = preg_match('#^([^/]*)/(.*)$#i', $path, $m) ? $m : null;
 		if (!$res) return null;
-		$res = $core->Get_path('plugins', $res[2], $res[1]);
-		return $res;
+		return $core->Get_path('plugins', $res[2], $res[1]);
 	}
 	
+	/**
+	 * Last error info from executed DB helper functions
+	 * 
+	 * @var array
+	 * @link http://php.net/manual/en/pdo.errorinfo.php php.net manual PDO::errorInfo
+	 */
+	private static $dbLastErrorInfo_ = null;
+	
+	/**
+	 * Get raw last database error
+	 * 
+	 * @return array
+	 * @link http://php.net/manual/en/pdo.errorinfo.php php.net manual PDO::errorInfo
+	 */
+	static function dbLastErrorInfoRaw() {
+		return self::$dbLastErrorInfo_;
+	}
+	
+	/**
+	 * Get parsed last database error
+	 * 
+	 * @return string
+	 */
+	static function dbLastErrorInfo() {
+		if (self::$dbLastErrorInfo_) {
+			if (isset(self::$dbLastErrorInfo_[2]) && self::$dbLastErrorInfo_[2]) {
+				$err = self::$dbLastErrorInfo_[2];
+			} else if (isset(self::$dbLastErrorInfo_[1]) && self::$dbLastErrorInfo_[1]) {
+				$err = self::$dbLastErrorInfo_[1];
+			} else if (isset(self::$dbLastErrorInfo_[0]) && intval(self::$dbLastErrorInfo_[0])) {
+				$err = self::$dbLastErrorInfo_[0];
+			} else {
+				$err = null;
+			}
+			return $err;
+		}
+		return null;
+	}
+	
+	/**
+	 * DB helper function
+	 */
+	static function dbInsert($data, $table, $_db = null) {
+		global $db;
+		if (!$_db || !is_object($_db)) $_db = $db;
+		$quot = ($_db->getAttribute(PDO::ATTR_DRIVER_NAME) == 'pgsql') ? '"' : '`';
+		$columns = '';
+		$values = '';
+		$values_v = array();
+		foreach ($data as $key => $value) {
+			if (is_array($value) || is_object($value)) $value = serialize($value);
+			$values .= ($values ? ", " : "").":$key";
+			$values_v[":$key"] = $value;
+			$columns .= ($columns ? ", " : "")."{$quot}$key{$quot}";
+		}
+		$r = $_db->prepare($q="INSERT INTO {$quot}$table{$quot} ( $columns ) VALUES ( $values )");
+		$r->execute($values_v);
+		self::$dbLastErrorInfo_ = $r->errorInfo();
+		return $_db->lastInsertId();
+	}
+	
+	/**
+	 * DB helper function
+	 */
+	static function dbUpdate($data, $where, $table, $_db = null) {
+		global $db;
+		if (!$_db || !is_object($_db)) $_db = $db;
+		$quot = ($_db->getAttribute(PDO::ATTR_DRIVER_NAME) == 'pgsql') ? '"' : '`';
+		$values = '';
+		$values_v = array();
+		foreach ($data as $key => $value) {
+			if (is_array($value) || is_object($value)) $value = serialize($value);
+			$values_v[":$key"] = $value;
+			$values .= ($values ? ", " : "")."{$quot}$key{$quot}=:$key";
+		}
+		$r = $_db->prepare("UPDATE {$quot}$table{$quot} SET $values".($where ? " WHERE $where" : ""));
+		$r->execute($values_v);
+		self::$dbLastErrorInfo_ = $r->errorInfo();
+	}
+	
+	/**
+	 * Redirect to url. Actions:
+	 * <code>
+	 * 		- closes session;
+	 * 		- writes header location header;
+	 * 		- terminates script execution width exit().
+	 * </code>
+	 * 
+	 * @param string $url url to redirect to.
+	 */
+	static function redirect($url) {
+		if (session_id()) session_write_close();
+		header('Location: '.$url);
+		exit();
+	}
+	
+	static $sesUik = null;
+	
+	static function getSessionKey() {
+		if (!self::$sesUik) {
+			self::$sesUik = md5(__FILE__).'_pc_utils';
+		}
+		return self::$sesUik;
+	}
+	
+	static function &setData($key, $value) {
+		$sesUik = self::getSessionKey();
+		if (!isset($_SESSION[$sesUik]) || !is_array($_SESSION[$sesUik])) {
+			$null = null;
+			$_SESSION[$sesUik] = &$null;
+			$_SESSION[$sesUik] = Array();
+		}
+		$_SESSION[$sesUik][$key] = $value;
+		return $_SESSION[$sesUik][$key];
+	}
+	
+	static function &getData($key) {
+		$sesUik = self::getSessionKey();
+		$null = null;
+		if (isset($_SESSION[$sesUik][$key]))
+			return $_SESSION[$sesUik][$key];
+		else
+			return $null;
+	}
+	
+	static function putMessage($key, $message, $type = '') {
+		$sesUik = self::getSessionKey();
+		if (!isset($_SESSION[$sesUik]) || !is_array($_SESSION[$sesUik])) {
+			$null = null;
+			$_SESSION[$sesUik] = &$null;
+			$_SESSION[$sesUik] = Array();
+		}
+		if (!isset($_SESSION[$sesUik]['messages']))
+			$_SESSION[$sesUik]['messages'] = Array();
+		$_SESSION[$sesUik]['messages'][$key] = Array('msg' => $message, 'type' => $type);
+	}
+	
+	static function getMessage($key) {
+		$sesUik = self::getSessionKey();
+		return isset($_SESSION[$sesUik]['messages'][$key])
+			? $_SESSION[$sesUik]['messages'][$key]['msg'] : false;
+	}
+	
+	static function getMessageType($key) {
+		$sesUik = self::getSessionKey();
+		return isset($_SESSION[$sesUik]['messages'][$key])
+			? $_SESSION[$sesUik]['messages'][$key]['type'] : false;
+	}
+	
+	static function removeMessage($key) {
+		$sesUik = self::getSessionKey();
+		unset($_SESSION[$sesUik]['messages'][$key]);
+	}
+	
+	static function popMessage($key) {
+		$msg = self::getMessage($key);
+		self::removeMessage($key);
+		return $msg;
+	}
+	
+	static function hasMessage($key) {
+		$sesUik = self::getSessionKey();
+		return isset($_SESSION[$sesUik]['messages'][$key]);
+	}
+	
+	
+	/**
+	 * Output language menu.
+	 *
+	 * The method is backwards compatible with older version: fourth parameter
+	 * ($displayType) accepts text as well as boolean value. The possible values
+	 * for that parameter are:
+	 * <code>
+	 * "name" or true - displays language names
+	 * "code" or false - displays ISO 639-1 language codes
+	 * "icon" - displays country associated icons
+	 * "icon+name" - displays country associated icons followed by language names
+	 * "icon+code" - displays country associated icons followed by ISO 639-1 language codes
+	 * </code>
+	 *
+	 * Icon matrix settings is an associative array, containing keys:
+	 * <code>
+	 * image - URI or flags' matrix image, relative to root (default="admin/images/flags_matrix.png")
+	 * width - width of each flag icon in the matrix (default=16)
+	 * height - height of each flag icon in the matrix (default=11)
+	 * xOffset - horizontal offset in pixels of top left corner, where flag icons start (default=0)
+	 * yOffset - vertical offset in pixels of top left corner, where flag icons start (default=0)
+	 * enCountryCode - country code for english language flag (default=gb)
+	 * </code>
+	 * All entries in matrix settings array are optional.
+	 *
+	 * @param array $menu menu item array to output.
+	 * @param PC_site &$site PC_site instance.
+	 * @param bool $hideCurr if true current language will be hidden from menu.
+	 * @param mixed $displayType determines the final contents of language links. Can have these values: "name" / true, "code" / false, "icon", "icon+name", "icon+code"
+	 * @param bool $onlyLinks if true then do not use UL LI structure.
+	 * @param array|null $iconSettings used to change icon matrix settings. if null then default settings will be used
+	 */
+	static function htmlLangMenu($menu, &$site, $hideCurr = false, $displayType = "code", $onlyLinks = false, $iconSettings = null ) {
+		$cc = 0;
+		$html = '';
+		if( $displayType === true ) $displayType = "name";
+		else if( $displayType === false ) $displayType = "code";
+		$useIcons = ($displayType == "icon" || $displayType == "icon+name" || $displayType == "icon+code");
+		$useNames = ($displayType == "name" || $displayType == "icon+name");
+		$useCode = ($displayType == "code" || $displayType == "icon+code");
+		if( !$useIcons && !$useNames && !$useCode )
+			$useCode = true;
+		if( $useIcons ) {
+			if( !is_array($iconSettings) )
+				$iconSettings = Array();
+			if( !isset($iconSettings["image"]) ) {
+				$iconSettings["image"] = "admin/images/flags_matrix.png";
+				$iconSettings["width"] = 16;
+				$iconSettings["height"] = 11;
+				$iconSettings["xOffset"] = 16;
+				$iconSettings["yOffset"] = 11;
+			}
+			if( !isset($iconSettings["width"]) ) $iconSettings["width"] = 16;
+			if( !isset($iconSettings["height"]) ) $iconSettings["height"] = 11;
+			if( !isset($iconSettings["xOffset"]) ) $iconSettings["xOffset"] = 0;
+			if( !isset($iconSettings["yOffset"]) ) $iconSettings["yOffset"] = 0;
+			if( !isset($iconSettings["enCountryCode"]) ) $iconSettings["enCountryCode"] = "gb";
+			
+			$iconUrl = $site->cfg["url"]["base"] . $iconSettings["image"];
+			$iconBaseStyles = "display:inline-block;vertical-align:middle;width:$iconSettings[width]px;height:$iconSettings[height]px;background:url($iconUrl) no-repeat ";
+		}
+		
+		foreach ($menu as $k => $v) {
+			$cls = array();
+			if ($cc == 0) $cls[] = 'f';
+			if ($k == $site->ln) $cls[] = 's';
+			$i = ($useIcons && $k == "en") ? $iconSettings["enCountryCode"] : $k;
+			if ($hideCurr && $k == $site->ln) continue;
+			if (!$onlyLinks) {
+				$html .= '<li'.(empty($cls) ? '' : (' class="'.implode(' ', $cls).'"')).'>';
+			}
+			$html .= '<a'.(empty($cls) ? '' : (' class="'.implode(' ', $cls).'"')).
+						' href="'.htmlspecialchars($site->Get_link(null, $k)).
+						'" title="'.htmlspecialchars($v).'">'.
+						($onlyLinks ? '' : '<span>').
+							($useIcons ? ('<i style="' . $iconBaseStyles . (-$iconSettings["xOffset"] - $iconSettings["width"] * (ord($i[0]) - 0x61)) . 'px ' . (-$iconSettings["yOffset"] - $iconSettings["height"] * (ord($i[1]) - 0x61)) . 'px;"></i>') : '').
+							($useNames ? $v : ($useCode ? $k : "")).
+						($onlyLinks ? '' : '</span>').
+					'</a>';
+			if (!$onlyLinks) {
+				$html .= '</li>';
+			}
+			$cc++;
+		}
+		echo ($onlyLinks ? $html : '<ul>'.$html.'</ul>');
+	}
+	
+	/**
+	 * Output menu.
+	 * 
+	 * Menu item structure:
+	 * <code>
+	 * Array(
+	 * 		['name'] => ...,		// Type: string. Required. Name of menu item.
+	 * 		['pid'] => ...,			// Type: int. Required. ID of menu item.
+	 * 		['route'] => ...,		// Type: string. Required (if url is set optional). Route of menu item.
+	 * 		['url'] => ...,			// Type: string. Optional. Url of menu item (if not set route will be used to generate it).
+	 * 		['hot'] => ...,			// Type: bool. Optional. Adds style class hot.
+	 * 		['controller'] => ...,	// Type: string. Optional. Adds controller as style class.
+	 * 		['sub'] => ...,			// Type: array. Optional. Submenu items (if not set will be retreved automaticly using $page->Get_submenu(pid)).
+	 * 		['sel'] => ...,			// Type: bool. Optional. Adds style class s (if not set will be retreved automaticly using $site->Is_opened(pid)).
+	 * 		['curr'] => ...			// Type: bool. Optional. Adds style class c (if not set will be retreved automaticly using ($site->loaded_page['pid'] == pid)).
+	 * )
+	 * </code>
+	 * 
+	 * @param array $menu menu item array to output.
+	 * @param PC_site &$site PC_site instance.
+	 * @param int $maxLvl maximum level to output menu items (levels counted from 1).
+	 * @param bool $popup if true then all submenus will be added event from unselected menu items, to use css/js popup menu.
+	 * @param int $lvl internal level counter. (DO NOT SET THIS PARAMETER).
+	 */
+	static function htmlMenu($menu, &$site, $maxLvl = -1, $popup = false, $lvl = 0) {
+		global $page;
+		$cc = 0;
+		$html = '';
+		
+		foreach ($menu as $li) {
+			if (empty($li['name'])) continue;
+			$isOpen = isset($li['sel'])
+				? ($li['sel'] ? true : false)
+				: $site->Is_opened($li['pid']);
+			$isCurr = isset($li['curr'])
+				? ($li['curr'] ? true : false)
+				: (isset($li['pid']) && ($site->loaded_page['pid'] == $li['pid']));
+			if (isset($li['url']) && $li['url']) {
+				$url = $li['url'];
+			} else {
+				$url = (isset($li['route']) && $li['route'])
+					? $site->Get_link($li['route']) : $site->Get_link_prefix();
+			}
+			
+			//papildytas
+			$target = '';
+			if (isset($li['redirect']) && $li['redirect'] != '') {
+				if (strpos($li['redirect'], 'http') !== false){
+					$target = 'target="_blank"';
+				}
+			}
+
+			$cls = array();
+			if (isset($li['controller']) && !empty($li['controller'])) { $cls[] = $li['controller']; }
+			if ($cc == 0) { $cls[] = 'f'; }
+			if ($isOpen) { $cls[] = 's'; }
+			if ($isCurr) { $cls[] = 'c'; }
+			if (isset($li['hot']) && $li['hot']) { $cls[] = 'hot'; }
+			if ((!isset($li['sub']) || !is_array($li['sub'])) && ($isOpen || $popup)
+				&& isset($page) && is_object($page) && ($maxLvl < 0 || $maxLvl > ($lvl + 1))) {
+				$li['sub'] = $page->Get_submenu($li['pid']);
+			}
+			$subHtml = (($isOpen || $popup) && isset($li['sub']))
+				? self::htmlMenu($li['sub'], $site, $maxLvl, $popup, $lvl + 1) : '';
+			if (!isset($li['controller']) || $li['controller'] != 'top_menu_bottom') { // greitas paprastas ifas tam kad nerodyti virsuje vieno mygtuko o apacioje jis butu matomas (koks tolkas is meniu dublikavimo.....?)
+				$html .= '<li'.(empty($cls) ? '' : (' class="'.implode(' ', $cls).'"')).'>'.
+						'<a'.(empty($cls) ? '' : (' class="'.implode(' ', $cls).'"')).
+							($isCurr ? '' : (' href="'.htmlspecialchars($url).'"')).
+							' title="'.htmlspecialchars($li['name']).'" '.$target.'><span>'.
+							$li['name'].'</span></a>'.
+							$subHtml.
+					'</li>';
+				$cc++;
+			}
+		}
+		$html_ = $html ? ('<ul>'.$html.'</ul>') : '';
+		if ($lvl > 0) {
+			return $html_;
+		}
+		echo $html_;
+	}
 	
 	static function getRequestData($fields, $request = 'post') {
 		$fields = array_flip($fields);

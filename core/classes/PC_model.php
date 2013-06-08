@@ -5,6 +5,9 @@ abstract class PC_model extends PC_base{
 	protected $_table = '';
 	protected $_table_id_col = 'id';
 	protected $_table_parent_col = 'pid';
+	
+	protected $_table_position_col = 'position';
+	
 	protected $_content_table = '';
 	protected $_content_table_relation_col = '';
 	protected $_content_table_ln_col = 'ln'; 
@@ -27,6 +30,10 @@ abstract class PC_model extends PC_base{
 		return $this->_content_table;
 	}
 		
+	public function get_table_position_col() {
+		return $this->_table_position_col;
+	}
+
 	protected function _set_rules() {
 		$this->_rules = array();
 	}

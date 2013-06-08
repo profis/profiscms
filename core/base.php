@@ -64,8 +64,8 @@ if (get_magic_quotes_gpc()) {
 
 global $class_autoload;
 $class_autoload = array(
-	'PhpThumbFactory'=> $cfg['path']['classes'].'phpthumb'.'/'.'ThumbLib.inc.php',
-	'PHPMailer'=> $cfg['path']['classes'].'class.phpmailer.php'
+	strtolower('PhpThumbFactory') => $cfg['path']['classes'].'phpthumb'.'/'.'ThumbLib.inc.php',
+	strtolower('PHPMailer') => $cfg['path']['classes'].'class.phpmailer.php'
 );
 /**
 * Class autoload function.
@@ -77,9 +77,10 @@ PC_app::$cfg = $cfg;
 
 if (!function_exists('PC_autoload')) {
 	function PC_autoload($cls) {
+		$cls_to_lower = strtolower($cls);
 		global $class_autoload;
-		if (!isset($class_autoload[$cls])) {
-			if (preg_match("#^PC_[a-z0-9_]+$#i", $cls)) {
+		if (!isset($class_autoload[$cls_to_lower])) {
+			if (preg_match("#^PC_[a-zA_Z0-9_]+$#i", $cls)) {
 				global $cfg;
 				$sub_folder = '';
 				if ($cls != 'PC_model' and substr($cls, -6) == '_model') {
@@ -92,7 +93,10 @@ if (!function_exists('PC_autoload')) {
 			}
 			else return false;
 		}
-		else $path =& $class_autoload[$cls];
+		else $path =& $class_autoload[$cls_to_lower];
+		if (!is_file($path) and $cls_to_lower == 'pc_utils') {
+			$path = str_replace('PC_Utils.php', 'PC_utils.php', $path);
+		}
 		if (!is_file($path)) {
 			return false;
 		}

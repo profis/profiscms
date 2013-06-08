@@ -20,7 +20,7 @@ require_once 'admin.php';
 
 $logger = new PC_debug();
 $logger->debug = true;
-$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'plugins/auth.plugins.html', false, 5);
+$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'plugins/ajax.plugins.html', false, 5);
 
 $plugins->absorb_debug_settings($logger);
 
@@ -45,6 +45,8 @@ if ($action == 'update') {
 				if ($plugin_data[1] != $is_activated) {
 					if ($plugin_data[1]) {
 						if ($plugins->Activate($plugin_data[0])) {
+							$logger->debug('Activating', 3);
+							$logger->debug($plugin_data, 4);
 							$out['activated'][] = $plugin_data[0];
 							$plugin_folder = $core->Get_path('plugins', '', $plugin_data[0]);
 							$plugin_setup_file = $plugin_folder . 'PC_setup.php';
@@ -74,7 +76,9 @@ if ($action == 'update') {
 							if (file_exists($plugin_setup_file)) {
 								require($plugin_setup_file);
 								$plugin_install_function = $plugin_data[0].'_install';
+								$logger->debug($plugin_install_function, 4);
 								if (function_exists($plugin_install_function)) {
+									$logger->debug('install function exists', 5);
 									call_user_func($plugin_install_function, $plugin_data[0]);
 								}
 							}
@@ -89,7 +93,12 @@ if ($action == 'update') {
 							$plugin_setup_file = $cfg['path']['plugins'].$plugin_data[0].'/PC_setup.php';
 							if (file_exists($plugin_setup_file)) {
 								require($plugin_setup_file);
-								//---
+								$plugin_uninstall_function = $plugin_data[0].'_uninstall';
+								$logger->debug($plugin_uninstall_function, 4);
+								if (function_exists($plugin_uninstall_function)) {
+									$logger->debug('uninstall function exists', 5);
+									call_user_func($plugin_uninstall_function, $plugin_data[0]);
+								}
 							}
 						}
 						else {

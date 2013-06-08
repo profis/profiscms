@@ -46,6 +46,8 @@ $cfg["cache"] = array(
 	'options' => array('folder' => 'cache'), // PC_file_cache specific options
 );
 
+$cfg['gallery_dir_chmod'] = 0777;
+$cfg['gallery_file_chmod'] = 0777;
 
 //core variables defaults
 $cfg['core_defaults'] = array(

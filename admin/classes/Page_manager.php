@@ -110,7 +110,7 @@ class Page_manager extends PC_base{
 	 * @return type
 	 */
 	public function is_node_accessible($node_id, $wanted_site_id = null) {
-		if (v($this->auth->Authorize('core', 'admin'))) {
+		if ($this->auth->Authorize('core', 'admin')) {
 			$this->debug(':) superadmin');
 			return true;
 		}

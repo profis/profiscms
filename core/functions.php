@@ -70,7 +70,7 @@ function _debug($key) {
 */
 function Register_class_autoloader($class, $path) {
 	global $class_autoload;
-	$class_autoload[$class] = $path;
+	$class_autoload[strtolower($class)] = $path;
 }
 
 /**

@@ -7,6 +7,9 @@ PC.ux.right_side_crud = Ext.extend(PC.ux.crud, {
 	},
 	
 	ajax_edit_response_success_handler: function (data, form_data) {
+		if (!form_data) {
+			form_data = this.form_data;
+		}
 		//PC.ux.right_side_crud.superclass.ajax_add_response_success_handler.call(data, this);
 		PC.ux.right_side_crud.superclass.ajax_edit_response_success_handler.defer(0, this, [data, form_data]);
 		if (this.ln.update && this.ln.update.success) {
@@ -29,8 +32,10 @@ PC.ux.right_side_crud = Ext.extend(PC.ux.crud, {
 				return;
 			}
 			var data = {names: {}, other: {}};
-			data.other = this.edit_form.getForm().getValues();
-			
+			data.other = this.edit_form.getForm().getFieldValues();
+			this.form_data = {
+				other: this.edit_form.getForm().getFieldValues()
+			};
 			Ext.Ajax.request({
 				url: this.api_url + 'edit',
 				method: 'POST',

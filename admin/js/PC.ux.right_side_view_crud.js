@@ -6,6 +6,18 @@ PC.ux.right_side_view_crud = Ext.extend(PC.ux.crud, {
 		align: 'stretch'
 	},
 	
+	get_view_xtemplate_begin: function() {
+		return [
+			'<div style="padding: 6px;">'
+		]
+	},
+			
+	get_view_xtemplate_end: function() {
+		return [
+			'</div>'
+		]
+	},
+	
 	get_view_xtemplate_empty: function() {
 		return [
 			'<strong>' + 'Choose item' + ':</strong>'
@@ -33,10 +45,10 @@ PC.ux.right_side_view_crud = Ext.extend(PC.ux.crud, {
 		var ln = this.ln;
 		var tpl = new Ext.XTemplate(
 			[	'<tpl if="show_details==\'no\'">'].concat(
-					this.get_view_xtemplate_empty(),
+					this.get_view_xtemplate_begin(), this.get_view_xtemplate_empty(), this.get_view_xtemplate_end(),
 				'</tpl>',
 				'<tpl if="show_details==\'yes\'">',
-					this.get_view_xtemplate(),
+					this.get_view_xtemplate_begin(), this.get_view_xtemplate(), this.get_view_xtemplate_end(),
 				'</tpl>'
 			)
 		);

@@ -74,6 +74,9 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 
 	row_editing: false,
 
+	sortable: false,
+	sort_field: 'position',
+
 	layout: 'fit',
 
     constructor: function(config) {
@@ -319,11 +322,16 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 	},
 	
 	get_tbar_buttons: function() {
-		return [
+		var buttons =  [
 			this.get_button_for_add(),
 			this.get_button_for_edit(),
 			this.get_button_for_del()
-		]
+		];
+		if (this.sortable) {
+			buttons.push(this.get_button_for_move_up());
+			buttons.push(this.get_button_for_move_down());
+		}
+		return buttons;
 	},
 	
 	get_tbar: function () {
@@ -366,6 +374,101 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		};
 	},
 	
+	get_button_for_move_up: function() {
+		return {	
+			ref: '../action_move_up',
+			text: this.ln.button._move_up?this.ln.button._move_up:PC.i18n.move_up,
+			icon: 'images/arrow-up.gif',
+			disabled: true,
+			_multi_select: true,
+			handler: Ext.createDelegate(this.button_handler_for_move_up, this)
+		}
+	},
+			
+	get_button_for_move_down: function() {
+		return {	
+			ref: '../action_move_down',
+			text: this.ln.button._move_down?this.ln.button._move_down: PC.i18n.move_down,
+			icon: 'images/arrow-down.gif',
+			disabled: true,
+			_multi_select: true,
+			handler: Ext.createDelegate(this.button_handler_for_move_down, this)
+		}
+	},		
+	
+	button_handler_for_move_up: function() {
+		this.move_selected_rows('up');
+	},	
+			
+	button_handler_for_move_down: function() {
+		this.move_selected_rows('down');
+	},			
+	
+	move_selected_rows: function(direction){
+		direction = direction || 'up';
+		var records = this.grid.selModel.getSelections();
+		if (!records.length) return;
+
+		var first_index = -1;
+		var last_index = -1;
+
+		
+		Ext.iterate(records, function(record, index) {
+			var my_index = this.grid.getStore().indexOf(record);
+			if (first_index == -1) {
+				first_index = my_index;
+			}
+			else if (my_index < first_index) {
+				first_index = my_index;
+			}
+			if (last_index == -1) {
+				last_index = my_index;
+			}
+			else if (my_index > last_index){
+				last_index = my_index;
+			}
+		}, this);
+
+		var row_to_move = false;
+		var new_position = -1;
+		if (direction == 'up') {
+			row_to_move = this.grid.store.getAt(first_index - 1);
+			new_position = last_index;
+		} 
+		else {
+			row_to_move = this.grid.store.getAt(last_index + 1);
+			new_position = first_index;
+		}
+
+		if (row_to_move) {
+			this.grid.getStore().remove(row_to_move);
+			//var deleted_fields = this.grid.getStore()._deletedFields;
+			//delete deleted_fields[row_to_move.id];
+			this.grid.getStore()._update_positions = true;
+			this._update_positions = true;
+			this.grid.getStore().insert(new_position, row_to_move);
+			this.save_positions();
+		}
+
+	},
+			
+	save_positions: function() {
+		if (this._update_positions) {
+			var positions = [];
+			Ext.iterate(this.store.getRange(), function(record, index) {
+				positions.push(record.data.id);
+			}, this);
+			
+			Ext.Ajax.request({
+				url: this.api_url +'set_positions',
+				params: {
+					positions: Ext.util.JSON.encode(positions)
+				},
+				method: 'POST'
+			});
+		}
+	},
+	
 	get_add_form_fields: function() {
 		return [];
 	},
@@ -380,6 +483,13 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 			})
 		}
 		return fields;
+	},
+	
+	_render_cell_yes_no: function(value, metaData, record, rowIndex, colIndex, store) {
+		if (value == 1) {
+			return PC.i18n.yes;
+		}
+		return PC.i18n.no;
 	},
 	
 	get_grid_columns: function() {
@@ -719,8 +829,14 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		}
 		var buttons = [
 			button_container.action_del,
-			button_container.action_edit
+			button_container.action_edit,
 		];
+		if (button_container.action_move_up) {
+			buttons.push(button_container.action_move_up);
+		}
+		if (button_container.action_move_down) {
+			buttons.push(button_container.action_move_down);
+		}
 		return buttons;
 	},
 	

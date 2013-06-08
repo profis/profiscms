@@ -113,7 +113,12 @@ class PC_debug {
 			$this->debug_string .= $wrap_begin . $string . $this->debug_entity_wrap_end;
 		}
 		if ($this->instant_debug_to_file) {
-			@file_put_contents($this->file, $this->debug_string, FILE_APPEND);
+			try {
+				@file_put_contents($this->file, $this->debug_string, FILE_APPEND);
+			}
+			catch(Exception $e) {
+
+			}
 			$this->clear_debug_string();
 		}
 	}
@@ -217,8 +222,13 @@ class PC_debug {
 			</head>
 			======================'. date('Y-m-d H:i:s') .'=============================';
 		}
+		try {
+			@file_put_contents($file_name, $pre_s . $this->get_debug_string(), $append);
+		}
+		catch(Exception $e) {
+			
+		}
 		
-		@file_put_contents($file_name, $pre_s . $this->get_debug_string(), $append);
 	}
 	
 	function clear() {

@@ -21,6 +21,10 @@ final class PC_gallery extends PC_base {
 	
 	const PERM = 0777;
 	const UMASK = 0;
+	
+	public $gallery_dir_chmod;
+	public $gallery_file_chmod;
+	
 	/**
 	* Field used as gallery's working path.
 	*/
@@ -93,8 +97,29 @@ final class PC_gallery extends PC_base {
 		
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'gallery/pc_gallery.html', false, 5);
+		$this->gallery_dir_chmod = v($this->cfg['gallery_dir_chmod'], self::PERM);
+		$this->gallery_file_chmod = v($this->cfg['gallery_file_chmod'], self::PERM);
 		
 	}
+	
+	public function mkdir($dest) {
+		$oldumask = umask(self::UMASK);
+		$this->debug("old_umask: $oldumask", 1);
+		$this->debug("mkdir($dest, $this->gallery_dir_chmod)", 1);
+		$result = mkdir($dest, $this->gallery_dir_chmod);
+		umask($oldumask);
+		return $result;
+	}
+	
+	public function chmod($dest) {
+		$oldumask = umask(self::UMASK);
+		$this->debug("old_umask: $oldumask", 1);
+		$this->debug("chmod($dest, $this->gallery_dir_chmod)", 1);
+		$result = chmod($dest, $this->gallery_dir_chmod);
+		umask($oldumask);
+		return $result;
+	}
+	
 	// uncategorized methods
 	/**
 	* Method used for removing special chars from given string and setting it's encoding to UTF-8. Cyrillic chars are with latin chars by as-it-spells. 
@@ -140,14 +165,12 @@ final class PC_gallery extends PC_base {
 		// Simple copy for a file
 		if (is_file($source)) {
 			$c = copy($source, $dest);
-			chmod($dest, self::PERM);
+			$this->chmod($dest);
 			return $c;
 		}
 		// Make destination directory
 		if (!is_dir($dest)) {
-			$oldumask = umask(self::UMASK);
-			mkdir($dest, self::PERM);
-			umask($oldumask);
+			$this->mkdir($dest);
 		}
 		// Loop through the folder
 		$dir = dir($source);
@@ -308,6 +331,7 @@ final class PC_gallery extends PC_base {
 	* @see PC_gallery::Generate_unique_category_directory();
 	*/
 	private function Create_directory($category, $path) {
+		$this->debug("<u>Create_directory($category, $path)</u>");
 		if (strlen($category) < 2) {
 			$response['errors'][] = "category";
 			return $response;
@@ -319,15 +343,9 @@ final class PC_gallery extends PC_base {
 			return $response;
 		}
 		$directory = $r['directory'];
-		$this->debug("mkdir($full_path.$directory)");
-		$old_umask = umask(self::UMASK);
-		$this->debug("old_umask: $old_umask");
-		if (!mkdir($full_path.$directory)) {
+		if (!$this->mkdir($full_path.$directory)) {
 			$response['errors'][] = "create_directory";
-			umask($old_umask);
 			return $response;
-		}else {
-			umask($old_umask);
 		}
 		
 		return array("success"=>true,"directory"=>$directory);
@@ -1520,7 +1538,7 @@ final class PC_gallery extends PC_base {
 						return $response;
 					}
 					$type =& $thumbnail_types[$thumbnail_type];
-					if (!is_dir($thumbnail_path)) if (!mkdir($thumbnail_path, 0777)) {
+					if (!is_dir($thumbnail_path)) if (!$this->mkdir($thumbnail_path)) {
 						$response['errors'][] = "create_thumbnail_directory";
 						return $response;
 					}
@@ -1541,17 +1559,16 @@ final class PC_gallery extends PC_base {
 						$this->debug("old_umask: $old_umask");
 						
 						$thumb->save($thumb_path);
+						umask($old_umask);
+						
 						$crop_data = $crop_data['x'].'|'.$crop_data['y'].'|'.$crop_data['w'].'|'.$crop_data['h'];
 						$crop_data_file = $thumb_path.'.txt';
 						file_put_contents($crop_data_file, $crop_data);
 						$thumb->show();
 						
-						$rr = chmod($crop_data_file, 0777);
-						$this->debug("$rr = chmod($crop_data_file, " . self::PERM, 3);
-						$rr = chmod($thumb_path, 0777);
-						$this->debug("$rr = chmod($thumb_path, " . self::PERM, 3);
-						
-						umask($old_umask);
+						$rr = $this->chmod($crop_data_file);
+						$rr = $this->chmod($thumb_path);
+												
 						return array("success"=>true);
 					}
 					catch (Exception $e) {
@@ -2053,6 +2070,7 @@ final class PC_gallery extends PC_base {
 			return $response;
 		}
 		$uploaded_file_path = $file_path.$filename;
+		$this->chmod($uploaded_file_path);
 		$watermark = '';
 		$this->core->Init_hooks('core/gallery/upload/watermark', array(
 			'dialog_type'=> v($_POST['dialog_type']),
@@ -2070,9 +2088,12 @@ final class PC_gallery extends PC_base {
 		$original_file_path =  $file_path_parts['dirname'] . '/' . $file_path_parts['filename'] . '._pc_original_.' . $file_path_parts['extension'];
 		$this->debug("making original: copy('$uploaded_file_path', '$original_file_path')", 2);
 		copy($uploaded_file_path, $original_file_path);
-		
+		$this->chmod($original_file_path);
 		if (!empty($watermark)) {
+			$oldumask = umask(self::UMASK);
 			$this->add_watermark($uploaded_file_path, $watermark);
+			$this->chmod($uploaded_file_path);
+			umask($oldumask);
 		}
 		
 		
@@ -2185,8 +2206,11 @@ final class PC_gallery extends PC_base {
 				
 				if (file_exists($orig_file_full_path)) {
 					@unlink($file_full_path);
+					$oldumask = umask(self::UMASK);
 					copy($orig_file_full_path, $file_full_path);
 					$this->add_watermark($file_full_path, $category_watermarks[$data['category_id']]);
+					$this->chmod($file_full_path);
+					umask($oldumask);
 				}
 				
 				if (isset($data['path'])) $full_path .= '/';
@@ -2341,6 +2365,7 @@ final class PC_gallery extends PC_base {
 			$response['errors'][] = "move_image";
 			return $response;
 		}
+		$this->chmod($new_path.$filename);
 		// List of file paths to unlink when operation completed successfully
 		$unlink_after_success = array();
 		$unlink_after_success[] = $source_path.$filename;
@@ -2352,10 +2377,12 @@ final class PC_gallery extends PC_base {
 			if (is_file($thumbnail_path.'/'.$filename)) {
 				$base_thumb_path = basename($thumbnail_path);
 				if (!is_dir($new_path.$base_thumb_path)) {
-					mkdir($new_path.$base_thumb_path, 0777);
+					$this->mkdir($new_path.$base_thumb_path);
 				}
-				if (copy($thumbnail_path.'/'.$filename, $new_path.$base_thumb_path.'/'.$filename)) {
-					$created[] = $new_path.$base_thumb_path.'/'.$filename;
+				$copied_path = $new_path.$base_thumb_path.'/'.$filename;
+				if (copy($thumbnail_path.'/'.$filename, $copied_path)) {
+					$this->chmod($copied_path);
+					$created[] = $copied_path;
 				}
 				$unlink_after_success[] = $thumbnail_path.'/'.$filename;
 			}
@@ -2603,7 +2630,7 @@ final class PC_gallery extends PC_base {
 			$thumb->crop($x_start, $y_start, $width, $height);
 			$thumb->resize($thumbnail_types[$thumbnail_type]['thumbnail_max_w'], $thumbnail_types[$thumbnail_type]['thumbnail_max_h']);
 			if (!is_dir($full_path.'thumb-'.$thumbnail_type)) {
-				if (!mkdir($full_path.'thumb-'.$thumbnail_type, 0777)) {
+				if (!$this->mkdir($full_path.'thumb-'.$thumbnail_type)) {
 					$response['errors'][] = "create_thumbnail_dir";
 					return $response;
 				}
@@ -2617,7 +2644,7 @@ final class PC_gallery extends PC_base {
 				$small_thumb->resize($thumbnail_types['thumbnail']['thumbnail_max_w'], $thumbnail_types['thumbnail']['thumbnail_max_h']);
 				$stop_save = false;
 				if (!is_dir($full_path.'thumb-thumbnail')) {
-					if (!mkdir($full_path.'thumb-thumbnail', 0777)) {
+					if (!$this->mkdir($full_path.'thumb-thumbnail')) {
 						$stop_save = true;
 					}
 				}

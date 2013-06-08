@@ -27,6 +27,9 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 				}
 			}
 		}
+		elseif(v($this->_default_order)) {
+			$params['order'] = $this->_default_order;
+		}
 	}
 	
 	protected function _get_available_order_columns() {
@@ -282,6 +285,25 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 				'name' => ''
 			));	
 		}
+	}
+	
+	public function set_positions() {
+		$this->debug('set_positions()');
+		$this->debug($_POST);
+		$ids = json_decode(v($_POST['positions'], '{}'), true);
+		$this->debug($ids);
+		
+		if (is_array($ids)) {
+			$position = 0;
+			$this->_model = $this->_get_model();
+			$this->_model->absorb_debug_settings($this);
+			foreach ($ids as $id) {
+				$this->_model->update(array($this->_model->get_table_position_col() => $position), $id);
+				$position++;
+			}
+		}
+		
+		
 	}
 	
 }
