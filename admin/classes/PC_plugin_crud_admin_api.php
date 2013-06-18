@@ -108,6 +108,15 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 			'where' => $where,
 			'query_params' => $parameters,
 		);
+		if (v($this->_content_fields) and is_array($this->_content_fields)) {
+			$content_fields = array();
+			foreach ($this->_content_fields as $key => $value) {
+				$content_fields[] = 'ct.' . $value;
+			}
+			$params['content'] = array(
+				'select' => implode(',', $content_fields)
+			);
+		}
 		
 		$this->_adjust_search($params);
 		

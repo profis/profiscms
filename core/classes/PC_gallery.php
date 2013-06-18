@@ -2069,34 +2069,35 @@ final class PC_gallery extends PC_base {
 			$response['errors'][] = "move_uploaded_file";
 			return $response;
 		}
-		$uploaded_file_path = $file_path.$filename;
-		$this->chmod($uploaded_file_path);
-		$watermark = '';
-		$this->core->Init_hooks('core/gallery/upload/watermark', array(
-			'dialog_type'=> v($_POST['dialog_type']),
-			'watermark'=> &$watermark,
-		));
-		
-		if (empty($watermark)) {
-			$watermark = $this->get_category_watermark($data);
-		}
-		
-		$file_path_parts = pathinfo($uploaded_file_path);
-		if ($file_path_parts['filename'] == 'watermark') {
-			$watermark = '';
-		}
-		$original_file_path =  $file_path_parts['dirname'] . '/' . $file_path_parts['filename'] . '._pc_original_.' . $file_path_parts['extension'];
-		$this->debug("making original: copy('$uploaded_file_path', '$original_file_path')", 2);
-		copy($uploaded_file_path, $original_file_path);
-		$this->chmod($original_file_path);
-		if (!empty($watermark)) {
-			$oldumask = umask(self::UMASK);
-			$this->add_watermark($uploaded_file_path, $watermark);
+		if ($this->filetypes[strtolower($pathinfo['extension'])] == 'image') {
+			$uploaded_file_path = $file_path.$filename;
 			$this->chmod($uploaded_file_path);
-			umask($oldumask);
+			$watermark = '';
+			$this->core->Init_hooks('core/gallery/upload/watermark', array(
+				'dialog_type'=> v($_POST['dialog_type']),
+				'watermark'=> &$watermark,
+			));
+
+			if (empty($watermark)) {
+				$watermark = $this->get_category_watermark($data);
+			}
+
+			$file_path_parts = pathinfo($uploaded_file_path);
+			if ($file_path_parts['filename'] == 'watermark') {
+				$watermark = '';
+			}
+			$original_file_path =  $file_path_parts['dirname'] . '/' . $file_path_parts['filename'] . '._pc_original_.' . $file_path_parts['extension'];
+			$this->debug("making original: copy('$uploaded_file_path', '$original_file_path')", 2);
+			copy($uploaded_file_path, $original_file_path);
+			$this->chmod($original_file_path);
+			if (!empty($watermark)) {
+				$oldumask = umask(self::UMASK);
+				$this->add_watermark($uploaded_file_path, $watermark);
+				$this->chmod($uploaded_file_path);
+				umask($oldumask);
+			}
 		}
-		
-		
+			
 		$now = time();
 		$r = $db->prepare("INSERT INTO {$this->db_prefix}gallery_files (filename,extension,category_id,size,date_added,date_modified,date_trashed) VALUES(?,?,?,?,?,?,0)");
 		$success = $r->execute(array($filename, $extension, $category_id, $size, $now, $now));

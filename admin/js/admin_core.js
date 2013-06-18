@@ -1902,6 +1902,7 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 	var disable_ln_combo = false;
 	var site = false;
 	var ln = false;
+	var fields = false;
 	if (page_selector_params) {
 		get_route = page_selector_params.get_route;
 		select_node_path = page_selector_params.select_node_path;
@@ -1911,6 +1912,7 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 		disable_ln_combo = page_selector_params.disable_ln_combo;
 		site = page_selector_params.site;
 		ln = page_selector_params.ln;
+		fields = page_selector_params.fields;
 		if (page_selector_params.tree_params) {
 			additionalBaseParams = page_selector_params.tree_params.additionalBaseParams;
 		}
@@ -2159,6 +2161,17 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 			pack: 'start'
 		}
 	};
+
+	if (fields) {
+		window_config.items.push({
+			xtype: 'form',
+			ref: '_form',
+			items: fields,
+			style: {
+				padding: '4px 4px 4px 0'
+			}
+		});
+	}
 
 	if (page_selector_params.return_only_window_config) {
 		return window_config

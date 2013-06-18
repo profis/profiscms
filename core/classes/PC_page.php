@@ -235,9 +235,10 @@ final class PC_page extends PC_base {
 		/* Create a fictional XHTML document with just the contents of $text in the body.
 		 * Both DOCTYPE and character set definition are necessary for all the magic to work properly.
 		 */
-		
 		try {
-			@$dom->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body>'.$text.'</body></html>');
+			$html = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body>'.$text.'</body></html>';
+			//$html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+			@$dom->loadHTML($html);
 		}
 		catch(Exception $e) {
 
@@ -250,7 +251,6 @@ final class PC_page extends PC_base {
 		$formElements = $dom->getElementsByTagName('form');
 
 		$this->debug("length: " . $formElements->length, 1);
-		
 		//$this->_form_count = $formElements->length;
 		
 		if ($formElements->length) {
@@ -277,11 +277,33 @@ final class PC_page extends PC_base {
 				$formIdHash = 'pc_' . md5($formId.'_honeypot');
 				$pageForm = array('status' => array('status' => 'initialized'), 'id' => $formId, 'idHash' => $formIdHash, 'submitEmails' => $formSubmitEmails, 'thankYouText' => $thankYouText, 'DOMElement' => &$form, 'fields' => array());
 				
+				
+				$innerHTML = '';
+				$children = $form->childNodes; 
+				foreach ($children as $child) { 
+					//$tmp_doc = new DOMDocument();				
+					$tmp_doc = new DOMDocument('1.0', 'utf-8');
+					$tmp_doc->appendChild($tmp_doc->importNode($child,true));        
+					$innerHTML .= $tmp_doc->saveHTML(); 
+				} 
+				//echo remove_utf8_accents($innerHTML);
+				
+				$name_matches = array();
+				preg_match_all('/name\s?=\s?"([^"]+)"/ui', $innerHTML, $name_matches);
+				$pageForm['_names'] = $name_matches[1];
+				
+				//echo remove_utf8_accents('Rückfahrt');
+				foreach ($pageForm['_names'] as $key => $value) {
+					$pageForm['_names'][$key] = remove_utf8_accents($value);
+				}
+				//print_pre($pageForm['_names']);
+				
 				foreach (array('input','textarea','select') as $tagName) {
 					$inputs = $form->getElementsByTagName($tagName);
 					for ($j=0; $j<$inputs->length; $j++) {
 						$field = $inputs->item($j);
 						$fieldName = preg_replace('/\[\]$/', '', $field->getAttribute('name'), -1, $multiple);
+						$fieldName = trim($fieldName);
 						if ($fieldName != '') {
 							$type = ($tagName == 'input') ? $field->getAttribute('type') : $tagName;
 							$multiple = $multiple || $field->hasAttribute('multiple') || ($type == 'checkbox');
@@ -351,6 +373,21 @@ final class PC_page extends PC_base {
 					$pageForm['status']['status'] = 'submitted';
 					$values = array();
 					$files = array();
+					
+					$new_fields = array();
+					
+					foreach ($pageForm['_names'] as $_name) {
+						if (isset($pageForm['fields'][$_name]) || array_key_exists($_name, $pageForm['fields'])) {
+							$new_fields[$_name] = $pageForm['fields'][$_name];
+							unset($pageForm['fields'][$_name]);
+						}
+						else {
+							//echo "$_name is not set in _names ";
+						}
+					}
+					$new_fields = array_merge($new_fields, $pageForm['fields']);
+					$pageForm['fields'] = $new_fields;
+					
 					foreach ($pageForm['fields'] as $fieldName => &$field) {
 						if ($field['type'] == 'file') {
 							$error = false;
@@ -1166,7 +1203,7 @@ final class PC_page extends PC_base {
 		.'\s*<param name="src" value="(.+?)" \/>'
 		.'(\s*<param name="poster" value="(.+?)" \/>)?'
 		.'(\s*<param name="skin" value="(.+?)" \/>)?'
-		.'\s*<embed src=".+?" type="(.+?)" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'
+		.'\s*<embed\s+(?:style="[^"]*")?\s*src=".+?" type="(.+?)" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'
 		.'\s*<\/object>/miu';
 		$r = preg_match_all($object, $text, $media);
 		if ($r) {

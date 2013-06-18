@@ -634,6 +634,7 @@ PC.langs.en = {
 			insert_text: 'Text Input',
 			insert_hidden: 'Hidden Value',
 			insert_pass: 'Password Input',
+			insert_email: 'Email Input',
 			insert_checkbox: 'Checkbox',
 			insert_radio: 'Radiobox',
 			insert_textarea: 'Textarea',

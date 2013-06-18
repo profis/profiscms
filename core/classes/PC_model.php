@@ -701,12 +701,32 @@ abstract class PC_model extends PC_base{
 				if (empty($sets)) {
 					continue;
 				}
-				$sets_s = implode(',', $sets);
-				$query = "UPDATE {$this->db_prefix}{$this->_content_table} SET $sets_s WHERE $this->_content_table_relation_col = ? AND $this->_content_table_ln_col = ?";
-				$query_params = array_merge(array_values($ln_values), array($entity_id, $ln));
-				$r = $this->prepare($query);
-				$this->debug_query($query, $query_params, 2);
-				$s = $r->execute($query_params);
+				
+				$query_select = "SELECT * FROM {$this->db_prefix}{$this->_content_table} WHERE $this->_content_table_relation_col = ? AND $this->_content_table_ln_col = ?";
+				$r_select = $this->prepare($query_select);
+				$params_select = array($entity_id, $ln);
+				$s = $r_select->execute($params_select);
+
+				if ($s and $r_select->fetch()) {
+					$sets_s = implode(',', $sets);
+					$query = "UPDATE {$this->db_prefix}{$this->_content_table} SET $sets_s WHERE $this->_content_table_relation_col = ? AND $this->_content_table_ln_col = ?";
+					$query_params = array_merge(array_values($ln_values), array($entity_id, $ln));
+					$r = $this->prepare($query);
+					$this->debug_query($query, $query_params, 2);
+					$s = $r->execute($query_params);
+				}
+				else {
+					$insert_fields = array_merge(array_keys($ln_values), array($this->_content_table_relation_col, $this->_content_table_ln_col));
+					$insert_values = array_fill(0, count($insert_fields), '?');
+					$insert_fields = implode(',' , $insert_fields);
+					$insert_values = implode(',' , $insert_values);
+					$query = "INSERT INTO {$this->db_prefix}{$this->_content_table} ($insert_fields) values ($insert_values)";
+					$query_params = array_merge(array_values($ln_values), array($entity_id, $ln));
+					$r = $this->prepare($query);
+					$this->debug_query($query, $query_params, 2);
+					$s = $r->execute($query_params);
+				}
+				
 			}
 		}
 		return $edited;

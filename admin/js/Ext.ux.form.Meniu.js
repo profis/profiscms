@@ -138,6 +138,7 @@ Ext.ux.form.Meniu = {
 			//1-icon			2-name			3-action_id
 			['forms_text.png',this.ln.insert_text,'text'],
 			['forms_pass.png',this.ln.insert_pass,'password'],
+			['forms_pass.png',this.ln.insert_email,'email'],
 			['forms_check.png',this.ln.insert_checkbox,'checkbox'],
 			['forms_radio.png',this.ln.insert_radio,'radio'],
 			['forms_area.png',this.ln.insert_textarea,'textarea'],

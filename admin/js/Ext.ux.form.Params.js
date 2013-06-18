@@ -45,6 +45,15 @@ Ext.ux.form.Params = {
 					items.push({fieldLabel: this.ln.maxlength, ref: '../../_maxlength'});
 					items.push({fieldLabel: this.ln.required, xtype: 'combo', ref: '../../_required',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['required',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 				break;
+				case 'email':
+					items.push({fieldLabel: this.ln.value, ref: '../../_value'});
+					items.push({fieldLabel: this.ln.placeholder, ref: '../../_placeholder'});
+//					items.push({fieldLabel: this.ln.size, ref: '../../_size'});
+					items.push({fieldLabel: this.ln.width, ref: '../../_width'});
+					items.push({fieldLabel: this.ln.maxlength, ref: '../../_maxlength'});
+					items.push({fieldLabel: this.ln.readonly, xtype: 'combo', ref: '../../_readonly',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['readonly',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
+					items.push({fieldLabel: this.ln.required, xtype: 'combo', ref: '../../_required',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['required',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
+				break;
 				case 'radio':
 					items.push({fieldLabel: this.ln.value, ref: '../../_value'});
 					items.push({fieldLabel: this.ln.checked, xtype: 'combo', ref: '../../_checked',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['checked',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});

@@ -494,7 +494,7 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 	
 	get_grid_columns: function() {
 		return [
-			{header: 'Id', dataIndex: 'id'},
+			{header: 'Id', dataIndex: 'id'}
 		];
 	},
 	
@@ -616,15 +616,18 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 			});
 			return true;
 		}, this);
+		
+		var multiln_params = {
+			title: PC.i18n.menu.addNew,
+			fields: this.get_add_form_fields(),
+			Save: save_handler,
+			close_in_callback: true,
+			no_ln_fields: this.no_ln_fields,
+			window_width: this.add_window_width
+		};
+		this.adjust_multiln_params(multiln_params);
 		return Ext.createDelegate(function() {
-			PC.dialog.multilnedit.show({
-				title: PC.i18n.menu.addNew,
-				fields: this.get_add_form_fields(),
-				Save: save_handler,
-				close_in_callback: true,
-				no_ln_fields: this.no_ln_fields,
-				window_width: this.add_window_width
-			});
+			PC.dialog.multilnedit.show(multiln_params);
 		}, this);
 	},
 	
@@ -716,7 +719,7 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 				
 		var save_handler = this.get_edit_button_handler();
 		
-		PC.dialog.multilnedit.show({
+		var multiln_params = {
 			title: PC.i18n.menu.rename,
 			values: record.data.names,
 			//pageX: xy[0], pageY: xy[1],
@@ -725,7 +728,13 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 			no_ln_fields: this.no_ln_fields,
 			window_width: this.edit_window_width
 			//center_window: true
-		});
+		};
+		this.adjust_multiln_params(multiln_params);
+		PC.dialog.multilnedit.show(multiln_params);
+	},
+	
+	adjust_multiln_params: function(multiln_params) {
+
 	},
 	
 	get_button_handler_for_update: function() {

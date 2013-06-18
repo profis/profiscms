@@ -416,7 +416,7 @@ class Page_manager extends PC_base{
 			$children = array();
 		}
 		
-		$children = array_merge(Get_tree_childs($node_id, $this->_site_id, v($this->_page_tree_params['deleted']), v($this->_page_tree_params['search']), v($this->_page_tree_params['date']), v($this->_page_tree_params['additional']), $this->_page_tree_params, $this), $children);
+		$children = array_merge(Get_tree_childs($node_id, $this->_site_id, v($this->_page_tree_params['deleted']), v($this->_page_tree_params['search']), v($this->_page_tree_params['date'], false), v($this->_page_tree_params['additional']), $this->_page_tree_params, $this), $children);
 		$this->debug("  number of children got by Get_tree_childs() - " . count($children));
 		
 		if ($node_id == 0 and (strlen($node_id)) == 1 and !v($this->_page_tree_params['search'])) {
