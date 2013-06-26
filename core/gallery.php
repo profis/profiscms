@@ -122,6 +122,7 @@ else {
 	//print_pre($parsing_result);
 	$result = $gallery->Get_file($parsing_result['filename'], $parsing_result['category_path']);
 	//print_pre($result);
+	//exit;
 	
 	
 	
@@ -138,8 +139,11 @@ else {
 	header('Last-Modified: '.time());
 	header("Etag: ".$etag);
 		
+	$file_data = array_merge($result['filedata'], $parsing_result);
+	$file_data['path'] = $file_data['category_path'];
+	
 	$result = $gallery->Output_file($parsing_result['filename'], $parsing_result['category_path'],
-								$parsing_result['thumbnail_type'], $result['filedata']);
+								$parsing_result['thumbnail_type'], $result['filedata'], $file_data);
 	
 	if (!v($result['success'])) {
 		header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");

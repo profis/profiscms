@@ -457,6 +457,14 @@ PC.langs.en = {
 			},
 			files: {
 				in_use: '<img class="ico" src="images/cancel.png" alt="" /> Selection includes files that is in use by your pages, they would be no longer available if you\'ll delete it!',
+				clear_thumb_cache: {
+					confirmation: {
+						title: 'Clear files thumb cache',
+						message: 'Do you really want to to clear thumb cache for selected files?</b>'
+					},
+					error_title: 'Thumb cache was not cleared',
+					request_results_title: 'Clear cache results'
+				},
 				remove: {
 					confirmation: {
 						title: 'Delete files',
@@ -674,6 +682,7 @@ PC.langs.en = {
 			anchor: 'Anchor',
 			open_in_new_window: 'Open link in new window',
 			open_in_lightbox: 'Open link in Lightbox',
+			nofollow: 'Add rel="nofollow"',
 			t_self: 'Self',
 			t_blank: 'Blank',
 			t_parent: 'Parent',

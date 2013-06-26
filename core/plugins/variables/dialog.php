@@ -287,6 +287,9 @@ function mod_variables_click() {
 	var all_tabs = {
 		all: atab
 	};
+	var tab_recs = {
+		all: []
+	};
 	PC.dialog.mod_variables.all_tabs = all_tabs;
 	
 	// ***** CREATE INDIVIDUAL SITE TABS *****
@@ -311,6 +314,7 @@ function mod_variables_click() {
 				}
 			});
 		});
+		tab_recs[rec.get('id')] = [];
 		all_tabs[rec.get('id')] = tabs.add({
 			title: rec.get('name'),
 			site_id: rec.get('id'),
@@ -351,8 +355,10 @@ function mod_variables_click() {
 				}
 			});
 			if (grd._lastcol !== undefined)
-				if (grd._lastcol!='key' || sel.data.controller=='')
+				if (grd._lastcol!='key' || sel.data.controller=='') {
 					col = grd._lastcol;
+				}
+					
 			grd.startEditing(idx, cm.findColumnIndex(col));
 		}
 	};
@@ -533,8 +539,9 @@ function mod_variables_click() {
 		}),
 		listeners: {
 			beforeedit: function(ee) {
-				if (ee.field=='key' && ee.record.data.controller!='')
-					return false; // allow editing only custom keys
+				//debugger;
+				if (ee.field=='key' && ((!ee.record.modified || !ee.record.modified.hasOwnProperty('key')) && ee.value != '') /*&& ee.record.data.controller!=''*/)
+					return false; // do not allow to edit keys (instead of allow editing only custom keys)
 				grd._lastcol = ee.field;
 			},
 			containerdblclick: function(g, e) {
@@ -874,11 +881,16 @@ function mod_variables_click() {
 								}
 							}
 						});
-						for (var x in recs)
-							all_tabs[x].str_store.loadData([ recs[x] ], true);
+						for (var x in recs) {
+							tab_recs[x].push(recs[x]);
+							//all_tabs[x].str_store.loadData([ recs[x] ], true);
+						}
+							
 					});
-					for (var x in all_tabs)
+					for (var x in all_tabs) {
+						all_tabs[x].str_store.loadData(tab_recs[x], true);
 						all_tabs[x].str_store.sort('key');
+					}
 					w.ok_btn.enable();
 					return; // OK
 				} catch(e) {};

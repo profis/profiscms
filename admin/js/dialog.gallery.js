@@ -674,6 +674,7 @@ PC.dialog.gallery = {
 						actions.Get('Rename', view).setDisabled(0);
 						//actions.Get('preview', view).setDisabled(0);
 						actions.Get('Delete', view).setDisabled(0);
+						actions.Get('ClearCache', view).setDisabled(0);
 						actions.Get('Trash', view).setDisabled(0);
 						actions.Get('Insert', view).each(function(obj) {
 							Ext.iterate(obj.menu.find('_class','thumbnail-type'), function(item){
@@ -724,6 +725,7 @@ PC.dialog.gallery = {
 						actions.Get('Rename', view).setDisabled(1);
 						//actions.Get('preview', view).setDisabled(1);
 						actions.Get('Delete', view).setDisabled(1);
+						actions.Get('ClearCache', view).setDisabled(1);
 						actions.Get('Trash', view).setDisabled(1);
 					}
 				}
@@ -735,6 +737,7 @@ PC.dialog.gallery = {
 				new Ext.menu.Item(PC.ux.gallery.files.actions.Get('Insert', this.files_view)),
 				new Ext.menu.Item(PC.ux.gallery.files.actions.Get('CreateThumbnail', this.files_view)),
 				PC.ux.gallery.files.actions.Get('Rename', this.files_view),
+				PC.ux.gallery.files.actions.Get('ClearCache', this.files_view),
 				PC.ux.gallery.files.actions.Get('Delete', this.files_view),
 				PC.ux.gallery.files.actions.Get('Trash', this.files_view),
 				PC.ux.gallery.files.actions.Get('Restore', this.files_view),
@@ -752,6 +755,7 @@ PC.dialog.gallery = {
 				PC.ux.gallery.files.actions.Get('CreateThumbnail', this.files_view),
 				PC.ux.gallery.files.actions.Get('Rename', this.files_view),
 				PC.ux.gallery.files.actions.Get('Trash', this.files_view),
+				//PC.ux.gallery.files.actions.Get('ClearCache', this.files_view),
 				PC.ux.gallery.files.actions.Get('Delete', this.files_view),
 				PC.ux.gallery.files.actions.Get('CopyLink', this.files_view),
 				{xtype: 'tbfill'},
@@ -1718,6 +1722,7 @@ PC.dialog.gallery = {
 				actions.Get('CreateThumbnail', view).hide();
 				actions.Get('Rename', view).hide();
 				actions.Get('Trash', view).hide();
+				actions.Get('ClearCache', view).hide();
 				actions.Get('Delete', view).hide();
 				actions.Get('CopyLink', view).hide();
 				actions.Get('Restore', view).show();
@@ -1734,6 +1739,7 @@ PC.dialog.gallery = {
 				actions.Get('Rename', view).show();
 				actions.Get('Trash', view).show();
 				actions.Get('CopyLink', view).show();
+				actions.Get('ClearCache', view).show();
 				actions.Get('Restore', view).hide();
 				actions.Get('Delete', view).hide();
 			}
@@ -1889,6 +1895,69 @@ PC.dialog.gallery = {
 							}
 							else {
 								PC.dialog.gallery.show_request_errors(PC.i18n.dialog.gallery.categories.remove.error_title, json_result.errors, true);
+							}
+						},
+						failure: function(){
+							PC.dialog.gallery.show_connection_error();
+						}
+					});
+				}
+			}
+		});
+	},
+	clear_thumb_cache: function(indexes) {
+		var dialog = this;
+		//format file_ids string concated from indexes separated by commas (server-side desirable format)
+		var file_ids = '';
+		if (indexes.length < 1) {
+			return false;
+		}
+		var record;
+		var contains_files_in_use = false;
+		for (var a=0; indexes[a] != undefined; a++) {
+			record = dialog.files_view.store.getAt(indexes[a]);
+			file_ids += record.data.id +',';
+			if (record.data.in_use) contains_files_in_use = true;
+		}
+		file_ids = file_ids.slice(0, -1);
+		var message = PC.i18n.dialog.gallery.files.clear_thumb_cache.confirmation.message;
+		Ext.Msg.show({
+			title: PC.i18n.dialog.gallery.files.clear_thumb_cache.confirmation.title,
+			msg: message,
+			buttons: {
+				ok: PC.i18n.dialog.gallery.button.ok,
+				cancel: PC.i18n.dialog.gallery.button.cancel
+			},
+			fn: function(bid) {
+				if (bid == 'ok') {
+					Ext.Ajax.request({
+						url: 'ajax.gallery.php?action=clear_thumb_cache',
+						method: 'POST',
+						params: {
+							file_ids: file_ids
+						},
+						success: function(result){
+							var json_result = Ext.util.JSON.decode(result.responseText);
+							if (json_result.success) {
+								if (json_result.results != undefined) {
+									PC.dialog.gallery.show_request_results(
+										PC.i18n.dialog.gallery.files.clear_thumb_cache.request_results_title,
+										json_result.results,
+										false
+									);
+								};
+								return;
+								//reload filelist in the category
+								dialog.files_view.store.load();
+								//reload category sizes in the tree
+								//PC.dialog.gallery.categories.getRootNode().reload();
+								PC.dialog.gallery.categories.getLoader().load(PC.dialog.gallery.categories.getRootNode(), function(){
+									var n = PC.dialog.gallery.categories.getNodeById(PC.ux.gallery.SelectedCategory);
+									if (n) n.ensureVisible();
+								});
+							}
+							else {
+								PC.dialog.gallery.show_request_errors(PC.i18n.dialog.gallery.categories.clear_thumb_cache.error_title, json_result.errors, true);
 							}
 						},
 						failure: function(){

@@ -457,13 +457,21 @@ PC.langs.lt = {
 			},
 			files: {
 				in_use: '<img class="ico" src="images/cancel.png" alt="" /> Tarp pasirinktų failų yra puslapiuose naudojamų failų, jie nebebus prieinami, jei juos ištrinsite!',
+				clear_thumb_cache: {
+					confirmation: {
+						title: 'Išvalyti kešą',
+						message: 'Ar tikrai išvalyti pasirinktų failų kešą?</b>'
+					},
+					error_title: 'Nepavyko išvalyti kešo',
+					request_results_title: 'Rezultatai'
+				},
 				remove: {
 					confirmation: {
 						title: 'Ištrinti',
 						message: 'Ar tikrai norite<b>ištrinti pasirinktus failus?</b>'
 					},
 					error_title: 'Nepavyko ištrinti failo',
-					request_results_title: 'Naikinti rezultatus'
+					request_results_title: 'Rezultatai'
 				},
 				restore: {
 					confirmation: {
@@ -614,6 +622,7 @@ PC.langs.lt = {
 			anchor: 'Žymė',
 			open_in_new_window: 'Nuorodą atidaryti naujame lange',
 			open_in_lightbox: 'Nuorodą atidaryti Lightbox lange',
+			nofollow: 'Pridėti rel="nofollow"',
 			t_self: 'Tame pačiame lange',
 			t_blank: 'Naujame lange',
 			t_parent: 'Parent',

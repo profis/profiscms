@@ -487,6 +487,16 @@ Ext.onReady(function(){
 												}
 											}
 										}]
+									},
+									{	id: 'db_fld_seo_redirect_title',
+										xtype: 'box',
+										style: 'padding: 6px',
+										html: PC.i18n.menu.shortcut_to.replace(/\s/, '&nbsp;') + ':'
+									},
+									{	id: 'db_fld_seo_redirect_container',
+										xtype: 'container',
+										layout: 'fit',
+										items: PC.view_factory.get_shortcut_field()
 									}
 								]
 							}],
@@ -1216,7 +1226,7 @@ Ext.onReady(function(){
 			var periodic_task = {
 				run: function(){
 					Ext.Ajax.request({
-						url: PC.global.BASE_URL + 'api/keepalive'
+						url: PC.global.BASE_URL + PC.global.ADMIN_DIR + '/api/keepalive'
 					});
 				},
 				interval: keep_alive_period

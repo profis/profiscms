@@ -432,8 +432,16 @@ elseif ($action == "delete_thumbnail_type") {
 	$output = $result;
 }
 elseif ($action == "clear_thumb_cache") {
-	$category_id = $_POST['category_id'];
-	$result = $gallery->Delete_thumbnails($category_id);
+	$category_id = v($_POST['category_id'], 0);
+	$file_ids = v($_POST['file_ids'], '');
+	$file_ids = trim($file_ids);
+	if (!empty($file_ids)) {
+		$file_ids = explode(',', $file_ids);
+	}
+	else {
+		$file_ids = array();
+	}
+	$result = $gallery->Delete_thumbnails($category_id, $file_ids);
 	$output = $result;
 }
 elseif ($action == "move_files") {

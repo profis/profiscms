@@ -143,6 +143,11 @@ function PC_format_error_string($errinfo, $backtrace = NULL) {
 function PC_error_handler($errno, $errstr, $errfile, $errline) {
 	$e = array('type'=> $errno,'message'=> $errstr,'file'=> $errfile,'line'=> $errline);
 	PC_log_error($e, PC_format_error_string($e, debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)));
+	if (defined('PC_THROW_EXCEPTIONS_ON_EVERYTHING')) {
+		echo '<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Error</title></head><body>';
+		echo '<pre style="font-size: 11px; line-height: 13px;">';
+		throw new ErrorException($errstr, $errno, 1, $errfile, $errline);
+	}
 	return TRUE;
 }
 

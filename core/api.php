@@ -47,6 +47,8 @@ if ($routes->Get(1) == 'admin') {
 	}
 	
 	switch (v($routes->Get(1))) {
+		case 'keepalive':
+			break;
 		case 'phpinfo':
 			phpinfo();
 			break;

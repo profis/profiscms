@@ -216,8 +216,9 @@ PC.ux.gallery.files.actions = {
 			handler: function(a1, a2, a3, a4, a5) {
 				this.view.el.frame();
 				if (!this.view) this.setView(PC.dialog.gallery.files_view);
-				var selected_files = this.view.getSelectedIndexes();
-				var record = this.view.store.getAt(selected_files[0]);
+				//var selected_files = this.view.getSelectedIndexes();
+				var index = this._index;
+				var record = this.view.store.getAt(index);
 				/*
 				var number = 0;
 				var cc = Ext.get(a2.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.id);
@@ -225,9 +226,8 @@ PC.ux.gallery.files.actions = {
 					number++;
 				}
 				*/
-				var record =  this.view.store.getAt(selected_files[0]);
 				if (record.data.filetype == 'image')
-				  PC.dialog.gallery.preview_image(selected_files[0]);
+				  PC.dialog.gallery.preview_image(index);
 				else
 				  window.open('../gallery/'+ record.data.path + record.data.name);
 			},
@@ -292,6 +292,16 @@ PC.ux.gallery.files.actions = {
 						});
 					}
 				}, null, null, current_filename);
+			}
+		},
+		ClearCache: {
+			//hidden: true,
+			disabled: true,
+			text: PC.i18n.dialog.gallery.action.clear_thumb_cache,
+			icon: 'images/clear_cache.png',
+			handler: function() {
+				var selected_indexes = this.view.getSelectedIndexes();
+				PC.dialog.gallery.clear_thumb_cache(selected_indexes);
 			}
 		},
 		Delete: {
@@ -656,6 +666,7 @@ PC.ux.gallery.files.actions.list.Edit = {
 			PC.ux.gallery.files.actions.Get('CreateThumbnail'),
 			'-',
 			PC.ux.gallery.files.actions.Get('Rename'),
+			//PC.ux.gallery.files.actions.Get('ClearCache'),
 			PC.ux.gallery.files.actions.Get('Trash'),
 			PC.ux.gallery.files.actions.Get('CopyLink')
 		]
@@ -754,6 +765,7 @@ PC.ux.gallery.files.View = function(config) {
 			mouseenter: function(view, index, node, e) {
 				view.fileOverPreviewButton = new Ext.Button(PC.ux.gallery.files.actions.Get('Preview', view));
 				view.fileOverPreviewButton.setView(view);
+				view.fileOverPreviewButton._index = index;
 				view.fileOverPreviewButton.addClass('gallery-file-over').setText('').render(Ext.get(node));
 			},
 			mouseleave: function(view, index, node, e) {

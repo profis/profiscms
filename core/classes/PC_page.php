@@ -230,6 +230,9 @@ final class PC_page extends PC_base {
 	}
 	public function Process_forms(&$text, $currentFormSubmitHash, $nextFormSubmitHash) {
 		$this->_form_count = 0;
+		if (v($this->cfg['do_not_process_forms'])) {
+			return;
+		}
 		$this->debug("Process_forms($currentFormSubmitHash)");
 		$dom = new DOMDocument();
 		/* Create a fictional XHTML document with just the contents of $text in the body.

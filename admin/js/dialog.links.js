@@ -124,6 +124,11 @@ PC.dialog.links = {
 					boxLabel: this.ln.open_in_lightbox,
 					xtype: 'checkbox'
 				}
+				,
+				{	ref: '../../_nofollow',
+					boxLabel: this.ln.nofollow,
+					xtype: 'checkbox'
+				}
 			]
 		};
 		this.advanced = {
@@ -426,6 +431,7 @@ PC.dialog.links = {
 			w._class.setValue(inst.dom.getAttrib(elm, 'class'));
 			w._target.setValue((inst.dom.getAttrib(elm, 'target') == '_blank'));
 			w._lightbox.setValue((inst.dom.getAttrib(elm, 'rel') == 'lightbox'));
+			w._nofollow.setValue((inst.dom.getAttrib(elm, 'rel') == 'nofollow'));
 		}
 		else {
 			//addClassesToList('classlist', 'advlink_styles');
@@ -512,11 +518,13 @@ PC.dialog.links = {
 		var href = w._href.getValue();
 		var target = w._target.getValue();
 		var lightbox = w._lightbox.getValue();
-
+		var nofollow = w._nofollow.getValue();
 		this.setAttrib(elm, 'href', href);
 		this.setAttrib(elm, 'title');
 		this.setAttrib(elm, 'target', target?'_blank':'');
-		if (lightbox) {
+		if (nofollow) {
+			this.setAttrib(elm, 'rel', 'nofollow');
+		} else if (lightbox) {
 			this.setAttrib(elm, 'rel', 'lightbox');
 		}
 		else {

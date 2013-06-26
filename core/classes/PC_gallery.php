@@ -1504,7 +1504,7 @@ final class PC_gallery extends PC_base {
 	* @see PC_gallery::Sort_path()
 	* @see PC_gallery::Get_thumbnail_types()
 	*/
-	public function Output_file($filename, $category_path, $thumbnail_type='', $file) {
+	public function Output_file($filename, $category_path, $thumbnail_type='', $file, $file_data = false) {
 		$this->debug("Output_file($filename, $category_path, $thumbnail_type)");
 		$this->debug($file, 1);
 		$set = ini_set('memory_limit', '512M');
@@ -1544,11 +1544,33 @@ final class PC_gallery extends PC_base {
 					}
 					try {
 						$file_path = $this->cfg['path']['gallery'];
-						if (!empty($category_path) && $category_path != '/')
+						if (!empty($category_path) && $category_path != '/') {
 							$file_path .= $category_path.'/';
+						}
+						$file_dir = $file_path;	
 						$file_path .= $filename;
 						
-						$crop_data = $this->Get_crop_data($file_path, $type);
+						$crop_data_path = $file_dir.'thumb-'.$thumbnail_type.'/'.$filename.'.txt';
+						$this->debug('$crop_data_path: ' . $crop_data_path, 2);
+						//$output['crop_data_path'] = $crop_data_path;
+						if (is_array($file_data) and is_file($crop_data_path)) {
+							$this->debug(':) file exists!', 3);
+							$crop_data = file_get_contents($crop_data_path);
+							$crop_data_n = explode('|', $crop_data);
+							$crop_data = array();
+							$crop_data['x'] = $crop_data_n[0];
+							$crop_data['y'] = $crop_data_n[1];
+							$crop_data['w'] = $crop_data_n[2];
+							$crop_data['h'] = $crop_data_n[3];
+							
+							$this->Crop_thumbnail($file_data, $thumbnail_type, $crop_data['x'], $crop_data['y'], $crop_data['w'], $crop_data['h']);
+						}
+						else {
+							$crop_data = $this->Get_crop_data($file_path, $type);
+						}
+						
+						$this->debug("crop data:", 2);
+						$this->debug($crop_data, 3);
 						
 						$thumb = $this->last_thumb;
 						
@@ -1814,6 +1836,13 @@ final class PC_gallery extends PC_base {
 	*/
 	public function Get_files($category_id=0, $filter='', $tree=0) {
 		//$tree = 0; //temporary disallow tree
+		$file_ids = array();
+		$file_ids_clause = '';
+		if (is_array($category_id)) {
+			$file_ids = $category_id;
+			$category_id = 0;
+			$file_ids_clause = ' AND f.id ' . $this->sql_parser->in($file_ids) . ' ';
+		}
 		$category_id = (int)$category_id;
 		if ($category_id < 0) $response['errors'][] = "category_id";
 		if ($tree != 0 && $tree != 1)
@@ -1873,11 +1902,11 @@ final class PC_gallery extends PC_base {
 						LEFT JOIN {$this->db_prefix}gallery_files f ON f.category_id = category.id
 						LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft BETWEEN path.lft and path.rgt
 						LEFT JOIN {$this->db_prefix}gallery_files_in_use files_in_use ON files_in_use.file_id=f.id
-						WHERE $cat_where f.date_trashed=0
+						WHERE $cat_where f.date_trashed=0 $file_ids_clause
 						GROUP BY f.id,f.filename,f.extension,f.category_id,f.size,f.date_added,f.date_modified,f.date_trashed";
 					$r = $db->prepare($query);
-					//echo $this->get_debug_query_string($query, $cat_params);
-					$success = $r->execute(array());
+					//echo $this->get_debug_query_string($query, $file_ids);
+					$success = $r->execute($file_ids);
 				}
 				
 			}
@@ -2185,7 +2214,10 @@ final class PC_gallery extends PC_base {
 		return array("success"=>true, "filename"=>$data['filename']);
 	}
 	
-	public function Delete_thumbnails($category_id = 0) {
+	public function Delete_thumbnails($category_id = 0, $file_ids = array()) {
+		if (!empty($file_ids) and is_array($file_ids)) {
+			$category_id = $file_ids;
+		}
 		$files = $this->Get_files($category_id, '', true);
 		$thumb_types = $this->Get_thumbnail_types();
 		
@@ -2578,9 +2610,7 @@ final class PC_gallery extends PC_base {
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'gallery/pc_gallery_crop.html', false, 5);
 		$this->debug("Crop_thumbnail($file_id, $thumbnail_type, $x_start, $y_start, $width, $height)");
-		$file_id = (int)$file_id;
-		if ($file_id < 1)
-			$response['errors'][] = "file_id";
+		
 		if (!preg_match('/^'.$this->patterns['thumbnail_type'].'$/', $thumbnail_type))
 			$response['errors'][] = "thumbnail_type";
 		$x_start = (int)$x_start;
@@ -2596,35 +2626,49 @@ final class PC_gallery extends PC_base {
 			$response['errors'][] = "thumbnail_not_found";
 			return $response;
 		}
-		if (count(v($response['errors'])) != 0) return $response;
-		global $db;
-		$r = $db->prepare("SELECT filename, extension,"
-		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true, 'separator'=>'/'))." path"
-		." FROM {$this->db_prefix}gallery_files f
-		LEFT JOIN {$this->db_prefix}gallery_categories category ON category.id=category_id
-		LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft BETWEEN path.lft and path.rgt
-		WHERE f.id=? GROUP BY f.id,f.filename,f.extension LIMIT 1");
-		$success = $r->execute(array($file_id));
-		if (!$success) {
-			$response['errors'][] = "database";
-			return $response;
+		
+		if (!is_array($file_id)) {
+			$file_id = (int)$file_id;
+			if ($file_id < 1)
+				$response['errors'][] = "file_id";
+
+			if (count(v($response['errors'])) != 0) return $response;
+			global $db;
+			$r = $db->prepare("SELECT filename, extension,"
+			.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'path.lft', 'path.directory'), array('distinct'=>true, 'separator'=>'/'))." path"
+			." FROM {$this->db_prefix}gallery_files f
+			LEFT JOIN {$this->db_prefix}gallery_categories category ON category.id=category_id
+			LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft BETWEEN path.lft and path.rgt
+			WHERE f.id=? GROUP BY f.id,f.filename,f.extension LIMIT 1");
+			$success = $r->execute(array($file_id));
+			if (!$success) {
+				$response['errors'][] = "database";
+				return $response;
+			}
+			$data = $r->fetch();
+			$this->Sort_path($data['path']);
+			if (empty($data['filename'])) {
+				$response['errors'][] = "file_not_found";
+				return $response;
+			}
+			if ($this->filetypes[$data['extension']] != 'image') {
+				$response['errors'][] = "file_is_not_an_image";
+				return $response;
+			}
 		}
-		$data = $r->fetch();
-		$this->Sort_path($data['path']);
-		if (empty($data['filename'])) {
-			$response['errors'][] = "file_not_found";
-			return $response;
+		else {
+			$data = $file_id;
+			//print_pre($data);
+			//exit;
 		}
-		if ($this->filetypes[$data['extension']] != 'image') {
-			$response['errors'][] = "file_is_not_an_image";
-			return $response;
-		}
+		
+		
 		$full_path = $this->config['gallery_path'].$data['path'];
 		if (isset($data['path'])) $full_path .= '/';
 		//crop image
 		try {
 			$set = ini_set('memory_limit', '512M');
-			$thumb = PhpThumbFactory::create($full_path.$data['filename'], array('jpegQuality'=>$thumbnail_types[$thumbnail_type]['thumbnail_quality']));
+			$this->last_thumb = $thumb = PhpThumbFactory::create($full_path.$data['filename'], array('jpegQuality'=>$thumbnail_types[$thumbnail_type]['thumbnail_quality']));
 			$currentDimensions = $thumb->getCurrentDimensions();
 			//echo 'Current dimensions: '; print_r($currentDimensions);
 			//echo "\n\n".'Crop from x'.$x_start.' y'. $y_start. ' '.$width.'x'.$height;

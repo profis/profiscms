@@ -456,6 +456,14 @@ PC.langs.ru = {
 			},
 			files: {
 				in_use: '<img class="ico" src="images/cancel.png" alt="" /> Среди выбранных файлов имеются используемые файлы. Они будут недоступны, если вы их удалите!',
+				clear_thumb_cache: {
+					confirmation: {
+						title: 'Очистить кэш',
+						message: 'Вы действительно хотите очистить кэш?'
+					},
+					error_title: 'Кэш не был очищен',
+					request_results_title: 'Результат'
+				},
 				remove: {
 					confirmation: {
 						title: 'Удалить файлы',
@@ -613,6 +621,7 @@ PC.langs.ru = {
 			anchor: 'Якорь',
 			open_in_new_window: 'Oткрыть ссылку в новом окне',
 			open_in_lightbox: 'Oткрыть ссылку в Lightbox окне',
+			nofollow: 'Добавить rel="nofollow"',
 			t_self: 'Не определена',
 			t_blank: 'Новое окно',
 			t_parent: 'Родительская категория',
