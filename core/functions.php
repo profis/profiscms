@@ -841,6 +841,11 @@ function Sanitize($type, $input, $extra=null) {
 			//extra - allow filenames or not
 			//transliteration
 			$input = strtolower(PC_translit($input));
+			$simple_replacements = array(
+				'`' => '',
+				"'" => ''
+			);
+			$input = str_replace(array_keys($simple_replacements), array_values($simple_replacements), $input);
 			//normalize structure
 			$allow = '';
 			if ($type == 'permalink') {
@@ -849,6 +854,8 @@ function Sanitize($type, $input, $extra=null) {
 			$patterns[] = '/[^a-z0-9'.($extra?'\\.\\s':'').$allow.']/'; $replacements[] = '-';
 			$patterns[] = '/--+/'; $replacements[] = '-';
 			$patterns[] = '/^-*(.*?)-*$/'; $replacements[] = '$1';
+			//$patterns[] = '/`/'; $replacements[] = '';
+			//$patterns[] = '/\'/'; $replacements[] = '';
 			$input = preg_replace($patterns, $replacements, $input);
 			if (empty($input)) return 'untitled';
 			return $input;

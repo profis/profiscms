@@ -102,7 +102,10 @@ final class PC_page extends PC_base {
 			$this->debug("Redirecting to permalink {$data['permalink']}: $redirect_link", 5);
 			$this->core->Redirect_local($redirect_link, 301);
 		}
-	
+		
+		if (!empty($data['ln_redirect'])) {
+			$data['redirect'] = $data['ln_redirect'];
+		}
 		if (!empty($data['redirect'])) {
 			if (preg_match("#^http://#", $data['redirect'])) {
 				$data = array(
@@ -1219,7 +1222,7 @@ final class PC_page extends PC_base {
 				$src = $media[5][$a];
 				$poster = $media[7][$a];
 				$skin = $media[9][$a];
-				$media_frame = '<div class="pc_media_player" style="height:'.$h.'px;'.$style.'"><div id="'.$id.'">';
+				$media_frame = '<div class="pc_media_player" style="height:'.$h.'px;'.$style.'"><div style="display: inline-block" id="'.$id.'">';
 				//if ($media[10][$a] == 'application/x-shockwave-flash') {
 				if (preg_match("#\.swf$#i", $src)) {
 					$media_frame .= "<script type=\"text/javascript\">var params={id:'".$id."',wmode:'transparent',allowFullScreen:true,allowScriptAccess:'always'};"

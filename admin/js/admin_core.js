@@ -488,15 +488,18 @@ Ext.onReady(function(){
 											}
 										}]
 									},
-									{	id: 'db_fld_seo_redirect_title',
+									{	id: 'db_fld_ln_redirect_title',
 										xtype: 'box',
 										style: 'padding: 6px',
 										html: PC.i18n.menu.shortcut_to.replace(/\s/, '&nbsp;') + ':'
 									},
-									{	id: 'db_fld_seo_redirect_container',
+									{	id: 'db_fld_ln_redirect_container',
 										xtype: 'container',
 										layout: 'fit',
-										items: PC.view_factory.get_shortcut_field()
+										items: PC.view_factory.get_shortcut_field({
+											id: 'db_fld_ln_redirect',
+											labelAlign: 'top'
+										})
 									}
 								]
 							}],
@@ -1450,7 +1453,7 @@ function Load_to_editor(ln, original) {
 	//fill page fields
 	Ext.each(PC.global.db_flds, function(i) {
 		var field = Ext.getCmp('db_fld_'+i);
-		if (/^(name|custom_name|info|info2|info3|title|keywords|description|route|permalink|text)$/.test(i)) {
+		if (/^(name|custom_name|info|info2|info3|title|keywords|description|route|permalink|text|ln_redirect)$/.test(i)) {
 			var source = content_store[i];
 			if (original) field.setValue(source.originalValue);
 			else field.setValue(source.value);
@@ -1679,7 +1682,7 @@ function Content_dirty() {
 			else return;
 		}
 		var field = Ext.getCmp('db_fld_'+i);
-		if (/^(name|custom_name|title|keywords|description|route|permalink)$/.test(i)) {
+		if (/^(name|custom_name|title|keywords|description|route|permalink|ln_redirect)$/.test(i)) {
 			var store = content_store[i];
 			
 		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|date|reference_id)$/.test(i)) {
@@ -1736,7 +1739,7 @@ function Save_content_to_store(ln_change_to) {
 	Ext.each(PC.global.db_flds, function(i) {
 		if (i == 'publishing_date') return;
 		var field = Ext.getCmp('db_fld_'+i);
-		if (/^(name|custom_name|text|info|info2|info3|title|keywords|description|route|permalink)$/.test(i)) {
+		if (/^(name|custom_name|text|info|info2|info3|title|keywords|description|route|permalink|ln_redirect)$/.test(i)) {
 			var store = content_store[i];
 			
 		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|date|reference_id)$/.test(i)) {
@@ -2265,13 +2268,13 @@ function Render_page_actions(controller) {
 	if (controller == undefined) var controller = PC.global.page.controller.value;
 	var front = 0;
 	if (PC.global.page.front != undefined) front = PC.global.page.front.value;
-	var could_be_enabled_or_disabled = 'controller|name_container|custom_name_container|title_container|keywords_container|description_container|route_container|permalink_container|redirect|redirect_container|published|route_lock_container|hot|nomenu|date_container|name_title|custom_name_title|route_title|permalink_title|title_title|description_title|keywords_title|date|time|reference_id';
+	var could_be_enabled_or_disabled = 'controller|name_container|custom_name_container|title_container|keywords_container|description_container|route_container|permalink_container|redirect_ln_container|redirect|redirect_container|published|route_lock_container|hot|nomenu|date_container|name_title|custom_name_title|route_title|permalink_title|redirect_ln_title|title_title|description_title|keywords_title|date|time|reference_id';
 	if (front > 0) {
 		var disabled = 'route_container|permalink_container|route_title|permalink_title|published|route_lock_container|hot|nomenu|date_container|date|time|reference_id';
 	}
 	else if (controller == 'menu') {
 		//console.log(controller);
-		var disabled = 'title_container|title_title|keywords_container|keywords_title|description_container|description_title|route_container|permalink_container|route_title|permalink_title|redirect_container|published|route_lock_container|hot|nomenu|date_container|date|time';
+		var disabled = 'title_container|title_title|keywords_container|keywords_title|description_container|description_title|route_container|permalink_container|redirect_ln_container|route_title|permalink_title|redirect_ln_title|redirect_container|published|route_lock_container|hot|nomenu|date_container|date|time';
 	}
 	else if (controller == 'search') {
 		var disabled = 'controller|name_container|custom_name_container|redirect|redirect_container|route_lock_container|hot|nomenu|date_container|name_title|date|time|reference_id';

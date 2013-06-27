@@ -30,12 +30,15 @@ upload/
 backups/*
 !backups/.htaccess
 !backups/index.php
+config_dev.php
 config_real.php
 config_test.php
 media/uppod/
 nbproject/
 logs/
 libs/
+admin/ext/
+admin/tiny_mce/
 admin/excel_attr/
 admin/ext_3_3/
 admin/ext_3_4/

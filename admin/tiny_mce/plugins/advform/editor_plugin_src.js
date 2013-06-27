@@ -140,12 +140,20 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 		var attr = dom.getAttrib(n, 'data-advform');
 		attrObject = this._parse(attr);
 
+
+
+		if (!attrObject) {
+			//return false;
+		}
+
 		// read non-packed attributes
 		for (var i=0; i<attrs.length; i++) {
 			if(!attrs[i].pack) {
 				var attr = dom.getAttrib(n, attrs[i].name);
 				if((typeof(attr) != 'undefined') && (attr != '')) {
-					attrObject[attrs[i].name] = attr;
+					if (attrObject) {
+						attrObject[attrs[i].name] = attr;
+					}
 				}
 			}
 		}

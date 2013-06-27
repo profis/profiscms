@@ -65,6 +65,6 @@ $cfg['patterns'] = array(
 $cfg['core_plugins'] = array('core','page', 'backup', 'domains', 'sites', 'variables', 'auth', 'config', 'forms');
 
 $cfg['valid_page_fields'] = array(
-	'name', 'custom_name', 'info', 'info2', 'info3', 'title', 'keywords', 'description', 'route', 'permalink', 'text',
+	'name', 'custom_name', 'info', 'info2', 'info3', 'title', 'keywords', 'description', 'route', 'permalink', 'ln_redirect', 'text',
 	'redirect', 'controller', 'route_lock', 'published', 'hot', 'nomenu', 'date_from', 'date_to', 'date', 'reference_id'
 );

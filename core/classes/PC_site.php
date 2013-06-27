@@ -801,6 +801,17 @@ final class PC_site extends PC_base {
 		$this->loaded_page['title'] = $title;
 		return true;
 	}
+	
+	public function Get_head() {
+		return '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+			<title>' . $this->Get_title().'</title>
+			<base href="'.htmlspecialchars($this->cfg['url']['base']).'" />'
+			.$this->Get_seo_html()
+			.$this->Get_stylesheets_html(false)
+			.$this->Get_scripts_html()
+			.$this->Get_favicon();
+	}
+	
 	/**
 	* Method used to get SEO of loaded page.
 	* @return string.
@@ -808,15 +819,22 @@ final class PC_site extends PC_base {
 	public function Get_seo_html() {
 		if (!$this->Page_is_loaded()) return false;
 		$list = array();
+		$list['keywords'] = '<meta name="keywords" content="'.v($this->loaded_page['keywords']).'" />';
+		$list['description'] = '<meta name="description" content="'.v($this->loaded_page['description']).'" />';
+		
 		$this->core->Init_hooks('core/site/get-seo-html', array(
 			'list'=> &$list
 		));
-		
-		$list[] = '<meta name="keywords" content="'.v($this->loaded_page['keywords']).'" />';
-		$list[] = '<meta name="description" content="'.v($this->loaded_page['description']).'" />';
-		if (v($this->cfg['meta_author']) and !empty($this->cfg['meta_author'])) {
-			$list[] = '<meta name="author" content="'. $this->cfg['meta_author'] .'" />';
+		if (!isset($list['author'])) {
+			$author = $this->core->Get_variable('meta_author');
+			if ($author !== false) {
+				$list['author'] = '<meta name="author" content="'.$author.'" />';
+			}
 		}
+		
+		//if (!isset($list['author']) and v($this->cfg['meta_author']) and !empty($this->cfg['meta_author'])) {
+		//	$list['author'] = '<meta name="author" content="'. $this->cfg['meta_author'] .'" />';
+		//}
 		return implode("\n", $list) . "\n";
 	}
 	/**
