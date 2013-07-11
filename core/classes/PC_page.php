@@ -914,6 +914,9 @@ final class PC_page extends PC_base {
 			$category_id = $category->id;
 			$new_marker .= "category_markers['" . $category_id . "'].push(" . $marker_var . ');';
 		}
+		else {
+			$new_marker .= "no_category_markers.push(" . $marker_var . ');';
+		}
 		
 		$new_marker .= "map_markers_" . $map_id . ".push(" . $marker_var . ');';
 			
@@ -939,6 +942,9 @@ final class PC_page extends PC_base {
 		}
 		if ($category_id) {
 			$cat_js = "category_markers['" . $category_id . "'].push(myPlacemark);";
+		}
+		else {
+			$cat_js = "no_category_markers.push(myPlacemark);";
 		}
 		$options_array = array();
 		if (v($marker->text)) {
@@ -1010,16 +1016,34 @@ final class PC_page extends PC_base {
 				$map_type = '';
 				if (!isset($gmaps[6])) {
 					$json_data = urldecode($gmaps[5][$a]);
+					//$json_data = pc_utf8_urldecode($gmaps[5][$a]);
+					//$json_data = $gmaps[5][$a];
 				}
 				else {
 					$map_type = $gmaps[5][$a];
 					$json_data = urldecode($gmaps[6][$a]);
+					//$json_data = pc_utf8_urldecode($gmaps[6][$a]);
+					//$json_data = str_replace('wtb1 [1]', '', $json_data);
+					
+					//$json_data = urldecode(utf8_decode($gmaps[6][$a]));
+					//$json_data = utf8_decode($gmaps[6][$a]);
+					//$json_data = utf8_decode($json_data);
+					//$json_data = $gmaps[6][$a];
+					
+					
+					//echo $json_data;
 				}
+				//$json_data = utf8_encode($json_data);
 				if (empty($map_type)) {
 					$map_type = 'google';
 				}
 				$map_types[$map_type] = $map_type;
+				//$json_data = pc_e($json_data);
+				//echo '----';
+				//print_pre(json_decode($json_data, true));
+				//exit;
 				$data = json_decode($json_data);
+				//echo 'data:';
 				//print_pre($data);
 				$map_custom_options = v($data->map_options);
 				$map_custom_options = trim($map_custom_options);
@@ -1063,6 +1087,7 @@ final class PC_page extends PC_base {
 				$filter = '';
 				$categories = 'var category_markers = {};
 					category_markers["0"] = [];
+					var no_category_markers = [];
 				';
 				
 				$vars = array();
@@ -1092,15 +1117,31 @@ final class PC_page extends PC_base {
 				}
 				
 				
-				$filter_js = 'var ready_callback = function (map, category_markers) {
-								return function() {
-									$(\'#map_filter_'.$id.' input\').on(\'click\', function() {
-										pc_maps_filter('.$map_manager.', map, $(\'#map_filter_'.$id.' input\'), category_markers, $(this).attr("rel"), this.checked)
-									});
-								};
+				$filter_js = 'var ready_callback = function (map, category_markers, no_category_markers) {
+								var default_filter = true;
+								try { 
+									if (typeof pc_maps_hook == \'function\') {
+										pc_maps_hook({
+											map_manager: '.$map_manager.',
+											map: map,
+											category_markers: category_markers,
+											no_category_markers: no_category_markers
+										});
+									}
+								}
+								catch(err) {
+									default_filter = false;
+								}
+								if (default_filter) {
+									return function() {
+										$(\'#map_filter_'.$id.' input\').on(\'click\', function() {
+											pc_maps_filter('.$map_manager.', map, $(\'#map_filter_'.$id.' input\'), category_markers, $(this).attr("rel"), this.checked)
+										});
+									};
+								}
 							};'
 							//. 'debugger;'
-							.'$(document).ready(ready_callback('.$map_var_name.', category_markers));';
+							.'$(document).ready(ready_callback('.$map_var_name.', category_markers, no_category_markers));';
 				
 				if (!$categories_exist) {
 					$filter_js = '';
@@ -1689,8 +1730,8 @@ final class PC_page extends PC_base {
 		return $r->fetchColumn();
 	}
 	
-	public function Get_submenu($id, $fields=array(), $limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr") {
-		return $this->Get_submenu_part($id, $fields, $limit, $include_content, $include_nomenu, $order);
+	public function Get_submenu($id, $fields=array(), $limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr", $function_params = array()) {
+		return $this->Get_submenu_part($id, $fields, $limit, $include_content, $include_nomenu, $order, $function_params);
 	}
 	
 	public function Get_submenu_part($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr", $function_params = array()) {
@@ -1767,6 +1808,16 @@ final class PC_page extends PC_base {
 			$additional_params[] = $function_params['date_to'];
 		}
 		
+		if (isset($function_params['my_date'])) {
+			$additional_where .= " and (p.date_to is null or p.date_to>=?)";
+			$additional_params[] = $function_params['my_date'];
+		} 
+		else{
+			$additional_where .= " and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')";
+		}
+		
+
+		
 		$query = "SELECT ".($paging?'SQL_CALC_FOUND_ROWS ':'').(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'h.id', 'h.front'), array('separator'=>'▓'))." redirects_from"
 		." FROM {$this->db_prefix}pages mp"
@@ -1776,7 +1827,7 @@ final class PC_page extends PC_base {
 		//check if home page rediects to this page
 		." LEFT JOIN {$this->db_prefix}pages h ON h.redirect=".$this->sql_parser->cast('p.id', 'text')
 		." WHERE mp.id ".(is_array($id)?'in('.implode(',', $id).')':'=?')." and p.published=1"
-		." and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')"
+		//." and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')"
 		. $additional_where
 		." GROUP BY p.id"
 		." $order_by ".(($limit_s)?" limit $limit_s":"");

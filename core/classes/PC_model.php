@@ -192,6 +192,11 @@ abstract class PC_model extends PC_base{
 		return $this->get_data(null, $params);
 	}
 	
+	public function get_one($params = array()) {
+		$params['limit'] = 1;
+		return $this->get_all($params);
+	}
+	
 	public function get_data($id = null, $params = array(), $limit = 0) {
 		$this->debug('get_data()');
 		$this->debug($params, 1);
@@ -255,6 +260,9 @@ abstract class PC_model extends PC_base{
 		$query_params = array_merge($query_params, $this->_query_params);
 		if (!isset($params['where'])) {
 			$params['where'] = array();
+		}
+		if (!is_array($params['where'])) {
+			$params['where'] = array($params['where']);
 		}
 		//$this->debug($params['where']);
 		if (!is_null($id)) {
@@ -732,7 +740,7 @@ abstract class PC_model extends PC_base{
 		return $edited;
 	}
 	
-	public function insert(array $data, array $content = array()) {
+	public function insert(array $data, array $content = array(), $params = array()) {
 		$this->debug('insert()');
 		$this->debug($data);
 		$count = count($data);
@@ -743,7 +751,11 @@ abstract class PC_model extends PC_base{
 		$fields = implode(',', array_keys($data));
 		$values = implode(',', array_fill(0, $count, '?'));
 		$data = array_values($data);
-		$query = "INSERT INTO {$this->db_prefix}{$this->_table} ($fields) VALUES ($values)";
+		$ignore = '';
+		if (v($params['ignore'])) {
+			$ignore = ' IGNORE ';
+		}
+		$query = "INSERT $ignore INTO {$this->db_prefix}{$this->_table} ($fields) VALUES ($values)";
 		$r = $this->prepare($query);
 		$this->debug_query($query, $data, 1);
 		
@@ -758,7 +770,7 @@ abstract class PC_model extends PC_base{
 				$count = count($ln_values);
 				$fields = implode(',', array_keys($ln_values));
 				$values = implode(',', array_fill(0, $count + 2, '?'));
-				$query = "INSERT INTO {$this->db_prefix}{$this->_content_table} ($this->_content_table_relation_col, $this->_content_table_ln_col, $fields) VALUES ($values)";
+				$query = "INSERT IGNORE INTO {$this->db_prefix}{$this->_content_table} ($this->_content_table_relation_col, $this->_content_table_ln_col, $fields) VALUES ($values)";
 				$query_params = array_merge(array($id, $ln), array_values($ln_values));
 				$r = $this->prepare($query);
 				$this->debug_query($query, $query_params, 2);
@@ -795,26 +807,36 @@ abstract class PC_model extends PC_base{
 			$where_s = ' WHERE ' . $where_s;
 		}
 		
+		
+		if (!empty($this->_content_table)) {
+			$content_where = array();
+			if (isset($params['where']) and isset($params['where']['id'])) {
+				$content_where[$this->_content_table_relation_col] = $params['where']['id'];
+			}
+			else {
+				$params['value'] = 'id';
+				$ids = $this->get_all($params);
+				$content_where[$this->_content_table_relation_col] = $ids;
+			}
+			
+			$content_query_params = array();
+			$content_where_s = $this->_get_where_clause($content_where, $content_query_params);
+			if (!empty($content_where_s)) {
+				$content_where_s = ' WHERE ' . $content_where_s;
+			}
+			$query = "DELETE FROM {$this->db_prefix}{$this->_content_table} $content_where_s";
+			$r = $this->prepare($query);
+			$this->debug_query($query, $content_query_params, 2);
+			$s = $r->execute($content_query_params);
+		}
+		
+		
 		$query = "DELETE FROM {$this->db_prefix}{$this->_table} $where_s $limit_s";
 		$r = $this->prepare($query);
 		$this->debug_query($query, $query_params, 1);
 		
 		$deleted = $s = $r->execute($query_params);
-		
-		if ($s and !empty($this->_content_table) and isset($params['where']) and isset($params['where']['id'])) {
-			$where = array(
-				$this->_content_table_relation_col => $params['where']['id']
-			);
-			$query_params = array();
-			$where_s = $this->_get_where_clause($where, $query_params);
-			if (!empty($where_s)) {
-				$where_s = ' WHERE ' . $where_s;
-			}
-			$query = "DELETE FROM {$this->db_prefix}{$this->_content_table} $where_s";
-			$r = $this->prepare($query);
-			$this->debug_query($query, $query_params, 2);
-			$s = $r->execute($query_params);
-		}
+				
 		return $deleted;
 	}
 	

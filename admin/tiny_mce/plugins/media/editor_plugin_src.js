@@ -42,8 +42,13 @@
 				});
 			});
 			ed.addCommand('mceGmap', function() {
-				PC.dialog.gmaps.show();
-				PC.dialog.gmaps.edit_map(ed.parents[0]);
+				//PC.dialog.gmaps.show();
+				//PC.dialog.gmaps.edit_map(ed.parents[0]);
+				//Profis:
+				var after_show_callback = function() {
+					PC.dialog.gmaps.edit_map(ed.parents[0]);
+				}
+				PC.dialog.gmaps.show(after_show_callback, ed.parents[0]);
 				return;
 			});
 			ed.addCommand('mceChart', function() {

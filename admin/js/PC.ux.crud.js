@@ -212,6 +212,7 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 				pageSize: this.per_page,
 				prependButtons: true
 			});
+			this._paging = config.bbar;
 		}
 		this.grid = new Ext.grid.GridPanel(config);
 		//this.grid = new Ext.list.ListView(config);

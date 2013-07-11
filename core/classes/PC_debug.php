@@ -132,12 +132,19 @@ class PC_debug {
 
 		# build a regular expression for each parameter
 		foreach ($params as $key => $value) {
+			$value = addslashes($value);
 			if (is_string($key)) {
 				$string_keys[] = '/:'.$key.'/';
-				$string_values[$key] = "'$value'";
+				if (!is_numeric($value)) {
+					$value = "'$value'";
+				}
+				$string_values[$key] = $value;
 			} else {
 				$keys[] = '/[?]/';
-				$values[$key] = "'$value'";
+				if (!is_numeric($value)) {
+					$value = "'$value'";
+				}
+				$values[$key] = $value;
 			}
 		}
 
@@ -194,12 +201,14 @@ class PC_debug {
 	function set_instant_debug_to_file($file_name, $append = null, $wait_seconds = 0) {
 		$this->instant_debug_to_file = true;
 		$this->file = $file_name;
-		if ($wait_seconds > 0 and @file_exists($this->file)) {
-			if (time() - filemtime($this->file) <= $wait_seconds) {
+		if (@file_exists($this->file)) {
+			if ($append or time() - filemtime($this->file) <= $wait_seconds) {
 				$append = true;
-				$this->debug('======================'. date('Y-m-d H:i:s') .'=============================');
+				$this->debug('=='. date('Y-m-d H:i:s') .'=============================');
+				$this->increase_debug_offset(1);
 			}
 		}
+		
 		$this->file_put_debug($this->file, $append);
 	}
 	

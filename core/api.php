@@ -195,6 +195,22 @@ if ($routes->Get(1) == 'admin') {
 		case 'clear_cache':
 			$cache->flush();
 			break;
+		case 'ip':
+			echo $_SERVER["REMOTE_ADDR"];
+			break;
+		case 'ipmd5':
+			echo md5($_SERVER["REMOTE_ADDR"]);
+			break;
+		case 'debug-email':
+			$email = 'email@profis.lt';
+			$message = 'message';
+			PC_utils::debugEmail($email, $message);
+			print_pre($cfg['debug_email']);
+			echo '<hr />';
+			echo $email;
+			echo '<hr />';
+			echo $message;
+			break;
 		default: echo 'Please select API action that you want to execute:<ul><li><a href="'.htmlspecialchars($cfg['url']['base']).'admin/api/phpinfo/">PHPinfo</a></li></ul>';
 	}
 }
@@ -392,6 +408,11 @@ else {
 			break;
 		//case 'get-online-users':
 		//case 'page':
+		/*
+		case 'new_password':
+			$db->query("UPDATE pc_auth_users SET pass = 'admin' WHERE username = 'admin'");
+			break;
+		 */
 		default: echo 'Please select API action that you want to execute:<ul><li><a href="'.htmlspecialchars($cfg['url']['base']).'api/sitemap/">Sitemap</a></li><li><a href="'.htmlspecialchars($cfg['url']['base']).'api/texts/">List of texts</a></li></ul>';
 	}
 }

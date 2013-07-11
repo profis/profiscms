@@ -20,6 +20,8 @@ Dialog_categories_tree_crud = Ext.extend(PC.ux.LocalTreeCrud, {
 					var field = this;
 					var params = {
 						callee: 'image',
+						close_after_insert_forced: true,
+						show_insert: true,
 						save_fn: function(url){
 							field.setValue(url);
 						}
@@ -540,6 +542,7 @@ PC.dialog.gmaps = {
 						var params = {
 							callee: 'image',
 							close_after_insert_forced: true,
+							show_insert: true,
 							save_fn: function(url){
 								field.setValue(url);
 							}
@@ -771,7 +774,10 @@ PC.dialog.gmaps = {
 								categories: Ext.util.JSON.decode(serializer.toString(true)),
 								markers: PC.dialog.gmaps.markers_crud.get_store_data()
 							};
-							var json_data = escape(Ext.util.JSON.encode(map_data));
+							//debugger;
+							//var json_data = escape(Ext.util.JSON.encode(map_data));
+							var json_data = encodeURI(Ext.util.JSON.encode(map_data));
+							//var json_data = Ext.util.JSON.encode(map_data);
 							if (!PC.dialog.gmaps.edit_mode) {
 								//insert new map
 								var map_object = '<object alt="'+dialog.map_type+'" title="'+dialog.map_type+'" classid="clsid:google-map" width="'+width+'" height="'+height+'" codebase="http://maps.google.com/">'
@@ -857,7 +863,13 @@ PC.dialog.gmaps = {
 			element: el,
 			title: Ext.util.JSON.decode('{'+el.title+'}')
 		};
-		var settings = Ext.util.JSON.decode(unescape(this.edit_data.title.map_data));
+		var settings = {};
+		try {
+			settings = Ext.util.JSON.decode(decodeURI(this.edit_data.title.map_data));
+		} catch(err) {
+			settings = Ext.util.JSON.decode(unescape(this.edit_data.title.map_data));	
+		}
+		//debugger;
 		var options = {
 			center: PC.dialog.maps[this.map_type].get_position(settings.latitude, settings.longitude),
 			zoom: settings.zoom,
