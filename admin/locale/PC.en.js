@@ -632,6 +632,7 @@ PC.langs.en = {
 			dashed: 'Dashed',
 			margin: 'Margin',
 			background_color: 'Background color',
+			onclick: 'OnClick',
 			onfocus: 'OnFocus',
 			onblur: 'OnBlur',
 			onselect: 'OnSelect',

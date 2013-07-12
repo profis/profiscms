@@ -1,0 +1,1 @@
+ALTER TABLE `pc_content` ADD `ln_redirect` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '';

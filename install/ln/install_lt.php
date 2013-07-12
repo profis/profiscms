@@ -2,6 +2,8 @@
 $titles = array(
 	'meta_title' => 'Profis CMS {version} diegimo vedlys',
 	'title' => 'Profis CMS {version} diegimo vedlys',
+	'meta_title_requirements' => 'Profis CMS {version} reikalavimai',
+	'title_requirements' => 'Profis CMS {version} reikalavimai',
 	'mysql_requirement' => 'Reikalinga MySQL {min_mysql_version} arba aukštesnė versija.',
 	'requirement' => 'Reikalavimas',
 	'available' => 'Prieinamas',

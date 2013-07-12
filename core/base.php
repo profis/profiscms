@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
- 
+
 if (phpversion() < 5.2) die('ProfisCMS requires at least PHP 5.2 version.');
 
 global $cfg, $db, $sql_parser;

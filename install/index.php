@@ -35,14 +35,14 @@ $t = $titles;
 
 require_once 'PC_installer.php';
 $installer = new PC_installer();
-
+$is_installed = $installer->is_installed();
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-    <title><?php echo str_replace('{version}', PC_INSTALL_VERSION, $t['meta_title'])?></title>
+    <title><?php echo str_replace('{version}', PC_INSTALL_VERSION, (!$is_installed)?$t['meta_title']:$t['meta_title_requirements'])?></title>
     <link href="css/bootstrap.css" media="screen" rel="Stylesheet" type="text/css" />
 	<link href="css/install.css" media="screen" rel="Stylesheet" type="text/css" />
 </head>
@@ -57,10 +57,11 @@ $installer = new PC_installer();
 		</ul>
 	</div>
 
-	<h1><? echo str_replace('{version}', PC_INSTALL_VERSION, $t['title']) ?></h1>
+	<h1><? echo str_replace('{version}', PC_INSTALL_VERSION, (!$is_installed)?$t['title']:$t['title_requirements']) ?></h1>
 	
 <?php
-if ($installer->is_installed()) {
+
+if (isset($_POST['install']) and $is_installed) {
 	header('Location: ../'); exit();
 }
 elseif (isset($_POST['install']) && !isset($_POST['commit'])) {

@@ -2,6 +2,8 @@
 $titles = array(
 	'meta_title' => 'Profis CMS {version} installation wizard',
 	'title' => 'Profis CMS {version} installation wizard',
+	'meta_title_requirements' => 'Profis CMS {version} requirements',
+	'title_requirements' => 'Profis CMS {version} requirements',
 	'mysql_requirement' => 'Please make sure you have MySQL {min_mysql_version} upwards.',
 	'requirement' => 'Requirement',
 	'available' => 'Available',

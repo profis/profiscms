@@ -470,6 +470,7 @@ Ext.ux.form.Params = {
 		};
 		
 		var eventItems = [
+			{fieldLabel: this.ln.onclick, ref: '../../_onclick'},
 			{fieldLabel: this.ln.onfocus, ref: '../../_onfocus'},
 			{fieldLabel: this.ln.onblur, ref: '../../_onblur'}
 		];

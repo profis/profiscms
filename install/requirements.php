@@ -53,15 +53,21 @@ $requirements = array(
 		?>
 	</tbody>
 </table>
-<hr />
-<p>
-	<form style="text-align: left;" action="" method="POST">
-	<?php
-	if (!$installer->requirements_passed) {
-		echo '' . $t['fix_problems_and'] .' <button class="btn btn-success" type="submit">' . $t['button_test_again'] .'</button>';
-	} else {
-		echo '<button class="btn btn-success" name="install" type="submit" value="1">' . $t['button_continue_to_install'] .'</button>';
-	}
-	?>
-	</form>
-</p>
+<?php
+if (!$is_installed) {
+?>
+	<hr />
+	<p>
+		<form style="text-align: left;" action="" method="POST">
+		<?php
+		if (!$installer->requirements_passed) {
+			echo '' . $t['fix_problems_and'] .' <button class="btn btn-success" type="submit">' . $t['button_test_again'] .'</button>';
+		} else {
+			echo '<button class="btn btn-success" name="install" type="submit" value="1">' . $t['button_continue_to_install'] .'</button>';
+		}
+		?>
+		</form>
+	</p>
+<?php
+}
+?>

@@ -38,5 +38,4 @@ $cfg['path']['system'] =& $cfg['path']['base'];
 foreach ($cfg['directories'] as $k=>$d) {
 	$cfg['path'][$k] = CMS_ROOT . $d.'/';
 }
-
 require_once('functions.php');
