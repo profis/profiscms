@@ -260,13 +260,23 @@ final class PC_database_tree extends PC_base {
 		if (!$r) return;
 		echo "<pre class=\"pc_tree_debug\">\n";
 		$level = 0;
+		$counter = 0;
 		while ($d = $r->fetch()) {
+			$counter++;
 			if (isset($previous))
 			if ($d[$cols['left']] < $previous[$cols['right']]) {
+				//print_pre($previous);
+				//print_pre($d);
 				$level++;
 			}
 			elseif ($d[$cols['left']]-1 != $previous[$cols['right']] && $d[$cols['right']]+1 != $previous[$cols['right']]) {
-				$level -= $d[$cols['left']]-1-$previous[$cols['right']];
+				//print_pre($previous);
+				//print_pre($d);
+				
+				if ($d[$cols['left']] != $previous[$cols['right']]) {
+					$level -= $d[$cols['left']]-1-$previous[$cols['right']];
+				}
+				
 			}
 			echo str_repeat(".......\t", $level);
 			echo ' <span class="id">id: '.$d[$cols['id']].' (parent_id: '.$d[$cols['parent']].')</span> '
@@ -274,6 +284,9 @@ final class PC_database_tree extends PC_base {
 				.' <span>'.$d[$cols['left']].','.$d[$cols['right']].'</span>'
 				."\n";
 			$previous = $d;
+			if ($counter >=2) {
+				//break;
+			}
 		}
 		echo '</pre>';
 	}
