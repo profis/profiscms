@@ -31,7 +31,6 @@ RewriteCond %{REQUEST_FILENAME} !-f
 #Everything goes to site.php
 RewriteRule ^(.*)$ site.php
 
-
 <Files PC_errors.txt>
   order allow,deny
   deny from all

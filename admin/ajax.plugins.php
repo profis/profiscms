@@ -149,7 +149,10 @@ $logger->debug($cfg['active_plugins'], 5);
 $mods = array();
 $adminAuthorized = $auth->Authorize('core', 'admin');
 foreach ($_plugins as &$p) {
-	preg_match('#(.+)\/(.+)\/#i', $p, $k);
+	preg_match('#(.+)[\/|\\\\](.+)\/#i', $p, $k);
+	//preg_match('#(.+)\/(.+)\/#i', $p, $k);
+	$logger->debug('Matches:', 14);
+	$logger->debug($k, 15);
 	$p = array(
 		'type'=> $k[1],
 		'name'=> $k[2],

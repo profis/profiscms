@@ -15,4 +15,12 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
  
 /*	Hey! If you're just trying to debug cms code - look at site.php instead :)	*/
-echo 'This server doesn\'t support .htaccess functionality.';
+
+$request_uri = $_SERVER['REQUEST_URI'];
+$info = pathinfo($request_uri);
+if (strpos($info['basename'], 'index.php') === false) {
+	include 'site.php';
+}
+else {
+	echo 'This server doesn\'t support .htaccess functionality.';
+}

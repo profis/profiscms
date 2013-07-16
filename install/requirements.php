@@ -30,13 +30,13 @@ $requirements = array(
 
 
 <p>
-	<? echo str_replace('{min_mysql_version}', $installer->min_mysql_version, $t['mysql_requirement']) ?>
+	<?php echo str_replace('{min_mysql_version}', $installer->min_mysql_version, $t['mysql_requirement']) ?>
 </p>
 
 <table class="table">
 	<thead>
 		<tr>
-			<th id="requirement"><? echo $t['requirement'] ?></th>
+			<th id="requirement"><?php echo $t['requirement'] ?></th>
 			<th>&nbsp;</th>
 		</tr>
 	</thead>

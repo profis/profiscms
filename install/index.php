@@ -6,7 +6,7 @@ error_reporting(0);
 require_once '../core/path_constants.php';
 
 define('PC_INSTALL_SEQUENCE', true);
-define('PC_INSTALL_VERSION', '4.4.3');
+define('PC_INSTALL_VERSION', '4.4.4');
 define('PC_CONFIG_FILE', CMS_ROOT . 'config.php');
 define('PC_INSTALL_FOLDER', 'install/');
 define('PC_INSTALL_DIR', CMS_ROOT . PC_INSTALL_FOLDER);
@@ -57,7 +57,7 @@ $is_installed = $installer->is_installed();
 		</ul>
 	</div>
 
-	<h1><? echo str_replace('{version}', PC_INSTALL_VERSION, (!$is_installed)?$t['title']:$t['title_requirements']) ?></h1>
+	<h1><?php echo str_replace('{version}', PC_INSTALL_VERSION, (!$is_installed)?$t['title']:$t['title_requirements']) ?></h1>
 	
 <?php
 

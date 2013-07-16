@@ -1399,7 +1399,8 @@ final class PC_gallery extends PC_base {
 	}
 	
 	public function Get_crop_data($file_path, $thumb_type) {
-		$this->debug("Get_crop_data($file_path, $thumb_type)");
+		$this->debug("Get_crop_data($file_path, ");
+		$this->debug($thumb_type, 1);
 		if (is_array($thumb_type)) {
 			$type = $thumb_type;
 		}

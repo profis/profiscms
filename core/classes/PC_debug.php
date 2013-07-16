@@ -214,7 +214,7 @@ class PC_debug {
 	
 	function file_put_debug($file_name = '', $append = null) {
 		global $cfg;
-		if (!$this->debug or v($cfg['debug_disable_output']) or isset($cfg['debug_ip']) and $_SERVER['REMOTE_ADDR'] != $cfg['debug_ip']) {
+		if (!$this->debug or !v($cfg['debug_file_output']) or isset($cfg['debug_ip']) and $_SERVER['REMOTE_ADDR'] != $cfg['debug_ip']) {
 			return;
 		}
 		if (empty($file_name)) {
@@ -240,7 +240,7 @@ class PC_debug {
 		
 	}
 	
-	function clear() {
+	function clear_time_data() {
 		$this->exec_times = array();
 		$this->group_time_data = array();
 	}

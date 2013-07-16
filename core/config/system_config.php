@@ -28,6 +28,7 @@ $cfg['db']['collation'] = 'utf8_general_ci';
 $cfg['timezone'] = 'Europe/Vilnius';
 //development
 $cfg['debug_mode'] = false;
+$cfg['debug_file_output'] = false;
 
 //languages
 $cfg['languages'] = array(
