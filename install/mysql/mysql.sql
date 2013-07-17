@@ -356,6 +356,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}pages` (
   `redirect` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `date` int(10) unsigned DEFAULT NULL,
   `reference_id` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `source_id` INT( 11 ) UNSIGNED NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `idp` (`idp`),
   KEY `nomenu` (`nomenu`),

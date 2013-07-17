@@ -134,7 +134,8 @@ PC.langs.lt = {
 		nomenu: 'Nerodyti meniu',
 		published: 'Paskelbtas',
 		show_period: 'Rodyti tik per šį laikotarpį',
-		shortcut_from: 'Nuoroda iš'
+		shortcut_from: 'Nuoroda iš',
+		source_id: 'Šaltinis'
 	},
 	prev_ver: {
 		s: 'Ankstesnės versijos'

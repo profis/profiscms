@@ -133,7 +133,8 @@ PC.langs.ru = {
 		nomenu: 'Не показывать в меню сайта',
 		published: 'Опубликовать на сайте',
 		show_period: 'Показывать только в этот период',
-		shortcut_from: 'Ссылка из'
+		shortcut_from: 'Ссылка из',
+		source_id: 'Источник'
 	},
 	prev_ver: {
 		s: 'Предыдущие версии'

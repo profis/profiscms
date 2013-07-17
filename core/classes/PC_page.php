@@ -42,7 +42,7 @@ final class PC_page extends PC_base {
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'router/route.html', false, 25);
 		$this->debug("Get_route_data($route)");
 		$now = time();
-		$r = $this->prepare("SELECT p.date,p.front,p.id pid, p.id page_id,p.idp,c.*,p.hot,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,"
+		$r = $this->prepare("SELECT p.date,p.front,p.id pid, p.id page_id,p.idp,c.*,p.hot,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,p.source_id,"
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.route'), array('separator'=>'▓'))." routes"
 		.', ' . $this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.permalink'), array('separator'=>'▓'))." permalinks"
 		.(is_null($route)?
@@ -70,7 +70,26 @@ final class PC_page extends PC_base {
 		if ($r->rowCount() != 1) {
 			return array('controller'=>'core','data'=>404);
 		}
-		$this->page_data = $data = $r->fetch();
+		$data = $r->fetch();
+		if ($data['source_id'] > 0) {
+			$this->debug('source_id = ' . $data['source_id'], 1);
+			$page_model = new PC_page_model();
+			$source_page_data = $page_model->get_one(array(
+				'content' => true,
+				'ln' => $this->site->ln,
+				'where' => array(
+					't.id' => $data['source_id']
+				)
+			));
+			if ($source_page_data and !empty($source_page_data)) {
+				$this->debug('Setting new text fields from source page', 1);
+				$data['text'] = $source_page_data['text'];
+				$data['info'] = $source_page_data['info'];
+				$data['info2'] = $source_page_data['info2'];
+				$data['info3'] = $source_page_data['info3'];
+			}
+		}
+		$this->page_data = $data;
 		if (empty($data['controller'])) {
 			$this->debug('Controller is empty', 1);
 			$this->debug($this->site->route, 2);
@@ -261,7 +280,7 @@ final class PC_page extends PC_base {
 		
 		if ($formElements->length) {
 			if ($this->debug) {
-				file_put_contents($this->cfg['path']['logs'] . 'text_2.html', $text);
+				//@file_put_contents($this->cfg['path']['logs'] . 'text_2.html', $text);
 			}
 			
 			$pageForms = array();
@@ -1746,6 +1765,10 @@ final class PC_page extends PC_base {
 		//retrieve only specified fields
 		$fields_count = count($fields);
 		if ($fields_count) {
+			if (!in_array('pid', $fields)) {
+				$fields[] = 'pid';
+				$fields_count++;
+			}
 			$valid_fields = array(
 				'idp'=> 'mp.id idp',
 				'pid'=> 'p.id pid',
@@ -1771,6 +1794,7 @@ final class PC_page extends PC_base {
 				'redirect'=> 'p.redirect',
 				'date'=> 'p.date',
 				'reference_id'=> 'p.reference_id',
+				'source_id'=> 'p.source_id',
 				'nomenu'=> 'p.nomenu'
 			);
 			$retrieve_fields = '';
@@ -1818,7 +1842,7 @@ final class PC_page extends PC_base {
 		
 
 		
-		$query = "SELECT ".($paging?'SQL_CALC_FOUND_ROWS ':'').(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
+		echo $query = "SELECT p.source_id,".($paging?'SQL_CALC_FOUND_ROWS ':'').(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date,").","
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'h.id', 'h.front'), array('separator'=>'▓'))." redirects_from"
 		." FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
@@ -1847,9 +1871,13 @@ final class PC_page extends PC_base {
 		}
 		
 		$items = array();
+		$source_ids = array();
 		if ($r->rowCount() >= 1) while ($menu = $r->fetch()) {
 			if (isset($menu['pid'])) if ($menu['pid'] == v($this->site->loaded_page['pid'])) {
 				$menu['current'] = true;
+			}
+			if ($menu['source_id'] > 0) {
+				$source_ids[] = $menu['source_id'];
 			}
 			if (isset($menu['text'])) $this->Parse_html_output($menu['text']);
 			if (isset($menu['info'])) $this->Parse_html_output($menu['info']);
@@ -1870,6 +1898,37 @@ final class PC_page extends PC_base {
 					
 			$items[] = $menu;
 		}
+		if (!empty($source_ids)) {
+			$page_model = new PC_page_model();
+			$sources = $page_model->get_all(array(
+				'content' => array(
+					'select' => 'ct.text, ct.info, ct.info2, ct.info3'
+				),
+				'where' => array(
+					't.id' => $source_ids
+				),
+				'key' => 'id'
+			));
+			if (!empty($sources)) {
+				//print_pre($sources);
+		
+				foreach ($items as $key => $item) {
+					if (isset($sources[v($item['source_id'])])) {
+						//echo $sources[$item['source_id']]['text'];
+						$items[$key]['source_text'] = $sources[$item['source_id']]['text'];
+						$items[$key]['source_info'] = $sources[$item['source_id']]['info'];
+						$items[$key]['source_info2'] = $sources[$item['source_id']]['info2'];
+						$items[$key]['source_info3'] = $sources[$item['source_id']]['info3'];
+					
+						$this->Parse_html_output($items[$key]['source_text']);
+						$this->Parse_html_output($items[$key]['source_info']);
+						$this->Parse_html_output($items[$key]['source_info2']);
+						$this->Parse_html_output($items[$key]['source_info3']);
+					}
+				}
+			}
+		}
+		
 		return $items;
 	}
 	public function Get_subpages($id, $where='') {

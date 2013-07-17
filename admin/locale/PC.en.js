@@ -135,7 +135,8 @@ PC.langs.en = {
 		nomenu: "Don't show in menu",
 		published: 'Published',
 		show_period: 'Show only during this period',
-		shortcut_from: 'Shortcut from'
+		shortcut_from: 'Shortcut from',
+		source_id: 'Source'
 	},
 	prev_ver: {
 		s: 'Previous versions'
