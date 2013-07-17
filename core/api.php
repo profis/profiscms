@@ -35,10 +35,10 @@ if ($routes->Get(1) == 'admin') {
 	require_once CMS_ROOT . 'admin/Admin_api.php';
 	$admin_api = new Admin_api();
 	
-	$api_name = v($routes->Get(1));
+	$api_name = $routes->Get(1);
 	
 	if (method_exists($admin_api, $api_name)) {
-		$answer = $admin_api->$api_name(v($routes->Get(2)), v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)), v($routes->Get(6)));
+		$answer = $admin_api->$api_name($routes->Get(2), $routes->Get(3), $routes->Get(4), $routes->Get(5), $routes->Get(6));
 		if (is_array($answer)) {
 			$answer = json_encode($answer);
 		}
@@ -46,7 +46,7 @@ if ($routes->Get(1) == 'admin') {
 		exit;
 	}
 	
-	switch (v($routes->Get(1))) {
+	switch ($routes->Get(1)) {
 		case 'keepalive':
 			break;
 		case 'phpinfo':
@@ -54,27 +54,27 @@ if ($routes->Get(1) == 'admin') {
 			break;
 		case 'tree':
 			$tree = $core->Get_object('PC_database_tree');
-			switch (v($routes->Get(2))) {
+			switch ($routes->Get(2)) {
 				case 'debug':
 					$params = array(
 						'cols'=> array(
-							'parent'=> v($routes->Get(4)),
-							'name'=> v($routes->Get(5))
+							'parent'=> $routes->Get(4),
+							'name'=> $routes->Get(5)
 						)
 					);
-					if (v($routes->Get(3)) == 'shop_categories') {
+					if ($routes->Get(3) == 'shop_categories') {
 						$params['cols']['join_table'] = 'shop_category_contents';
 						$params['cols']['join_col'] = 'category_id';
 					}
-					$tree->Debug_tree(v($routes->Get(3)), $params);
+					$tree->Debug_tree($routes->Get(3), $params);
 					break;
 				case 'recalculate':
 					$params = array(
 						'cols'=> array(
-							'parent'=> v($routes->Get(4))
+							'parent'=> $routes->Get(4)
 						)
 					);
-					$tree->Recalculate(v($routes->Get(3)), $params);
+					$tree->Recalculate($routes->Get(3), $params);
 					break;
 			}
 			break;
@@ -104,7 +104,7 @@ if ($routes->Get(1) == 'admin') {
 						$plugin_api_path = $cfg['path']['plugins'] . $pluginName . '/admin_api/';
 						$plugin_api_path = $core->Get_path('plugins', '', $pluginName) . 'admin_api/';
 						
-						$class_name = $pluginName_up . '_' . v($routes->Get(1)) . '_admin_api';
+						$class_name = $pluginName_up . '_' . $routes->Get(1) . '_admin_api';
 						$file_name = $plugin_api_path . "$class_name.php";
 
 						$logger->debug('filename: ' . $file_name, 2);
@@ -128,7 +128,7 @@ if ($routes->Get(1) == 'admin') {
 							
 							require_once($file_name);
 							
-							$extend_api_hook = 'plugin/' . $pluginName . '/extend-admin-api/' . v($routes->Get(1));
+							$extend_api_hook = 'plugin/' . $pluginName . '/extend-admin-api/' . $routes->Get(1);
 							$logger->debug('extend_api_hook: ' . $extend_api_hook, 4);
 							
 							$extend_admin_api_class = '';
@@ -150,12 +150,12 @@ if ($routes->Get(1) == 'admin') {
 							if (!file_exists($plugin_api_log_dir)) {
 								@mkdir($plugin_api_log_dir);
 							}
-							$log_file = $plugin_api_log_dir . '/admin_'.v($routes->Get(1)) . '_' . v($routes->Get(2)) .'_api.html';
+							$log_file = $plugin_api_log_dir . '/admin_'.$routes->Get(1) . '_' . $routes->Get(2) .'_api.html';
 							$logger->debug('Log file: ' . $log_file, 3);
 							$api = new $class_name($page_manager);
 							$api->debug = true;
 							$api->set_instant_debug_to_file($log_file);
-							$proccessed = $api->process(v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)));
+							$proccessed = $api->process($routes->Get(3), $routes->Get(4), $routes->Get(5));
 
 							$api->set_debug_offset(0);
 							$api->debug('Page manager debug:');
@@ -222,7 +222,7 @@ else {
 			break;
 		case 'texts':
 			$site->Identify();
-			$ln = v($routes->Get(2));
+			$ln = $routes->Get(2);
 			if (!empty($ln)) {
 				$site->Set_language($ln);
 			}
@@ -288,7 +288,7 @@ else {
 					$common_class_name = $pluginName_up . '_api';
 					$common_file_name = $plugin_api_path . "$common_class_name.php";
 					
-					$class_name = $pluginName_up . '_' . v($routes->Get(2)) . '_api';
+					$class_name = $pluginName_up . '_' . $routes->Get(2) . '_api';
 					$file_name = $plugin_api_path . "$class_name.php";
 					
 					
@@ -297,7 +297,7 @@ else {
 						require_once($common_file_name);
 						//echo ' ' . $common_class_name;
 						$api = new $common_class_name();
-						$proccessed = $api->process(v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)));
+						$proccessed = $api->process($routes->Get(3), $routes->Get(4), $routes->Get(5));
 						
 					}
 					if (!$proccessed and @file_exists($file_name)) {
@@ -306,7 +306,7 @@ else {
 						require_once($file_name);
 						//echo ' ' . $class_name;
 						$api = new $class_name();
-						$proccessed = $api->process(v($routes->Get(3)), v($routes->Get(4)), v($routes->Get(5)));
+						$proccessed = $api->process($routes->Get(3), $routes->Get(4), $routes->Get(5));
 					}
 					
 					if ($proccessed) {

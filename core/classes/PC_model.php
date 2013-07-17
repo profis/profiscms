@@ -410,7 +410,6 @@ abstract class PC_model extends PC_base{
 			if (isset($params['key']) and isset($d[$params['key']]) and !empty($d[$params['key']])) {
 				$custom_key = $d[$params['key']];
 			}
-			
 			if (isset($params['value']) and isset($d[$params['value']])) {
 				$d = $d[$params['value']];
 			}
