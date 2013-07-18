@@ -7,10 +7,7 @@
 	<?php
 	$site->Add_stylesheet($core->Get_theme_path() . 'css/bootstrap.css');
 	$site->Add_stylesheet($core->Get_theme_path() . 'css/style.css');
-	echo $site->Get_seo_html();
-	echo $site->Get_stylesheets_html(false);
-	echo $site->Get_scripts_html();
-	echo $site->Get_favicon();
+	echo $site->Get_head();
 	?>
 	<script type="text/javascript">
 	</script>

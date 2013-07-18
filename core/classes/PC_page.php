@@ -87,6 +87,7 @@ final class PC_page extends PC_base {
 				$data['info'] = $source_page_data['info'];
 				$data['info2'] = $source_page_data['info2'];
 				$data['info3'] = $source_page_data['info3'];
+				$this->site->Add_head_part('<link rel="canonical" href="%s" />', $this->Get_page_link_by_id($data['source_id']));
 			}
 		}
 		$this->page_data = $data;

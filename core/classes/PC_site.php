@@ -73,6 +73,12 @@ final class PC_site extends PC_base {
 	
 	
 	/**
+	 *
+	 * @var array
+	 */
+	protected $_head_parts = array();
+	
+	/**
 	* Method used to initialize a page. Inside this method is called PC_site::Load().
 	* @see PC_site::Load()
 	*/
@@ -806,6 +812,7 @@ final class PC_site extends PC_base {
 		return '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 			<title>' . $this->Get_title().'</title>
 			<base href="'.htmlspecialchars($this->cfg['url']['base']).'" />'
+			.$this->Get_head_parts()
 			.$this->Get_seo_html()
 			.$this->Get_stylesheets_html(false)
 			.$this->Get_scripts_html()
@@ -1337,6 +1344,11 @@ final class PC_site extends PC_base {
 		$this->_headers[$header] = $value;
 	}
 	
+	public function Add_head_part($header, $value) {
+		if (empty($value)) return false;
+		$this->_head_parts[$header] = $value;
+	}
+	
 	/**
 	* Method used to remove script file from scripts collection.
 	* @param mixed $src file source path given to remove from scripts collection.
@@ -1370,6 +1382,14 @@ final class PC_site extends PC_base {
 		foreach ($this->_scripts as $script=>$priority)
 		$html .= "<script type=\"text/javascript\" src=\"$script\"></script>\n";
 		return $html;
+	}
+	
+	public function Get_head_parts() {
+		$s = '';
+		foreach ($this->_head_parts as $key => $value) {
+			$s .= sprintf($key, $value);
+		}
+		return $s;
 	}
 	
 	public function output_headers() {
