@@ -1843,7 +1843,7 @@ final class PC_page extends PC_base {
 		
 
 		
-		echo $query = "SELECT p.source_id,".($paging?'SQL_CALC_FOUND_ROWS ':'').(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date,").","
+		$query = "SELECT p.source_id,".($paging?'SQL_CALC_FOUND_ROWS ':'').(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date,").","
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'h.id', 'h.front'), array('separator'=>'▓'))." redirects_from"
 		." FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
