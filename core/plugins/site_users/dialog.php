@@ -20,10 +20,10 @@ require_once '../../../admin/admin.php';
 
 
 $plugin_name = basename(dirname(__FILE__));
-$plugin_url = $cfg['url']['base'].$cfg['directories']['core_plugins'].'/'.$plugin_name.'/';
+$plugin_url = $cfg['url']['base'].$cfg['directories']['core_plugins_www'].'/'.$plugin_name.'/';
 $plugin_file = $plugin_url . basename(__FILE__);
 
-$plugin_path = $cfg['url']['base'].$cfg['directories']['core_plugins'].'/'.$plugin_name;
+$plugin_path = $cfg['url']['base'].$cfg['directories']['core_plugins_www'].'/'.$plugin_name;
 
 if (!isset($logger)) {
 	$logger = new PC_debug();

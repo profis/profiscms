@@ -652,6 +652,7 @@ PC.langs.en = {
 			insert_reset: 'Reset Button',
 			insert_image: 'Image Button',
 			insert_submit: 'Submit Button',
+			insert_captcha: 'Captcha',
 			insert_label: 'Label',
 			specific: 'Specific',
 			value: 'Value',

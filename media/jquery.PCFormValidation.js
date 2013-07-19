@@ -112,7 +112,6 @@ $(document).ready(function(){
 		validate(this, true);
 	});
 
-	
 	// Block submit if there are invalid fields found
 	$('form').bind('submit', function() {
 		var formValid = true;
@@ -120,6 +119,30 @@ $(document).ready(function(){
 			inputValid = validate(this, true);
 			formValid = formValid && inputValid;
 		});
+		var challengeField = $("input#recaptcha_challenge_field");
+		var responseField = $("input#recaptcha_response_field");
+		if (formValid && challengeField && responseField) {
+			var html = $.ajax({
+				type: "POST",
+				url: PC_base_url + "api/plugin/forms/recaptcha/validate",
+				data: "recaptcha_challenge_field=" + challengeField.val() + "&recaptcha_response_field=" + responseField.val(),
+				async: false
+			}).responseText;
+			if (html != 'OK') {
+				formValid = false;
+				var ra = $('#recaptcha_area');
+				ra.fadeOut(100, function(){
+					ra.fadeIn(100, function(){
+						ra.fadeOut(100, function(){
+							ra.fadeIn(100, function(){
+
+							});
+						});
+					});
+				});
+			}
+		}
+		
 		return formValid;
 	});
 });

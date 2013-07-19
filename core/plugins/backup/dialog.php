@@ -270,7 +270,7 @@ function mod_backup_click() {
 	var add_fn = function() {
 		// ***** CREATE *****
 		Ext.Ajax.request({
-			url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/backup/<?php echo basename(__FILE__) ?>',
+			url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/backup/<?php echo basename(__FILE__) ?>',
 			params: {
 				ajax: '',
 				create: '_manual'
@@ -306,7 +306,7 @@ function mod_backup_click() {
 				if (btn_id == 'yes') {
 					var res_rq = function() {
 						Ext.Ajax.request({
-							url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/backup/<?php echo basename(__FILE__) ?>',
+							url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/backup/<?php echo basename(__FILE__) ?>',
 							params: {
 								ajax: '',
 								restore: rec.data.fsname
@@ -356,7 +356,7 @@ function mod_backup_click() {
 							if (btn_id == 'no') res_rq();
 							if (btn_id == 'yes')
 								Ext.Ajax.request({
-									url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/backup/<?php echo basename(__FILE__) ?>',
+									url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/backup/<?php echo basename(__FILE__) ?>',
 									params: {
 										ajax: '',
 										create: '_onrestore'
@@ -400,7 +400,7 @@ function mod_backup_click() {
 						dellist.push(rec.data.fsname);
 					});
 					Ext.Ajax.request({
-						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/backup/<?php echo basename(__FILE__) ?>',
+						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/backup/<?php echo basename(__FILE__) ?>',
 						params: {
 							ajax: '',
 							'delete[]': dellist
@@ -536,7 +536,7 @@ function mod_backup_click() {
 				if (ee.field == 'name') {
 					// ***** RENAME *****
 					Ext.Ajax.request({
-						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/backup/<?php echo basename(__FILE__) ?>',
+						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/backup/<?php echo basename(__FILE__) ?>',
 						params: {
 							ajax: '',
 							fsname: ee.record.data.fsname,
@@ -618,7 +618,7 @@ function mod_backup_click() {
 	});
 	w.show();
 	Ext.Ajax.request({
-		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/backup/<?php echo basename(__FILE__) ?>',
+		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/backup/<?php echo basename(__FILE__) ?>',
 		params: {
 			ajax: ''
 		},

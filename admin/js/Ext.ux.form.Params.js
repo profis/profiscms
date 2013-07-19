@@ -107,6 +107,11 @@ Ext.ux.form.Params = {
 						}
 					);
 				break;
+				case 'captcha':
+					items = [
+						
+					];
+					break;
 				case 'submit':
 				case 'reset':
 					items.push({fieldLabel: this.ln.value, ref: '../../_value'});

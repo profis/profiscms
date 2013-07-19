@@ -330,7 +330,36 @@ final class PC_page extends PC_base {
 						$field = $inputs->item($j);
 						$fieldName = preg_replace('/\[\]$/', '', $field->getAttribute('name'), -1, $multiple);
 						$fieldName = trim($fieldName);
-						if ($fieldName != '') {
+						if ($tagName == 'input' and $field->getAttribute('type') == 'captcha') {
+							try {
+								$template = $dom->createDocumentFragment();
+								$template->appendXML('<script type="text/javascript"
+									src="http://www.google.com/recaptcha/api/challenge?k='.$this->cfg['forms']['recaptcha_public_key'].'">
+								 </script>
+								 <noscript>
+									<iframe src="http://www.google.com/recaptcha/api/noscript?k='.$this->cfg['forms']['recaptcha_public_key'].'"
+										height="300" width="500" frameborder="0"></iframe><br />
+									<textarea name="recaptcha_challenge_field" rows="3" cols="40">
+									</textarea>
+									<input type="hidden" name="recaptcha_response_field"
+										value="manual_challenge" />
+								 </noscript>');
+								
+								$field->setAttribute('value', 'martynas');
+								$field->parentNode->replaceChild($template, $field);
+								
+								$pageForm['fields']['captcha'] = array(
+									'type' => 'captcha'
+								);
+								
+							}
+							catch(Exception $e) {
+
+							} 
+							
+							
+						}
+						elseif ($fieldName != '' and $fieldName != 'recaptcha_challenge_field') {
 							$type = ($tagName == 'input') ? $field->getAttribute('type') : $tagName;
 							$multiple = $multiple || $field->hasAttribute('multiple') || ($type == 'checkbox');
 							$nameAttribute = 'pc_' . md5($fieldName);
@@ -454,7 +483,15 @@ final class PC_page extends PC_base {
 								$field['DOMElement']->setAttribute('data-error', $errmsg);
 								$pageForm['status'] = array('status' => 'error', 'errors' => array($error));
 							}
-						} else {
+						}
+						elseif ($field['type'] == 'captcha') {
+							require_once($this->cfg['path']['core_plugins'] . 'forms/classes/PC_recaptcha_validator.php');
+							$recapctha_validator = new PC_recaptcha_validator();
+							if (!$recapctha_validator->validate()) {
+								$pageForm['status'] = array('status' => 'error', 'errors' => array('captcha.'));
+							}
+						}
+						else {
 							if (array_key_exists($field['name'], $_POST)) {
 								$values[$fieldName] = $_POST[$field['name']];
 							}
@@ -463,7 +500,6 @@ final class PC_page extends PC_base {
 							$defaultValueSubmitted = array_key_exists($fieldName, $values) && (($defaultValue == $values[$fieldName]) || ($field['multiple'] && is_array($values[$fieldName]) && in_array($defaultValue, $values[$fieldName])));
 							// relevant for freeform text inputs only
 							$nonEmptyValueSubmitted = array_key_exists($fieldName, $values) && ((is_string($values[$fieldName]) && (trim($values[$fieldName]) != '')) || (is_array($values[$fieldName]) && !empty($values[$fieldName])));
-							
 							switch ($field['type']) {
 								case 'checkbox':
 								case 'radio':

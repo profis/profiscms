@@ -37,7 +37,7 @@ class PC_plugin_api extends PC_base {
 	 * @return boolean returns true if api request was processed
 	 */
 	public function process() {
-		$method = v($this->routes->Get(2));
+		$method = $this->routes->Get(2);
 		if (empty($method)) {
 			$method = 'default_action';
 		}

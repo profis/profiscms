@@ -291,7 +291,7 @@ function mod_domains_click() {
 					} else
 						rqparams.domains = '';
 					Ext.Ajax.request({
-						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/domains/<?php echo basename(__FILE__) ?>',
+						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/domains/<?php echo basename(__FILE__) ?>',
 						params: rqparams,
 						method: 'POST',
 						callback: function(opts, success, rspns) {
@@ -323,7 +323,7 @@ function mod_domains_click() {
 	});
 	w.show();
 	Ext.Ajax.request({
-		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/domains/<?php echo basename(__FILE__) ?>',
+		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/domains/<?php echo basename(__FILE__) ?>',
 		params: {
 			ajax: ''
 		},

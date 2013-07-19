@@ -258,7 +258,7 @@ function mod_sites_langs_click() {
 		if (brk) return;
 		var do_rq = function() {
 			Ext.Ajax.request({
-				url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/sites/<?php echo basename(__FILE__) ?>',
+				url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/sites/<?php echo basename(__FILE__) ?>',
 				params: rqparams,
 				method: 'POST',
 				callback: function(opts, success, rspns) {
@@ -389,7 +389,7 @@ function mod_sites_langs_click() {
 					store: {
 						xtype: 'arraystore',
 						fields: ['theme', 'name'],
-						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/sites/<?php echo basename(__FILE__) ?>',
+						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/sites/<?php echo basename(__FILE__) ?>',
 						data: <?php
 							$out = array();
 							foreach (get_themes() as $t)

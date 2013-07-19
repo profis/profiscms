@@ -149,6 +149,7 @@ Ext.ux.form.Meniu = {
 			['forms_reset.png',this.ln.insert_reset,'reset'],
 			['forms_hidden.png',this.ln.insert_hidden,'hidden'],
 			['forms_label.png',this.ln.insert_label,'label'],
+			['forms_captcha.png',this.ln.insert_captcha,'captcha'],
 			['forms_insert.png',this.ln.insert_form,'FORM']
 		];
 		var att = 

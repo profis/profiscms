@@ -38,7 +38,7 @@ nbproject/
 logs/
 libs/
 admin/ext/
-admin/tiny_mce/
+#admin/tiny_mce/
 admin/excel_attr/
 admin/ext_3_3/
 admin/ext_3_4/

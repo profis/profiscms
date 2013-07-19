@@ -143,7 +143,7 @@ function mod_forms_click() {
 						deleted: Ext.encode(del_ids)
 					};
 					Ext.Ajax.request({
-						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/forms/<?php echo basename(__FILE__) ?>',
+						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/forms/<?php echo basename(__FILE__) ?>',
 						params: rqparams,
 						method: 'POST',
 						callback: function(opts, success, rspns) {
@@ -203,7 +203,7 @@ function mod_forms_click() {
 	w.show();
 	
 	Ext.Ajax.request({
-		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/forms/<?php echo basename(__FILE__) ?>',
+		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/forms/<?php echo basename(__FILE__) ?>',
 		params: {
 			ajax: ''
 		},

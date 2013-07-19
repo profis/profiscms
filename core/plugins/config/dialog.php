@@ -772,7 +772,7 @@ function mod_config_click() {
 						deleted: Ext.encode(PC.dialog.mod_config.deleted)
 					};
 					Ext.Ajax.request({
-						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/config/<?php echo basename(__FILE__) ?>',
+						url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/config/<?php echo basename(__FILE__) ?>',
 						params: rqparams,
 						method: 'POST',
 						callback: function(opts, success, rspns) {
@@ -804,7 +804,7 @@ function mod_config_click() {
 	});
 	w.show();
 	Ext.Ajax.request({
-		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins']; ?>/config/<?php echo basename(__FILE__) ?>',
+		url: '<?php echo $cfg['url']['base'].$cfg['directories']['core_plugins_www']; ?>/config/<?php echo basename(__FILE__) ?>',
 		params: {
 			ajax: ''
 		},

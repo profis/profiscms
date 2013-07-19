@@ -26,13 +26,13 @@ $cfg['directories'] =  array(
 	'logs' => 'logs',
 	'plugins' => 'plugins',
 	'core_plugins' => CORE_DIR . DS . 'plugins',
+	'core_plugins_www' => CORE_DIR . '/plugins',
 	'gallery' => 'gallery',
 	'media' => 'media',
 	'backups' => 'backups',
 	'uploads' => 'upload',
 	'config' => CORE_DIR . DS . 'config'
 );
-
 
 //if custom value is not set then set this by its configured (default) value
 foreach ($cfg['core_defaults'] as $key=>$value) {
