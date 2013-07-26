@@ -17,6 +17,7 @@
 final class PC_page extends PC_base {
 	public  $text,
 			$data,
+			$page_data,
 			$menus = array(),
 			$decoded_links = array();
 	private $_menu_shift = 1,
@@ -87,7 +88,8 @@ final class PC_page extends PC_base {
 				$data['info'] = $source_page_data['info'];
 				$data['info2'] = $source_page_data['info2'];
 				$data['info3'] = $source_page_data['info3'];
-				$this->site->Add_head_part('<link rel="canonical" href="%s" />', $this->Get_page_link_by_id($data['source_id']));
+				$data['canonical_link'] = $this->Get_page_link_by_id($data['source_id']);
+				$this->site->Add_head_part('<link rel="canonical" href="%s" />', $data['canonical_link']);
 			}
 		}
 		$this->page_data = $data;
@@ -1879,7 +1881,7 @@ final class PC_page extends PC_base {
 		
 
 		
-		$query = "SELECT p.source_id,".($paging?'SQL_CALC_FOUND_ROWS ':'').(!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date,").","
+		$query = "SELECT ".($paging?'SQL_CALC_FOUND_ROWS ':''). 'p.source_id,' . (!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'h.id', 'h.front'), array('separator'=>'▓'))." redirects_from"
 		." FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
@@ -1893,12 +1895,12 @@ final class PC_page extends PC_base {
 		." GROUP BY p.id"
 		." $order_by ".(($limit_s)?" limit $limit_s":"");
 		
-
 		$r = $this->prepare($query);
 		$params = array();
 		if (!is_array($id)) $params[] = $id;
 		if (is_array($id) && !count($id)) return false;
 		$params = array_merge($params, $additional_params);
+		$this->get_debug_query_string($query, $params);
 		$success = $r->execute($params);
 		if (!$success) return false;
 		

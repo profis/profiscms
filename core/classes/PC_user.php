@@ -386,7 +386,13 @@ final class PC_user extends PC_base {
 		$mail->Subject = $subject;
 		
 		$act_page = $this->page->Get_page("activate-account", true, true);
-		$url = $this->cfg['url']['base'] . $this->site->Get_link($act_page["route"]) . $code . "/";
+		if (empty($act_page)) {
+			$ctrl_pages = $this->page->Get_by_controller('site_users_registration');
+			if (count($ctrl_pages)) {
+				$act_page = $this->page->Get_page($ctrl_pages[0]);
+			}
+		}
+		$url = $this->cfg['url']['base'] . $this->site->Get_link($act_page["route"]) . 'activate/' . $code . "/";
 		
 		$style= '';
 		$body = lang('activation_code').': <a href="'.$url.'">'.$url.'</a>';

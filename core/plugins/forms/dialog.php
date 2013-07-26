@@ -38,6 +38,7 @@ if (isset($_POST['ajax'])) {
 	while ($f = $r->fetch()) {
 		$f['ip'] = long2ip($f['ip']);
 		foreach(json_decode($f['data']) as $key => $value) {
+			$key = str_replace(array('.'), '', $key);
 			$f['data_'.$key] = $value;
 		}
 		$out[] = $f;
@@ -210,9 +211,8 @@ function mod_forms_click() {
 		method: 'POST',
 		callback: function(opts, success, rspns) {
 			if (success && rspns.responseText) {
-				try {
+				//try {
 					var data = Ext.decode(rspns.responseText);
-					
 					var tabNames = [];
 					var fieldLists = [];
 					var gridData = [];
@@ -247,6 +247,7 @@ function mod_forms_click() {
 								renderer: formRenderer
 							});
 						});
+						
 						var mytab = new Ext.Panel({
 							title: tabName,
 							border: false,
@@ -336,7 +337,9 @@ function mod_forms_click() {
 					});
 					tabs.setActiveTab(0);
 					return;
-				} catch(e) {};
+				//} catch(e) {
+				//	console.log(e);
+				//};
 			}
 			Ext.MessageBox.show({
 				title: PC.i18n.error,

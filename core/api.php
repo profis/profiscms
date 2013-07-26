@@ -388,7 +388,18 @@ else {
 				if ((int)$p['hot'] > 0) echo '<priority>0.8</priority>'."\r\n";
 				echo '</url>'."\r\n";*/
 			}
-			$query = "SELECT pid,route,ln FROM {$cfg['db']['prefix']}content WHERE pid in(".implode(',', $ids).")";
+			$ln_model = new PC_language_model();
+			$site_languages = $ln_model->get_all(array(
+				'where' => array(
+					'disabled' => 0,
+					'site' => $site->get_id()
+				),
+				'value' => 'ln',
+			));
+			foreach ($site_languages as $key => $site_language) {
+				$site_languages[$key] = "'$site_language'";
+			}
+			$query = "SELECT pid,route,ln FROM {$cfg['db']['prefix']}content WHERE pid in(".implode(',', $ids).") AND ln in (".implode(',', $site_languages).")";
 			$r = $db->query($query);
 			if (!$r) {
 				header('HTTP/1.1 503 Service Temporarily Unavailable');
