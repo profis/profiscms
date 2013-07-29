@@ -201,6 +201,7 @@ if ($routes->Get(1) == 'admin') {
 		case 'ipmd5':
 			echo md5($_SERVER["REMOTE_ADDR"]);
 			break;
+		case 'email':
 		case 'debug-email':
 			$email = 'email@profis.lt';
 			$message = 'message';
@@ -210,6 +211,18 @@ if ($routes->Get(1) == 'admin') {
 			echo $email;
 			echo '<hr />';
 			echo $message;
+			break;
+		case 'error':
+			echo 'display_errors = ' . ini_get('display_errors') . "\n<br />";
+			echo 'register_globals = ' . ini_get('register_globals') . "\n<br />";
+			echo 'max_execution_time = ' . ini_get('max_execution_time') . "\n<br />";
+			echo 'post_max_size = ' . ini_get('post_max_size') . "\n<br />";
+			echo 'post_max_size+1 = ' . (ini_get('post_max_size')+1) . "\n<br />";
+			//echo 'post_max_size in bytes = ' . return_bytes(ini_get('post_max_size')) . '<br />';
+			echo '<hr />';
+			echo 'log_errors = ' . ini_get('log_errors') . "\n<br />";
+			echo 'error_log = ' . ini_get('error_log') . "\n<br />";
+			
 			break;
 		default: echo 'Please select API action that you want to execute:<ul><li><a href="'.htmlspecialchars($cfg['url']['base']).'admin/api/phpinfo/">PHPinfo</a></li></ul>';
 	}
@@ -421,9 +434,9 @@ else {
 		//case 'page':
 		/*
 		case 'new_password':
-			$db->query("UPDATE pc_auth_users SET pass = 'admin' WHERE username = 'admin'");
+			$db->query("UPDATE pc_auth_users SET pass = '".$auth->users->Encode_password('admin')."' WHERE username = 'admin'");
 			break;
-		 */
+		*/
 		default: echo 'Please select API action that you want to execute:<ul><li><a href="'.htmlspecialchars($cfg['url']['base']).'api/sitemap/">Sitemap</a></li><li><a href="'.htmlspecialchars($cfg['url']['base']).'api/texts/">List of texts</a></li></ul>';
 	}
 }
