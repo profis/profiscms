@@ -140,6 +140,11 @@ CREATE TABLE IF NOT EXISTS `{prefix}config` (
 INSERT INTO `{prefix}config` (`plugin`, `ckey`, `value`) VALUES 
 ('', 'active_plugins', 'backup,domains,sites,variables,auth,config,forms');
 
+INSERT INTO `{prefix}config` (`plugin`, `ckey`, `value`) VALUES 
+('forms', 'recaptcha_public_key', '');
+
+INSERT INTO `{prefix}config` (`plugin`, `ckey`, `value`) VALUES 
+('forms', 'recaptcha_private_key', '');
 -- --------------------------------------------------------
 
 -- 

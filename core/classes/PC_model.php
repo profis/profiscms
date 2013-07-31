@@ -192,9 +192,17 @@ abstract class PC_model extends PC_base{
 		return $this->get_data(null, $params);
 	}
 	
-	public function get_one($params = array()) {
-		$params['limit'] = 1;
-		return $this->get_all($params);
+	public function get_one($params = array(), $params_2 = array()) {
+		if (!is_array($params)) {
+			$id = $params;
+			$params = $params_2;
+			$params['limit'] = 1;
+			return $this->get_data($id, $params);
+		}
+		else {
+			return $this->get_all($params);
+		}
+		
 	}
 	
 	public function get_data($id = null, $params = array(), $limit = 0) {

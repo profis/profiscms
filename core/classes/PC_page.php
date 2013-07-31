@@ -143,7 +143,9 @@ final class PC_page extends PC_base {
 			//parse redirect data
 			
 			$route_data = $this->process_redirect($data, $internal_redirects);
-			return $route_data;
+			if ($route_data) {
+				return $route_data;
+			}
 		}
 		if (empty($data['controller']) || $data['controller'] == 'menu') $data['controller'] = 'page';
 		return $data;
@@ -184,6 +186,21 @@ final class PC_page extends PC_base {
 				'id' => $controller_data['id']
 			));
 			if (!empty($url)) {
+				if (count($this->route) > 2 and !empty($data['controller'])) {
+					return false;
+				}
+				$old_url = $this->routes->Get_request();
+				$new_url = $url;
+				if (substr($old_url, -1) != '/') {
+					$old_url .= '/';
+				}
+				if (substr($new_url, -1) != '/') {
+					$new_url .= '/';
+				}
+				if (strpos($old_url, $new_url) === 0) {
+					return false;
+				}
+				
 				$this->core->Redirect_local($url, 301);
 			}
 		}
@@ -1057,235 +1074,249 @@ final class PC_page extends PC_base {
 		return $marker_custom_options;
 	}
 	
+	protected function _replace_google_map_object_callback($gmap) {
+		//print_pre($gmap);
+		
+		$map_type = '';
+		if (!isset($gmap[6])) {
+			$json_data = urldecode($gmap[5]);
+			//$json_data = pc_utf8_urldecode($gmaps[5][$a]);
+			//$json_data = $gmaps[5][$a];
+		}
+		else {
+			$map_type = $gmap[5];
+			$json_data = urldecode($gmap[6]);
+			//$json_data = pc_utf8_urldecode($gmaps[6][$a]);
+			//$json_data = str_replace('wtb1 [1]', '', $json_data);
+
+			//$json_data = urldecode(utf8_decode($gmaps[6][$a]));
+			//$json_data = utf8_decode($gmaps[6][$a]);
+			//$json_data = utf8_decode($json_data);
+			//$json_data = $gmaps[6][$a];
+
+
+			//echo $json_data;
+		}
+		//$json_data = utf8_encode($json_data);
+		if (empty($map_type)) {
+			$map_type = 'google';
+		}
+		$this->_map_types[$map_type] = $map_type;
+		//$json_data = pc_e($json_data);
+		//echo '----';
+		//print_pre(json_decode($json_data, true));
+		//exit;
+		//echo $json_data;
+		$data = json_decode($json_data);
+		//echo 'data:';
+		//print_pre($data);
+		$map_custom_options = v($data->map_options);
+		$map_custom_options = trim($map_custom_options);
+		$map_custom_options = trim($map_custom_options, ',');
+		if (!empty($map_custom_options)) {
+			$map_custom_options = ', ' . $map_custom_options;
+		}
+		$marker_custom_options = v($data->marker_options);
+		$marker_custom_options = trim($marker_custom_options);
+		$marker_custom_options = trim($marker_custom_options, ',');
+		if (!empty($marker_custom_options)) {
+			$marker_custom_options = ', ' . $marker_custom_options;
+		}
+		$marker_image = v($data->marker_image);
+		$y_marker_image = '';
+		if (!empty($marker_image)) {
+			$absolute_image_path = $this->core->Absolute_url($marker_image);
+			$marker_image = ', icon:"' . $absolute_image_path .'"';
+			$y_marker_image = 'iconImageHref: "'.$absolute_image_path.'"';
+		}
+
+		$id = 'gmap_'.$this->_gmap_counter++;
+
+		$map_markers = 'var map_markers_'.$id.' = [];';
+
+		$markers = '';
+		if (!isset($data->markers)) {
+			$old_marker = new stdClass();
+			$old_marker->id = 1;
+			$old_marker->latitude = $data->latitude;
+			$old_marker->longitude = $data->longitude;
+			$old_marker->options = v($data->marker_options);
+			$old_marker->icon = v($data->marker_image);
+			$data->markers = array($old_marker);
+		}
+		if (isset($data->markers)) {
+			foreach ($data->markers as $key => $marker) {
+				$markers .= $this->_get_map_marker($id, $map_type, $marker, $data->categories, $data);
+			}
+		}
+		$filter = '';
+		$categories = 'var category_markers = {};
+			category_markers["0"] = [];
+			var no_category_markers = [];
+		';
+
+		$vars = array();
+		$vars['categories'] = array();
+
+		$categories_exist = false;
+		if (isset($data->categories)) {
+			foreach ($data->categories as $key => $category) {
+				if (isset($category->js)) {
+					$categories_exist = true;
+					$vars['categories'][] = array(
+						'el_id' => $id.'_'.$category->id,
+						'id' => $category->id,
+						'data' => $category->_data
+					);
+					$categories .= $category->js;
+					$filter .= '<label for = "'.$id.'_'.$category->id.'">' . $category->_data->name . ':</label> <span><input type="checkbox" id = "'.$id.'_'.$category->id.'" rel = "' . $category->id . '" />&nbsp;</span>';
+				}
+			}
+		}
+
+		$map_var_name = $id;
+		$map_manager = 'PC_google_maps';
+		if ($map_type == 'yandex') {
+			$map_var_name = 'myMap';
+			$map_manager = 'PC_yandex_maps';
+		}
+
+
+		$filter_js = 'var ready_callback = function (map, category_markers, no_category_markers) {
+						var default_filter = true;
+						try { 
+							if (typeof pc_maps_hook == \'function\') {
+								pc_maps_hook({
+									map_manager: '.$map_manager.',
+									map: map,
+									category_markers: category_markers,
+									no_category_markers: no_category_markers
+								});
+							}
+						}
+						catch(err) {
+							default_filter = false;
+						}
+						if (default_filter) {
+							return function() {
+								$(\'#map_filter_'.$id.' input\').on(\'click\', function() {
+									pc_maps_filter('.$map_manager.', map, $(\'#map_filter_'.$id.' input\'), category_markers, $(this).attr("rel"), this.checked)
+								});
+							};
+						}
+					};'
+					//. 'debugger;'
+					.'$(document).ready(ready_callback('.$map_var_name.', category_markers, no_category_markers));';
+
+		if (!$categories_exist) {
+			$filter_js = '';
+		}
+
+		$w = $gmap[3];
+		$h = $gmap[4];
+
+		$map_init_js = $this->site->Get_tpl_content('map', 'init.js', array('id' => $id));
+
+		if ($map_type == 'google') {
+			$vars = array_merge($vars, array(
+				'id' => $id,
+				'filter_el_id' => 'map_filter_' . $id,
+				'width' => $w,
+				'height' => $h,
+				'style' => $gmap[2],
+				'filter' => $categories_exist,
+				'js' => '<script type="text/javascript">'
+					.$map_markers
+					.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false'.(isset($data->scrollwheel)?',scrollwheel:'.$data->scrollwheel:''). $map_custom_options . '};'
+					.'var '.$id.'=null;'
+					.'$(function(){'
+						.$id.'=new google.maps.Map(document.getElementById(\''.$id.'\'),options_'.$id.');'
+						.$categories
+						.'var infowindow = new google.maps.InfoWindow();'
+						.$markers
+						//.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
+						//.'debugger;'
+						.$map_init_js
+						. $filter_js
+					.'});'
+					.'
+					'
+				.'</script>',
+
+
+			));
+			$map_frame = $this->site->Get_tpl_content('map', $vars);
+			$map_frame_ = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmap[2].'">'
+			.'</div>' 
+			. '<div  id="map_filter_'.$id.'">'. $filter . '</div>';
+		}
+		if ($map_type == 'yandex') {
+			$vars = array_merge($vars, array(
+				'id' => $id,
+				'filter_el_id' => 'map_filter_' . $id,
+				'width' => $w,
+				'height' => $h,
+				'style' => $gmap[2],
+				'filter' => $categories_exist,
+				'js' => '<script type="text/javascript">'
+					.$map_markers
+					.'ymaps.ready(yandex_map_init_'.$id.');
+					function yandex_map_init_'.$id.' () {
+						var myMap = new ymaps.Map("'.$id.'", {
+							center: ['.$data->latitude.', '.$data->longitude.'],
+							zoom: ' . $data->zoom . ',
+							type: "' . $data->map_type . '", 
+							behaviors: ["default", "scrollZoom"]
+						});
+						myMap.controls
+						.add("zoomControl")
+						.add("typeSelector");
+						'
+						.$categories
+						.$markers
+						//.'debugger;'
+						.$filter_js
+						.'
+					}
+					'
+				.'</script>',
+
+
+			));
+			$map_frame = $this->site->Get_tpl_content('map', $vars);
+			$map_frame_ = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmap[2].'">'
+			.'</div>'
+			. '<div  id="map_filter_'.$id.'">'. $filter . '</div>';
+		}
+
+		//$text = preg_replace('#'.preg_quote($gmap[0], "#").'#m', $map_frame, $text, 1);
+		
+		return $map_frame;
+	}
+	
 	public function Replace_google_map_objects(&$text) {
 		//<object width="100%" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"> <param name="map_data" value="%7B%22latitude%22%3A55.710803%2C%22longitude%22%3A21.13180699999998%2C%22zoom%22%3A12%2C%22map_type%22%3A%22satellite%22%7D" /> <param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="100%" height="240px">&nbsp;</embed> </object>
 		//<object width="500" height="240" classid="clsid:google-map" codebase="http://maps.google.com/"><param name="map_data" value="%7B%22latitude%22%3A43.635515820871454%2C%22longitude%22%3A51.17217413757328%2C%22zoom%22%3A15%2C%22map_type%22%3A%22hybrid%22%7D" /><param name="src" value="maps.google.com" /><embed src="maps.google.com" type="application/google-map" width="500" height="240">&nbsp;</embed></object>
 		$google_map_object = '/<object( style="(.+?)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase=".+?">'."\s*".'(?:<param name="map_type" value="(.+?)" \/>)?'."\s*".'<param name="map_data" value="(.+?)" \/>'."\s*".'<param name="src" value=".+?" \/>\s*(<param name="map_type" value="(.+?)" \/>)?\s*<embed( style="(.+?)")? src=".+?" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
+		//$google_map_object = '/<object( style="([^"]*)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase="([^"]*)">'."\s*".'(?:<param name="map_type" value="([^"]*)" \/>)?'."\s*".'<param name="map_data" value="([^"]*)" \/>'."\s*".'<param name="src" value="([^"]*)" \/>\s*(<param name="map_type" value="([^"]*)" \/>)?\s*<embed( style="([^"]*)")? src="([^"]*)" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
+		
 		$this->debug("google_map_object pattern:", 1);
 		$this->debug(htmlspecialchars($google_map_object), 2);
 		//htmlspecialchars($text);
-		if (!empty($text)) if (preg_match_all($google_map_object, $text, $gmaps)) {
-			//echo 'Martynas';
-			//print_pre($gmaps);
-			//exit;
-			$map_types = array();
-			
-			for ($a=0; isset($gmaps[0][$a]); $a++) {
-				$map_type = '';
-				if (!isset($gmaps[6])) {
-					$json_data = urldecode($gmaps[5][$a]);
-					//$json_data = pc_utf8_urldecode($gmaps[5][$a]);
-					//$json_data = $gmaps[5][$a];
-				}
-				else {
-					$map_type = $gmaps[5][$a];
-					$json_data = urldecode($gmaps[6][$a]);
-					//$json_data = pc_utf8_urldecode($gmaps[6][$a]);
-					//$json_data = str_replace('wtb1 [1]', '', $json_data);
-					
-					//$json_data = urldecode(utf8_decode($gmaps[6][$a]));
-					//$json_data = utf8_decode($gmaps[6][$a]);
-					//$json_data = utf8_decode($json_data);
-					//$json_data = $gmaps[6][$a];
-					
-					
-					//echo $json_data;
-				}
-				//$json_data = utf8_encode($json_data);
-				if (empty($map_type)) {
-					$map_type = 'google';
-				}
-				$map_types[$map_type] = $map_type;
-				//$json_data = pc_e($json_data);
-				//echo '----';
-				//print_pre(json_decode($json_data, true));
-				//exit;
-				$data = json_decode($json_data);
-				//echo 'data:';
-				//print_pre($data);
-				$map_custom_options = v($data->map_options);
-				$map_custom_options = trim($map_custom_options);
-				$map_custom_options = trim($map_custom_options, ',');
-				if (!empty($map_custom_options)) {
-					$map_custom_options = ', ' . $map_custom_options;
-				}
-				$marker_custom_options = v($data->marker_options);
-				$marker_custom_options = trim($marker_custom_options);
-				$marker_custom_options = trim($marker_custom_options, ',');
-				if (!empty($marker_custom_options)) {
-					$marker_custom_options = ', ' . $marker_custom_options;
-				}
-				$marker_image = v($data->marker_image);
-				$y_marker_image = '';
-				if (!empty($marker_image)) {
-					$absolute_image_path = $this->core->Absolute_url($marker_image);
-					$marker_image = ', icon:"' . $absolute_image_path .'"';
-					$y_marker_image = 'iconImageHref: "'.$absolute_image_path.'"';
-				}
-				
-				$id = 'gmap_'.$this->_gmap_counter++;
-				
-				$map_markers = 'var map_markers_'.$id.' = [];';
-				
-				$markers = '';
-				if (!isset($data->markers)) {
-					$old_marker = new stdClass();
-					$old_marker->id = 1;
-					$old_marker->latitude = $data->latitude;
-					$old_marker->longitude = $data->longitude;
-					$old_marker->options = v($data->marker_options);
-					$old_marker->icon = v($data->marker_image);
-					$data->markers = array($old_marker);
-				}
-				if (isset($data->markers)) {
-					foreach ($data->markers as $key => $marker) {
-						$markers .= $this->_get_map_marker($id, $map_type, $marker, $data->categories, $data);
-					}
-				}
-				$filter = '';
-				$categories = 'var category_markers = {};
-					category_markers["0"] = [];
-					var no_category_markers = [];
-				';
-				
-				$vars = array();
-				$vars['categories'] = array();
-				
-				$categories_exist = false;
-				if (isset($data->categories)) {
-					foreach ($data->categories as $key => $category) {
-						if (isset($category->js)) {
-							$categories_exist = true;
-							$vars['categories'][] = array(
-								'el_id' => $id.'_'.$category->id,
-								'id' => $category->id,
-								'data' => $category->_data
-							);
-							$categories .= $category->js;
-							$filter .= '<label for = "'.$id.'_'.$category->id.'">' . $category->_data->name . ':</label> <span><input type="checkbox" id = "'.$id.'_'.$category->id.'" rel = "' . $category->id . '" />&nbsp;</span>';
-						}
-					}
-				}
-				
-				$map_var_name = $id;
-				$map_manager = 'PC_google_maps';
-				if ($map_type == 'yandex') {
-					$map_var_name = 'myMap';
-					$map_manager = 'PC_yandex_maps';
-				}
-				
-				
-				$filter_js = 'var ready_callback = function (map, category_markers, no_category_markers) {
-								var default_filter = true;
-								try { 
-									if (typeof pc_maps_hook == \'function\') {
-										pc_maps_hook({
-											map_manager: '.$map_manager.',
-											map: map,
-											category_markers: category_markers,
-											no_category_markers: no_category_markers
-										});
-									}
-								}
-								catch(err) {
-									default_filter = false;
-								}
-								if (default_filter) {
-									return function() {
-										$(\'#map_filter_'.$id.' input\').on(\'click\', function() {
-											pc_maps_filter('.$map_manager.', map, $(\'#map_filter_'.$id.' input\'), category_markers, $(this).attr("rel"), this.checked)
-										});
-									};
-								}
-							};'
-							//. 'debugger;'
-							.'$(document).ready(ready_callback('.$map_var_name.', category_markers, no_category_markers));';
-				
-				if (!$categories_exist) {
-					$filter_js = '';
-				}
-				
-				$w = $gmaps[3][$a];
-				$h = $gmaps[4][$a];
-				
-				$map_init_js = $this->site->Get_tpl_content('map', 'init.js', array('id' => $id));
-				
-				if ($map_type == 'google') {
-					$vars = array_merge($vars, array(
-						'id' => $id,
-						'filter_el_id' => 'map_filter_' . $id,
-						'width' => $w,
-						'height' => $h,
-						'style' => $gmaps[2][$a],
-						'filter' => $categories_exist,
-						'js' => '<script type="text/javascript">'
-							.$map_markers
-							.'var options_'.$id.'={zoom:'.$data->zoom.',center:new google.maps.LatLng('.$data->latitude.','.$data->longitude.'),mapTypeId:google.maps.MapTypeId.'.strtoupper($data->map_type).',streetViewControl:false'.(isset($data->scrollwheel)?',scrollwheel:'.$data->scrollwheel:''). $map_custom_options . '};'
-							.'var '.$id.'=null;'
-							.'$(function(){'
-								.$id.'=new google.maps.Map(document.getElementById(\''.$id.'\'),options_'.$id.');'
-								.$categories
-								.'var infowindow = new google.maps.InfoWindow();'
-								.$markers
-								//.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
-								//.'debugger;'
-								.$map_init_js
-								. $filter_js
-							.'});'
-							.'
-							'
-						.'</script>',
-
-						
-					));
-					$map_frame = $this->site->Get_tpl_content('map', $vars);
-					$map_frame_ = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
-					.'</div>' 
-					. '<div  id="map_filter_'.$id.'">'. $filter . '</div>';
-				}
-				if ($map_type == 'yandex') {
-					$vars = array_merge($vars, array(
-						'id' => $id,
-						'filter_el_id' => 'map_filter_' . $id,
-						'width' => $w,
-						'height' => $h,
-						'style' => $gmaps[2][$a],
-						'filter' => $categories_exist,
-						'js' => '<script type="text/javascript">'
-							.$map_markers
-							.'ymaps.ready(yandex_map_init_'.$id.');
-							function yandex_map_init_'.$id.' () {
-								var myMap = new ymaps.Map("'.$id.'", {
-									center: ['.$data->latitude.', '.$data->longitude.'],
-									zoom: ' . $data->zoom . ',
-									type: "' . $data->map_type . '", 
-									behaviors: ["default", "scrollZoom"]
-								});
-								myMap.controls
-								.add("zoomControl")
-								.add("typeSelector");
-								'
-								.$categories
-								.$markers
-								//.'debugger;'
-								.$filter_js
-								.'
-							}
-							'
-						.'</script>',
-
-						
-					));
-					$map_frame = $this->site->Get_tpl_content('map', $vars);
-					$map_frame_ = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmaps[2][$a].'">'
-					.'</div>'
-					. '<div  id="map_filter_'.$id.'">'. $filter . '</div>';
-				}
-				
-				$text = preg_replace('#'.preg_quote($gmaps[0][$a], "#").'#m', $map_frame, $text, 1);
-			}
+		
+		if (strlen($text) > 7000) {
+			//ini_set('pcre.backtrack_limit', 2000000);
+			ini_set("pcre.backtrack_limit", "23001337");
+			ini_set("pcre.recursion_limit", "23001337");	
+		}
+		$this->_map_types = array();
+		if (!empty($text)) {
+			$text = preg_replace_callback($google_map_object, array($this, '_replace_google_map_object_callback'), $text);
+		}
+		
+		if (!empty($this->_map_types)) {
 			$this->site->Add_script($this->cfg['directories']['media'] . '/maps.js');
-			foreach ($map_types as $key => $map_type) {
+			foreach ($this->_map_types as $key => $map_type) {
 				switch ($map_type) {
 					case 'google':
 						$this->site->Add_script('http://maps.google.com/maps/api/js?sensor=false');
@@ -1300,6 +1331,10 @@ final class PC_page extends PC_base {
 				}
 			}
 		}
+
+		$this->debug('preg_last_error():', 3);
+		$this->debug(preg_last_error(), 4);
+		
 		return true;
 	}
 	public function Replace_media_objects(&$text) {
