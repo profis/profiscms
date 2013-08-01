@@ -24,11 +24,13 @@ plugins/*
 themes/
 !themes/default/
 !themes/index.php
-upload/
+upload/*
 !upload/.htaccess
+!upload/web.config
 !upload/index.php
 backups/*
 !backups/.htaccess
+!backups/web.config
 !backups/index.php
 config_dev.php
 config_real.php
