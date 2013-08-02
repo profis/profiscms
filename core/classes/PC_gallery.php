@@ -2470,12 +2470,14 @@ final class PC_gallery extends PC_base {
 		unset($r);
 		$old_name = $data['filename'];
 		$extension = substr($data['filename'], strrpos($data['filename'], '.')+1);
+		$clean_name = $name;
 		$name .= '.'.$extension;
 		if ($name == $old_name) {
 			$r['errors'][] = "no_changes";
 			return $r;
 		}
 		if (isset($data['path'])) $data['path'] .= '/';
+		$main_path = $this->config['gallery_path'].$data['path'];
 		$old_full_path = $this->config['gallery_path'].$data['path'].$old_name;
 		$full_path = $this->config['gallery_path'].$data['path'].$name;
 		//check if file with new name already exists
@@ -2501,6 +2503,25 @@ final class PC_gallery extends PC_base {
 			$r['errors'][] = "database";
 			return $r;
 		}
+		$files_to_rename = array(
+			$main_path . str_replace('.' . $extension, '._pc_original_.' . $extension, $old_name) => $main_path . $clean_name . '._pc_original_.' . $extension
+		);
+				
+		if ($this->filetypes[$extension] == 'image') {
+			foreach (glob($main_path.'thumb-*') as $thumbnail_path) {
+				if (is_dir($thumbnail_path)) {
+					$files_to_rename[$thumbnail_path . '/' . $old_name] = $thumbnail_path  . '/' . $name;
+					$files_to_rename[$thumbnail_path . '/' . $old_name . '.txt'] = $thumbnail_path  . '/' . $name . '.txt';
+				}
+			}
+		}
+		foreach ($files_to_rename as $old_name => $new_name) {
+			if (is_file($old_name)) {
+				@rename($old_name, $new_name);
+			}
+		}
+		$this->debug('Files_to_rename:', 2);
+		$this->debug($files_to_rename, 3);
 		return array('success'=>true,'name'=>$name);
 	}
 	// thumbnails
