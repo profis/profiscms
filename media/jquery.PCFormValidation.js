@@ -121,7 +121,7 @@ $(document).ready(function(){
 		});
 		var challengeField = $("input#recaptcha_challenge_field");
 		var responseField = $("input#recaptcha_response_field");
-		if (formValid && challengeField && responseField) {
+		if (formValid && challengeField && responseField && challengeField.length) {
 			var html = $.ajax({
 				type: "POST",
 				url: PC_base_url + "api/plugin/forms/recaptcha/validate",

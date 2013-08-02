@@ -292,7 +292,7 @@ final class PC_page extends PC_base {
 		if (v($this->cfg['do_not_process_forms'])) {
 			return;
 		}
-		$this->debug("Process_forms($currentFormSubmitHash)");
+		$this->debug("Process_forms(current_hash: $currentFormSubmitHash, next_hash: $nextFormSubmitHash)");
 		$dom = new DOMDocument();
 		/* Create a fictional XHTML document with just the contents of $text in the body.
 		 * Both DOCTYPE and character set definition are necessary for all the magic to work properly.
@@ -316,6 +316,7 @@ final class PC_page extends PC_base {
 		//$this->_form_count = $formElements->length;
 		
 		if ($formElements->length) {
+			$this->debug($this->get_callstack());
 			if ($this->debug) {
 				//@file_put_contents($this->cfg['path']['logs'] . 'text_2.html', $text);
 			}
@@ -722,7 +723,9 @@ final class PC_page extends PC_base {
 							
 							PC_utils::debugEmail($pageForm['submitEmails'], $message, $textBody);
 							
-							$this->debug("sending to:" . $pageForm['submitEmails'], 4);
+							$this->debug("sending to:", 4);
+							$this->debug($pageForm['submitEmails'], 4);
+							//$this->debug("email text:" . $textBody, 4);
 							
 							foreach ($pageForm['submitEmails'] as $submitEmail) {
 								$mail->AddAddress($submitEmail);
@@ -753,6 +756,18 @@ final class PC_page extends PC_base {
 						}
 						$this->site->Register_data('saved_form', $pageForm);
 					}
+					$this->debug('$pageForm:', 2);
+					$this->debug($pageForm, 3);
+				}
+				else {
+					//array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == $currentFormSubmitHash)
+					if (!array_key_exists($pageForm['idHash'], $_POST)) {
+						$this->debug(":( {$pageForm['idHash']} is not set in POST", 3);
+					}
+					elseif($_POST[$pageForm['idHash']] != $currentFormSubmitHash) {
+						$this->debug(":( $currentFormSubmitHash != {$_POST[$pageForm['idHash']]}", 3);
+					}
+					
 				}
 			}
 			
@@ -800,8 +815,15 @@ final class PC_page extends PC_base {
 			#
 			$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
 			if ($this->_form_count) {
-				$_SESSION['formSubmitHash'] = $nextFormSubmitHash;
-				$this->debug("_SESSION['formSubmitHash'] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
+				if (v($this->_next_form_submit_hash_already_set)) {
+					$this->debug("_SESSION['formSubmitHash'] is already set in this request", 1);
+				}
+				else {
+					$this->_next_form_submit_hash_already_set = true;
+					$_SESSION['formSubmitHash'] = $nextFormSubmitHash;
+					$this->debug("_SESSION['formSubmitHash'] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
+				}
+				
 			}
 			
 			$this->Replace_google_map_objects($text);
