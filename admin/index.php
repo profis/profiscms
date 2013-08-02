@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  
 require_once 'admin.php';
-
+header("Content-Type: text/html; charset=utf-8");
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -108,6 +108,7 @@ require_once 'admin.php';
 	PC.version = '<?php echo PC_VERSION; ?>';
 	</script>
 	<script type="text/javascript" src="tiny_mce/tiny_mce_src.js"></script>
+<!--	<script type="text/javascript" src="tinymce/tinymce.js"></script>-->
 	<script type="text/javascript" src="js/pack.scripts.php"></script>
 </body>
 </html>

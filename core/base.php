@@ -23,6 +23,8 @@ if (!defined('PC_VERSION')) {
 
 	class PC_app {
 		static $cfg;
+		static $content_type = "";
+		//static $content_type = "text/html; charset=utf-8";
 	}
 	//error handling
 	require('error_handling.php');
