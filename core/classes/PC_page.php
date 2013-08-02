@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
 final class PC_page extends PC_base {
+	const PAGE_BREAK = '╬';
 	public  $text,
 			$data,
 			$page_data,
@@ -105,6 +106,22 @@ final class PC_page extends PC_base {
 		$this->debug($data, 6);
 		$this->core->Parse_data_str($data['routes'], '▓', '░');
 		$this->core->Parse_data_str($data['permalinks'], '▓', '░');
+		
+		//pc_page_break
+		$page_parts = explode(self::PAGE_BREAK, $data['text']);
+		$page_part_count = count($page_parts);
+		if ($page_part_count > 1) {
+			$page = v($_GET['page'], 1);
+			if (isset($page_parts[$page - 1])) {
+				$data['text'] = $page_parts[$page - 1];
+				$data['text'] = $this->site->Get_tpl_content('text_page', array(
+					'text' => $data['text'],
+					'total_pages' => $page_part_count
+				));
+			}
+		}
+		
+		
 		$this->Parse_html_output($data['text'], $data['info'], $data['info2'], $data['info3']);
 		$this->Parse_html_output($data['description'], $data['keywords'], $data['title']);
 		//save route path

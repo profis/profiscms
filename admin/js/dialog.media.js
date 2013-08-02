@@ -703,7 +703,7 @@ PC.dialog.media = {
 				+'<param name="movie" value="'+ src +'"></param>'
 				+'<param name="allowFullScreen" value="true"></param>'
 				+'<param name="allowscriptaccess" value="always"></param>'
-				+'<embed src="'+ src +'" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="'+ w +'" height="'+ h +'"></embed>'
+				+'<embed allowfullscreen="true" src="'+ src +'" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="'+ w +'" height="'+ h +'"></embed>'
 			+'</object>';
 			dialog.update_code(source, preview_mode);
 			return source;

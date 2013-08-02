@@ -8,15 +8,15 @@
 	<?php
 	foreach ($items as $key => $item) {
 		$li_classes = array ();
-		if ($item['disabled']) {
+		if (v($item['disabled'])) {
 			$li_classes[] = 'disabled';
 		}
-		if ($item['active']) {
+		if (v($item['active'])) {
 			$li_classes[] = 'active';
 		}
 		$li_class = implode(' ', $li_classes);
 	?>
-		<li class="<?php echo $li_class ?>"><a href="<?php echo $item['link'] ?>"><?php echo $item['label'] ?> </a></li>
+		<li class="<?php echo $li_class ?>"><a href="<?php echo v($item['link']) ?>"><?php echo $item['label'] ?> </a></li>
 	<?php
 	}
 	?>  
