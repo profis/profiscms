@@ -40,7 +40,7 @@ final class PC_user extends PC_base {
 	}
 	public function Refresh() {
 		$this->debug("Refresh()");
-		$this->Current_secure = md5($_SERVER['REMOTE_ADDR'].$_SERVER['HTTP_USER_AGENT']);
+		$this->Current_secure = md5($_SERVER['REMOTE_ADDR'].v($_SERVER['HTTP_USER_AGENT']));
 		$this->Post_login = v($_POST['user_login']);
 		$this->Post_password = $this->Sanitize('password', v($_POST['user_password']));
 		$this->Session_login = v($_SESSION['user_login']);
