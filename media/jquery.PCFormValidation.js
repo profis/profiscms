@@ -119,8 +119,8 @@ $(document).ready(function(){
 			inputValid = validate(this, true);
 			formValid = formValid && inputValid;
 		});
-		var challengeField = $("input#recaptcha_challenge_field");
-		var responseField = $("input#recaptcha_response_field");
+		var challengeField = $(this).find("input#recaptcha_challenge_field");
+		var responseField = $(this).find("input#recaptcha_response_field");
 		if (formValid && challengeField && responseField && challengeField.length) {
 			var html = $.ajax({
 				type: "POST",
