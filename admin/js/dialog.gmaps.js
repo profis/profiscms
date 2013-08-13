@@ -760,7 +760,14 @@ PC.dialog.gmaps = {
 								height += h_unit;
 							}
 							var pos = PC.dialog.gmaps.panel.map.getCenter();
-							var serializer = new Ext.tree.JsonTreeSerializer(PC.dialog.gmaps.categories_panel.tree);
+							var new_categories = '[]';
+							if (PC.dialog.gmaps.categories_panel.tree.rendered) {
+								var serializer = new Ext.tree.JsonTreeSerializer(PC.dialog.gmaps.categories_panel.tree);
+								new_categories = Ext.util.JSON.decode(serializer.toString(true));
+							}
+							else if (PC.dialog.gmaps.original_options_json) {
+								new_categories = Ext.util.JSON.decode(PC.dialog.gmaps.original_options_json);
+							}
 							//serializer.jsonAttributes.push('text');
 							//debugger;
 							var map_data = {
@@ -771,7 +778,7 @@ PC.dialog.gmaps = {
 								map_options: PC.dialog.gmaps.window._gmap_map_options.getValue(),
 								marker_options: PC.dialog.gmaps.window._gmap_marker_options.getValue(),
 								marker_image: PC.dialog.gmaps.window._gmap_marker_image.getValue(),
-								categories: Ext.util.JSON.decode(serializer.toString(true)),
+								categories: new_categories,
 								markers: PC.dialog.gmaps.markers_crud.get_store_data()
 							};
 							//debugger;
@@ -829,7 +836,9 @@ PC.dialog.gmaps = {
 		PC.dialog.gmaps.window._gmap_map_options.setValue(options.map_options);
 		PC.dialog.gmaps.window._gmap_marker_options.setValue(options.marker_options);
 		PC.dialog.gmaps.window._gmap_marker_image.setValue(options.icon);
+		this.original_options_json = Ext.util.JSON.encode([]);
 		if (options.categories) {
+			this.original_options_json = Ext.util.JSON.encode(options.categories);
 			PC.dialog.gmaps.categories_panel.set_children(options.categories);
 		}
 		if (!options.markers) {
