@@ -200,6 +200,7 @@ abstract class PC_model extends PC_base{
 			return $this->get_data($id, $params);
 		}
 		else {
+			$params['limit'] = 1;
 			return $this->get_all($params);
 		}
 		
@@ -459,8 +460,23 @@ abstract class PC_model extends PC_base{
 					
 				}
 				else {
-					$where_strings[] = " $key " . $this->sql_parser->in($value);
-					$query_params = array_merge($query_params, $value);
+					if (is_string($key)) {
+						$where_strings[] = " $key " . $this->sql_parser->in($value);
+						$query_params = array_merge($query_params, $value);
+					}
+					else {
+						$field = v($value['field'], '');
+						$op = v($value['op'], '=');
+						if (isset($value['value'])) {
+							$value = $value['value'];
+							if (!is_array()) {
+								$query_params[] = $value;
+							}
+							else{
+								$query_params = array_merge($query_params, $value);
+							}
+						}
+					}
 				}
 			}
 			$where_clause = implode(' AND ', $where_strings);
