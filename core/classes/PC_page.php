@@ -316,7 +316,7 @@ final class PC_page extends PC_base {
 		//$this->_form_count = $formElements->length;
 		
 		if ($formElements->length) {
-			$this->debug($this->get_callstack());
+			//$this->debug($this->get_callstack());
 			if ($this->debug) {
 				//@file_put_contents($this->cfg['path']['logs'] . 'text_2.html', $text);
 			}
@@ -355,10 +355,19 @@ final class PC_page extends PC_base {
 				preg_match_all('/name\s?=\s?"([^"]+)"/ui', $innerHTML, $name_matches);
 				$pageForm['_names'] = $name_matches[1];
 				
+				//$this->debug("matched names:", 4);
+				//$this->debug($pageForm['_names'], 5);
+				
+				$matched_page_form_names = $pageForm['_names'];
+				
 				//echo remove_utf8_accents('Rückfahrt');
 				foreach ($pageForm['_names'] as $key => $value) {
 					$pageForm['_names'][$key] = remove_utf8_accents($value);
 				}
+				
+				//$this->debug("names after removing accents:", 4);
+				//$this->debug($pageForm['_names'], 5);
+				
 				//print_pre($pageForm['_names']);
 				
 				foreach (array('input','textarea','select') as $tagName) {
@@ -382,7 +391,6 @@ final class PC_page extends PC_base {
 										value="manual_challenge" />
 								 </noscript>');
 								
-								$field->setAttribute('value', 'martynas');
 								$field->parentNode->replaceChild($template, $field);
 								
 								$pageForm['fields']['captcha'] = array(
@@ -468,15 +476,33 @@ final class PC_page extends PC_base {
 					
 					$new_fields = array();
 					
-					foreach ($pageForm['_names'] as $_name) {
+					foreach ($pageForm['_names'] as $kk => $_name) {
+						$mathed_name = false;
+						if (isset($matched_page_form_names[$kk])) {
+							$mathed_name = $matched_page_form_names[$kk];
+						}
 						if (isset($pageForm['fields'][$_name]) || array_key_exists($_name, $pageForm['fields'])) {
+							$this->debug(" :) $_name is set in _names ", 6);
 							$new_fields[$_name] = $pageForm['fields'][$_name];
 							unset($pageForm['fields'][$_name]);
 						}
+						elseif ($mathed_name and isset($pageForm['fields'][$mathed_name]) || array_key_exists($mathed_name, $pageForm['fields'])) {
+							$this->debug(" :) $kk is set in matched_page_form_names ", 6);
+							$new_fields[$mathed_name] = $pageForm['fields'][$mathed_name];
+							unset($pageForm['fields'][$mathed_name]);
+						}
 						else {
 							//echo "$_name is not set in _names ";
+							$this->debug(" :( $_name is not set in _names ", 6);
 						}
 					}
+					
+					//$this->debug("new_fields keys:", 4);
+					//$this->debug(array_keys($new_fields), 5);
+					
+					//$this->debug("pageForm['fields'] keys:", 4);
+					//$this->debug(array_keys($pageForm['fields']), 5);
+					
 					$new_fields = array_merge($new_fields, $pageForm['fields']);
 					$pageForm['fields'] = $new_fields;
 					
