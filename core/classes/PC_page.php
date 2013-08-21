@@ -1866,7 +1866,7 @@ final class PC_page extends PC_base {
 		return $this->Get_submenu_part($id, $fields, $limit, $include_content, $include_nomenu, $order, $function_params);
 	}
 	
-	public function Get_submenu_part($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr", $function_params = array()) {
+	public function Get_submenu_part($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr", $function_params = array(), $addWhere = null) {
 		if (!empty($fields) and !in_array('permalink', $fields)) {
 			$fields[] = 'permalink';
 		}
@@ -1952,7 +1952,13 @@ final class PC_page extends PC_base {
 		else{
 			$additional_where .= " and (p.date_from is null or p.date_from<='$now') and (p.date_to is null or p.date_to>='$now')";
 		}
-		
+
+        if ($addWhere) {
+            foreach ($addWhere as $sql => $param) {
+                $additional_where .= " and $sql";
+                $additional_params[] = $param;
+            }
+        }
 
 		
 		$query = "SELECT ".($paging?'SQL_CALC_FOUND_ROWS ':''). 'p.source_id,' . (!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
@@ -1968,7 +1974,6 @@ final class PC_page extends PC_base {
 		. $additional_where
 		." GROUP BY p.id"
 		." $order_by ".(($limit_s)?" limit $limit_s":"");
-		
 		$r = $this->prepare($query);
 		$params = array();
 		if (!is_array($id)) $params[] = $id;

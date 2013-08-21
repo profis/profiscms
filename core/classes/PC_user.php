@@ -9,7 +9,8 @@
 	public function Edit() {}
 }*/
 define("PC_UF_DEFAULT",			0x00000000);
-define("PC_UF_MUST_ACTIVATE",			0x00000001);
+//define("PC_UF_MUST_ACTIVATE",			0x00000001);
+define("PC_UF_MUST_ACTIVATE",			0);
 define("PC_UF_CONFIRM_PASS_CHANGE",		0x00000002);
 
 final class PC_user extends PC_base {
@@ -145,6 +146,7 @@ final class PC_user extends PC_base {
 				$this->ID = $data['id'];
 				$this->LoginName = $this->Post_login;
 				$this->Logged_in = true;
+                $this->Get_data();
 				if( isset($_REQUEST["remember"]) && $_REQUEST["remember"] )
 					$this->SetCookie();
 				return true;
@@ -440,7 +442,7 @@ final class PC_user extends PC_base {
 		
 		$style= '';
 		$body = $this->core->Get_variable('pass_change_confirmation_code', null, 'site_users_pass_change').': '.$code;
-			
+
 		$params = array(
 			'subject' => $subject,
 			'from_email' => $from_email,
