@@ -62,6 +62,9 @@ final class PC_user extends PC_base {
 	public function ChangePassword($pass, $user_id=0) {
 		if ($user_id == 0) $user_id = $this->ID;
 		$pass_code = $this->Sanitize('password', $pass);
+		if (emty($pass_code)) {
+			return false;
+		}
 		$r = $this->prepare("UPDATE {$this->db_prefix}site_users SET password=? WHERE id=?");
 		if( !$r->execute(array($pass_code, $user_id)) )
 			return false;

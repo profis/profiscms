@@ -344,29 +344,44 @@ final class PC_page extends PC_base {
 				$innerHTML = '';
 				$children = $form->childNodes; 
 				foreach ($children as $child) { 
-					//$tmp_doc = new DOMDocument();				
-					$tmp_doc = new DOMDocument('1.0', 'utf-8');
+					$tmp_doc = new DOMDocument();
+					$tmp_doc->preserveWhiteSpace = false; 
+					//$tmp_doc = new DOMDocument('1.0', 'utf-8');
+					//$child->setAttribute ("content","UTF-8");
 					$tmp_doc->appendChild($tmp_doc->importNode($child,true));        
-					$innerHTML .= $tmp_doc->saveHTML(); 
+					//$innerHTML .= $tmp_doc->saveHTML(); 
+					$innerHTML .= html_entity_decode($tmp_doc->saveHTML(),ENT_QUOTES,"UTF-8");
 				} 
 				//echo remove_utf8_accents($innerHTML);
 				
+				//$innerHTML = mb_convert_encoding($innerHTML, 'HTML-ENTITIES', 'UTF-8');
+				//$innerHTML = iconv('ASCII', 'UTF-8//IGNORE', $innerHTML);
+				
 				$name_matches = array();
 				preg_match_all('/name\s?=\s?"([^"]+)"/ui', $innerHTML, $name_matches);
+				//preg_match_all('/name\s?=\s?"([\p{L}\p{Z}\p{N}\-\,\.\s]+)"/ui', $innerHTML, $name_matches);
+				//$innerHTML = '<input style="width: 250px;" title="Vardas, pavardė" required="required" name="pavardė" type="text" data-msg-required="Šis laukas privalomas.">';
+				$this->debug("mb_detect_encoding(string_for_matching): " . mb_detect_encoding($innerHTML), 8);
+				//preg_match_all('/name\s?=\s?"([\p{L}]+)"/ui', $innerHTML, $name_matches);
+				
+				//print_r($name_matches);
+				//exit;
+				
 				$pageForm['_names'] = $name_matches[1];
 				
-				//$this->debug("matched names:", 4);
-				//$this->debug($pageForm['_names'], 5);
+				$this->debug("matched names:", 4);
+				$this->debug($pageForm['_names'], 5);
 				
 				$matched_page_form_names = $pageForm['_names'];
 				
 				//echo remove_utf8_accents('Rückfahrt');
 				foreach ($pageForm['_names'] as $key => $value) {
-					$pageForm['_names'][$key] = remove_utf8_accents($value);
+					$pageForm['_names'][$key] = preg_replace('/\[\]$/ui', '', $pageForm['_names'][$key], -1, $multiple);
+					$pageForm['_names'][$key] = trim($pageForm['_names'][$key]);
 				}
 				
-				//$this->debug("names after removing accents:", 4);
-				//$this->debug($pageForm['_names'], 5);
+				$this->debug("names after processing:", 4);
+				$this->debug($pageForm['_names'], 5);
 				
 				//print_pre($pageForm['_names']);
 				
@@ -374,8 +389,9 @@ final class PC_page extends PC_base {
 					$inputs = $form->getElementsByTagName($tagName);
 					for ($j=0; $j<$inputs->length; $j++) {
 						$field = $inputs->item($j);
-						$fieldName = preg_replace('/\[\]$/', '', $field->getAttribute('name'), -1, $multiple);
+						$fieldName = preg_replace('/\[\]$/ui', '', $field->getAttribute('name'), -1, $multiple);
 						$fieldName = trim($fieldName);
+						$this->debug('$fieldName: ' . $fieldName, 5);
 						if ($tagName == 'input' and $field->getAttribute('type') == 'captcha') {
 							try {
 								$template = $dom->createDocumentFragment();
@@ -481,13 +497,36 @@ final class PC_page extends PC_base {
 						if (isset($matched_page_form_names[$kk])) {
 							$mathed_name = $matched_page_form_names[$kk];
 						}
+						/*
+						foreach ($pageForm['fields'] as $field => $field_data) {
+							
+							ob_start();
+							var_dump($field);
+							$s1 = ob_get_clean();
+							ob_start();
+							var_dump($_name);
+							$s2 = ob_get_clean();
+							ob_start();
+							var_dump($mathed_name);
+							$s3 = ob_get_clean();
+							
+							$this->debug('attribute->name:' . $s1, 8);
+							$this->debug('processed name from preg_match_all' . $s2, 8);
+							$this->debug('raw name from preg_match_all' . $s3, 8);
+							$this->debug("mb_detect_encoding($field): " . mb_detect_encoding($field), 8);
+							$this->debug("mb_detect_encoding($_name): " . mb_detect_encoding($_name), 8);
+							$this->debug("mb_detect_encoding($mathed_name): " . mb_detect_encoding($mathed_name), 8);
+							$this->debug("'$field' == '$_name': " . ($field == $_name), 8);
+							$this->debug("strcmp ('$field', '$_name'): " . strcmp ( $field, $_name), 8);
+							 
+						}*/
 						if (isset($pageForm['fields'][$_name]) || array_key_exists($_name, $pageForm['fields'])) {
 							$this->debug(" :) $_name is set in _names ", 6);
 							$new_fields[$_name] = $pageForm['fields'][$_name];
 							unset($pageForm['fields'][$_name]);
 						}
 						elseif ($mathed_name and isset($pageForm['fields'][$mathed_name]) || array_key_exists($mathed_name, $pageForm['fields'])) {
-							$this->debug(" :) $kk is set in matched_page_form_names ", 6);
+							$this->debug(" :) $mathed_name is in matched_page_form_names ", 6);
 							$new_fields[$mathed_name] = $pageForm['fields'][$mathed_name];
 							unset($pageForm['fields'][$mathed_name]);
 						}
@@ -497,11 +536,11 @@ final class PC_page extends PC_base {
 						}
 					}
 					
-					//$this->debug("new_fields keys:", 4);
-					//$this->debug(array_keys($new_fields), 5);
+					$this->debug("new_fields keys:", 4);
+					$this->debug(array_keys($new_fields), 5);
 					
-					//$this->debug("pageForm['fields'] keys:", 4);
-					//$this->debug(array_keys($pageForm['fields']), 5);
+					$this->debug("pageForm['fields'] keys:", 4);
+					$this->debug(array_keys($pageForm['fields']), 5);
 					
 					$new_fields = array_merge($new_fields, $pageForm['fields']);
 					$pageForm['fields'] = $new_fields;
