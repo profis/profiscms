@@ -28,11 +28,20 @@ $localizeAt = count($files);
 $files = array_merge($files, glob('Ext.ux.*.js'));
 $pc_ux_files = glob('PC.ux.*.js');
 
-$key = array_search('PC.ux.crud.js', $pc_ux_files);
-if ($key !== false) {
-	$files[] = $pc_ux_files[$key];
-    unset($pc_ux_files[$key]);
+$front_pc_files = array(
+	'PC.ux.LocalCrud.js',
+	'PC.ux.crud.js'
+);
+
+foreach ($front_pc_files as $value) {
+	$key = array_search($value, $pc_ux_files);
+	if ($key !== false) {
+		$files[] = $pc_ux_files[$key];
+		unset($pc_ux_files[$key]);
+	}
 }
+
+
 $files = array_merge($files, $pc_ux_files);
 $files = array_merge($files, glob('PC.*.js'));
 ////////$files = array_merge($files, glob('Ext.ux.*.js'), glob('ProfisCMS.*.js'), glob('PC.*.js'));

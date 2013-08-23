@@ -1,71 +1,6 @@
 Ext.namespace('PC.ux');
 
-var ln =  {
-	en: {
-		title: 'Crud panel',
-		_delete: {
-			confirm_title: 'Deleting item',
-			confirm_message: 'Delete item?'
-		},
-		button: {
-			//_delete: 'Delete item'
-		},
-		error: {
-			json: 'Invalid JSON data returned.',
-			connection: 'Connection error.',
-			did_not_save: 'Data has not been saved.',
-			did_not_delete: 'Data were not deleted.',
-			name: 'Length must be between 2 and 100 symbols',
-			password: 'Length must be between 8 and 30 symbols',
-			unique: 'This value is already taken',
-			required: 'This field is required'
-		}
-	},
-	lt: {
-		title: 'Administravimo panelė',
-		_delete: {
-			confirm_title: 'Trynimas',
-			confirm_message: 'Trinti?'
-		},
-		button: {
-			
-		},
-		error: {
-			json: 'Neteisingi JSON duomenys.',
-			connection: 'Ryšio klaida.',
-			did_not_save: 'Duomenys nebuvo išsaugoti.',
-			did_not_delete: 'Duomenys nebuvo ištrinti.',
-			name: 'Ilgumas turi būti tarp 2 ir 100 simbolių',
-			password: 'Ilgumas turi būti tarp 8 ir 30 simbolių',
-			unique: 'Ši reikšmė jau užimta',
-			required: 'Privalomas laukas'
-		}
-	},
-	ru: {
-		title: 'Панель администрирования',
-		_delete: {
-			confirm_title: 'Удаление',
-			confirm_message: 'Удалить?'
-		},
-		button: {
-			
-		},
-		error: {
-			json: 'Неверные данные JSON.',
-			connection: 'Ошибка соединения.',
-			did_not_save: 'Данные не были сохранены.',
-			did_not_delete: 'Данные не были удалены.',
-			name: 'Длина должна быть от 2 до 100 символов',
-			password: 'Длина должна быть от 8 до 30 символов',
-			unique: 'Это значение уже занято',
-			required: 'Это поле обязательно для заполнения'
-		}
-	}
-}
-
-PC.utils.localize('pc_ux_crud', ln);
-
-PC.ux.crud = Ext.extend(Ext.Panel, {
+PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 	api_url: '',
 	per_page: false,
 	auto_load: true,
@@ -79,40 +14,6 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 
 	layout: 'fit',
 
-    constructor: function(config) {
-		this.ln = this.get_ln();
-
-		if (config.api_url) {
-			this.api_url = config.api_url;
-		}
-
-		if (config.ln) {
-			Ext.apply(this.ln, config.ln);
-			delete config.ln;
-		}
-
-		config = Ext.apply({
-			tbar: this.get_tbar(),
-			items: this.get_items()
-        }, config);
-
-        PC.ux.crud.superclass.constructor.call(this, config);
-		
-		this.set_titles();
-    },
-	
-	get_items: function() {
-		return this.get_grid();
-	},
-	
-	get_ln: function() {
-		return PC.i18n.pc_ux_crud;
-	},
-	
-	set_titles: function() {
-		this.title = this.ln.title;
-	},
-	
 	get_store: function(){
 		var store_url =  this.api_url +'get/';
 		if (this.store_admin_ln) {
@@ -134,22 +35,8 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		}
 		return this.store;
 	},
-	
-	get_store_fields: function() {
-		return [
-				'id'
-		];
-	},
-	
-	get_grid_selection_model: function() {
-		return new Ext.grid.RowSelectionModel({
-			listeners: {
-				selectionchange: this.get_grid_selection_change_handler()
-			}
-		});
-	},
-	
-	get_cell_dblclick_handler: function() {
+
+    get_cell_dblclick_handler: function() {
 		if (this.row_editing) {
 			return false;
 		}
@@ -169,11 +56,7 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		}
 		return listeners;
 	},
-	
-	get_grid_config: function() {
-		return {};
-	},
-	
+		
 	get_grid: function () {
 		var plugins = [];
 		var store =  this.get_store();
@@ -220,190 +103,10 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		return this.grid;
 	},
 	
-	get_tbar_filters: function() {
-		return [];
-	},
-	
-	get_tbar_items: function() {
-		var items = this.get_tbar_buttons();
-		var filters = this.get_tbar_filters();
-		if (filters && filters.length) {
-			/*keyup: function(field, event) {
-											if(event.getKey() == 13) {
-												applyFilter(mytab);
-											}
-										}
-			*/
-			Ext.each(filters, function(filter, index) {
-				if (filter._filter_name) {
-					if (!filter.listeners) {
-						filter.listeners = {};
-					}
-					if (!filter.listeners.keyup) {
-						filters[index].enableKeyEvents = true,
-						filters[index].listeners.keyup = Ext.createDelegate(function(field, event) {
-							if(event.getKey() == 13) {
-								this.apply_filters();
-							}
-						}, this)
-					};
-				}
-			}, this);
-			items.push({xtype:'tbfill'});
-			items = items.concat(filters, this.get_filter_buttons());
-		}
-		return items;
-	},
-	
-	apply_filters: function() {
-		var button_container = this.get_button_container();
-		if (this.tbar_filter_refs) {
-			var filter_count = 0;
-			Ext.each(this.tbar_filter_refs, function(filter_ref, index) {
-				if (button_container[filter_ref]) {
-					var filter_value = button_container[filter_ref].getValue();
-					if (button_container[filter_ref]['_filter_name'] && filter_value) {
-						filter_count++;
-						this.store.setBaseParam('filters['+button_container[filter_ref]['_filter_name']+']', filter_value);
-					}
-				}
-			}, this);
-			if (filter_count) {
-				if (!this.store_original_base_params) {
-					this.store_original_base_params = this.store.baseParams;
-				}
-				this.store.load({
-					params: {
-						start: 0 // reset the start to 0 since you want the filtered results to start from the first page
-					}
-				});
-			}
-		}
-	},
-	
-	remove_filters: function() {
-		//dialog.store.setBaseParam('site', dialog.Initial_site_value);
-		if (this.store_original_base_params) {
-			//this.store.baseParams = this.store_original_base_params;
-		}
-		var button_container = this.get_button_container();
-		if (this.tbar_filter_refs) {
-			Ext.each(this.tbar_filter_refs, function(filter_ref, index) {
-				if (button_container[filter_ref]) {
-					var initial_value = '';
-					if (button_container[filter_ref].initial_value) {
-						 initial_value = button_container[filter_ref].initial_value;
-					}
-					button_container[filter_ref].setValue(initial_value);
-					this.store.setBaseParam('filters['+button_container[filter_ref]['_filter_name']+']', undefined);
-				}
-			}, this);
-		}
 
-		this.store.load({
-			params: {
-				start: 0 // reset the start to 0 since you want the filtered results to start from the first page
-			}
-		});
-		//filters.order_id.setValue('');
-		//filters.search_phrase.setValue('');
-		//filters.date_from.setValue(initial_date_from);
-		//filters.date_to.setValue(initial_date_to);
-	},
+
 	
-	get_filter_buttons: function() {
-		return [
-			{	icon:'images/zoom.png',
-				handler: Ext.createDelegate(this.apply_filters, this)
-			},
-			{	icon:'images/zoom_out.png',
-				handler: Ext.createDelegate(this.remove_filters, this)
-			}
-		];
-	},
-	
-	get_tbar_buttons: function() {
-		var buttons =  [
-			this.get_button_for_add(),
-			this.get_button_for_edit(),
-			this.get_button_for_del()
-		];
-		if (this.sortable) {
-			buttons.push(this.get_button_for_move_up());
-			buttons.push(this.get_button_for_move_down());
-		}
-		return buttons;
-	},
-	
-	get_tbar: function () {
-		return this.get_tbar_items();
-	},
-	
-	get_button_for_add: function() {
-		return {	
-			ref: '../action_add',
-			text: this.ln.button._add?this.ln.button._add:PC.i18n.add,
-			icon: 'images/add.png',
-			handler: this.get_button_handler_for_add()
-		}
-	},
-	
-	button_handler_for_edit: function() {
-		if (this.selected_record) {
-			this.show_edit_window(this.selected_record);
-		}
-	},
-	
-	get_button_for_edit: function() {
-		return {	
-			ref: '../action_edit',
-			text: this.ln.button._edit?this.ln.button._edit:PC.i18n.edit,
-			icon: 'images/pencil.png',
-			disabled: true,
-			handler: Ext.createDelegate(this.button_handler_for_edit, this)
-		}
-	},
-	
-	get_button_for_del: function() {
-		return {	
-			ref: '../action_del',
-			text: this.ln.button._delete?this.ln.button._delete:PC.i18n.del,
-			icon: 'images/delete.png',
-			handler: this.get_button_handler_for_delete(),
-			disabled: true,
-			_multi_select: true
-		};
-	},
-	
-	get_button_for_move_up: function() {
-		return {	
-			ref: '../action_move_up',
-			text: this.ln.button._move_up?this.ln.button._move_up:PC.i18n.move_up,
-			icon: 'images/arrow-up.gif',
-			disabled: true,
-			_multi_select: true,
-			handler: Ext.createDelegate(this.button_handler_for_move_up, this)
-		}
-	},
-			
-	get_button_for_move_down: function() {
-		return {	
-			ref: '../action_move_down',
-			text: this.ln.button._move_down?this.ln.button._move_down: PC.i18n.move_down,
-			icon: 'images/arrow-down.gif',
-			disabled: true,
-			_multi_select: true,
-			handler: Ext.createDelegate(this.button_handler_for_move_down, this)
-		}
-	},		
-	
-	button_handler_for_move_up: function() {
-		this.move_selected_rows('up');
-	},	
-			
-	button_handler_for_move_down: function() {
-		this.move_selected_rows('down');
-	},			
+		
 	
 	move_selected_rows: function(direction){
 		direction = direction || 'up';
@@ -472,18 +175,6 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 	
 	get_add_form_fields: function() {
 		return [];
-	},
-	
-	get_edit_form_fields: function(data) {
-		var fields = this.get_add_form_fields(true);
-		if (data) {
-			Ext.each(fields, function(field) {
-				if (data[field._fld]) {
-					field.value = data[field._fld];
-				}
-			})
-		}
-		return fields;
 	},
 	
 	_render_cell_yes_no: function(value, metaData, record, rowIndex, colIndex, store) {
@@ -577,7 +268,6 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 	},
 	
 	get_button_handler_for_add: function() {
-		
 		this.ajax_add_respone_handler = Ext.createDelegate(function(opts, success, response) {
 			if (success && response.responseText) {
 				try {
@@ -711,32 +401,6 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		});
 	},
 	
-	show_edit_window: function(record, ev) {
-		if (!record) return false;
-		//if (!record || !ev) return false;
-		//var xy = ev.getXY();
-		
-		this.edit_record = record;
-				
-		var save_handler = this.get_edit_button_handler();
-		
-		var multiln_params = {
-			title: PC.i18n.menu.rename,
-			values: record.data.names,
-			//pageX: xy[0], pageY: xy[1],
-			fields: this.get_edit_form_fields(record.data),
-			Save: save_handler,
-			no_ln_fields: this.no_ln_fields,
-			window_width: this.edit_window_width
-			//center_window: true
-		};
-		this.adjust_multiln_params(multiln_params);
-		PC.dialog.multilnedit.show(multiln_params);
-	},
-	
-	adjust_multiln_params: function(multiln_params) {
-
-	},
 	
 	get_button_handler_for_update: function() {
 		
@@ -821,63 +485,6 @@ PC.ux.crud = Ext.extend(Ext.Panel, {
 		}
 		return id_array;
 		return ids;
-	},
-	
-	get_grid_selection_change_handler: function () {
-		return Ext.createDelegate(function(selModel) {
-			this.on_grid_selection_change(selModel);
-		}, this);
-	},
-	
-	get_button_container: function() {
-		return this.grid.ownerCt;
-	},
-	
-	get_dynamic_buttons: function(button_container) {
-		if (!button_container) {
-			button_container = this;
-		}
-		var buttons = [
-			button_container.action_del,
-			button_container.action_edit,
-		];
-		if (button_container.action_move_up) {
-			buttons.push(button_container.action_move_up);
-		}
-		if (button_container.action_move_down) {
-			buttons.push(button_container.action_move_down);
-		}
-		return buttons;
-	},
-	
-	update_buttons: function(select_length, sel_model) {
-		var button_container = this.get_button_container();
-		var buttons = this.get_dynamic_buttons(button_container);
-		Ext.each(buttons, function(button, index) {
-			if (!button) {
-				return;
-			}
-			if (select_length == 1 || select_length > 1 && button._multi_select) {
-				button.enable();
-			}
-			else {
-				button.disable();
-			}
-		});
-	},
-	
-	on_grid_selection_change: function(selModel) {
-		var selected = selModel.getSelections();
-		this.selected_id = false;
-		if (selected.length) {
-			this.selected_id = selected[0].id;
-			this.selected_record = selected[0];
-		}
-		this.update_buttons(selected.length, selModel);
-	},
-	
-	get_store_data: function() {
-		return Ext.pluck(this.store.data.items, 'data');
 	},
 	
 	load_data: function(data) {

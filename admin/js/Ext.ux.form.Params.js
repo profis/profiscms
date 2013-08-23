@@ -12,7 +12,9 @@ Ext.ux.form.Params = {
 			ParentNode = dom.getParent(dialog.formItem, "FORM");
 			dialog.formItem?ParentNode.nodeName:null;
 			items.push({fieldLabel: this.ln.emails, ref: '../../_emails',xtype: 'textarea', height: 32});
-			items.push({fieldLabel: this.ln.thank_you_text, ref: '../../_thankYouText',xtype: 'textarea', height: 64});
+			items.push({fieldLabel: this.ln.thank_you_text, ref: '../../_thankYouText',xtype: 'textarea', height: 52});
+			items.push({xtype: 'box', autoEl: {cn: 'Custom emails'}});
+			items.push(new PC.formEmails({ref: '../../_custom_emails'}));
 		} else {
 			items.push({fieldLabel: this.ln.name, ref: '../../_name'});
 			items.push({fieldLabel: this.ln.title, ref: '../../_title'});
@@ -780,6 +782,8 @@ Ext.ux.form.Params = {
 							if((typeof(thankYouText) != 'undefined') && (thankYouText != '')){
 								pfs.thankYouText = thankYouText;
 							}
+							
+							pfs.custom_emails = dialog.window._custom_emails.pc_get_data();
 							dialog.formItem.setAttribute('pcformsettings', plugin._serialize(pfs));
 						} else {
 							if(type == 'select') {
@@ -827,6 +831,7 @@ Ext.ux.form.Params = {
 					if(typeof(pfs.thankYouText) != 'undefined') {
 						dialog.window._thankYouText.setValue(pfs.thankYouText);
 					}
+					dialog.window._custom_emails.store.loadData(pfs.custom_emails)
 				}
 			} else {
 				var packed = plugin._parse(dialog.getAttrib(dialog.formItem, 'data-advform'));
