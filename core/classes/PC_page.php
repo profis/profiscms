@@ -326,9 +326,12 @@ final class PC_page extends PC_base {
 				$form = $formElements->item($i);
 				$formId = $form->getAttribute('id');
 				$formSettings = json_decode($form->getAttribute('pcformsettings'), true);
+				$this->debug('$formSettings:', 3);
+				$this->debug($formSettings, 4);
 				$form->removeAttribute('pcformsettings');
 				$formSubmitEmails = array();
 				$thankYouText = '';
+				$custom_emails = array();
 				if (!is_null($formSettings)) {
 					if (array_key_exists('emails', $formSettings)) {
 						$formSubmitEmails = explode(';', $formSettings['emails']);
@@ -337,8 +340,11 @@ final class PC_page extends PC_base {
 						$thankYouText = $formSettings['thankYouText'];
 					}
 				}
+				if (isset($formSettings['custom_emails']) and is_array($formSettings['custom_emails'])) {
+					$custom_emails = $formSettings['custom_emails'];
+				}
 				$formIdHash = 'pc_' . md5($formId.'_honeypot');
-				$pageForm = array('status' => array('status' => 'initialized'), 'id' => $formId, 'idHash' => $formIdHash, 'submitEmails' => $formSubmitEmails, 'thankYouText' => $thankYouText, 'DOMElement' => &$form, 'fields' => array());
+				$pageForm = array('status' => array('status' => 'initialized'), 'id' => $formId, 'idHash' => $formIdHash, 'submitEmails' => $formSubmitEmails, 'thankYouText' => $thankYouText, 'custom_emails' => $custom_emails, 'DOMElement' => &$form, 'fields' => array());
 				
 				
 				$innerHTML = '';
@@ -755,6 +761,18 @@ final class PC_page extends PC_base {
 							$body->appendChild(new DOMElement('p', lang('form_submitted_text', $pageForm['id'], $this->page_data['name'])));
 							$textBody = lang('form_submitted_heading') . "\r\n\r\n" . lang('form_submitted_text', $pageForm['id'], $this->page_data['name']) . "\r\n\r\n";
 							$table = $body->appendChild(new DOMElement('table'));
+							$this->debug('$values:', 3);
+							$this->debug($values, 3);
+							if (!empty($pageForm['custom_emails'])) {
+								foreach ($pageForm['custom_emails'] as $custom_email_data) {
+									if (isset($values[$custom_email_data['name']]) and $values[$custom_email_data['name']] == $custom_email_data['value']) {
+										$this->debug('changing submit emails to ' . $custom_email_data['emails'], 3);
+										$pageForm['submitEmails'] = explode(';', $custom_email_data['emails']);
+										break;
+									}
+								}
+								
+							}
 							foreach ($values as $fieldName => $value) {
 								$row = $table->appendChild(new DOMElement('tr'));
 								$headCell = $row->appendChild(new DOMElement('th', lang('form_submitted_field_name', $fieldName)));
