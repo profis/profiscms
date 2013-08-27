@@ -930,6 +930,13 @@ class PC_utils {
 		require_once $cfg['path']['classes'] . 'class.phpmailer.php';
 		
 		$mail = new PHPMailer(); 
+		
+		if (isset($cfg['from_smtp']) and !empty($cfg['from_smtp'])) {
+			require_once $cfg['path']['classes'] . 'class.smtp.php';
+			$mail->IsSMTP();
+			$mail->Host = $cfg['from_smtp'];
+		}
+		
 		$mail->From		= $params['from_email'];
 		$mail->FromName	= $params['from_name'];
 		$mail->Subject	= $params['subject'];
@@ -947,7 +954,12 @@ class PC_utils {
 				$mail->AddAddress($email);
 			}
 		}
-		return $mail->Send(); 
+		$result = $mail->Send();
+		if (!$result) {
+			$logger->debug(':(', 2);
+			$logger->debug(print_r(error_get_last(), true), 3);
+		}
+		return $result;
 	}
 	
 }

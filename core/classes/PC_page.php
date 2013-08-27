@@ -814,6 +814,11 @@ final class PC_page extends PC_base {
 								$mail->AddAddress($submitEmail);
 							}
 							
+							if (isset($this->cfg['from_smtp']) and !empty($this->cfg['from_smtp'])) {
+								$mail->IsSMTP();
+								$mail->Host = $this->cfg['from_smtp'];
+							}
+							
 							$mail->Body = $message;
 							$mail->AltBody = $textBody;
 													
@@ -821,6 +826,7 @@ final class PC_page extends PC_base {
 								$pageForm['status'] = array('status' => 'error', 'errors'=>array('email'));
 								// echo 'Mailer error: ' . $mail->ErrorInfo;
 								$this->debug("error: " . $mail->ErrorInfo, 4);
+								$this->debug(print_r(error_get_last(), true), 5);
 							} else {
 								$pageForm['status'] = array('status' => 'sent');
 								$this->debug(":) sent", 6);
