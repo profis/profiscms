@@ -111,6 +111,19 @@ function mod_variables_click() {
 	var ln = PC.i18n.mod.variables;
 	var deleted_list = [];
 	PC.dialog.mod_variables.deleted = deleted_list;
+	
+	PC.dialog.mod_variables.custom_edit = {
+		_custom: {
+			
+		}
+	}
+	
+	var hook_params = {};
+	PC.hooks.Init('plugin/variables/custom_edit', hook_params);
+	if (hook_params) {
+		Ext.apply(PC.dialog.mod_variables.custom_edit, hook_params);
+	}
+	
 	/*
 	//var ed_sk = function(fld, e) {
 	function ed_sk(fld, e) {
@@ -213,6 +226,7 @@ function mod_variables_click() {
 					dataIndex: item[0],
 					sortable: true,
 					groupable: false,
+					renderer: 'htmlEncode',
 					editor: {
 						xtype: 'textfield',
 						//completeOnEnter: false,
@@ -512,6 +526,7 @@ function mod_variables_click() {
 		//layout: 'fit',
 		flex: 1,
 		border: false,
+		autoEncode: true,
         view: new Ext.grid.GroupingView({
 			enableGroupingMenu: false,
 			enableNoGroups: false,
@@ -539,9 +554,91 @@ function mod_variables_click() {
 		}),
 		listeners: {
 			beforeedit: function(ee) {
-				//debugger;
 				if (ee.field=='key' && ((!ee.record.modified || !ee.record.modified.hasOwnProperty('key')) && ee.value != '') /*&& ee.record.data.controller!=''*/)
 					return false; // do not allow to edit keys (instead of allow editing only custom keys)
+				var controller = ee.record.data.controller;
+				if (controller == '') {
+					controller = '_custom';
+				}
+				if (PC.dialog.mod_variables.custom_edit[controller] && PC.dialog.mod_variables.custom_edit[controller][ee.record.data.key]) {
+					var dialog = PC.dialog.mod_variables;
+					var expl = '';
+					if (PC.dialog.mod_variables.custom_edit[controller][ee.record.data.key]['expl']) {
+						expl = PC.dialog.mod_variables.custom_edit[controller][ee.record.data.key]['expl'];
+					}
+					if (!dialog.edit_window) {
+						
+						var form = new Ext.form.FormPanel({
+							ref: '_f',
+							//width: this.form_width,
+							flex: 1,
+							layout: 'form',
+							padding: 6,
+							border: false,
+							bodyCssClass: 'x-border-layout-ct',
+							labelWidth: 100,
+							labelAlign: 'top',
+							defaults: {xtype: 'htmleditor', anchor: '100%', enableLists: false, enableFontSize: false},
+							items: [
+								{	
+									ref: '../_field',
+									name: 'value',
+									mode: 'local',
+									editable: false,
+									forceSelection: true,
+									value: '',
+									allowBlank: false
+								},
+								{
+									ref: '../_expl',
+									xtype: 'box', 
+									autoEl: {cn: expl}
+								}
+							],
+							frame: true,
+							buttonAlign: 'center',
+							buttons: [
+								{	text: PC.i18n.save,
+									iconCls: 'icon-save',
+									ref: '../../_btn_save',
+									handler: function() {
+										var w = PC.dialog.mod_variables.edit_window;
+										w.record.set(w.field_name, w._field.getValue()); 
+										w.hide();
+									}
+								}
+							]
+
+						});
+						
+						dialog.edit_window = new PC.ux.Window({
+							modal: true,
+							title: 'Window title',
+							closeAction: 'hide',
+							width: 600,
+							height: 425,
+							layout: 'hbox',
+							layoutConfig: {
+								align: 'stretch'
+							},
+							items: form
+						});
+					}
+					dialog.edit_window.record = ee.record;
+					dialog.edit_window.field_name = ee.field;
+					dialog.edit_window.setTitle(ee.record.data.key + ' - ' + ee.field);
+
+					dialog.edit_window._field.setValue(ee.value);
+					
+					try {
+						dialog.edit_window._expl.update(expl);
+					}
+					catch(e) {
+					
+					}
+					dialog.edit_window.show();
+					return false;
+				}
 				grd._lastcol = ee.field;
 			},
 			containerdblclick: function(g, e) {

@@ -9,8 +9,7 @@
 	public function Edit() {}
 }*/
 define("PC_UF_DEFAULT",			0x00000000);
-//define("PC_UF_MUST_ACTIVATE",			0x00000001);
-define("PC_UF_MUST_ACTIVATE",			0);
+define("PC_UF_MUST_ACTIVATE",			0x00000001);
 define("PC_UF_CONFIRM_PASS_CHANGE",		0x00000002);
 
 final class PC_user extends PC_base {
@@ -400,7 +399,18 @@ final class PC_user extends PC_base {
 		$url = $this->cfg['url']['base'] . $this->site->Get_link($act_page["route"]) . 'activate/' . $code . "/";
 		
 		$style= '';
-		$body = lang('activation_code').': <a href="'.$url.'">'.$url.'</a>';
+		
+		$body = $this->core->Get_plugin_variable('email_tpl_activation', 'site_users_registration');
+		
+		if (empty($body)) {
+			$body = lang('activation_code').': {link}';
+		}
+		
+		$markers = array(
+			'{link}' => '<a href="'.$url.'">'.$url.'</a>'
+		);
+		
+		$body = str_replace(array_keys($markers), array_values($markers), $body);
 		
 		$mail->MsgHTML('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 			<html>
@@ -444,8 +454,20 @@ final class PC_user extends PC_base {
 		$subject = $this->core->Get_variable('pass_change_confirmation_code', null, 'site_users_pass_change');
 		
 		$style= '';
-		$body = $this->core->Get_variable('pass_change_confirmation_code', null, 'site_users_pass_change').': '.$code;
-
+		
+		$body = $this->core->Get_plugin_variable('email_tpl_pass_change', 'site_users_pass_change');
+		
+		if (empty($body)) {
+			$body = $this->core->Get_variable('pass_change_confirmation_code', null, 'site_users_pass_change').': {code}';
+		}
+		
+		$markers = array(
+			'{code}' => $code
+		);
+		
+		$body = str_replace(array_keys($markers), array_values($markers), $body);
+		
+		
 		$params = array(
 			'subject' => $subject,
 			'from_email' => $from_email,
