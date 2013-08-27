@@ -201,6 +201,49 @@ if ($routes->Get(1) == 'admin') {
 		case 'ipmd5':
 			echo md5($_SERVER["REMOTE_ADDR"]);
 			break;
+		case 'cfg':
+			print_pre($cfg);
+			break;
+		case 'links':
+			$links = array(
+				'<strong>Admin api</strong>' => '',
+				'phpinfo' => 'admin/api/phpinfo',
+				'cfg' => 'admin/api/cfg',
+				'ip' => 'admin/api/ip',
+				'ipmd5' => 'admin/api/ipmd5',
+				'debug' => 'admin/api/dbg',
+				'debug' => 'admin/api/dbg',
+				'debug' => 'admin/api/dbg',
+				'ip' => 'admin/api/ip',
+				'debug-email' => 'admin/api/debug-email',
+				'error' => 'admin/api/error',
+				
+				'<strong>Logai</strong>' => '',
+				'send email log' => 'logs/send_mail.html',
+				'route' => 'logs/router/route.html',
+				'routes' => 'logs/router/routes.html',
+				'redirect' => 'logs/router/redirect.html',
+			);
+			$table = '';
+			foreach ($links as $key => $link) {
+				$link_show = $link_url = $cfg['url']['base'] . $link;
+				if (empty($link)) {
+					$link_show = '';
+				}
+				$table .= "<tr><td>$key</td><td><a target='_blank' href='$link_url'>" . $link_show .  '</a></td></tr>';
+			}
+			$table = '<table>' . $table . '</table>';
+			echo $table;
+			break;
+		case 'debug':
+		case 'dbg':
+			$debug_logger = new PC_debug();
+			$debug_logger->debug = true;
+			$debug_logger->debug('Test');
+			echo '$cfg[debug_disable_output] = ' . v($cfg['debug_disable_output']) . "\n<br />";
+			echo '$cfg[debug_ip] = ' . v($cfg['debug_ip']) . "\n<br />";
+			echo 'get_debug_string(): ' . $debug_logger->get_debug_string() . "\n<br />";
+			break;
 		case 'email':
 		case 'debug-email':
 			$email = 'email@profis.lt';
