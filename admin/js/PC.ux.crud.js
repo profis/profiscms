@@ -267,35 +267,35 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		}
 	},
 	
-	get_button_handler_for_add: function() {
-		this.ajax_add_respone_handler = Ext.createDelegate(function(opts, success, response) {
-			if (success && response.responseText) {
-				try {
-					var data = Ext.decode(response.responseText);
-					if (data.success) {
-						this.ajax_add_response_success_handler(data);
-						return;
-					}
-					else {
-						error = data.error;
-						if (data.error_data) {
-							error = this.get_save_error_message(data.error_data,  this.add_form);
-						}
+	ajax_add_respone_handler: function(opts, success, response) {
+		if (success && response.responseText) {
+			try {
+				var data = Ext.decode(response.responseText);
+				if (data.success) {
+					this.ajax_add_response_success_handler(data);
+					return;
+				}
+				else {
+					error = data.error;
+					if (data.error_data) {
+						error = this.get_save_error_message(data.error_data,  this.add_form);
 					}
 				}
-				catch(e) {
-					var error = this.ln.error.json;
-				};
 			}
-			else var error = this.ln.error.connection;
-			Ext.MessageBox.show({
-				title: PC.i18n.error,
-				msg: (error?'<b>'+ error +'</b>':''),
-				buttons: Ext.MessageBox.OK,
-				icon: Ext.MessageBox.ERROR
-			});
-		}, this);
-		
+			catch(e) {
+				var error = this.ln.error.json;
+			};
+		}
+		else var error = this.ln.error.connection;
+		Ext.MessageBox.show({
+			title: PC.i18n.error,
+			msg: (error?'<b>'+ error +'</b>':''),
+			buttons: Ext.MessageBox.OK,
+			icon: Ext.MessageBox.ERROR
+		});
+	},
+	
+	button_handler_for_add: function() {
 		var save_handler = Ext.createDelegate(function(data, w, dlg, callback) {
 			this._add_success_callback = callback;
 			this.add_form = w;
@@ -303,7 +303,7 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 				url: this.api_url + 'create',
 				method: 'POST',
 				params: Ext.apply({data: Ext.util.JSON.encode(data)}, this.base_params),
-				callback: this.ajax_add_respone_handler
+				callback: Ext.createDelegate(this.ajax_add_respone_handler, this)
 			});
 			return true;
 		}, this);
@@ -317,9 +317,8 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 			window_width: this.add_window_width
 		};
 		this.adjust_multiln_params(multiln_params);
-		return Ext.createDelegate(function() {
-			PC.dialog.multilnedit.show(multiln_params);
-		}, this);
+		PC.dialog.multilnedit.show(multiln_params);
+		//PC.dialog.multilnedit.show.defer(0, this, [multiln_params]);
 	},
 	
 	ajax_edit_response_success_handler: function (data, form_data) {
@@ -406,72 +405,57 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		
 	},
 	
-	get_button_handler_for_delete: function() {
-		var ln = this.ln;
-		var selected_records = false;
-		this.ajax_del_response_success_handler = function (data) {
-			if (this.per_page) {
-				this.grid.store.reload();
-			}
-			else {
-				if (selected_records) {
-					this.store.remove(selected_records);
-				}
-			}
-		}
-		
-		this.ajax_del_respone_handler = Ext.createDelegate(function(opts, success, response) {
-			if (success && response.responseText) {
-				try {
-					var data = Ext.decode(response.responseText);
-					if (data.success) {
-						this.ajax_del_response_success_handler(data);
-						return;
-					}
-					else {
-						error = data.error;
-					}
-				}
-				catch(e) {
-					var error = this.ln.error.json;
-				};
-			}
-			else var error = this.ln.error.connection;
-			Ext.MessageBox.show({
-				title: PC.i18n.error,
-				msg: (error?'<b>'+ error +'</b><br />':'') +this.ln.error.did_not_delete,
-				buttons: Ext.MessageBox.OK,
-				icon: Ext.MessageBox.ERROR
-			});
-		}, this);
-		
-		var delete_handler_confirmed = Ext.createDelegate(function(btn_id) {
-			if (btn_id == 'yes') {
-				var ids = this.get_selected_ids();
-				selected_records = this.grid.getSelectionModel().getSelected();
-				if (!ids.length) {
+	ajax_del_response_success_handler: function(opts, success, response) {
+		if (success && response.responseText) {
+			try {
+				var data = Ext.decode(response.responseText);
+				if (data.success) {
+					this.ajax_del_response_success_handler(data);
 					return;
 				}
-				Ext.Ajax.request({
-					url: this.api_url + 'delete',
-					method: 'POST',
-					params: {ids: Ext.util.JSON.encode(ids)},
-					callback: this.ajax_del_respone_handler
-				});
+				else {
+					error = data.error;
+				}
 			}
-		}, this);
-		
-		return function(b, e) {
-			Ext.MessageBox.show({
-				buttons: Ext.MessageBox.YESNO,
-				title: ln._delete.confirm_title,
-				msg: ln._delete.confirm_message,
-				icon: Ext.MessageBox.WARNING,
-				maxWidth: 320,
-				fn: delete_handler_confirmed
-			});
+			catch(e) {
+				var error = this.ln.error.json;
+			};
+		}
+		else var error = this.ln.error.connection;
+		Ext.MessageBox.show({
+			title: PC.i18n.error,
+			msg: (error?'<b>'+ error +'</b><br />':'') +this.ln.error.did_not_delete,
+			buttons: Ext.MessageBox.OK,
+			icon: Ext.MessageBox.ERROR
+		});
+	},
+	
+	ajax_del_respone_handler: function(data) {
+		if (this.per_page) {
+			this.grid.store.reload();
+		}
+		else {
+			if (this.selected_records) {
+				this.store.remove(this.selected_records);
+			}
 		}
 	},
+		
+	button_handler_for_del_submit: function(btn_id) {
+		if (btn_id == 'yes') {
+			var ids = this.get_selected_ids();
+			this.selected_records = this.grid.getSelectionModel().getSelected();
+			if (!ids.length) {
+				return;
+			}
+			Ext.Ajax.request({
+				url: this.api_url + 'delete',
+				method: 'POST',
+				params: {ids: Ext.util.JSON.encode(ids)},
+				callback: Ext.createDelegate(this.ajax_del_respone_handler, this)
+			});
+		}
+	},	
 	
 	get_selected_ids: function() {
 		var selected = this.grid.selModel.getSelections();
