@@ -1314,4 +1314,28 @@ function pc_append_route($url, $route = '') {
 	return $url;
 }
 
+function db_file_import($sql_files) {
+	global $core;
+	$query_count = 0;
+	$driver = $core->sql_parser->Get_default_driver();
+	if (isset($sql_files[$driver])) {
+		$sql = @file_get_contents($sql_files[$driver]);
+		if ($sql) {
+			$core->sql_parser->Replace_variables($sql);
+			$queries = explode(';', $sql);
+			foreach ($queries as $query) {
+				if (!empty($query)) {
+					$query = trim($query);
+					if (!empty($query)) {
+						$core->db->query($query);
+						$query_count++;
+					}
+
+				}
+			}
+		}
+	}
+	return $query_count;
+}
+
 ?>
