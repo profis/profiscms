@@ -163,6 +163,7 @@ class GdThumb extends ThumbBase
 	 */
 	public function resize ($maxWidth = 0, $maxHeight = 0)
 	{
+		$this->debug("resize (maxWidth: $maxWidth, maxHeight: $maxHeight)", 1);
 		// make sure our arguments are valid
 		if (!is_numeric($maxWidth))
 		{
@@ -201,21 +202,37 @@ class GdThumb extends ThumbBase
 		
 		$this->preserveAlpha();		
 		
+		$image_copy_resampled_params = array(
+			'dst_x' => 0,
+            'dst_y' => 0,
+            'src_x' => 0,
+            'src_y' => 0,
+            'dst_w' => $this->newDimensions['newWidth'],
+            'dst_h' => $this->newDimensions['newHeight'],
+            'src_w' => $this->currentDimensions['width'],
+            'src_h' => $this->currentDimensions['height']
+		);
+		
 		// and create the newly sized image
 		imagecopyresampled
 		(
 			$this->workingImage,
 			$this->oldImage,
-			0,
-			0,
-			0,
-			0,
-			$this->newDimensions['newWidth'],
-			$this->newDimensions['newHeight'],
-			$this->currentDimensions['width'],
-			$this->currentDimensions['height']
+			$image_copy_resampled_params['dst_x'],
+			$image_copy_resampled_params['dst_y'],
+			$image_copy_resampled_params['src_x'],
+			$image_copy_resampled_params['src_y'],
+			$image_copy_resampled_params['dst_w'],
+			$image_copy_resampled_params['dst_h'],
+			$image_copy_resampled_params['src_w'],
+			$image_copy_resampled_params['src_h']
 		);
 
+		
+		
+		$this->debug('$image_copy_resampled_params:', 2);
+		$this->debug($image_copy_resampled_params, 3);
+		
 		// update all the variables and resources to be correct
 		$this->oldImage 					= $this->workingImage;
 		$this->currentDimensions['width'] 	= $this->newDimensions['newWidth'];
@@ -234,8 +251,9 @@ class GdThumb extends ThumbBase
 	 * @param int $maxHeight
 	 * @return GdThumb
 	 */
-	public function adaptiveResize ($width, $height)
+	public function adaptiveResize ($width, $height, $direction = 'center')
 	{
+		$this->debug("adaptiveResize (width: $width, hright: $height, direction:$direction)");
 		// make sure our arguments are valid
 		if (!is_numeric($width) || $width  == 0)
 		{
@@ -258,11 +276,18 @@ class GdThumb extends ThumbBase
 			$this->maxHeight	= intval($height);
 			$this->maxWidth		= intval($width);
 		}
-		
+		$this->debug('current dimensions:', 1);
+		$this->debug($this->currentDimensions, 2);
 		$this->calcImageSizeStrict($this->currentDimensions['width'], $this->currentDimensions['height']);
 		
 		// resize the image to be close to our desired dimensions
 		$this->resize($this->newDimensions['newWidth'], $this->newDimensions['newHeight']);
+		
+		$this->debug('current dimensions:', 1);
+		$this->debug($this->currentDimensions, 2);
+		
+		$this->debug('newDimensions:', 1);
+		$this->debug($this->newDimensions, 2);
 		
 		// reset the max dimensions...
 		if ($this->options['resizeUp'] === false)
@@ -300,7 +325,16 @@ class GdThumb extends ThumbBase
 		}
 		elseif ($this->currentDimensions['height'] > $this->maxHeight)
 		{
-			$cropY = intval(($this->currentDimensions['height'] - $this->maxHeight) / 2);
+			if ($direction == 'top') {
+				$cropY = 0;
+			}
+			elseif(false) {
+				
+			}
+			else {
+				$cropY = intval(($this->currentDimensions['height'] - $this->maxHeight) / 2);
+			}
+			
 		}
 		
 		//Profis fix: source crop width/height cannot exceed boundaries
@@ -1008,6 +1042,7 @@ class GdThumb extends ThumbBase
 	 */
 	protected function calcImageSizeStrict ($width, $height)
 	{
+		$this->debug("calcImageSizeStrict (w: $width, h: $height)", 1);
 		// first, we need to determine what the longest resize dimension is..
 		if ($this->maxWidth >= $this->maxHeight)
 		{

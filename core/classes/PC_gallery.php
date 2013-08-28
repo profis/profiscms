@@ -1408,11 +1408,19 @@ final class PC_gallery extends PC_base {
 			$type = $this->Get_thumbnail_type($thumb_type);
 		}
 		
+		$direction = 'center';
+		//$direction = 'top';
+		if (isset($type['direction']) and !empty($type['direction'])) {
+			$direction = $type['direction'];
+		}
+		
 		$this->debug($type, 1);
 		$this->debug('creating: ' . $file_path, 1);
 		$this->last_thumb = $thumb = PhpThumbFactory::create($file_path, array('resizeUp' => true, 'jpegQuality'=>$type['thumbnail_quality']));
 		$this->debug('Current dimensions before resizing:', 3);
 		$this->debug($thumb->currentDimensions, 4);
+		$crop_data_x = -1;
+		$crop_data_y = -1;
 		if ($type['thumbnail_type'] == "thumbnail" || $type['use_adaptive_resize']) {
 			$resize_to_w = $type['thumbnail_max_w'];
 			$resize_to_h = $type['thumbnail_max_h'];
@@ -1434,7 +1442,11 @@ final class PC_gallery extends PC_base {
 				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
 			}
 			$this->debug("thumb->adaptiveResize($resize_to_w, $resize_to_h)", 2);
-			$thumb->adaptiveResize($resize_to_w, $resize_to_h);
+			$thumb->absorb_debug_settings($this, 8);
+			$thumb->adaptiveResize($resize_to_w, $resize_to_h, $direction);
+			if ($direction == 'top') {
+				$crop_data_y = 0;
+			}
 		}
 		else {
 			$resize_to_w = $type['thumbnail_max_w'];
@@ -1457,6 +1469,14 @@ final class PC_gallery extends PC_base {
 		$crop_data['w'] = $thumb->currentDimensions['width'];
 		$crop_data['h'] = $thumb->currentDimensions['height'];
 		
+		if ($crop_data_x >= 0) {
+			$crop_data['x'] = $crop_data_x;
+		}
+		
+		if ($crop_data_y >= 0) {
+			$crop_data['y'] = $crop_data_y;
+		}
+		
 		$this->debug('$crop_data:', 3);
 		$this->debug($crop_data, 4);
 		
@@ -1466,7 +1486,7 @@ final class PC_gallery extends PC_base {
 		$this->debug('Current dimensions after resizing:', 3);
 		$this->debug($thumb->currentDimensions, 4);
 		$this->debug('imagecopyresampled_params:', 3);
-		//$this->debug($thumb->imagecopyresampled_params, 4);
+		$this->debug($thumb->imagecopyresampled_params, 4);
 		/*if ($thumbnail_type == "thumbnail" || $thumbnail_type == "large") {
 			if ($type['use_adaptive_resize']) {
 				$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
