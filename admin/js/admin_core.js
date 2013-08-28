@@ -678,6 +678,11 @@ Ext.onReady(function(){
 										layout: 'fit',
 										items: PC.view_factory.get_shortcut_field({id: 'db_fld_source_id'})
 									},
+									{	fieldLabel: PC.i18n.page.target,
+										xtype: 'checkbox',
+										ref: '../../../../../../../_fld_target',
+										id: 'db_fld_target'
+									},		
 									{	ref: '../../../../../../../_fld_reference_id',
 										id: 'db_fld_reference_id',
 										fieldLabel: PC.i18n.reference_id,
@@ -1493,7 +1498,7 @@ function Load_to_editor(ln, original) {
 			value = Page_datetime_convert(value, null);
 			field.setValue(value.date);
 			Ext.getCmp('db_fld_time').setValue(value.time);
-		} else if (/^(controller|published|route_lock|hot|nomenu|redirect|source_id|reference_id)$/.test(i)) {
+		} else if (/^(controller|published|route_lock|hot|nomenu|redirect|source_id|target|reference_id)$/.test(i)) {
 			var source = PC.global.page[i];
 			if (original) field.setValue(source.originalValue);
 			else field.setValue(source.value);
@@ -1695,7 +1700,7 @@ function Content_dirty() {
 		if (/^(name|custom_name|title|keywords|description|route|permalink|ln_redirect)$/.test(i)) {
 			var store = content_store[i];
 			
-		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|source_id|date|reference_id)$/.test(i)) {
+		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|source_id|target|date|reference_id)$/.test(i)) {
 			var store = PC.global.page[i];
 		}
 		if (/^(date_from|date_to)$/.test(i)) {
@@ -1752,7 +1757,7 @@ function Save_content_to_store(ln_change_to) {
 		if (/^(name|custom_name|text|info|info2|info3|title|keywords|description|route|permalink|ln_redirect)$/.test(i)) {
 			var store = content_store[i];
 			
-		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|source_id|date|reference_id)$/.test(i)) {
+		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|source_id|target|date|reference_id)$/.test(i)) {
 			var store = PC.global.page[i];
 		}
 		//use solid date format
@@ -2278,16 +2283,16 @@ function Render_page_actions(controller) {
 	if (controller == undefined) var controller = PC.global.page.controller.value;
 	var front = 0;
 	if (PC.global.page.front != undefined) front = PC.global.page.front.value;
-	var could_be_enabled_or_disabled = 'controller|name_container|custom_name_container|title_container|keywords_container|description_container|route_container|permalink_container|redirect_ln_container|redirect|redirect_container|source_id|source_id_container|published|route_lock_container|hot|nomenu|date_container|name_title|custom_name_title|route_title|permalink_title|redirect_ln_title|title_title|description_title|keywords_title|date|time|reference_id';
+	var could_be_enabled_or_disabled = 'controller|name_container|custom_name_container|title_container|keywords_container|description_container|route_container|permalink_container|redirect_ln_container|redirect|redirect_container|source_id|source_id_container|target|target_container|published|route_lock_container|hot|nomenu|date_container|name_title|custom_name_title|route_title|permalink_title|redirect_ln_title|title_title|description_title|keywords_title|date|time|reference_id';
 	if (front > 0) {
 		var disabled = 'route_container|permalink_container|route_title|permalink_title|published|route_lock_container|hot|nomenu|date_container|date|time|reference_id';
 	}
 	else if (controller == 'menu') {
 		//console.log(controller);
-		var disabled = 'title_container|title_title|keywords_container|keywords_title|description_container|description_title|route_container|permalink_container|redirect_ln_container|route_title|permalink_title|redirect_ln_title|redirect_container|source_id_container|published|route_lock_container|hot|nomenu|date_container|date|time';
+		var disabled = 'title_container|title_title|keywords_container|keywords_title|description_container|description_title|route_container|permalink_container|redirect_ln_container|route_title|permalink_title|redirect_ln_title|redirect_container|source_id_container|target_container|published|route_lock_container|hot|nomenu|date_container|date|time';
 	}
 	else if (controller == 'search') {
-		var disabled = 'controller|name_container|custom_name_container|redirect|redirect_container|source_id|source_id_container|route_lock_container|hot|nomenu|date_container|name_title|date|time|reference_id';
+		var disabled = 'controller|name_container|custom_name_container|redirect|redirect_container|source_id|source_id_container|target|target_container|route_lock_container|hot|nomenu|date_container|name_title|date|time|reference_id';
 	}
 	/*else if (Controller_has_fields(controller)) {
 		

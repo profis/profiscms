@@ -1,0 +1,1 @@
+ALTER TABLE `pc_pages` ADD `target` SMALLINT( 1 ) NOT NULL DEFAULT '0';

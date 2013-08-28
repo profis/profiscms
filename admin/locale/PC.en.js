@@ -136,7 +136,8 @@ PC.langs.en = {
 		published: 'Published',
 		show_period: 'Show only during this period',
 		shortcut_from: 'Shortcut from',
-		source_id: 'Source'
+		source_id: 'Source',
+		target: 'Open in a new window'
 	},
 	prev_ver: {
 		s: 'Previous versions'

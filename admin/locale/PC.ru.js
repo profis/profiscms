@@ -134,7 +134,8 @@ PC.langs.ru = {
 		published: 'Опубликовать на сайте',
 		show_period: 'Показывать только в этот период',
 		shortcut_from: 'Ссылка из',
-		source_id: 'Источник'
+		source_id: 'Источник',
+		target: 'Открыть в новом окне'
 	},
 	prev_ver: {
 		s: 'Предыдущие версии'

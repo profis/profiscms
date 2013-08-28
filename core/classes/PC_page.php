@@ -1831,7 +1831,7 @@ final class PC_page extends PC_base {
 	
 	public function Load_menu() {
 		$now = time();
-		$query = "SELECT mp.id idp,p.id pid,c.id cid,c.name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id FROM {$this->db_prefix}pages mp"
+		$query = "SELECT mp.id idp,p.id pid,c.id cid,c.name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id,p.target FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
 		." AND p.controller!='menu' AND p.nomenu<1"
 		." LEFT JOIN {$this->db_prefix}content c ON pid=p.id AND ln='{$this->site->ln}'"
@@ -1903,23 +1903,31 @@ final class PC_page extends PC_base {
 			//print_pre($item);
 			$classes = array();
 			$class_full = '';
+			$target = '';
 			if ($this->site->Is_opened($item['pid'])) {
 				$classes[] = v($params['li_active_class'], 'active');
 			}
 			if ($item['hot']) {
 				$classes[] = 'hot';
 			}
+			if (v($item['target'])) {
+				$target = 'target="_blank"';
+			}
 			if (!empty($classes)) {
 				$class_full = ' class = "'.implode(' ', $classes).'"';
 			}
-			$html .= '<li ' . $class_full . '><a href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.$item['pid'].'</i>').'</a>';
+			$html .= '<li ' . $class_full . '><a ' . $target . ' href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.$item['pid'].'</i>').'</a>';
 			//if this item is opened - submenu should be displayed
 			if (v($params['level'], 1) > 1 and $this->site->Is_opened($item['pid'])) {
-				$submenu = $this->Get_submenu($item['pid'], array('pid','name','route','info'));
+				$submenu = $this->Get_submenu($item['pid'], array('pid','name','route','info','target'));
 				$html .= '<ul style="padding-left:15px;">';
 				foreach ($submenu as $item) {
+					$target = '';
+					if (v($item['target'])) {
+						$target = 'target="_blank"';
+					}
 					$hot = (isset($item['hot'])?($item['hot']?' class="hot"':''):'');
-					$html .= '<li'.$hot.'><a '.($this->site->Is_opened($item['pid'])?'style="font-weight:bold;" ':'').'href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.v($item['id']).'</i>').'</a></li>';
+					$html .= '<li'.$hot.'><a ' . $target . ' '.($this->site->Is_opened($item['pid'])?'style="font-weight:bold;" ':'').'href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.v($item['id']).'</i>').'</a></li>';
 				}
 				unset($hot);
 				$html .= '</ul>';
@@ -1997,6 +2005,7 @@ final class PC_page extends PC_base {
 				'date'=> 'p.date',
 				'reference_id'=> 'p.reference_id',
 				'source_id'=> 'p.source_id',
+				'target'=> 'p.target',
 				'nomenu'=> 'p.nomenu'
 			);
 			$retrieve_fields = '';
@@ -2050,7 +2059,7 @@ final class PC_page extends PC_base {
         }
 
 		
-		$query = "SELECT ".($paging?'SQL_CALC_FOUND_ROWS ':''). 'p.source_id,' . (!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date").","
+		$query = "SELECT ".($paging?'SQL_CALC_FOUND_ROWS ':''). 'p.source_id,' . (!empty($retrieve_fields)?$retrieve_fields:"mp.id idp,p.id pid".($include_content?",c.id cid,c.name,c.route,c.permalink":'').",p.nr,p.hot,p.date,p.target").","
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'h.id', 'h.front'), array('separator'=>'▓'))." redirects_from"
 		." FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
