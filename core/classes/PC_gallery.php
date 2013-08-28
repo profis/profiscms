@@ -2584,6 +2584,7 @@ final class PC_gallery extends PC_base {
 	public function Create_thumbnail_type($thumbnail_type, $max_w, $max_h, $quality=76, $use_adaptive_resize) {
 		$use_adaptive_resize = (int)$use_adaptive_resize;
 		$thumbnail_type = strtolower($thumbnail_type);
+		$thumbnail_type = preg_replace('/\s\s+/', '_', $thumbnail_type);
 		if (!preg_match('/^'.$this->patterns['thumbnail_type'].'$/', $thumbnail_type))
 			$response['errors'][] = "thumbnail_type"; 
 		if ($max_w < 1) $response['errors'][] = "max_w";
