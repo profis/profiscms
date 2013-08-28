@@ -123,7 +123,7 @@ PC.ux.TinyMCE = function(config) {
 			theme: 'advanced',
 			skin: 'o2k7',
 			plugins: 'autolink,profis_search,profis_link,-insert_quotes,safari,style,layer,table,advhr,advimage,advlist,emotions,iespell,insertdatetime,preview,media,print,contextmenu,paste,directionality,noneditable,visualchars,nonbreaking,xhtmlxtras,template,save,advform',
-			theme_advanced_buttons1: 'save,|,undo,redo,search,|,cut,copy,paste,|,link,unlink,anchor,|,table,|,hr,pc_pagebreak,charmap,insert_quotes,|,gallery,gmaps,media,|,forms,|,code',
+			theme_advanced_buttons1: 'save,|,undo,redo,search,|,cut,copy,paste,|,link,unlink,anchor,|,table,|,hr,pc_pagebreak,charmap,insert_quotes,|,gallery,gmaps,media,|,forms,|,code,|,formatselect',
 			theme_advanced_buttons2: 'editstyles,styleselect,removeformat,|,bold,italic,underline,strikethrough,changecase,|,sub,sup,|,forecolor,backcolor,|,bullist,numlist,|,justifyleft,justifycenter,justifyright,justifyfull,|,outdent,indent',
 			theme_advanced_buttons3: '',
 			theme_advanced_toolbar_location: 'top',

@@ -1023,6 +1023,9 @@ Ext.onReady(function(){
 							});
 							Reload_content_archive();
 							if (typeof callback == 'function') callback();
+							if (request_params.hasOwnProperty('controller')) {
+								node.reload();
+							}
 							return;
 						}
 						else if (data.errors.length) {
