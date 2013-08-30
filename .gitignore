@@ -21,8 +21,10 @@ plugins/*
 !plugins/variables/
 !plugins/.htaccess
 !plugins/index.php
-themes/
+themes/*
 !themes/default/
+themes/default/*
+!themes/default/css/
 !themes/index.php
 upload/*
 !upload/.htaccess
