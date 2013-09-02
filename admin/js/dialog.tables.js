@@ -452,7 +452,7 @@ PC.dialog.tables = {
 			//references
 			var f = this.form;
 			var w = f._wh.innerCt._width;
-			var w_unit = f._wh.innerCt._width_unit
+			var w_unit = f._wh.innerCt._width_unit;
 			var h = f._wh.innerCt._height;
 			var h_unit = f._wh.innerCt._height_unit;
 			var cellspacing = f._cell.innerCt._spacing;

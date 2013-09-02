@@ -29,7 +29,7 @@ Ext.ux.form.Params = {
 				case 'hidden':
 					items = [
 						{fieldLabel: this.ln.name, ref: '../../_name'},
-						{fieldLabel: this.ln.value, ref: '../../_value'},
+						{fieldLabel: this.ln.value, ref: '../../_value'}
 					];
 				break;
 				case 'text':
@@ -1032,7 +1032,7 @@ Ext.ux.form.Params = {
 					break;
 
 				case 'hspace':
-					v = dom.getStyle(e, 'margin-left')
+					v = dom.getStyle(e, 'margin-left');
 					v2 = dom.getStyle(e, 'margin-right');
 
 					if (v && v == v2)
@@ -1041,7 +1041,7 @@ Ext.ux.form.Params = {
 					break;
 
 				case 'vspace':
-					v = dom.getStyle(e, 'margin-top')
+					v = dom.getStyle(e, 'margin-top');
 					v2 = dom.getStyle(e, 'margin-bottom');
 					if (v && v == v2)
 						return parseInt(v.replace(/[^0-9]/g, ''));

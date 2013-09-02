@@ -12,12 +12,10 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 	sortable: false,
 	sort_field: 'position',
 
-	layout: 'fit',
-
 	get_store: function(){
 		var store_url =  this.api_url +'get/';
 		if (this.store_admin_ln) {
-			store_url += '?ln=' + PC.global.admin_ln
+			store_url += '?ln=' + PC.global.admin_ln;
 		}
 		this.store = new Ext.data.JsonStore({
 			url: store_url,
@@ -36,27 +34,7 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		return this.store;
 	},
 
-    get_cell_dblclick_handler: function() {
-		if (this.row_editing) {
-			return false;
-		}
-		return Ext.createDelegate(function(grid, rowIndex, cellIndex, ev) {
-			var record = grid.store.getAt(rowIndex);
-			if (!record) return false;
-			this.show_edit_window(record, ev);
-			return false;
-		}, this);
-	},
-	
-	get_grid_listeners: function() {
-		var listeners = {};
-		var cell_dblclick_handler = this.get_cell_dblclick_handler();
-		if (cell_dblclick_handler) {
-			listeners.celldblclick = cell_dblclick_handler;
-		}
-		return listeners;
-	},
-		
+    	
 	get_grid: function () {
 		var plugins = [];
 		var store =  this.get_store();
@@ -68,12 +46,12 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 			var edit_field_keys = {};
 			Ext.each(edit_fields, function(field, index) {
 				edit_field_keys[field.name] = index + 1;
-			})
+			});
 			Ext.each(columns, function(column, index) {
 				if (column.dataIndex && edit_field_keys[column.dataIndex]) {
 					column.editor = edit_fields[edit_field_keys[column.dataIndex] - 1];
 				}
-			})
+			});
 			
 		}
 		
@@ -184,12 +162,6 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		return PC.i18n.no;
 	},
 	
-	get_grid_columns: function() {
-		return [
-			{header: 'Id', dataIndex: 'id'}
-		];
-	},
-	
 	
 //	Ext.Ajax.request({
 //		url: this.api_url + 'edit',
@@ -220,7 +192,7 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 					var data = {
 						names: {},
 						other: changes
-					}
+					};
 					Ext.Ajax.request({
 						url: this.api_url +'edit',
 						params: {
@@ -469,14 +441,6 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		}
 		return id_array;
 		return ids;
-	},
-	
-	load_data: function(data) {
-		this.store.loadData(data);
-	},
-	
-	format_time_to_date: function(time){
-		return new Date(time*1000).format('Y-m-d H:i');
 	}
 	
 });

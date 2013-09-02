@@ -1554,7 +1554,7 @@ PC.dialog.gallery = {
 		}
 	},
 	restore_trash: function() {
-		var gallery = PC.dialog.gallery
+		var gallery = PC.dialog.gallery;
 		var indexes = gallery.files_view.getSelectedIndexes();
 		//format file_ids string concated from indexes separated by commas (server-side desirable format)
 		var file_ids = '';

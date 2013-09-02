@@ -78,7 +78,7 @@ PC.auth.perms.editors.Register('core', 'page_nodes', {
 				PC.plugin.auth.core_page_access_permission_data.sites = {};
 			}
 			if (!PC.plugin.auth.core_page_access_permission_data.sites[PC.global.site]) {
-				PC.plugin.auth.core_page_access_permission_data.sites[PC.global.site] = []
+				PC.plugin.auth.core_page_access_permission_data.sites[PC.global.site] = [];
 			}
 			PC.plugin.auth.core_page_access_permission_data.sites[PC.global.site] = window._tree.checked_nodes;
 			return PC.plugin.auth.core_page_access_permission_data;

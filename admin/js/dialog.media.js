@@ -6,7 +6,7 @@ PC.dialog.media = {
 		dialog.media = media;
 		dialog.current_media_url = '';
 		dialog.current_media = false;
-		dialog.current_default_width = dialog.current_default_height = undefined
+		dialog.current_default_width = dialog.current_default_height = undefined;
 		dialog.ln = PC.i18n.dialog.media;
 		var ln = dialog.ln;
 		dialog.preview_empty = '<br /><br />'+ ln.enter_media_url +'<br /><img src="images/player_play.png" alt="" /><br /><br />',
@@ -434,7 +434,7 @@ PC.dialog.media = {
 			//get settings
 			var w = media.getAttribute('width');
 			var h = media.getAttribute('height');
-			var properties = tinymce.activeEditor.plugins.media._parse(media.title)
+			var properties = tinymce.activeEditor.plugins.media._parse(media.title);
 			var id = properties.id;
 			var url = properties.src;
 			var poster = properties.poster;
@@ -550,10 +550,10 @@ PC.dialog.media = {
 			//margin
 			var margin = this.window._margin.innerCt;
 			var sides = new Array();
-			sides[0] = parseInt((margin._top.getValue()>0?margin._top.getValue():0)) + 'px'
-			sides[1] = parseInt((margin._right.getValue()>0?margin._right.getValue():0)) + 'px'
-			sides[2] = parseInt((margin._bottom.getValue()>0?margin._bottom.getValue():0)) + 'px'
-			sides[3] = parseInt((margin._left.getValue()>0?margin._left.getValue():0)) + 'px'
+			sides[0] = parseInt((margin._top.getValue()>0?margin._top.getValue():0)) + 'px';
+			sides[1] = parseInt((margin._right.getValue()>0?margin._right.getValue():0)) + 'px';
+			sides[2] = parseInt((margin._bottom.getValue()>0?margin._bottom.getValue():0)) + 'px';
+			sides[3] = parseInt((margin._left.getValue()>0?margin._left.getValue():0)) + 'px';
 			styles += 'margin:'+sides.join(' ')+';';
 			styles += this.window._style.getValue();
 		}

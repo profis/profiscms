@@ -29,10 +29,10 @@ PC.dialog.styles = {
 		}
 		//format padding stylesheet
 		var sides = new Array();
-		sides[0] = _top.getValue() + 'px'
-		sides[1] = _right.getValue() + 'px'
-		sides[2] = _bottom.getValue() + 'px'
-		sides[3] = _left.getValue() + 'px'
+		sides[0] = _top.getValue() + 'px';
+		sides[1] = _right.getValue() + 'px';
+		sides[2] = _bottom.getValue() + 'px';
+		sides[3] = _left.getValue() + 'px';
 		var padding = sides.join(' ');
 		//update style declaration
 		if (i == -1) {
@@ -73,10 +73,10 @@ PC.dialog.styles = {
 		}
 		//format margin stylesheet
 		var sides = new Array();
-		sides[0] = _top.getValue() + 'px'
-		sides[1] = _right.getValue() + 'px'
-		sides[2] = _bottom.getValue() + 'px'
-		sides[3] = _left.getValue() + 'px'
+		sides[0] = _top.getValue() + 'px';
+		sides[1] = _right.getValue() + 'px';
+		sides[2] = _bottom.getValue() + 'px';
+		sides[3] = _left.getValue() + 'px';
 		var margin = sides.join(' ');
 		//update style declaration
 		if (i == -1) {

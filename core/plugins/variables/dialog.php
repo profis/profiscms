@@ -116,7 +116,7 @@ function mod_variables_click() {
 		_custom: {
 			
 		}
-	}
+	};
 	
 	var hook_params = {};
 	PC.hooks.Init('plugin/variables/custom_edit', hook_params);

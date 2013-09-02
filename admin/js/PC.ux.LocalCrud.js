@@ -72,6 +72,8 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	
 	max_id: 0,
 	
+	layout: 'fit',
+	
 	constructor: function(config) {
 		if (!config) {
 			config = {};
@@ -131,11 +133,37 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		};
 	},
 	
+	get_grid_columns: function() {
+		return [
+			{header: 'Id', dataIndex: 'id'}
+		];
+	},
+			
+	get_cell_dblclick_handler: function() {
+		if (this.row_editing) {
+			return false;
+		}
+		return Ext.createDelegate(function(grid, rowIndex, cellIndex, ev) {
+			var record = grid.store.getAt(rowIndex);
+			if (!record) return false;
+			this.show_edit_window(record, ev);
+			return false;
+		}, this);
+	},
+	
+	get_grid_listeners: function() {
+		var listeners = {};
+		var cell_dblclick_handler = this.get_cell_dblclick_handler();
+		if (cell_dblclick_handler) {
+			listeners.celldblclick = cell_dblclick_handler;
+		}
+		return listeners;
+	},
+	
 	get_grid: function () {
 		var plugins = [];
 		var store =  this.get_store();
 		var columns = this.get_grid_columns();
-
 		var config = {
 			store: store,
 			sm: this.get_grid_selection_model(),
@@ -522,7 +550,7 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		}
 		var buttons = [
 			button_container.action_del,
-			button_container.action_edit,
+			button_container.action_edit
 		];
 		if (button_container.action_move_up) {
 			buttons.push(button_container.action_move_up);
@@ -559,10 +587,12 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		this.update_buttons(selected.length, selModel);
 	},		
 		
+	/*
 	get_grid_listeners: function() {
 		var listeners = {};
 		return listeners;
-	},		
+	},
+	*/
 		
 	get_store_data: function() {
 		return Ext.pluck(this.store.data.items, 'data');
@@ -584,6 +614,19 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 			options.push(optdata);
 		}
 		return options;
+	},
+			
+	load_data: function(data) {
+		if (data.list) {
+			this.store.loadData(data.list);
+		} 
+		else {
+			this.store.loadData(data);
+		}
+	},
+	
+	format_time_to_date: function(time){
+		return new Date(time*1000).format('Y-m-d H:i');
 	}
 	
 });

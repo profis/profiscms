@@ -25,12 +25,14 @@ PC.ux.LocalTreeCrud = Ext.extend(Ext.Panel, {
 			delete config.ln;
 		}
 		*/
-		config = Ext.apply({
-			tbar: this.get_tbar(),
-			items: this.get_items(config)
+		var tbar = this.get_tbar();
+		var items = this.get_items(config);
+		var my_config = Ext.apply({
+			tbar: tbar,
+			items: items
         }, config);
 		
-        PC.ux.LocalTreeCrud.superclass.constructor.call(this, config);
+        PC.ux.LocalTreeCrud.superclass.constructor.call(this, my_config);
 		
 		//this.set_titles();
     },
@@ -105,7 +107,7 @@ PC.ux.LocalTreeCrud = Ext.extend(Ext.Panel, {
 			text: (this.ln && this.ln.button._add)?this.ln.button._add:PC.i18n.add,
 			icon: 'images/add.png',
 			handler: Ext.createDelegate(this.button_handler_for_add, this)
-		}
+		};
 	},
 	
 	get_button_for_del: function() {
@@ -122,14 +124,14 @@ PC.ux.LocalTreeCrud = Ext.extend(Ext.Panel, {
 		return [
 			this.get_button_for_add(),
 			this.get_button_for_del()
-		]
+		];
 	},
 	
 	get_items: function(config) {
 		return [
 			this.get_tree(config.json),
 			this.get_edit_form()
-		]
+		];
 	},
 	
 	tree_selection_change: function (node) {
@@ -188,7 +190,7 @@ PC.ux.LocalTreeCrud = Ext.extend(Ext.Panel, {
 			}
 		});
 		
-		return this.tree
+		return this.tree;
 	},
 	
 	set_children: function(children) {
@@ -213,7 +215,7 @@ PC.ux.LocalTreeCrud = Ext.extend(Ext.Panel, {
 				if (data[field._fld]) {
 					field.value = data[field._fld];
 				}
-			})
+			});
 		}
 		return fields;
 	},
@@ -223,10 +225,11 @@ PC.ux.LocalTreeCrud = Ext.extend(Ext.Panel, {
 			if (field.name) {
 				field.setValue(record.attributes._data[field.name]);
 			}
-		})
+		});
 	},
 	
 	get_edit_form: function() {
+		var items = this.get_edit_form_fields();
 		this.edit_form = new Ext.form.FormPanel({
 			ref: '_f',
 			//width: this.form_width,
@@ -238,7 +241,7 @@ PC.ux.LocalTreeCrud = Ext.extend(Ext.Panel, {
 			labelWidth: 100,
 			labelAlign: 'right',
 			defaults: {xtype: 'textfield', anchor: '100%'},
-			items: this.get_edit_form_fields(),
+			items: items,
 			frame: true,
 			buttonAlign: 'center',
 			buttons: [

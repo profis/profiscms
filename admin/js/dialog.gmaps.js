@@ -32,7 +32,7 @@ Dialog_categories_tree_crud = Ext.extend(PC.ux.LocalTreeCrud, {
 					}
 					PC.dialog.gallery.show(params);
 				}
-			},
+			}
 		];
 	}
 	
@@ -71,7 +71,7 @@ Dialog_markers_crud = Ext.extend(PC.ux.LocalCrud, {
 			text: '',
 			icon: 'images/eye.png',
 			handler: Ext.createDelegate(this.button_handler_for_center, this)
-		}
+		};
 	},
 	
 	button_handler_for_center: function() {
@@ -86,7 +86,7 @@ Dialog_markers_crud = Ext.extend(PC.ux.LocalCrud, {
 			text: '',
 			icon: 'images/gmaps_marker.png',
 			handler: Ext.createDelegate(this.button_handler_for_center_marker, this)
-		}
+		};
 	},
 	
 	button_handler_for_center_marker: function() {
@@ -293,7 +293,7 @@ Dialog_markers_crud = Ext.extend(PC.ux.LocalCrud, {
 			text: this.ln.button._add?this.ln.button._add:PC.i18n.add,
 			icon: 'images/add.png',
 			handler: Ext.createDelegate(this.button_handler_for_add, this)
-		}
+		};
 	},
 	
 	button_handler_for_add: function() {
@@ -358,7 +358,6 @@ Dialog_markers_crud = Ext.extend(PC.ux.LocalCrud, {
 	},
 	
 	marker_drop: function(id, marker) {
-		//debugger;
 		var map_object = PC.dialog.maps[PC.dialog.gmaps.map_type];
 		var record = this.store.getById(id);
 		
@@ -416,7 +415,6 @@ PC.dialog.gmaps = {
 		this.ln = PC.i18n.dialog.gmaps;
 		var dialog = this;
 		//if gmaps window is already created, just show it and return
-		//debugger;
 		if (this.window) {
 			this.window.show();
 			if (this.edit_mode) {
@@ -510,7 +508,7 @@ PC.dialog.gmaps = {
 				this.panel_container,
 				this.markers_crud
 			]
-		}
+		};
 		
 		this.options_tab = {
 			title: 'Options',
@@ -553,7 +551,7 @@ PC.dialog.gmaps = {
 						}
 						PC.dialog.gallery.show(params);
 					}
-				},
+				}
 			]
 		};
 		
@@ -572,7 +570,7 @@ PC.dialog.gmaps = {
 				this.categories_panel
 				//tree
 			]
-		}
+		};
 		
 		this.tabs = {
 			xtype: 'tabpanel',
@@ -594,7 +592,6 @@ PC.dialog.gmaps = {
 			width: 800,
 			height: 450,
 			resizable: false,
-			closeAction: 'hide',
 			//items: this.panel,
 			items: this.tabs,
 			listeners: {
@@ -673,11 +670,11 @@ PC.dialog.gmaps = {
 										toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
 									}
 								}
-							}
+							};
 							
 							var error_callback = function(err) {
 								alert(dialog.ln.geocoder_error + err);
-							}
+							};
 							
 							PC.dialog.maps[dialog.map_type].search_address(address, callback, error_callback);
 							

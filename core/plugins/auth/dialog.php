@@ -756,7 +756,7 @@ function mod_auth_click() {
 			return config;
 		}
 		return field;
-	}
+	};
 	
 	dialog.Create_form_field = function(ref, field){
 		Ext.applyIf(field, {
@@ -765,7 +765,7 @@ function mod_auth_click() {
 			ref: ref
 		});
 		return field;
-	}
+	};
 	
 	dialog.form = {
 		ref: '../_form',
@@ -1104,7 +1104,7 @@ function mod_auth_click() {
 						blur: function(field) {
 							var r = dialog.permissions._getSelectedRecord();
 							if (!r) return false;
-							var data = field.getValue()
+							var data = field.getValue();
 							dialog.permissions._loaded.Set(r.data.plugin, r.data.name, data);
 							dialog.permissions.view.refresh();
 						}/*,
@@ -1138,7 +1138,7 @@ function mod_auth_click() {
 								buttons: Ext.MessageBox.OK,
 								icon: Ext.MessageBox.ERROR
 							});
-						}
+						};
 						
 						var button = new Ext.Button({
 							text: '<img src="images/pencil.png" alt="" />',

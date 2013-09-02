@@ -326,7 +326,7 @@ function mod_sites_langs_click() {
 				}
 			});
 		}
-	}
+	};
 	
 	var site_store = new Ext.data.ArrayStore({
 		fields: ['site_id', 'site_name', 'site_dir', 'site_langs', 'lang_store','editor_width','editor_background', 'mask', 'active'],

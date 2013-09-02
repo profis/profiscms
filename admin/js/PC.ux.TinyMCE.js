@@ -237,7 +237,7 @@ PC.ux.TinyMCE = function(config) {
 			paste_preprocess: function(pl, o) {
 				if (/<\w+(\s+[^>])*>/i.test(o.content)) var rich = true;
 				if (rich) {
-					var answer = confirm(PC.i18n.msg.paste_as_plain)
+					var answer = confirm(PC.i18n.msg.paste_as_plain);
 					if (answer) pl.editor.pasteAsPlainText = true;
 				}
 			},
