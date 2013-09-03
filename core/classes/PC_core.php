@@ -147,7 +147,7 @@ final class PC_core extends PC_base {
 			$this->site->render = false;
 			#echo 'Error: <b>page not found</b>';
 			#header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
-			$this->Redirect($this->cfg['url']['base'], 301);
+			$this->Redirect($this->cfg['url']['base'], 301);		
 		}
 	}
 	/**

@@ -94,10 +94,11 @@ final class PC_page extends PC_base {
 			}
 		}
 		$this->page_data = $data;
-		if (empty($data['controller'])) {
+		if (!$route_is_page_id and empty($data['controller'])) {
 			$this->debug('Controller is empty', 1);
 			$this->debug($this->site->route, 2);
 			if (count($this->site->route) > 2) {
+				return array('controller'=>'core','data'=>404);
 				$this->debug("Redirecting to index, because we have extra routes", 5);
 				$this->core->Redirect_local('', 301);
 			}

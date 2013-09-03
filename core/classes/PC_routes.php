@@ -131,7 +131,7 @@ final class PC_routes extends PC_debug{
 				if (!preg_match("#^(\pL+|\pN+|[\pL\pN][\pL\pN-_]{0,253}[\pL\pN])$#u", $this->list[$a])) {
 					$this->debug("Unsetting $a: {$this->list[$a]} because allowed format was not satisfied", 2);
 					if (defined('CMF_FRONTEND') and !empty($this->list[$a])) {
-						$core->Redirect_local('', 301);
+						//$core->Redirect_local('', 301);
 					}
 					unset($this->list[$a]);
 										

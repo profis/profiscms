@@ -117,7 +117,7 @@ final class PC_site extends PC_base {
 		//$route['text'] = preg_replace("/href=\"".$this->default_ln."\//", "href=\"",  $route['text']);
 		$this->loaded_page = &$route;
 		$nearest_published = false;
-		if (isset($route['path'])) {
+		if (isset($route['path']) and isset($route['path'][0])) {
 			$path_part_1 = $this->Get_page_path($route['path'][0]['idp'], false);
 			foreach ($path_part_1 as $key => $part) {
 				if ($part['published']) {
@@ -139,14 +139,14 @@ final class PC_site extends PC_base {
 		}
 		$this->plugin =& $this->loaded_page['controller'];
 		$this->text =& $this->loaded_page['text'];
-		$this->loaded_page['original_title'] = $this->loaded_page['title'];
+		$this->loaded_page['original_title'] = v($this->loaded_page['title']);
 		//freshly load page path, so we could know which menu items are opened
 		//print_pre($this->loaded_page['route_path'][0]); die;
 		//print_pre($path_part_1);
 		//print_pre($path_part_2);
 		//$this->loaded_page['path'] = array_merge($path_part_1, (count($this->loaded_page['path'])>1?array_slice($path_part_2, 1,
 		//count($path_part_2)-1):$path_part_2));
-		if (isset($route['path'])) $this->loaded_page['path'] = $this->loaded_page['route_path'];
+		if (isset($route['path'])) $this->loaded_page['path'] = v($this->loaded_page['route_path']);
 		$this->debug('Init hook (after_load_page)', 2);
 		$this->core->Init_hooks('after_load_page', array(
 			'page'=> &$route
@@ -262,6 +262,21 @@ final class PC_site extends PC_base {
 		$this->debug($this->get_callstack(debug_backtrace()));
 		$this->debug($args, 1);
 		$route = call_user_func_array(array($this->page, 'Get_route_data'), $args);
+		if ($route['controller'] == 'core' and $route['data'] == 404) {
+			$route = array(
+				'id' => 0,
+				'pid' => 0,
+				'page_id' => 0,
+				'name' => '404',
+				'custom_name' => '404',
+				'text' => '',
+				'controller' => '',
+				'path' => array(),
+				'_404' => true
+			);
+		}
+		//print_pre($route);
+		//exit;
 		//analyze route data
 		//core controller shouldnt be loaded
 		if ($route['controller'] == 'core') {
@@ -483,6 +498,20 @@ final class PC_site extends PC_base {
 			else {
 				//new page load mode
 				$route = $this->Load_page_by_path();
+				if (v($this->loaded_page['_404'])) {
+					
+					$page_id_404 = $this->page->Get_page_id_by_reference('404');
+					if ($page_id_404) {
+						$route_404 = call_user_func_array(array($this->page, 'Get_route_data'), array($page_id_404, true));
+						$this->Load_page($route_404);
+					}
+					
+					$file = $this->core->Get_theme_path(null, false).'404.php';
+					header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+					if (is_file($file)) {
+						$this->data['tpl'] = $file;
+					}
+				}
 				//select page (check route)
 				//if (isset($this->route[$this->route_shift])) {
 				/*if ($this->routes->Exists(1)) {
@@ -715,7 +744,7 @@ final class PC_site extends PC_base {
 		}
 		$pre_text = '';
 		if ($force_headings) {
-			$h1_name = $this->loaded_page['custom_name'];
+			$h1_name = v($this->loaded_page['custom_name']);
 			if (empty($h1_name)) {
 				$h1_name = $this->loaded_page['name'];
 			}
@@ -795,7 +824,12 @@ final class PC_site extends PC_base {
 	*/
 	public function Get_title() {
 		if (!$this->Page_is_loaded()) return false;
-		$title = str_replace('"', '&quot;', (!empty($this->loaded_page['title'])?$this->loaded_page['title']:$this->loaded_page['name']));
+		if (isset($this->loaded_page['title'])) {
+			$title = str_replace('"', '&quot;', (!empty($this->loaded_page['title'])?$this->loaded_page['title']:$this->loaded_page['name']));
+		}
+		else {
+			$title = v($this->loaded_page['name']);
+		}
 		$title = strip_tags($title);
 		return $title;
 	}

@@ -54,7 +54,7 @@ final class PC_controllers extends PC_base {
 	}
 	public function Execute() {
 		if (!$this->site->Is_loaded()) return false;
-		$total = count($this->site->loaded_page['route_path']);
+		$total = count(v($this->site->loaded_page['route_path'], array()));
 		for ($i=0; isset($this->site->loaded_page['route_path'][$i]); $i++) {
 			$p =& $this->site->loaded_page['route_path'][$i];
 			if (!empty($p['controller'])) {
