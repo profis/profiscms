@@ -29,6 +29,8 @@ class PC_utils {
 										"Friday", "Saturday", "Sunday"));
 	static $yearChar = array( 'en' => 'm', 'ru' => 'г' );
 	
+	public static $last_send_email_error = '';
+	
 	/**
 	 * Gets first photo from text.
 	 * @param array|string content object as kay value pair array or text as string.
@@ -905,6 +907,7 @@ class PC_utils {
 		$logger = new PC_debug;
 		$logger->debug = true;
 		$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'send_mail.html');
+		//$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'send_mail.html', true, 10);
 		$logger->debug('sendEmail');
 		
 		if (is_array($recipient)) {
@@ -936,7 +939,7 @@ class PC_utils {
 			$mail->IsSMTP();
 			$mail->Host = $cfg['from_smtp'];
 		}
-		
+		//$mail->SMTPDebug  = 1;
 		$mail->From		= $params['from_email'];
 		$mail->FromName	= $params['from_name'];
 		$mail->Subject	= $params['subject'];
@@ -957,7 +960,9 @@ class PC_utils {
 		$result = $mail->Send();
 		if (!$result) {
 			$logger->debug(':(', 2);
+			$logger->debug("error: " . $mail->ErrorInfo, 3);
 			$logger->debug(print_r(error_get_last(), true), 3);
+			self::$last_send_email_error = $mail->ErrorInfo;
 		}
 		return $result;
 	}

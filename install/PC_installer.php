@@ -68,7 +68,17 @@ class PC_installer {
 	}
 	
 	public function validate_mod_rewrite() {
-		return in_array('mod_rewrite', apache_get_modules());
+		if (function_exists('apache_get_modules')) {
+			return in_array('mod_rewrite', apache_get_modules());
+		}
+		else {
+			ob_start();
+			phpinfo(INFO_MODULES);
+			$contents = ob_get_contents();
+			ob_end_clean();
+			return strpos($contents, 'mod_rewrite') !== false;
+		}
+		
 	}
 	
 	public function validate_mbstring() {

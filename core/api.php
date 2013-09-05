@@ -211,6 +211,7 @@ if ($routes->Get(1) == 'admin') {
 				'cfg' => 'admin/api/cfg',
 				'ip' => 'admin/api/ip',
 				'ipmd5' => 'admin/api/ipmd5',
+				'pass' => 'admin/api/pass',
 				'debug' => 'admin/api/dbg',
 				'debug' => 'admin/api/dbg',
 				'debug' => 'admin/api/dbg',
@@ -267,6 +268,13 @@ if ($routes->Get(1) == 'admin') {
 			echo 'error_log = ' . ini_get('error_log') . "\n<br />";
 			
 			break;
+		
+		case 'pass':
+			$salt = v($_GET['salt'], $cfg['salt']);
+			echo '<hr />';
+			echo $auth->users->auth_users_base->Encode_password(v($_GET['pass'], 'admin'), $salt);
+			break;
+		
 		default: echo 'Please select API action that you want to execute:<ul><li><a href="'.htmlspecialchars($cfg['url']['base']).'admin/api/phpinfo/">PHPinfo</a></li></ul>';
 	}
 }
