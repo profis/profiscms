@@ -160,7 +160,18 @@ switch (v($_GET['action'])) {
 				$out['success'] = false;
 			}
 			else {
-				$s = $auth->users->Create($name, $language, $password, $group_id);
+				$id = $s = $auth->users->Create($name, $language, $password, $group_id);
+				//save permissions
+				$permissions = v($_POST['permissions'], "");
+				$perms_list = json_decode($permissions, true);
+				$out['permissions_saved'] = false;
+				if ($perms_list) {
+					foreach ($perms_list as $plugin=>$data_array) {
+						foreach ($data_array as $name=>$data) {
+							$out['permissions_saved'] = $auth->permissions->Save_for_user($id, $plugin, $name, $data);
+						}
+					}
+				}
 				$out['success'] = (bool)$s;
 				if ($s) {
 					$out['data'] = $auth->users->Get($s);
