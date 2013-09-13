@@ -123,6 +123,9 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$model->absorb_debug_settings($this);
 		$this->_adjust_order_params($params);
 		$this->_out['list'] = $model->get_all($params);
+		
+		$this->_after_get();
+		
 		if ($paging) {
 			$this->_out['total'] = $paging->Get_total();
 		}
@@ -194,12 +197,22 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		
 	}
 	
+	protected function _after_get() {
+		
+	}
+	
 	protected function _before_update(&$data, &$content) {
 		
 	}
 	
 	public function edit() {
 		$this->debug('edit()');
+		
+		$id = intval(v($_POST['id']));
+		if ($id == 0) {
+			$this->create();
+			return;
+		}
 		
 		$data = json_decode(v($_POST['data'], '{}'), true);
 		
@@ -269,6 +282,46 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$this->_out['success'] = true;
 	}
 	
+	protected function _get_sync_fields() {
+		return array();
+	}
+	
+	public function sync() {
+		$this->_model = $this->_get_model();
+		$this->_model->absorb_debug_settings($this);
+		
+		
+		$data = json_decode(v($_POST['data'], '[]'), true);
+		
+		$this->debug($data);
+		
+		$sync_fields = $this->_get_sync_fields();
+		$sync_fields_flipped = array_flip($sync_fields);
+		
+		foreach ($data as $update_data) {
+			$id_field = $this->_model->get_id_field();
+			$id = v($update_data[$id_field]);
+			if ($id) {
+				unset($update_data[$id_field]);
+				if (!empty($sync_fields)) {
+					$update_data = array_intersect_key($update_data, $sync_fields_flipped);
+				}
+				$content = array();
+		
+				if (isset($update_data['names'])) {
+					foreach ($data['names'] as $ln => $name) {
+						v($content[$ln], array());
+						$content[$ln]['name'] = $name;
+					}
+					unset($update_data['names']);
+				}
+				$update_data['_content'] = $content;
+				$this->_model->update($update_data, $id);
+			}
+		}
+		
+		$this->_out['success'] = true;
+	}
 	
 	public function get_for_combo() {
 		$this->_model = $this->_get_model();

@@ -34,6 +34,10 @@ abstract class PC_model extends PC_base{
 		return $this->_table_position_col;
 	}
 
+	public function get_id_field() {
+		return $this->_table_id_col;
+	}
+	
 	protected function _set_rules() {
 		$this->_rules = array();
 	}
@@ -469,13 +473,17 @@ abstract class PC_model extends PC_base{
 						$op = v($value['op'], '=');
 						if (isset($value['value'])) {
 							$value = $value['value'];
-							if (!is_array()) {
+							if (!is_array($value)) {
 								$query_params[] = $value;
 							}
 							else{
 								$query_params = array_merge($query_params, $value);
 							}
 						}
+						if (!empty($field)) {
+							$where_strings[] = " $field $op ?";
+						}
+						
 					}
 				}
 			}
@@ -671,12 +679,12 @@ abstract class PC_model extends PC_base{
 			$entity_id = $params;
 			$params = array(
 				'where' => array(
-					'id' => $entity_id
+					$this->_table_id_col => $entity_id
 				)
 			);
 		}
-		elseif(isset($params['where']) and isset($params['where']['id']) and !is_array($params['where']['id'])) {
-			$entity_id = $params['where']['id'];
+		elseif(isset($params['where']) and isset($params['where'][$this->_table_id_col]) and !is_array($params['where'][$this->_table_id_col])) {
+			$entity_id = $params['where'][$this->_table_id_col];
 		}
 		
 		$content = array();
@@ -808,7 +816,7 @@ abstract class PC_model extends PC_base{
 	public function delete($params = array()) {
 		if (!is_array($params) and $params) {
 			$params = array('where' => array(
-				'id' => $params
+				$this->_table_id_col => $params
 			));
 		}
 		$query_params = array();
@@ -833,11 +841,11 @@ abstract class PC_model extends PC_base{
 		
 		if (!empty($this->_content_table)) {
 			$content_where = array();
-			if (isset($params['where']) and isset($params['where']['id'])) {
-				$content_where[$this->_content_table_relation_col] = $params['where']['id'];
+			if (isset($params['where']) and isset($params['where'][$this->_table_id_col])) {
+				$content_where[$this->_content_table_relation_col] = $params['where'][$this->_table_id_col];
 			}
 			else {
-				$params['value'] = 'id';
+				$params['value'] = $this->_table_id_col;
 				$ids = $this->get_all($params);
 				$content_where[$this->_content_table_relation_col] = $ids;
 			}

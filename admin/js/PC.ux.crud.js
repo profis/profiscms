@@ -368,7 +368,7 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		Ext.Ajax.request({
 			url: this.api_url + 'edit',
 			method: 'POST',
-			params: {id: this.edit_record.id, data: Ext.util.JSON.encode(data)},
+			params: Ext.apply({id: this.edit_record.id, data: Ext.util.JSON.encode(data)}, this.base_params),
 			callback: this.ajax_edit_respone_handler
 		});
 	},

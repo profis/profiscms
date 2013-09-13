@@ -74,6 +74,8 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	
 	layout: 'fit',
 	
+	id_property: id,
+	
 	constructor: function(config) {
 		if (!config) {
 			config = {};
@@ -183,15 +185,25 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	},
 	
 	get_store: function(){
-		this.store = new Ext.data.JsonStore({
-			autoLoad: false,
+		var config = {
+			autoLoad: this.auto_load,
 			//remoteSort: (this.per_page)?true:false,
 			//root: 'list',
 			//totalProperty: 'total',
 			//idProperty: 'id',
 			//data: {data: [], count : 0},
 			fields: this.get_store_fields()
-		});
+		};
+		if (this.api_url_get) {
+			Ext.apply(config, {
+				url: this.api_url_get,
+				method: 'POST',
+				root: 'list',
+				totalProperty: 'total',
+				idProperty: this.id_property
+			});
+		}
+		this.store = new Ext.data.JsonStore(config);
 		return this.store;
 	},
 	
@@ -200,7 +212,9 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		this.form_data = data;
 		this.form_field_container = this.edit_window = renameWindow;
 		Ext.apply(this.edit_record.data, data.other);
-		this.edit_record.commit();
+		if (!this.no_commit_after_edit) {
+			this.edit_record.commit();
+		}
 		this.edit_window.close();
 		
 	},
@@ -406,7 +420,10 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 				this.edit_record.set('name', PC.utils.extractName(form_data.names));
 			}
 		}
-		this.edit_record.commit();
+		if (!this.no_commit_after_edit) {
+			this.edit_record.commit();
+		}
+		
 		if (form_window) {
 			form_window.close();
 		}
@@ -517,8 +534,12 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		return this.add_form;
 	},		
 		
+	get_empty_edit_form_fields: function() {
+		return this.get_add_form_fields(true);
+	},	
+		
 	get_edit_form_fields: function(data) {
-		var fields = this.get_add_form_fields(true);
+		var fields = this.get_empty_edit_form_fields();
 		if (data) {
 			Ext.each(fields, function(field) {
 				if (data[field._fld]) {
@@ -594,7 +615,53 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	},
 	*/
 		
-	get_store_data: function() {
+		
+	sync_grid: function() {
+		Ext.Ajax.request({
+			url: this.api_url + 'sync',
+			method: 'POST',
+			params: {data: Ext.util.JSON.encode(this.get_store_data(true))},
+			callback: Ext.createDelegate(this.ajax_sync_respone_handler, this)
+		});
+	},	
+			
+	ajax_sync_respone_handler: function(opts, success, response) {
+		if (success && response.responseText) {
+			try {
+				var data = Ext.decode(response.responseText);
+				if (data.success) {
+					this.ajax_sync_success_respone_handler.defer(0, this, [data]);
+					return;
+				}
+				else {
+					error = data.error;
+				}
+			}
+			catch(e) {
+				var error = this.ln.error.json;
+			};
+		}
+		else var error = this.ln.error.connection;
+		Ext.MessageBox.show({
+			title: PC.i18n.error,
+			msg: (error?'<b>'+ error +'</b><br />':''),
+			buttons: Ext.MessageBox.OK,
+			icon: Ext.MessageBox.ERROR
+		});
+	},
+			
+	ajax_sync_success_respone_handler: function(data) {
+		this.commit_records();
+	},
+		
+	commit_records: function() {
+		this.store.commitChanges();
+	},	
+		
+	get_store_data: function(modified_only) {
+		if (modified_only) {
+			return Ext.pluck(this.store.getModifiedRecords(), 'data');
+		}
 		return Ext.pluck(this.store.data.items, 'data');
 	},		
 			

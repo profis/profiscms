@@ -79,8 +79,15 @@ PC_app::$cfg = $cfg;
 
 if (!function_exists('PC_autoload')) {
 	function PC_autoload($cls) {
-		$cls_to_lower = strtolower($cls);
 		global $class_autoload;
+		$cls_to_lower = strtolower($cls);
+		/*
+		if ($cls == 'Class name to debug') {
+			echo 'class name: ' . $cls_to_lower;
+			print_pre($class_autoload);
+			echo isset($class_autoload[$cls_to_lower]);
+		}
+		*/
 		if (!isset($class_autoload[$cls_to_lower])) {
 			if (preg_match("#^PC_[a-zA_Z0-9_]+$#i", $cls)) {
 				global $cfg;

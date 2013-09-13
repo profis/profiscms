@@ -23,7 +23,8 @@ final class PC_page extends PC_base {
 			$decoded_links = array();
 	private $_menu_shift = 1,
 			$_gmap_counter = 0,
-			$_media_counter = 1;
+			$_media_counter = 1,
+			$_parse_html_page_id = 0;
 	public function Init() {
 		//constructor
 	}
@@ -122,7 +123,7 @@ final class PC_page extends PC_base {
 			}
 		}
 		
-		
+		$this->_parse_html_page_id = $this->get_id();
 		$this->Parse_html_output($data['text'], $data['info'], $data['info2'], $data['info3']);
 		$this->Parse_html_output($data['description'], $data['keywords'], $data['title']);
 		//save route path
@@ -889,9 +890,10 @@ final class PC_page extends PC_base {
 		// This has a side-effect that if the user has multiple pages open in
 		// different tabs, submitting both of them from the first time becomes impossible.
 		$currentFormSubmitHash = null;
-		if(array_key_exists('formSubmitHash', $_SESSION)) {
-			$currentFormSubmitHash = $_SESSION['formSubmitHash'];
-			$this->debug("currentFormSubmitHash = _SESSION['formSubmitHash'] [$currentFormSubmitHash]", 1);
+		$formSubmitHash_key = $this->_parse_html_page_id . '_' . 'formSubmitHash';
+		if(array_key_exists($formSubmitHash_key, $_SESSION)) {
+			$currentFormSubmitHash = $_SESSION[$formSubmitHash_key];
+			$this->debug("currentFormSubmitHash = _SESSION['$formSubmitHash_key'] [$currentFormSubmitHash]", 1);
 		}
 		
 		$nextFormSubmitHash = time();
@@ -906,12 +908,12 @@ final class PC_page extends PC_base {
 			$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
 			if ($this->_form_count) {
 				if (v($this->_next_form_submit_hash_already_set)) {
-					$this->debug("_SESSION['formSubmitHash'] is already set in this request", 1);
+					$this->debug("_SESSION['$formSubmitHash_key'] is already set in this request", 1);
 				}
 				else {
 					$this->_next_form_submit_hash_already_set = true;
-					$_SESSION['formSubmitHash'] = $nextFormSubmitHash;
-					$this->debug("_SESSION['formSubmitHash'] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
+					$_SESSION[$formSubmitHash_key] = $nextFormSubmitHash;
+					$this->debug("_SESSION[$formSubmitHash_key] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
 				}
 				
 			}
@@ -1695,6 +1697,7 @@ final class PC_page extends PC_base {
 		$list = array();
 		$valid_html_fields = array('text', 'info', 'info2', 'info3');
 		$needed_html_fields = array_intersect($valid_html_fields, $fields);
+		$this->_parse_html_page_id = $id;
 		while ($d = $r->fetch()) {
 			if (!empty($fields)) {
 				if (!empty($needed_html_fields)) {
@@ -2096,6 +2099,7 @@ final class PC_page extends PC_base {
 			if ($menu['source_id'] > 0) {
 				$source_ids[] = $menu['source_id'];
 			}
+			$this->_parse_html_page_id = $menu['pid'];
 			if (isset($menu['text'])) $this->Parse_html_output($menu['text']);
 			if (isset($menu['info'])) $this->Parse_html_output($menu['info']);
 			if (isset($menu['info2'])) $this->Parse_html_output($menu['info2']);
@@ -2137,6 +2141,7 @@ final class PC_page extends PC_base {
 						$items[$key]['source_info2'] = $sources[$item['source_id']]['info2'];
 						$items[$key]['source_info3'] = $sources[$item['source_id']]['info3'];
 					
+						$this->_parse_html_page_id = $item['source_id'];
 						$this->Parse_html_output($items[$key]['source_text']);
 						$this->Parse_html_output($items[$key]['source_info']);
 						$this->Parse_html_output($items[$key]['source_info2']);
@@ -2199,6 +2204,7 @@ final class PC_page extends PC_base {
 		$success = $r->execute(array($pid, $this->site->ln));
 		if ($success) if ($r->rowCount()) {
 			$text = $r->fetchColumn();
+			$this->_parse_html_page_id = $pid;
 			$this->Parse_html_output($text);
 			return $text;
 		}
@@ -2211,6 +2217,7 @@ final class PC_page extends PC_base {
 		$success = $r->execute(array($pid, $ln));
 		if ($success) if ($r->rowCount()) {
 			$data = $r->fetch();
+			$this->_parse_html_page_id = $pid;
 			if (isset($data['text'])) $this->Parse_html_output($data['text']);
 			if (isset($data['info'])) $this->Parse_html_output($data['info']);
 			if (isset($data['info2'])) $this->Parse_html_output($data['info2']);
@@ -2257,6 +2264,7 @@ final class PC_page extends PC_base {
 			if (!is_array($pid)) $params[] = $pid;
 			$s = $r->execute($params);
 		}
+		$this->_parse_html_page_id = $pid;
 		if ($s) if ($r->rowCount()) {
 			if (is_array($pid)) {
 				$data = array();
