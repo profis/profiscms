@@ -393,7 +393,7 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		var save_handler = this.get_edit_button_handler();
 		
 		var multiln_params = {
-			title: PC.i18n.menu.rename,
+			title: PC.i18n.edit,
 			values: record.data.names,
 			//pageX: xy[0], pageY: xy[1],
 			fields: this.get_edit_form_fields(record.data),

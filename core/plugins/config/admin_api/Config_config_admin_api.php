@@ -40,6 +40,13 @@ class Config_config_admin_api extends PC_plugin_admin_api {
 					'ckey' => $key
 				)
 			));
+			if (!empty($controller)) {
+				$this->cfg[$controller][$key] = $value;
+			}
+			$this->core->Init_hooks('plugin/config/after-update/' . $controller . ':' . $key, array(
+				'value'=> &$value,
+				'logger' => &$this
+			));
 		}
 		
 		$this->_out['success'] = true;

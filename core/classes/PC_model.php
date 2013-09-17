@@ -722,14 +722,14 @@ abstract class PC_model extends PC_base{
 
 		$this->debug_query($query, $query_params, 1);
 		
-		$edited = $r->execute($query_params);
+		$r->execute($query_params);
+		$edited = $r->rowCount();
 		
-		
-		$this->debug('-', 9);$this->debug($entity_id, 10);
-		$this->debug('-', 9);$this->debug($edited, 10);
-		$this->debug('-', 9);$this->debug(!empty($content), 10);
-		$this->debug('-', 9);$this->debug(is_array($content), 10);
-		$this->debug('-', 9);$this->debug(!empty($this->_content_table), 10);
+		$this->debug('id -', 9);$this->debug($entity_id, 10);
+		$this->debug('edited -', 9);$this->debug($edited, 10);
+		//$this->debug('-', 9);$this->debug(!empty($content), 10);
+		//$this->debug('-', 9);$this->debug(is_array($content), 10);
+		//$this->debug('-', 9);$this->debug(!empty($this->_content_table), 10);
 		
 		if ($entity_id and $edited and !empty($content) and is_array($content) and !empty($this->_content_table)) {
 			foreach ($content as $ln => $ln_values) {

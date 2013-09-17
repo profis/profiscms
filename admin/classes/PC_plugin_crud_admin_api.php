@@ -12,6 +12,10 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 	
 	abstract protected function _get_model();
 		
+	public function get_model() {
+		return $this->_get_model();
+	}
+	
 	protected function _adjust_order_params(&$params) {
 		if (isset($_POST['sort'])) {
 			$cols = $this->_get_available_order_columns();
@@ -290,8 +294,10 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$this->_model = $this->_get_model();
 		$this->_model->absorb_debug_settings($this);
 		
-		
-		$data = json_decode(v($_POST['data'], '[]'), true);
+		$data = v($_POST['data'], '[]');
+		if (!is_array($data)) {
+			$data = json_decode($data, true);
+		}
 		
 		$this->debug($data);
 		
@@ -316,7 +322,13 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 					unset($update_data['names']);
 				}
 				$update_data['_content'] = $content;
-				$this->_model->update($update_data, $id);
+				$updated = $this->_model->update($update_data, $id);
+				$this->debug('update result: ' . $updated, 5);
+				if (!$updated) {
+					unset($update_data['_content']);
+					$update_data[$id_field] = $id;
+					$this->_model->insert($update_data);
+				}
 			}
 		}
 		

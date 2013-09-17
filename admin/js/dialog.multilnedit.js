@@ -7,6 +7,10 @@ PC.dialog.multilnedit = {
 		if (params.window_width) {
 			width = params.window_width;
 		}
+		var save_button_label = PC.i18n.save;
+		if (params.save_button_label) {
+			save_button_label = params.save_button_label;
+		}
 		var dialog = this;
 		if (!PC.dialog.styles.multilnedit) {
 			var flds = [];
@@ -36,6 +40,17 @@ PC.dialog.multilnedit = {
 			if (typeof params.fields == 'object') if (params.fields != null) {
 				var flds = flds.concat(params.fields);
 			}
+			var bbar_items = [{xtype:'tbfill'}];
+			var buttons = [];
+			buttons.push();
+			if (params.pre_buttons) {
+				buttons = params.pre_buttons;
+			}
+			buttons.push({	text: save_button_label,
+				icon: 'images/disk.png',
+				handler: this.Save
+			});
+			bbar_items = bbar_items.concat(buttons);
 			var cfg = {
 				width: width,
 				modal: true,
@@ -72,13 +87,7 @@ PC.dialog.multilnedit = {
 						delete PC.dialog.styles.multilnedit;
 					}
 				},
-				bbar: [
-					{xtype:'tbfill'},
-					{	text: PC.i18n.save,
-						icon: 'images/disk.png',
-						handler: this.Save
-					}
-				]
+				bbar: bbar_items
 			};
 			Ext.apply(cfg, params);
 			PC.dialog.styles.multilnedit = new PC.ux.Window(cfg);
