@@ -10,6 +10,9 @@ $path = $site->Get_page_path();
 	<?php
 	$site->Add_stylesheet($core->Get_theme_path() . 'css/bootstrap.css');
 	$site->Add_stylesheet($core->Get_theme_path() . 'css/style.css');
+	
+	$site->Add_script($core->Get_theme_path() . 'js/bootstrap.min.js');
+	$site->Add_script($core->Get_theme_path() . 'js/main.js');
 	echo $site->Get_head();
 	?>
 	
@@ -59,6 +62,12 @@ $path = $site->Get_page_path();
 						)); 
 					?>
 					<!-- / INFORMATION MENU -->
+					
+					<?php
+					echo $site->Get_widget_text('PC_plugin_pc_shop_mini_basket_widget', array(
+						'cart_page_ref' => ''
+					));
+					?>
 				</div>
 				
 				<div class="col-md-9 col-sm-9">
@@ -129,9 +138,5 @@ $path = $site->Get_page_path();
 	</div>
 	<!-- / FOOTER -->
 	
-	<!-- JS -->
-	<script src="js/bootstrap.min.js"></script>
-	<script src="js/main.js"></script>
-	<!-- / JS -->
 </body>
 </html>
