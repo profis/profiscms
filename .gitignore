@@ -25,6 +25,8 @@ themes/*
 !themes/default/
 themes/default/*
 !themes/default/css/
+!themes/default/js/
+!themes/default/fonts/
 !themes/index.php
 !themes/default/config.php
 !themes/default/template.php

@@ -1,3 +1,6 @@
+<?php 
+$path = $site->Get_page_path();
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -9,146 +12,126 @@
 	$site->Add_stylesheet($core->Get_theme_path() . 'css/style.css');
 	echo $site->Get_head();
 	?>
-	<script type="text/javascript">
-	</script>
-	<style type="text/css">
-		a {color:#493BBF;}
-		a:hover {color:#001E6F}
-		li.hot a {font-weight: bold;color: #CF0C0C;}
-		#location {background:#222;padding:3px 5px;color:#666}
-		#location a {color: #aaa;}
-		img.pc_icon{vertical-align:-3px;margin-right:2px;}
-		
-		
-		body {
-        padding-top: 20px;
-        padding-bottom: 60px;
-      }
-
-      /* Custom container */
-      .container {
-        margin: 0 auto;
-        max-width: 1000px;
-      }
-      .container > hr {
-        margin: 60px 0;
-      }
-
-      /* Main marketing message and sign up button */
-      .jumbotron {
-        margin: 80px 0;
-        text-align: center;
-      }
-      .jumbotron h1 {
-        font-size: 100px;
-        line-height: 1;
-      }
-      .jumbotron .lead {
-        font-size: 24px;
-        line-height: 1.25;
-      }
-      .jumbotron .btn {
-        font-size: 21px;
-        padding: 14px 24px;
-      }
-
-      /* Supporting marketing content */
-      .marketing {
-        margin: 60px 0;
-      }
-      .marketing p + h4 {
-        margin-top: 28px;
-      }
-
-
-      /* Customize the navbar links to be fill the entire space of the .navbar */
-      .navbar .navbar-inner {
-        padding: 0;
-      }
-      .navbar .nav {
-        margin: 0;
-        display: table;
-        width: 100%;
-      }
-      .navbar .nav li {
-        display: table-cell;
-        width: 1%;
-        float: none;
-      }
-      .navbar .nav li a {
-        font-weight: bold;
-        text-align: center;
-        border-left: 1px solid rgba(255,255,255,.75);
-        border-right: 1px solid rgba(0,0,0,.1);
-      }
-      .navbar .nav li:first-child a {
-        border-left: 0;
-        border-radius: 3px 0 0 3px;
-      }
-      .navbar .nav li:last-child a {
-        border-right: 0;
-        border-radius: 0 3px 3px 0;
-      }
-	</style>
+	
+	<!--[if lt IE 9]>
+	  <script src="../../assets/js/html5shiv.js"></script>
+	  <script src="../../assets/js/respond.min.js"></script>
+	<![endif]-->
 	
 </head>
-<body style="">
-	<div class="container">
-		<div class="masthead">
-			<?php echo $site->Get_html_languages(array('ul_class' => 'nav nav-pills pull-right')); ?>
-			<h3 class="muted"><a href="<?php echo $site->Get_home_link(); ?>">Home</a></h3>
-		</div>
-		<div class="navbar">
-		  <div class="navbar-inner">
+
+<body>
+	<div id="wrap">
+
+		<!-- FIXED NAVBAR -->
+		<div class="navbar navbar-default navbar-fixed-top">
 			<div class="container">
-				<?php echo $page->Get_html_menu(0, array('ul_class' => 'nav', 'level' => 1)); ?>
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="#">Project name</a>
+				</div>
+				<div class="collapse navbar-collapse">
+					<?php echo $page->Get_html_menu(0, array('ul_class' => 'nav navbar-nav', 'level' => 1)); ?>
+				</div>
 			</div>
-		  </div>
-		</div><!-- /.navbar -->
-
-
-		<?php
-		$breadcrumbs = $site->Get_page_path();
-		if (count($breadcrumbs) >= 1 and !$breadcrumbs[0]['front']) {
-			?>
-			<ul class="breadcrumb">
-				<li>You are here: </li>
-				<?php
-				$breadcrumb_html = '';
-				foreach ($breadcrumbs as $p) {
-					if (empty($p['name'])) {
-						continue;
-					}
-					if (!empty($breadcrumb_html)) {
-						$breadcrumb_html .= ' &gt; ';
-					}
-					$breadcrumb_html .= '<li><a href="'.$site->Get_link($p['route']).'">'.v($p['name']).'</a></li>';
-				}
-				echo $breadcrumb_html;
-				?>
-			</ul>
-			<?php
-		}
-		?>
-		
-		<div style="padding:10px;" class="pc_content">
-			<?php 
-			if($site->Is_front_page() and file_exists($core->Get_theme_path().'template_frontpage.php')){
-				include $core->Get_theme_path().'template_frontpage.php';
-			}else{
-				echo $site->Get_text();
-			}
-			
-			?>
-			<div style="clear:both"></div>
 		</div>
+		<!-- / FIXED NAVBAR -->
+		
+		<!-- CONTAINER -->
+		<div class="container">
 
-		<!-- <div style="color: #aaa; background: #eee;border:1px solid #aaa;padding:3px 5px;">
-			<?php /*echo $page->Get_info_block(1); */?>
-		</div> -->
-		<div class="footer">
-			<p>&copy; 2013</p>
+			<div class="row">
+				<div class="col-md-3 col-sm-3">
+				
+					<!-- INFORMATION MENU -->
+					<?php 
+						echo $site->Get_widget_text('PC_vmenu_widget', array(
+							'root' => $path[0]['pid'],
+							'wrap' => '<ul id="menu" class="nav nav-pills nav-stacked side_block">|</ul>',
+							'wrap_2' => '<ul>|</ul>',
+							'wrap_3' => '<ul>|</ul>',
+							'wrap_4' => '<ul>|</ul>',
+							'wrap_5' => '<ul>|</ul>'
+						)); 
+					?>
+					<!-- / INFORMATION MENU -->
+				</div>
+				
+				<div class="col-md-9 col-sm-9">
+				
+					<?php
+					$breadcrumbs = $site->Get_page_path();
+					$breadcrumb_count = count($breadcrumbs);
+					if ($breadcrumb_count >= 1 and !$breadcrumbs[0]['front']) {
+						array_unshift($breadcrumbs, array(
+							'name' => 'Home',
+							'route' => '',
+						));
+						$breadcrumb_count++;
+						?>
+						<!-- NAVIGATION -->
+						<ol class="breadcrumb">
+							<?php
+							$breadcrumb_html = '';
+							$i = 0;
+							foreach ($breadcrumbs as $p) {
+								$i++;
+								if (empty($p['name'])) {
+									continue;
+								}
+								$li_class = '';
+								$item_html = v($p['name']);
+								if ($breadcrumb_count != $i) {
+									if (!empty($p['route'])) {
+										$link = $site->Get_link($p['route']);
+									}
+									else {
+										$link = $site->Get_home_link();
+									}
+									$item_html = '<a href="'.$link.'">'.$item_html.'</a>';
+								}
+								else {
+									$li_class = ' class="active"';
+								}
+								$breadcrumb_html .= '<li'.$li_class.'>'.$item_html.'</li>';
+							}
+							echo $breadcrumb_html;
+							?>
+						</ol>
+						<!-- / NAVIGATION -->
+						<?php
+					}
+					?>
+				
+					<?php 
+					if($site->Is_front_page() and file_exists($core->Get_theme_path().'template_frontpage.php')){
+						include $core->Get_theme_path().'template_frontpage.php';
+					}else{
+						echo $site->Get_text();
+					}
+					
+					?>
+					
+				</div>
+			</div>
+		</div>
+		<!-- / CONTAINER -->
+	</div>
+	<!-- FOOTER -->
+	<div id="footer">
+		<div class="container">
+			<p id="copyright" class="text-muted">© 2013 UAB <a href="http://www.profis.eu" title="Profis">„Profis“</a>.</p>
 		</div>
 	</div>
+	<!-- / FOOTER -->
+	
+	<!-- JS -->
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/main.js"></script>
+	<!-- / JS -->
 </body>
 </html>
