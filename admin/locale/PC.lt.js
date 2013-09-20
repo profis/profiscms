@@ -36,6 +36,7 @@ PC.langs.lt = {
     move_down: 'Į apačią',
 
 	not_set: 'Nenustatytas',
+	price_not_set: 'Nenustatyta',
 
 	close: 'Uždaryti',
 	seo: 'SEO',

@@ -38,6 +38,7 @@ PC.langs.en = {
 	move_down: 'Move down',
 	
 	not_set: 'Not set',
+	price_not_set: 'Not set',
 	
 	close: 'Close',
 	seo: 'SEO',

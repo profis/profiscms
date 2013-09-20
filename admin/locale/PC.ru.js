@@ -36,6 +36,7 @@ PC.langs.ru = {
     move_down: 'Вниз',
 	
 	not_set: 'Не установленный',
+	price_not_set: 'Не установленна',
 	
 	close: 'Закрыть',
 	seo: 'SEO',

@@ -1917,26 +1917,41 @@ final class PC_page extends PC_base {
 			if (v($item['target'])) {
 				$target = 'target="_blank"';
 			}
+			
+			//if this item is opened - submenu should be displayed
+			$html_2 = '';
+			$sub_count = 0;
+				
+			if (v($params['include_submenu']) or v($params['level'], 1) > 1 and $this->site->Is_opened($item['pid'])) {
+				$submenu = $this->Get_submenu($item['pid'], array('pid','name','route','info','target'));
+				$html_2 .= '<ul class="' . v($params['ul_2_class']) . '">';
+				foreach ($submenu as $item_2) {
+					$sub_count++;
+					$target_2 = '';
+					if (v($item_2['target'])) {
+						$target_2 = 'target="_blank"';
+					}
+					$hot = (isset($item_2['hot'])?($item_2['hot']?' class="hot"':''):'');
+					$html_2 .= '<li'.$hot.'><a ' . $target_2 . ' '.($this->site->Is_opened($item_2['pid'])?'style="font-weight:bold;" ':'').'href="'.$this->site->Get_link($item_2['route']).'">'.(!empty($item_2['name'])?$item_2['name']:'<i>#'.v($item_2['id']).'</i>').'</a></li>';
+				}
+				unset($hot);
+				$html_2 .= '</ul>';
+			}
+			$inner_html = !empty($item['name'])?$item['name']:'<i>#'.$item['pid'].'</i>';
+			
+			if ($sub_count) {
+				$classes[] = $params['li_class_with_submenu'];
+				if (isset($params['inner_wrap_with_submenu']) and !empty($params['inner_wrap_with_submenu'])) {
+					list($wb, $we) = explode('|', $params['inner_wrap_with_submenu']);
+					$inner_html = $wb . $inner_html . $we;
+				}
+			}
 			if (!empty($classes)) {
 				$class_full = ' class = "'.implode(' ', $classes).'"';
 			}
-			$html .= '<li ' . $class_full . '><a ' . $target . ' href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.$item['pid'].'</i>').'</a>';
-			//if this item is opened - submenu should be displayed
-			if (v($params['level'], 1) > 1 and $this->site->Is_opened($item['pid'])) {
-				$submenu = $this->Get_submenu($item['pid'], array('pid','name','route','info','target'));
-				$html .= '<ul style="padding-left:15px;">';
-				foreach ($submenu as $item) {
-					$target = '';
-					if (v($item['target'])) {
-						$target = 'target="_blank"';
-					}
-					$hot = (isset($item['hot'])?($item['hot']?' class="hot"':''):'');
-					$html .= '<li'.$hot.'><a ' . $target . ' '.($this->site->Is_opened($item['pid'])?'style="font-weight:bold;" ':'').'href="'.$this->site->Get_link($item['route']).'">'.(!empty($item['name'])?$item['name']:'<i>#'.v($item['id']).'</i>').'</a></li>';
-				}
-				unset($hot);
-				$html .= '</ul>';
-			}
-			$html .= '</li>';
+			
+			$html .= '<li ' . $class_full . '><a ' . $target . ' href="'.$this->site->Get_link($item['route']).'">'.$inner_html.'</a>' . $html_2 . '</li>';
+			
 		}
 		$html .= '</ul>';
 		return $html;

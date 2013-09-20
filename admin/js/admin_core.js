@@ -1426,7 +1426,10 @@ function Load_page(data) {
 				try {
 					var data = Ext.decode(rspns.responseText);
 					Load_page_data({treeNode: PC.tree.component.getNodeById(PC.global.pid)}, data, Ext.Msg.hide);
-				} catch(e) { Ext.Msg.hide(); };
+				} catch(e) { 
+					Ext.Msg.hide(); 
+					//debugger;
+				};
 			}
 		}
 	});

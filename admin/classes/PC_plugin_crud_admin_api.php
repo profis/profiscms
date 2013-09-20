@@ -307,7 +307,8 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		foreach ($data as $update_data) {
 			$id_field = $this->_model->get_id_field();
 			$id = v($update_data[$id_field]);
-			if ($id) {
+			if (true) {
+				$updated = false;
 				unset($update_data[$id_field]);
 				if (!empty($sync_fields)) {
 					$update_data = array_intersect_key($update_data, $sync_fields_flipped);
@@ -322,8 +323,11 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 					unset($update_data['names']);
 				}
 				$update_data['_content'] = $content;
-				$updated = $this->_model->update($update_data, $id);
-				$this->debug('update result: ' . $updated, 5);
+				if ($id) {
+					$updated = $this->_model->update($update_data, $id);
+					$this->debug('update result: ' . $updated, 5);
+				}
+				
 				if (!$updated) {
 					unset($update_data['_content']);
 					$update_data[$id_field] = $id;

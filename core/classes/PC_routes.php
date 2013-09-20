@@ -169,14 +169,14 @@ final class PC_routes extends PC_debug{
 	* @param int $n given route map level to look for.
 	* @return string route name.
 	*/
-	public function Get($n=null) {
+	public function Get($n=null, $default = false) {
 		if (is_null($n)) {
 			return $this->list;
 		}
 		if (isset($this->list[$n])) {
 			return $this->list[$n];
 		}
-		return false;
+		return $default;
 	}
 	/**
 	* Method used to check if route map level exists in the route map by given route map level.
