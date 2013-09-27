@@ -1000,7 +1000,7 @@ tinymce.create('static tinymce.util.XHR', {
 		isWebKit = tinymce.isWebKit,
 		isIE = tinymce.isIE,
 		blockRe = /^(H[1-6R]|P|DIV|ADDRESS|PRE|FORM|T(ABLE|BODY|HEAD|FOOT|H|R|D)|LI|OL|UL|CAPTION|BLOCKQUOTE|CENTER|DL|DT|DD|DIR|FIELDSET|NOSCRIPT|MENU|ISINDEX|SAMP)$/,
-		boolAttrs = makeMap('checked,compact,declare,defer,disabled,ismap,multiple,nohref,noresize,noshade,nowrap,readonly,selected'),
+		boolAttrs = makeMap('checked,compact,declare,defer,disabled,ismap,multiple,nohref,noresize,noshade,nowrap,readonly,selected,required'),
 		mceAttribs = makeMap('src,href,style,coords,shape'),
 		encodedChars = {'&' : '&amp;', '"' : '&quot;', '<' : '&lt;', '>' : '&gt;'},
 		encodeCharsRe = /[<>&\"]/g,
@@ -1032,6 +1032,7 @@ tinymce.create('static tinymce.util.XHR', {
 			maxlength : "maxLength",
 			readonly : "readOnly",
 			selected : "selected",
+			required : "required",
 			value : "value",
 			id : "id",
 			name : "name",
@@ -1496,10 +1497,14 @@ tinymce.create('static tinymce.util.XHR', {
 				v = e.getAttribute(n, 2);
 
 			// Check boolean attribs
-			if (/^(checked|compact|declare|defer|disabled|ismap|multiple|nohref|noshade|nowrap|readonly|selected)$/.test(n)) {
+			if (/^(checked|compact|declare|defer|disabled|ismap|multiple|nohref|noshade|nowrap|readonly|selected|required)$/.test(n)) {
 				if (e[t.props[n]] === true && v === '')
 					return n;
-
+				if (v === null && n === 'required' && e.attributes.required) {
+					if (e.attributes.required.nodeValue == -1) {
+						return n;
+					}
+				}
 				return v ? n : '';
 			}
 
@@ -1546,6 +1551,7 @@ tinymce.create('static tinymce.util.XHR', {
 					case 'checked':
 					case 'disabled':
 					case 'readonly':
+					case 'required':
 						if (v === 0)
 							v = '';
 
@@ -1990,7 +1996,7 @@ tinymce.create('static tinymce.util.XHR', {
 
 			if (isIE) {
 				h = h.replace(/&apos;/g, '&#39;'); // IE can't handle apos
-				h = h.replace(/\s+(disabled|checked|readonly|selected)\s*=\s*[\"\']?(false|0)[\"\']?/gi, ''); // IE doesn't handle default values correct
+				h = h.replace(/\s+(disabled|checked|readonly|selected|required)\s*=\s*[\"\']?(false|0)[\"\']?/gi, ''); // IE doesn't handle default values correct
 			}
 
 			// Force tags open, and on IE9 replace $1$2 that got left behind due to bugs in their RegExp engine
@@ -6583,7 +6589,7 @@ window.tinymce.dom.Sizzle = Sizzle;
 							for (i=0, at = ru.attribs, l = at.length; i<l; i++) {
 								a = at[i];
 								v = t._getAttrib(n, a);
-
+								
 								if (v !== null)
 									w.writeAttribute(a.name, v);
 							}
