@@ -2,6 +2,8 @@
 
 class PC_hmenu_widget extends PC_menu_widget {
 	
-	protected $_template_group = 'hmenu';
+	public function get_template_group() {
+		 return parent::get_template_group() . ':hmenu';
+	}
 	
 }

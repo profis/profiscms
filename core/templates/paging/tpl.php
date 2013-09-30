@@ -3,8 +3,9 @@
 		return;
 	}
 ?>
-<div class="pagination">
-  <ul>
+<div class="clearfix"></div>
+<div>
+  <ul class="pagination">
 	<?php
 	foreach ($items as $key => $item) {
 		$li_classes = array ();

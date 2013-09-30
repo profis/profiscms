@@ -722,8 +722,8 @@ abstract class PC_model extends PC_base{
 
 		$this->debug_query($query, $query_params, 1);
 		
-		$r->execute($query_params);
-		$edited = $r->rowCount();
+		$edited = $r->execute($query_params);
+		$edited_count = $r->rowCount();
 		
 		$this->debug('id -', 9);$this->debug($entity_id, 10);
 		$this->debug('edited -', 9);$this->debug($edited, 10);
@@ -768,7 +768,7 @@ abstract class PC_model extends PC_base{
 				
 			}
 		}
-		return $edited;
+		return $edited_count;
 	}
 	
 	public function insert(array $data, array $content = array(), $params = array()) {

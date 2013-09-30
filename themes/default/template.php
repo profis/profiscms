@@ -38,7 +38,31 @@ $path = $site->Get_page_path();
 					<a class="navbar-brand" href="#">Project name</a>
 				</div>
 				<div class="collapse navbar-collapse">
-					<?php echo $page->Get_html_menu(0, array('ul_class' => 'nav navbar-nav', 'level' => 1)); ?>
+					<?php 
+						echo $site->Get_widget_text('PC_hmenu_widget', array(
+							'menu' => 0,
+							'max_levels' => 2,
+							'wrap' => '<ul class="nav navbar-nav">|</ul>',
+							'li_class_with_submenu' => 'dropdown',
+							'a_tag_params_with_submenu' => 'class="dropdown-toggle" data-toggle="dropdown"',
+							'inner_wrap_with_submenu' => '| <b class="caret"></b>',
+							'no_href_with_submenu' => true,
+							'submenu_for_all' => true,
+							'level_config' => array(
+								'2' => array(
+									'wrap' => '<ul class="dropdown-menu">|</ul>',
+								)
+							)
+						)); 
+					
+						$page->Get_html_menu(0, array(
+						'ul_class' => 'nav navbar-nav', 
+						'level' => 1, 
+						'li_class_with_submenu' => 'dropdown',
+						'inner_wrap_with_submenu' => '| <b class="caret"></b>',
+						'include_submenu' => false,
+						'ul_2_class' => 'dropdown-menu'
+					)); ?>
 				</div>
 			</div>
 		</div>
@@ -55,13 +79,21 @@ $path = $site->Get_page_path();
 						echo $site->Get_widget_text('PC_vmenu_widget', array(
 							'root' => $path[0]['pid'],
 							'wrap' => '<ul id="menu" class="nav nav-pills nav-stacked side_block">|</ul>',
-							'wrap_2' => '<ul>|</ul>',
-							'wrap_3' => '<ul>|</ul>',
-							'wrap_4' => '<ul>|</ul>',
-							'wrap_5' => '<ul>|</ul>'
+							'level_config' => array(
+								'2' => array('wrap' => '<ul>|</ul>'),
+								'3' => array('wrap' => '<ul>|</ul>'),
+								'4' => array('wrap' => '<ul>|</ul>'),
+								'5' => array('wrap' => '<ul>|</ul>')
+							)
 						)); 
 					?>
 					<!-- / INFORMATION MENU -->
+					
+					<?php
+					echo $site->Get_widget_text('PC_plugin_pc_shop_currency_selector_widget', array(
+					
+					));
+					?>
 					
 					<?php
 					echo $site->Get_widget_text('PC_plugin_pc_shop_mini_basket_widget', array(
@@ -70,7 +102,7 @@ $path = $site->Get_page_path();
 					?>
 				</div>
 				
-				<div class="col-md-9 col-sm-9">
+				<div class="col-md-9 col-sm-9 pc_content">
 				
 					<?php
 					$breadcrumbs = $site->Get_page_path();
@@ -95,7 +127,10 @@ $path = $site->Get_page_path();
 								$li_class = '';
 								$item_html = v($p['name']);
 								if ($breadcrumb_count != $i) {
-									if (!empty($p['route'])) {
+									if (!empty($p['link'])) {
+										$link = $p['link'];
+									}
+									elseif (!empty($p['route'])) {
 										$link = $site->Get_link($p['route']);
 									}
 									else {
