@@ -1111,7 +1111,7 @@ final class PC_page extends PC_base {
 		if (v($marker->text)) {
 			$new_marker .= '
 			google.maps.event.addListener(' . $marker_var . ', "click", function() {
-				infowindow.setContent(' . json_encode($marker->text) . ');
+				infowindow.setContent(' . json_encode(nl2br($marker->text)) . ');
 				infowindow.open(' . $map_id . ','.$marker_var.');
 			});';
 		}
@@ -1154,7 +1154,7 @@ final class PC_page extends PC_base {
 		}
 		$options_array = array();
 		if (v($marker->text)) {
-			$options_array[] = 'balloonContentBody: ' . json_encode($marker->text);
+			$options_array[] = 'balloonContentBody: ' . json_encode(nl2br($marker->text));
 		}
 		return '
 			myPlacemark = new ymaps.Placemark(['.$marker->latitude.', '.$marker->longitude.'], 

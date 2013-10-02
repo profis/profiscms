@@ -241,7 +241,7 @@ if ($routes->Get(1) == 'admin') {
 			$debug_logger = new PC_debug();
 			$debug_logger->debug = true;
 			$debug_logger->debug('Test');
-			echo '$cfg[debug_disable_output] = ' . v($cfg['debug_disable_output']) . "\n<br />";
+			echo '$cfg[debug_output] = ' . v($cfg['debug_output']) . "\n<br />";
 			echo '$cfg[debug_ip] = ' . v($cfg['debug_ip']) . "\n<br />";
 			echo 'get_debug_string(): ' . $debug_logger->get_debug_string() . "\n<br />";
 			break;
@@ -270,9 +270,19 @@ if ($routes->Get(1) == 'admin') {
 			break;
 		
 		case 'pass':
-			$salt = v($_GET['salt'], $cfg['salt']);
+			$salt = $cfg['salt'];
+			if (isset($_GET['salt']) and !empty($_GET['salt'])) {
+				$salt = $_GET['salt'];
+			}
+			$pass = v($_GET['password'], 'admin');
+			echo '<form action="" method="get">
+				Salt: <input name="salt" value="'.pc_e(v($_GET['salt'])).'">
+				<br />
+				Pass: <input name="password" value="'.pc_e($pass).'">
+				<input type=submit>
+				</form>';
 			echo '<hr />';
-			echo $auth->users->auth_users_base->Encode_password(v($_GET['pass'], 'admin'), $salt);
+			echo $auth->users->auth_users_base->Encode_password($pass, $salt);
 			break;
 		
 		default: echo 'Please select API action that you want to execute:<ul><li><a href="'.htmlspecialchars($cfg['url']['base']).'admin/api/phpinfo/">PHPinfo</a></li></ul>';

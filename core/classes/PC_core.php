@@ -731,6 +731,9 @@ final class PC_core extends PC_base {
 		$object = $this->memstore->Get($path);
 		if ($object) return $object;
 		//create new instance
+		if (!class_exists($className)) {
+			return false;
+		}
 		$reflectionCls = new ReflectionClass($className);
 		return $this->memstore->Cache($path, $reflectionCls->newInstanceArgs($args));
 	}

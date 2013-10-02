@@ -74,6 +74,12 @@ $path = $site->Get_page_path();
 			<div class="row">
 				<div class="col-md-3 col-sm-3">
 				
+					<?php
+					echo $site->Get_widget_text('PC_plugin_pc_shop_currency_selector_widget', array(
+					
+					));
+					?>
+					
 					<!-- INFORMATION MENU -->
 					<?php 
 						echo $site->Get_widget_text('PC_vmenu_widget', array(
@@ -89,11 +95,7 @@ $path = $site->Get_page_path();
 					?>
 					<!-- / INFORMATION MENU -->
 					
-					<?php
-					echo $site->Get_widget_text('PC_plugin_pc_shop_currency_selector_widget', array(
 					
-					));
-					?>
 					
 					<?php
 					echo $site->Get_widget_text('PC_plugin_pc_shop_mini_basket_widget', array(

@@ -704,6 +704,9 @@ final class PC_site extends PC_base {
 		$args = func_get_args();
 		array_shift($args);
 		$widget = $this->core->Get_object($widget_name, $args);
+		if (!$widget) {
+			return false;
+		}
 		return $widget->get_text();
 	}
 	
@@ -712,6 +715,9 @@ final class PC_site extends PC_base {
 		array_shift($args);
 		$data = array_shift($args);
 		$widget = $this->core->Get_object($widget_name, $args);
+		if (!$widget) {
+			return false;
+		}
 		return $widget->get_text($data);
 	}
 	
@@ -719,6 +725,9 @@ final class PC_site extends PC_base {
 		$args = func_get_args();
 		array_shift($args);
 		$widget = $this->core->Get_object($widget_name, $args);
+		if (!$widget) {
+			return false;
+		}
 		return $widget->get_data();
 	}
 	
