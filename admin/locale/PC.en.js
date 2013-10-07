@@ -669,6 +669,7 @@ PC.langs.en = {
 			readonly: 'Readonly',
 			placeholder: 'Placeholder',
 			required: 'Required',
+			html5_type: 'Html5_type',
 			checked: 'Checked',
 			selected: 'Selected',
 			disabled: 'Disabled',

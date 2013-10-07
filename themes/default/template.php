@@ -80,6 +80,12 @@ $path = $site->Get_page_path();
 					));
 					?>
 					
+					<?php
+					echo $site->Get_widget_text('PC_plugin_pc_shop_search_form_widget', array(
+					
+					));
+					?>
+					
 					<!-- INFORMATION MENU -->
 					<?php 
 						echo $site->Get_widget_text('PC_vmenu_widget', array(

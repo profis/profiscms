@@ -41,6 +41,7 @@ if (isset($_POST['ajax'])) {
 	
 	// ***** RESTORE *****
 	if (isset($_POST['restore'])) {
+		set_time_limit(30000);
 		$f = $relbd.basename($_POST['restore']);
 		if ($z = fopen($f, 'rb')) {
 			$fn_read = 'fread';
@@ -231,6 +232,7 @@ if (isset($_POST['ajax'])) {
 	// ***** GET *****
 	foreach (glob($relbd.'*') as $f) {
 		if (basename($f) == 'index.php') continue;
+		if (basename($f) == 'web.config') continue;
 		if (@is_file($f)) {
 			$t = filemtime($f);
 			$s = filesize($f);
@@ -312,6 +314,7 @@ function mod_backup_click() {
 								restore: rec.data.fsname
 							},
 							method: 'POST',
+							timeout:3000000,
 							callback: function(opts, success, rspns) {
 								if (success && rspns.responseText) {
 									try {

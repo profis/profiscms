@@ -434,6 +434,11 @@ final class PC_page extends PC_base {
 							$nameAttribute = 'pc_' . md5($fieldName);
 							$field->setAttribute('name', $nameAttribute . ($multiple?'[]':''));
 							$pageForm['fields'][$fieldName]['multiple'] = $multiple;
+							
+							if ($type == 'tel') {
+								$field->setAttribute('pattern', '[\+]?[\d-\s]+');
+							}
+							
 							//$element = array();
 							//$element['type'] = ($tagName == 'input' ? $field->getAttribute('type') : $tagName);
 							//$element['required'] = $field->hasAttribute('required');
@@ -472,6 +477,9 @@ final class PC_page extends PC_base {
 								}
 								$pageForm['fields'][$fieldName]['options'] = $options;
 							}
+						}
+						else {
+							
 						}
 					}
 				}

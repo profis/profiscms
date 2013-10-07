@@ -18,6 +18,7 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 			{name: 'readonly', pack: true},
 			{name: 'placeholder', pack: true},
 			{name: 'required', pack: true},
+			{name: 'type', pack: true},
 			{name: 'checked', pack: true},
 //			{name: 'cols', pack: true},
 //			{name: 'rows', pack: true},
@@ -163,7 +164,11 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 		}
 		
 		if(tagName == 'input') {
-			attrObject.type = type;
+			attrObject['data-adv_input_type'] = type;
+			if (!attrObject.type) {
+				attrObject.type = type;
+			}
+			debugger;
 			ob = dom.create('input', attrObject);
 		} else if(tagName == 'textarea') {
 			var textContent = attrObject.textContent;
@@ -233,11 +238,17 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 				ea.options = options;
 			} else {
 				type = dom.getAttrib(n, 'type');
+				if (Forms_plugin_data.html5_types[type]) {
+					ea['data-adv_input_type'] = type;
+					type = 'text';
+					ea['type'] = type;
+				}
 			}
 			if((type != 'image') || (typeof(ao.src) == 'undefined')) {
 				ao.src = this.url + '/img/'+type+'.png';
 			}
 			ao['class'] = 'mceItemForm_' + type;
+			debugger;
 			ao['data-advform'] = this._serialize(ea);
 			im = dom.create('img', ao);
 			
