@@ -5,4 +5,5 @@ RewriteCond %{REQUEST_URI} !^(.+)/admin/(thumbnail|small|large)(/[^/]+)$
 #RewriteCond %{REQUEST_URI} !^(.+)/admin/(thumbnail|thumb-small|small|thumb-large|large)(/[^/]+)$
 RewriteRule ^(.+)/admin/(thumbnail|small|large)(/[^/]+)$ $1/thumb-$2$3
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.+)$ ../core/gallery.php?r=$1 [QSA]
+#RewriteRule ^(.+)$ ../core/gallery.php?r=$1 [QSA]
+RewriteRule ^(.+)$ gallery.php?r=$1 [QSA]

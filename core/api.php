@@ -52,6 +52,9 @@ if ($routes->Get(1) == 'admin') {
 		case 'phpinfo':
 			phpinfo();
 			break;
+		case 'server':
+			print_pre($_SERVER);
+			break;
 		case 'tree':
 			$tree = $core->Get_object('PC_database_tree');
 			switch ($routes->Get(2)) {
@@ -208,6 +211,7 @@ if ($routes->Get(1) == 'admin') {
 			$links = array(
 				'<strong>Admin api</strong>' => '',
 				'phpinfo' => 'admin/api/phpinfo',
+				'server' => 'admin/api/server',
 				'cfg' => 'admin/api/cfg',
 				'ip' => 'admin/api/ip',
 				'ipmd5' => 'admin/api/ipmd5',
