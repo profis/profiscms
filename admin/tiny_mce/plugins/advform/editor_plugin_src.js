@@ -164,11 +164,9 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 		}
 		
 		if(tagName == 'input') {
-			attrObject['data-adv_input_type'] = type;
-			if (!attrObject.type) {
-				attrObject.type = type;
+			if (attrObject['data-adv_input_type']) {
+				attrObject.type = attrObject['data-adv_input_type'];
 			}
-			debugger;
 			ob = dom.create('input', attrObject);
 		} else if(tagName == 'textarea') {
 			var textContent = attrObject.textContent;
@@ -248,7 +246,6 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 				ao.src = this.url + '/img/'+type+'.png';
 			}
 			ao['class'] = 'mceItemForm_' + type;
-			debugger;
 			ao['data-advform'] = this._serialize(ea);
 			im = dom.create('img', ao);
 			

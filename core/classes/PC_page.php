@@ -892,6 +892,10 @@ final class PC_page extends PC_base {
 	}
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
+		$params = $t2;
+		if (!is_array($params)) {
+			$params = false;
+		}
 		$this->debug("Parse_html_output()");
 		// prevent double-submitting of forms. This goes here and not in Process_forms()
 		// because we run Process_forms() multiple times for each page load.
@@ -907,31 +911,46 @@ final class PC_page extends PC_base {
 		$nextFormSubmitHash = time();
 						
 		//$this->page_data['pid']
-		//echo $t1;
+		//print_pre($params);
 		$tc = 1;
 		$var = 't'.$tc;
 		$text =& $$var;
-		while (isset($text)) {
+		while (isset($text) and !is_array($text)) {
 			#
-			$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
-			if ($this->_form_count) {
-				if (v($this->_next_form_submit_hash_already_set)) {
-					$this->debug("_SESSION['$formSubmitHash_key'] is already set in this request", 1);
+			if ($params === false or in_array('forms', $params)) {
+				$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
+				if ($this->_form_count) {
+					if (v($this->_next_form_submit_hash_already_set)) {
+						$this->debug("_SESSION['$formSubmitHash_key'] is already set in this request", 1);
+					}
+					else {
+						$this->_next_form_submit_hash_already_set = true;
+						$_SESSION[$formSubmitHash_key] = $nextFormSubmitHash;
+						$this->debug("_SESSION[$formSubmitHash_key] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
+					}
 				}
-				else {
-					$this->_next_form_submit_hash_already_set = true;
-					$_SESSION[$formSubmitHash_key] = $nextFormSubmitHash;
-					$this->debug("_SESSION[$formSubmitHash_key] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
-				}
-				
 			}
 			
-			$this->Replace_google_map_objects($text);
-			$this->Parse_gallery_files_requests($text);
+			if ($params === false or in_array('maps', $params)) {
+				$this->Replace_google_map_objects($text);
+			}
+				
+			if ($params === false or in_array('gallery', $params)) {
+				$gallery_params = array();
+				if (is_array($params) and isset($params['gallery_params'])) {
+					$gallery_params = $params['gallery_params'];
+				}
+				$this->Parse_gallery_files_requests($text, $gallery_params);
+			}
+			else {
+				
+			}
 			$this->core->Init_hooks('parse_html_output', array(
 				'text'=> &$text
 			));
-			$this->Replace_media_objects($text);
+			if ($params === false or in_array('media', $params)) {
+				$this->Replace_media_objects($text);
+			}
 			//fix hash links
 			if (isset($this->route[1])) $text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1], null, false)."$1\"",  $text);
 			//remove default language code from links
@@ -952,7 +971,7 @@ final class PC_page extends PC_base {
 			#continue to the next arg
 			$tc++;
 			$var = 't'.$tc;
-			$text =& $$var;
+			$text =& $$var;			
 		}
 	}
 	
@@ -1019,13 +1038,35 @@ final class PC_page extends PC_base {
 		$link = (substr($match[0], 0, 7) == 'mailto:');
 		return ($link?'mailto:':'').Hex_encode(($link?substr($match[0], 7):$match[0]), !$link);
 	}
-	public function Parse_gallery_files_requests(&$text) {
+	public function Parse_gallery_files_requests(&$text, $params = array()) {
 		if (!empty($text)) {
 			//echo "<hr /><hr />Parse_gallery_files_requests()";
 			//echo $text;
 			//preg_match_all('#"((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+)")#i', $text, $matches);
 			//preg_match_all('#(url\("?|")((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+))("?\)|")#i', $text, $matches);
-			preg_match_all('#(url\("?|")(?:[^"]*)((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+))("?\)|")#i', $text, $matches);
+			$pattern = '#(url\("?|")(?:[^"]*)((gallery/admin/id/(thumb-)?([a-z0-9][a-z0-9\-_]{0,18}[a-z0-9]/)?)([0-9]+))("?\)|")#i';
+			
+			if (v($params['first_only'])) {
+				preg_match($pattern, $text, $single_matches);
+				$matches = array();
+				foreach ($single_matches as $key => $value) {
+					$matches[$key] = array($value);
+				}
+				
+			}
+			else {
+				preg_match_all($pattern, $text, $matches);
+				$limit = v($params['limit'], 0);
+				if ($limit) {
+					$new_matches = array();
+					foreach ($matches as $key => $value) {
+						$new_matches[$key] = array_slice($value , 0, $limit);
+					}
+					$matches = $new_matches;
+				}
+			
+			}
+			
 			//print_pre($matches);
 			if (count($matches[6])) {
 				//print_pre($matches);
@@ -1660,7 +1701,7 @@ final class PC_page extends PC_base {
 	}
 	
 	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false, $includeParents=false, $fields = array(), $lang = '') {
-		if (is_array($id) and empty($id)) {
+		if (is_array($id) and empty($id) or is_null($id)) {
 			return array();
 		}
 		$where = array();
@@ -2123,10 +2164,22 @@ final class PC_page extends PC_base {
 				$source_ids[] = $menu['source_id'];
 			}
 			$this->_parse_html_page_id = $menu['pid'];
-			if (isset($menu['text'])) $this->Parse_html_output($menu['text']);
-			if (isset($menu['info'])) $this->Parse_html_output($menu['info']);
-			if (isset($menu['info2'])) $this->Parse_html_output($menu['info2']);
-			if (isset($menu['info3'])) $this->Parse_html_output($menu['info3']);
+			if (isset($menu['text']) and !v($function_params['no_parse_text'])) {
+				$parse_params = v($function_params['parse_text']);
+				$this->Parse_html_output($menu['text'], $parse_params);
+			}
+			if (isset($menu['info']) and !v($function_params['no_parse_info'])) {
+				$parse_params = v($function_params['parse_info']);
+				$this->Parse_html_output($menu['info'], $parse_params);
+			}
+			if (isset($menu['info2']) and !v($function_params['no_parse_info2'])) {
+				$parse_params = v($function_params['parse_info2']);
+				$this->Parse_html_output($menu['info2'], $parse_params);
+			}
+			if (isset($menu['info3']) and !v($function_params['no_parse_info3'])) {
+				$parse_params = v($function_params['parse_info3']);
+				$this->Parse_html_output($menu['info3'], $parse_params);
+			}
 			
 			//print_pre($menu);
 			
