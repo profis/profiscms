@@ -10,6 +10,8 @@ _restore_trink_jei_nieko_netruksta/
 # Gallery
 gallery/*
 !gallery/.htaccess
+!gallery/web.config
+!gallery/gallery.php
 # Plugins
 plugins/*
 !plugins/auth/

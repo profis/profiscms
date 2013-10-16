@@ -9,6 +9,26 @@ $logger->set_instant_debug_to_file($cfg['path']['logs'] . 'api.html');
 
 error_reporting(E_ALL);
 
+if (isset($_GET['r1'])) {
+	$site->route[1] = $_GET['r1'];
+}
+
+if (isset($_GET['r2'])) {
+	$site->route[2] = $_GET['r2'];
+}
+
+if (isset($_GET['r3'])) {
+	$site->route[3] = $_GET['r3'];
+}
+
+if (isset($_GET['r4'])) {
+	$site->route[4] = $_GET['r4'];
+}
+
+if (isset($_GET['r5'])) {
+	$site->route[5] = $_GET['r5'];
+}
+
 if (isset($site->route[1]) and strlen($site->route[1]) == 2) {
 	$site->Identify();	
 	if(isset($site->data['languages'][$site->route[1]])) {
@@ -221,6 +241,7 @@ if ($routes->Get(1) == 'admin') {
 				'debug' => 'admin/api/dbg',
 				'ip' => 'admin/api/ip',
 				'debug-email' => 'admin/api/debug-email',
+				'send test email' => 'admin/api/send_test_email',
 				'error' => 'admin/api/error',
 				
 				'<strong>Logai</strong>' => '',
@@ -257,6 +278,20 @@ if ($routes->Get(1) == 'admin') {
 			print_pre($cfg['debug_email']);
 			echo '<hr />';
 			echo $email;
+			echo '<hr />';
+			echo $message;
+			break;
+		case 'send_test_email':
+		case 'send-test-email':
+			$message = 'Test message';
+			$email_to = v($_GET['email'], 'test@profis.lt');
+			echo '<hr />';
+			echo 'sending to ' . $email_to;
+			echo '<hr />';
+			$send_result = PC_utils::sendEmail($email_to, $message);
+			print_pre(PC_utils::$last_send_email_error);
+			echo '<hr />';
+			echo $send_result;
 			echo '<hr />';
 			echo $message;
 			break;
@@ -499,7 +534,12 @@ else {
 		//case 'page':
 		/*
 		case 'new_password':
-			$db->query("UPDATE pc_auth_users SET pass = '".$auth->users->Encode_password('admin')."' WHERE username = 'admin'");
+			$new_pass = $routes->Get(2);
+			$new_pass = trim($new_pass);
+			if (empty($new_pass)) {
+				$new_pass = 'admin';
+			}
+			$db->query("UPDATE pc_auth_users SET pass = '".$auth->users->Encode_password($new_pass)."' WHERE username = 'admin'");
 			break;
 		*/
 		default: echo 'Please select API action that you want to execute:<ul><li><a href="'.htmlspecialchars($cfg['url']['base']).'api/sitemap/">Sitemap</a></li><li><a href="'.htmlspecialchars($cfg['url']['base']).'api/texts/">List of texts</a></li></ul>';

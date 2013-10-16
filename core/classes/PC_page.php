@@ -754,7 +754,6 @@ final class PC_page extends PC_base {
 						$this->debug("saved", 3);
 						if (!empty($pageForm['submitEmails'])) {
 							$mail = new PHPMailer();
-							$mail->SMTPDebug  = 1;
 							$mail->CharSet = "utf-8";
 							$mail->SetFrom(v($this->cfg['from_email']));
 							if (isset($this->cfg['from_name']) and !empty($this->cfg['from_name'])) {
@@ -828,6 +827,13 @@ final class PC_page extends PC_base {
 								$mail->IsSMTP();
 								$mail->Host = $this->cfg['from_smtp'];
 							}
+							
+							if (isset($this->cfg['mailer_params']) and is_array($this->cfg['mailer_params'])) {
+								foreach ($this->cfg['mailer_params'] as $key => $value) {
+									$this->debug("setting $key", 1);
+									$mail->$key = $value;
+								}
+							}	
 							
 							$mail->Body = $message;
 							$mail->AltBody = $textBody;
@@ -1539,7 +1545,7 @@ final class PC_page extends PC_base {
 				$media_frame = '<div class="pc_media_player" style="height:'.$h.'px;'.$style.'"><div style="display: inline-block" id="'.$id.'">';
 				//if ($media[10][$a] == 'application/x-shockwave-flash') {
 				if (preg_match("#\.swf$#i", $src)) {
-					$media_frame .= "<script type=\"text/javascript\">var params={id:'".$id."',wmode:'transparent',allowFullScreen:true,allowScriptAccess:'always'};"
+					$media_frame .= "<script type=\"text/javascript\">var params={id:'".$id."',wmode:'opaque',allowFullScreen:true,allowScriptAccess:'always'};"
 					."new swfobject.embedSWF('".$base.$src."','".$id."', ".$w.", ".$h.",'9.0.115');</script>";
 				}
 				else {

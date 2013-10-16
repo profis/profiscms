@@ -74,3 +74,8 @@ $cfg['valid_page_fields'] = array(
 	'nomenu', 'date_from', 'date_to', 'date', 'reference_id', 
 	'source_id', 'target'
 );
+
+if (isset($cfg['debug_output']) and isset($cfg['debug_ip']) and $cfg['debug_ip'] == $_SERVER['REMOTE_ADDR']) {
+	$pc_testing = true;
+}
+define('PC_TESTING', $pc_testing);

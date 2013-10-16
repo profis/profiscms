@@ -159,6 +159,16 @@ $path = $site->Get_page_path();
 					}
 					?>
 				
+					<?php
+					echo $site->Get_widget_text('PC_plugin_pc_shop_popular_products_widget_', array(
+						'limit' => '3',
+						'attribute_ref' => 'popular',
+						'params' => array(
+							'full_links' => false
+						)
+					));
+					?>
+				
 					<?php 
 					if($site->Is_front_page() and file_exists($core->Get_theme_path().'template_frontpage.php')){
 						include $core->Get_theme_path().'template_frontpage.php';

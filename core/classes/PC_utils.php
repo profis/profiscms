@@ -902,7 +902,7 @@ class PC_utils {
 	 * For example if $tags = array('foo' => 'bar'),
 	 * then '{foo}' occurrences will be replaced to 'bar' in the message
 	 */
-	static function sendEmail($recipient, $message, $params, $tags = array()) {
+	static function sendEmail($recipient, $message, $params = array(), $tags = array()) {
 		global $cfg;
 		$logger = new PC_debug;
 		$logger->debug = true;
@@ -936,15 +936,22 @@ class PC_utils {
 		
 		if (isset($cfg['from_smtp']) and !empty($cfg['from_smtp'])) {
 			require_once $cfg['path']['classes'] . 'class.smtp.php';
+			$logger->debug("setting IsSMTP() and host", 1);
 			$mail->IsSMTP();
 			$mail->Host = $cfg['from_smtp'];
 		}
 		//$mail->SMTPDebug  = 1;
-		$mail->From		= $params['from_email'];
-		$mail->FromName	= $params['from_name'];
-		$mail->Subject	= $params['subject'];
+		$mail->From		= v($params['from_email'], v($cfg['from_email']));
+		$mail->FromName	= v($params['from_name'], v($cfg['from_name']));
+		$mail->Subject	= v($params['subject'], '');
 		
-			
+		if (isset($cfg['mailer_params']) and is_array($cfg['mailer_params'])) {
+			foreach ($cfg['mailer_params'] as $key => $value) {
+				$logger->debug("setting $key", 1);
+				$mail->$key = $value;
+			}
+		}	
+		
 		$mail->AltBody = strip_tags($message);
 		$mail->CharSet = v($params['charset'], 'utf-8');
 		$mail->MsgHTML($message);
