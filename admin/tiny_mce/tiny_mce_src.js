@@ -1452,10 +1452,19 @@ tinymce.create('static tinymce.util.XHR', {
 						break;
 				}
 
-				if (is(v) && v !== null && v.length !== 0)
-					e.setAttribute(n, '' + v, 2);
-				else
-					e.removeAttribute(n, 2);
+				try {
+					if (is(v) && v !== null && v.length !== 0) {
+						e.setAttribute(n, '' + v, 2);
+					}
+
+					else
+						e.removeAttribute(n, 2);
+				}
+				catch (e) {
+
+				}
+				
+				
 			});
 		},
 
