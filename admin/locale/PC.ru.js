@@ -587,7 +587,7 @@ PC.langs.ru = {
 			semi_adaptive: 'Полу-aдаптивный'
 		},
 		gmaps: {
-			title: 'Карты Googlе',
+			title: 'Карты',
 			geocoder_emptytext: 'Поиск',
 			geocoder_error: 'Не удалось установить место по указанному адресу: ',
 			latitude: 'Долгота',

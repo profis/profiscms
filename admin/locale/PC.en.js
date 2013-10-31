@@ -588,7 +588,7 @@ PC.langs.en = {
 			semi_adaptive: 'Semi adaptive'
 		},
 		gmaps: {
-			title: 'Google Maps',
+			title: 'Maps',
 			geocoder_emptytext: 'Search',
 			geocoder_error: 'Geocode was not successful for the following reason: ',
 			latitude: 'Latitude',

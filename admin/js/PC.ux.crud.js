@@ -4,6 +4,7 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 	api_url: '',
 	per_page: false,
 	reload_after_save: false,
+	reload_after_insert: true,
 	auto_load: true,
 	base_params: {},
 	no_ln_fields: false,
@@ -232,7 +233,7 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		if (!this.no_ln_fields) {
 			n.set('name', PC.utils.extractName(data.names));
 		}
-		if (this.per_page || this.reload_after_save) {
+		if (this.per_page || this.reload_after_save || this.reload_after_insert) {
 			store.reload();
 		}
 		if (this._add_success_callback) {

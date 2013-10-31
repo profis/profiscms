@@ -86,8 +86,8 @@ final class PC_site extends PC_base {
 		if (!is_null($id)) {
 			$this->Load($id);
 		}
-		//$this->debug = true;
-		//$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'site/site.html', false, 5);
+		$this->debug = true;
+		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'site/site.html', false, 5);
 	}
 	
 	/**
@@ -363,12 +363,13 @@ final class PC_site extends PC_base {
 			$this->debug("new request is: " . $new_request, 5);
 			//define entry request
 			$pattern = str_replace('%', '', substr($site['mask'], $site_mask_pos));
+			$pattern = stripslashes($pattern);
 			$old_base_url = preg_replace('#^https?://#ui', '', $this->cfg['url']['base']);
 			$old_base_url = substr($old_base_url, strpos($old_base_url, '/'));
 			
 			$pre_request = '';
 			$mask_pos = strpos($request, $pattern);
-			$this->debug("Mask pos:" . $mask_pos , 4);
+			$this->debug("Mask pos:" . $mask_pos . "(strpos($request, $pattern))" , 4);
 			if ($mask_pos) {
 				$pre_request = mb_substr($request, 0, $mask_pos);
 				$this->debug("pre_request: " . $pre_request , 4);
@@ -962,10 +963,13 @@ final class PC_site extends PC_base {
 	* Method used to check if loaded page is "front" or home page.
 	* @return bool TRUE if loaded page is considered front, FALSE otherwise.
 	*/
-	public function Is_front_page() {
-		if (v($this->loaded_page['front'])) return true;
-		elseif (v($this->loaded_page['route_path'][0]['front'])) return true;
-		elseif (v($this->loaded_page['route_path'][0]['redirect_from_home'])) return true;
+	public function Is_front_page($page = false) {
+		if (!$page) {
+			$page = $this->loaded_page;
+		}
+		if (v($page['front'])) return true;
+		elseif (v($page['route_path'][0]['front'])) return true;
+		elseif (v($page['route_path'][0]['redirect_from_home'])) return true;
 		return false;
 	}
 	/**

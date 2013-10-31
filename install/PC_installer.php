@@ -90,6 +90,9 @@ class PC_installer {
 	}
 	
 	public function validate_gd(&$value) {
+		if (!function_exists('gd_info')) {
+			return false;
+		}
 		$gd_info = gd_info();
 		if ($gd_info and isset($gd_info['GD Version'])) {
 			$value = 'GD ' . $gd_info['GD Version'];

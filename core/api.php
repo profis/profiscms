@@ -265,6 +265,7 @@ if ($routes->Get(1) == 'admin') {
 		case 'dbg':
 			$debug_logger = new PC_debug();
 			$debug_logger->debug = true;
+			//$debug_logger->debug_forced = true;
 			$debug_logger->debug('Test');
 			echo '$cfg[debug_output] = ' . v($cfg['debug_output']) . "\n<br />";
 			echo '$cfg[debug_ip] = ' . v($cfg['debug_ip']) . "\n<br />";

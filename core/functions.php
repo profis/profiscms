@@ -65,6 +65,10 @@ function _debug($key) {
 	return false;
 }
 
+function pc_ip() {
+	return $_SERVER['REMOTE_ADDR'];
+}
+
 /**
 * Function used to add class file and path to runtime variable $class_autoload.
 */

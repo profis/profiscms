@@ -87,6 +87,9 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		}
 
 		if (config.ln) {
+			if (this.ln.error && config.ln.error) {
+				config.ln.error = Ext.apply(this.ln.error, config.ln.error);
+			}
 			Ext.apply(this.ln, config.ln);
 			delete config.ln;
 		}
@@ -106,7 +109,7 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	},
 	
 	get_ln: function() {
-		return PC.i18n.pc_ux_crud;
+		return Ext.apply({}, PC.i18n.pc_ux_crud);
 	},
 	
 	set_titles: function() {

@@ -23,7 +23,7 @@ if (count($menu)) {
 			$li_classes[] = 'active';
 		}
 		$a_tag_params = '';
-		$full_href = 'href="'.$menu_item['link'] . '"';
+		$full_href = 'href="'.$this->site->Get_link($menu_item['route']) . '"';
 		
 		$inner = $menu_item['name'];
 				

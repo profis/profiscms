@@ -899,7 +899,11 @@ final class PC_page extends PC_base {
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
 		$params = $t2;
-		if (!is_array($params)) {
+		if (isset($this->_parse_html_output_params) and is_array($this->_parse_html_output_params)) {
+			$params = $this->_parse_html_output_params;
+			$this->_parse_html_output_params = false;
+		}
+		elseif (!is_array($params)) {
 			$params = false;
 		}
 		$this->debug("Parse_html_output()");
@@ -961,14 +965,14 @@ final class PC_page extends PC_base {
 			if (isset($this->route[1])) $text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1], null, false)."$1\"",  $text);
 			//remove default language code from links
 			
-						
+			$text = preg_replace("/(href=\"www\.)/", 'href="http://www.',  $text);			
 			$text = preg_replace("/href=\"".$this->site->default_ln."\//", "href=\"",  $text);
 			$this->_decode_links($text);
 			//append prefix to the links from editor
 			//if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
 			
 			if (true or isset($this->route[1])) {
-				$text = preg_replace("/href=\"(?!(mailto:|gallery|http:\/\/|https:\/\/|www\.))/ui", "href=\"".$this->site->link_prefix,  $text);
+				$text = preg_replace("/href=\"(?!(mailto:|skype:|gallery|http:\/\/|https:\/\/|www\.))/ui", "href=\"".$this->site->link_prefix,  $text);
 			}
 			//page break
 			$text = str_replace('╬', '<span style="display:none" id="pc_page_break">&nbsp;</span>', $text);
@@ -1262,7 +1266,6 @@ final class PC_page extends PC_base {
 	
 	protected function _replace_google_map_object_callback($gmap) {
 		//print_pre($gmap);
-		
 		$map_type = '';
 		if (!isset($gmap[6])) {
 			$json_data = urldecode($gmap[5]);
@@ -1710,6 +1713,12 @@ final class PC_page extends PC_base {
 		if (is_array($id) and empty($id) or is_null($id)) {
 			return array();
 		}
+		if (is_array($parseLinks)) {
+			$parseLinks_param = v($parseLinks['links'], true);
+		}
+		else {
+			$parseLinks_param = $parseLinks;
+		}
 		$where = array();
 		if (empty($lang)) {
 			$lang = v($this->site->ln);
@@ -1763,7 +1772,8 @@ final class PC_page extends PC_base {
 					}
 				}
 			}
-			if ($parseLinks) $this->Parse_html_output($d['text'], $d['info'], $d['info2'], $d['info3']);
+			$this->_parse_html_output_params = $parseLinks;
+			if ($parseLinks_param) $this->Parse_html_output($d['text'], $d['info'], $d['info2'], $d['info3']);
 			$list[] = $d;
 		}
 		$valid_html_fields = array('text', 'info', 'info2', 'info3');

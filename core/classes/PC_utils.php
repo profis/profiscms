@@ -945,6 +945,10 @@ class PC_utils {
 		$mail->FromName	= v($params['from_name'], v($cfg['from_name']));
 		$mail->Subject	= v($params['subject'], '');
 		
+		$logger->debug("mail->From: " . $mail->From, 1);
+		$logger->debug("mail->FromName: " . $mail->FromName, 1);
+		$logger->debug("mail->Subject: " . $mail->Subject, 1);
+		
 		if (isset($cfg['mailer_params']) and is_array($cfg['mailer_params'])) {
 			foreach ($cfg['mailer_params'] as $key => $value) {
 				$logger->debug("setting $key", 1);

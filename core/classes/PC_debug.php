@@ -13,6 +13,7 @@ if (!function_exists('v')) {
 
 class PC_debug {
 	public $debug = false;
+	public $debug_forced = false;
 	public $debug_level = 0;
 	public $debug_groups = array();
 	public $debug_state_stack = array();
@@ -61,6 +62,7 @@ class PC_debug {
 	
 	public function absorb_debug_settings(PC_debug $logger, $debug_level_offset = 0) {
 		$this->debug = $logger->debug;
+		$this->debug_forced = $logger->debug_forced;
 		$this->instant_debug_to_file = $logger->instant_debug_to_file;
 		$this->file = $logger->file;
 		$this->debug_level = $logger->debug_level;
@@ -75,9 +77,12 @@ class PC_debug {
 	 */
 	function debug($string, $group_indent = '') {
 		global $cfg;
-		if (!$this->debug or !v($cfg['debug_output']) or isset($cfg['debug_ip']) and $_SERVER['REMOTE_ADDR'] != $cfg['debug_ip']) {
-			return;
+		if (!$this->debug_forced) {
+			if (!$this->debug or !v($cfg['debug_output']) or isset($cfg['debug_ip']) and $_SERVER['REMOTE_ADDR'] != $cfg['debug_ip']) {
+				return;
+			}
 		}
+		
 				
 		$debug_group = $group_indent;
 		$indent = 0;
@@ -214,8 +219,10 @@ class PC_debug {
 	
 	function file_put_debug($file_name = '', $append = null) {
 		global $cfg;
-		if (!$this->debug or !v($cfg['debug_output']) or isset($cfg['debug_ip']) and $_SERVER['REMOTE_ADDR'] != $cfg['debug_ip']) {
-			return;
+		if (!$this->debug_forced) {
+			if (!$this->debug or !v($cfg['debug_output']) or isset($cfg['debug_ip']) and $_SERVER['REMOTE_ADDR'] != $cfg['debug_ip']) {
+				return;
+			}
 		}
 		if (empty($file_name)) {
 			$file_name = $this->file;

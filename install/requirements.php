@@ -5,7 +5,7 @@ if (!defined('PC_INSTALL_SEQUENCE')) {
     exit();
 }
 
-$requirements = array(
+$requirements = array(	
 	'PHP ' . $installer->min_php_version => $installer->get_validation_result('php_version'),
 	$t['req_pdo'] => $installer->get_validation_result('pdo'),
 	$t['req_pdo_mysql'] => $installer->get_validation_result('pdo_mysql'),

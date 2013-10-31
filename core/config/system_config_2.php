@@ -46,7 +46,11 @@ if (isset($cfg['router']) and isset($cfg['router']['no_trailing_slash']) and $cf
 }
 
 if (!isset($cfg['from_email'])) {
-	$cfg['from_email'] = 'noreply@' . $_SERVER['HTTP_HOST'];
+	$host = $_SERVER['HTTP_HOST'];
+	if (strpos($host, 'www.') === 0) {
+		$host = substr($host, 4);
+	}
+	$cfg['from_email'] = 'noreply@' . $host;
 }
 
 //static regexp patterns
@@ -75,6 +79,7 @@ $cfg['valid_page_fields'] = array(
 	'source_id', 'target'
 );
 
+$pc_testing = false;
 if (isset($cfg['debug_output']) and isset($cfg['debug_ip']) and $cfg['debug_ip'] == $_SERVER['REMOTE_ADDR']) {
 	$pc_testing = true;
 }

@@ -35,7 +35,7 @@ $path = $site->Get_page_path();
 						<span class="icon-bar"></span>
 						<span class="icon-bar"></span>
 					</button>
-					<a class="navbar-brand" href="#">Project name</a>
+					<a class="navbar-brand" href="<?php echo $site->Get_home_link() ?>">Project name</a>
 				</div>
 				<div class="collapse navbar-collapse">
 					<?php 
@@ -54,15 +54,13 @@ $path = $site->Get_page_path();
 								)
 							)
 						)); 
-					
-						$page->Get_html_menu(0, array(
-						'ul_class' => 'nav navbar-nav', 
-						'level' => 1, 
-						'li_class_with_submenu' => 'dropdown',
-						'inner_wrap_with_submenu' => '| <b class="caret"></b>',
-						'include_submenu' => false,
-						'ul_2_class' => 'dropdown-menu'
-					)); ?>
+					?>
+					<div id="language_box" class="btn-group pull-right">
+						<button type="button" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">
+							<?php echo $site->ln ?>
+						</button>
+						<?php echo $site->Get_html_languages(array('ul_class' => 'dropdown-menu')); ?>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -157,16 +155,6 @@ $path = $site->Get_page_path();
 						<!-- / NAVIGATION -->
 						<?php
 					}
-					?>
-				
-					<?php
-					echo $site->Get_widget_text('PC_plugin_pc_shop_popular_products_widget_', array(
-						'limit' => '3',
-						'attribute_ref' => 'popular',
-						'params' => array(
-							'full_links' => false
-						)
-					));
 					?>
 				
 					<?php 

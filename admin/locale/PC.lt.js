@@ -587,7 +587,7 @@ PC.langs.lt = {
 			semi_adaptive: 'Pusiau prisitaikantis'
 		},
 		gmaps: {
-			title: 'Google žemėlapiai',
+			title: 'Žemėlapiai',
 			geocoder_emptytext: 'Paieška',
 			geocoder_error: 'Nepavyko nustatyti vietos pagal nurodytą adresą dėl šios priežasties: ',
 			latitude: 'Ilguma',
