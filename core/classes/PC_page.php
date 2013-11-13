@@ -219,7 +219,8 @@ final class PC_page extends PC_base {
 				if (strpos($old_url, $new_url) === 0) {
 					return false;
 				}
-				
+				//echo $url; exit;
+		
 				$this->core->Redirect_local($url, 301);
 			}
 		}
@@ -972,7 +973,9 @@ final class PC_page extends PC_base {
 			//if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
 			
 			if (true or isset($this->route[1])) {
-				$text = preg_replace("/href=\"(?!(mailto:|skype:|gallery|http:\/\/|https:\/\/|www\.))/ui", "href=\"".$this->site->link_prefix,  $text);
+				$pattern = "/href=\"(?!(".preg_quote('new/', '/')."|mailto:|skype:|gallery|http:\/\/|https:\/\/|www\.))/ui";
+				//print_pre($pattern);
+				$text = @preg_replace($pattern, "href=\"".$this->site->link_prefix,  $text);
 			}
 			//page break
 			$text = str_replace('╬', '<span style="display:none" id="pc_page_break">&nbsp;</span>', $text);
@@ -1815,7 +1818,7 @@ final class PC_page extends PC_base {
 		}
 		$page_data = $this->Get_page($id, false, false, false, array('route', 'permalink'), $ln);
 	
-		$page_link = $this->Get_page_link_from_data($page_data, $ln);
+		$page_link = $this->site->link_prefix . $this->Get_page_link_from_data($page_data, $ln);
 		
 		$vars_string = PC_utils::urlParamsToString($vars);
 		if (!empty($vars_string)) {

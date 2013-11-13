@@ -2943,6 +2943,7 @@ final class PC_gallery extends PC_base {
 			if (count($return_thumbnail_types)) {
 				//$this->Replace_thumbnail_types($text, $return_thumbnail_types);
 				$files = array();
+				
 				foreach ($m[1] as $src) {
 					$r = $this->Parse_file_request($src);
 					if (isset($r['errors'])) if (count($r['errors'])) continue;

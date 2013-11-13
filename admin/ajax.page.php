@@ -141,7 +141,6 @@ elseif ($action == "update") {
 		echo json_encode($out);
 		exit;
 	}
-	
 	if (!$data) $out['errors'][] = 'json';
 	else if (!(ctype_digit($data['id']) || is_int($data['id'])) || $data['id'] < 1) {
 		$id =& $data['id'];

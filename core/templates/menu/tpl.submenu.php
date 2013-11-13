@@ -9,6 +9,7 @@ if (count($menu)) {
 	$this_wrap_begin = $this_config['wrap_begin'];
 	$$level_wrap_end_var_name = $this_config['wrap_end'];
 	echo $this_wrap_begin;
+	//print_pre($menu);
 	foreach ($menu as $menu_item) {
 		$submenu = false;
 		if (v($menu_item['_submenu'])) {
@@ -23,7 +24,16 @@ if (count($menu)) {
 			$li_classes[] = 'active';
 		}
 		$a_tag_params = '';
-		$full_href = 'href="'.$this->site->Get_link($menu_item['route']) . '"';
+		if (isset($menu_item['link'])) {
+			$link = $menu_item['link'];
+			if (!empty($this->site->link_prefix) and strpos($link, $this->site->link_prefix) !== 0) {
+				$link = $this->site->Get_link($link);
+			}
+		}
+		else {
+			$link = $this->site->Get_link($menu_item['route']);
+		}
+		$full_href = 'href="'. $link . '"';
 		
 		$inner = $menu_item['name'];
 				

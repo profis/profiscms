@@ -507,7 +507,7 @@ abstract class PC_model extends PC_base{
 	public static function add_all_words_fulltext_operators($string) {
 		$words = PC_utils::str_word_count_utf8($string, 1, true);
 		foreach ($words as $word) {
-			$prepared_search_string .= '+'.$word.' ';
+			$prepared_search_string .= '+'.$word.'* ';
 		}
 		return $prepared_search_string;
 	}

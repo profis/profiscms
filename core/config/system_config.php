@@ -30,7 +30,7 @@ $cfg['timezone'] = 'Europe/Vilnius';
 $cfg['debug_mode'] = false;
 
 $cfg['debug_output'] = false;
-$cfg['debug_ip'] = false;
+//$cfg['debug_ip'] = false;
 
 
 //languages
