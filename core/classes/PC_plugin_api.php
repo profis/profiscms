@@ -60,4 +60,8 @@ class PC_plugin_api extends PC_base {
 		return false;
 	}
 	
+	protected function _get_meta_charset() {
+		return '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
+	}
+	
 }

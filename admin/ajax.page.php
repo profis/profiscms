@@ -87,6 +87,10 @@ if ($action == "get") {
 				} else unset($data['redirects_from']);
 				//set output data
 				$out = $data;
+				//$out['ignore_gmt_offset'] = false;
+				//if (v($cfg['ignore_time_zone'])) {
+					//$out['ignore_gmt_offset'] = true;
+				//}
 				//append content in all languages
 				$out['content'] = array();
 				$r_content->execute(array($_POST['id']));
@@ -181,6 +185,7 @@ elseif ($action == "update") {
 				$core->Init_hooks('before_page_save', array(
 					'changes'=> &$data
 				));
+				$gmt_offset = v($data['gmt_offset'], 0) * 60;
 				foreach ($data as $key=>&$value) {
 					if ($key == 'id') continue;
 					if ($key == 'content') {
@@ -410,6 +415,9 @@ elseif ($action == "update") {
 								if ($value > 2147483647) $value = 2147483647;
 								$shared_sets .= "$key=?";
 								//$shared_queryParams[] = $key;
+								//if (v($cfg['ignore_time_zone'])) {
+								//	$value -= $gmt_offset;
+								//}
 								$shared_queryParams[] = $value;
 							}
 						}

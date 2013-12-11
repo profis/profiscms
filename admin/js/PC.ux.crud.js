@@ -226,6 +226,18 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		return '<b>' + field + '</b>' + message;
 	},
 	
+	_after_insert: function() {
+
+	},
+			
+	_after_update: function() {
+
+	},
+	
+	_after_save: function() {
+
+	},
+	
 	ajax_add_response_success_handler: function (data) {
 		var store = this.store;
 		var n = new store.recordType(data);
@@ -239,6 +251,8 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		if (this._add_success_callback) {
 			this._add_success_callback();
 		}
+		this._after_insert();
+		this._after_save();
 	},
 	
 	ajax_add_respone_handler: function(opts, success, response) {
@@ -317,6 +331,8 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		if (this.per_page || this.reload_after_save) {
 			this.store.reload();
 		}
+		this._after_update();
+		this._after_save();
 	},
 	
 	get_ajax_edit_response_handler: function() {

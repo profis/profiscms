@@ -15,10 +15,11 @@ abstract class PC_model extends PC_base{
 	
 	protected $_where = array();
 	protected $_query_params = array();
+	protected $_join = array();
 	
 	protected $_scope_where = array();
 	protected $_scope_query_params = array();
-	
+	protected $_scope_join = array();
 	
 	protected $_rules;
 	protected $_filters;
@@ -337,13 +338,20 @@ abstract class PC_model extends PC_base{
 		}
 		
 		$join = '';
+		$my_joined_merged = false;
+		if (!isset($params['join']) and !empty($this->_join)) {
+			$params['join'] = $this->_join;
+			$my_joined_merged = true;
+		}
 		if (isset($params['join'])) {
-			if (is_array($params['join'])) {
-				$join = implode(' ', $params['join']);
+			if (!is_array($params['join'])) {
+				$params['join'] = array($params['join']);
 			}
-			else {
-				$join = $params['join'];
+			if (!empty($this->_join) and !$my_joined_merged) {
+				$params['join'] = array_merge($this->_join, $params['join']);
 			}
+			$join = implode(' ', $params['join']);
+			
 			if (isset($params['join_params'])) {
 				$query_params = array_merge($query_params, $params['join_params']);
 			}
@@ -715,15 +723,22 @@ abstract class PC_model extends PC_base{
 		if (!empty($where_s)) {
 			$where_s = ' WHERE ' . $where_s;
 		}
-		$sets_s = implode(',', $sets);
-		$query = "UPDATE {$this->db_prefix}{$this->_table} SET $sets_s
-			$where_s $limit_s";
-		$r = $this->prepare($query);
+		if (!empty($sets)) {
+			$sets_s = implode(',', $sets);
+			$query = "UPDATE {$this->db_prefix}{$this->_table} SET $sets_s
+				$where_s $limit_s";
+			$r = $this->prepare($query);
 
-		$this->debug_query($query, $query_params, 1);
+			$this->debug_query($query, $query_params, 1);
+
+			$edited = $r->execute($query_params);
+			$edited_count = $r->rowCount();
+		}
+		else {
+			$edited = true;
+			$edited_count = 1;
+		}
 		
-		$edited = $r->execute($query_params);
-		$edited_count = $r->rowCount();
 		
 		$this->debug('id -', 9);$this->debug($entity_id, 10);
 		$this->debug('edited -', 9);$this->debug($edited, 10);

@@ -162,10 +162,12 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 		if(type != 'image') {
 			delete attrObject.src;
 		}
-		
 		if(tagName == 'input') {
 			if (attrObject['data-adv_input_type']) {
 				attrObject.type = attrObject['data-adv_input_type'];
+			}
+			else if (type != '') {
+				attrObject.type = type;
 			}
 			ob = dom.create('input', attrObject);
 		} else if(tagName == 'textarea') {
@@ -239,6 +241,9 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 				if (Forms_plugin_data.html5_types[type]) {
 					ea['data-adv_input_type'] = type;
 					type = 'text';
+					ea['type'] = type;
+				}
+				else if (type == 'email') {
 					ea['type'] = type;
 				}
 			}

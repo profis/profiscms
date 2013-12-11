@@ -261,6 +261,7 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$valid = $this->_model->validate($new_data, $validation_data);
 		if ($valid) {
 			$this->_out['success'] = $this->_model->update($new_data, $params);
+			$this->_out['success'] = true;
 		}
 		else {
 			$this->_out['success'] = false;

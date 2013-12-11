@@ -980,6 +980,7 @@ Ext.onReady(function(){
 			});
 			
 			//console.log(request_params); Ext.Msg.hide(); return;
+			request_params.gmt_offset = new Date().getTimezoneOffset();
 			Ext.Ajax.request({
 				url: 'ajax.page.php?action=update',
 				params: {
@@ -1425,6 +1426,10 @@ function Load_page(data) {
 			if (success && rspns.responseText) {
 				try {
 					var data = Ext.decode(rspns.responseText);
+					if (data.ignore_gmt_offset && data.date) {
+						//data.date = parseInt(data.date) + (new Date().getTimezoneOffset()*60);
+					}
+					//delete data.ignore_gmt_offset;
 					Load_page_data({treeNode: PC.tree.component.getNodeById(PC.global.pid)}, data, Ext.Msg.hide);
 				} catch(e) { 
 					Ext.Msg.hide(); 
@@ -1499,6 +1504,7 @@ function Load_to_editor(ln, original) {
 			Ext.getCmp('db_fld_time'+i.substr(4)).setValue(time_value);
 		} else if (i == 'date') {
 			var source = PC.global.page[i];
+			
 			if (original) var value = source.originalValue;
 			else var value = source.value;
 			value = Page_datetime_convert(value, null);
@@ -1631,13 +1637,21 @@ function Page_datetime_convert(datetime, default_return_value) {
 		var time = datetime.time.split(':');
 		date.setHours(time[0]);
 		date.setMinutes(time[1]);
-		return Math.round(date.getTime()/1000);
+		var timestamp = Math.round(date.getTime()/1000);
+		if (PC.global.ignore_time_zone) {
+			timestamp = parseInt(timestamp) - date.getTimezoneOffset() * 60;
+		}
+		return timestamp;
 	}
 	else {
 		var date_value = null;
 		var time_value = null;
 		if (datetime>0) {
 			var date = new Date(datetime*1000);
+			if (PC.global.ignore_time_zone) {
+				datetime = parseInt(datetime) + date.getTimezoneOffset()*60;
+				date = new Date(datetime*1000);
+			}
 			var date_value = date.format('Y-m-d');
 			var time_value = date.format('H:i');
 		}

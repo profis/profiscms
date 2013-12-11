@@ -128,7 +128,7 @@ final class PC_routes extends PC_debug{
 			$redirect = false;
 			for ($a=0; isset($this->list[$a]); $a++) {
 				//allowed formats: any number or route i.e. 29, about-us, about_us, 871, hi, 4 etc
-				if (!preg_match("#^(\pL+|\pN+|[\pL\pN][\pL\pN-_]{0,253}[\pL\pN])$#u", $this->list[$a])) {
+				if (!preg_match("#^(\pL+|\pN+|[\pL\pN][\pL\pN-_\s]{0,253}[\pL\pN])$#u", $this->list[$a])) {
 					$this->debug("Unsetting $a: {$this->list[$a]} because allowed format was not satisfied", 2);
 					if (defined('CMF_FRONTEND') and !empty($this->list[$a])) {
 						//$core->Redirect_local('', 301);

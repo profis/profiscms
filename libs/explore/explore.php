@@ -151,7 +151,7 @@ function explore($var, $_options = array()){
 	
 	// Defaults
 	$explore_default_options = array(
-		'show_type'  => TRUE,
+		'show_type'  => false,
 		'enable_js'  => TRUE,
 		'expand_all' => false,
 		'print'      => false

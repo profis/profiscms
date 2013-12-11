@@ -36,7 +36,12 @@ if (count($menu)) {
 		$full_href = 'href="'. $link . '"';
 		
 		$inner = $menu_item['name'];
-				
+			
+		$target = '';
+		if (v($menu_item['target'])) {
+			$target = 'target="_blank" ';
+		}
+		
 		if ($submenu and !empty($submenu) and v($this_config['li_class_with_submenu'])) {
 			if (v($this_config['inner_wrap_with_submenu'])) {
 				list($iwb, $iwe) = explode('|', $this_config['inner_wrap_with_submenu']);
@@ -56,7 +61,7 @@ if (count($menu)) {
 		
 		?>
 		<li class="<?php echo implode(' ', $li_classes)?>">
-			<a <?php echo $full_href?> <?php echo $a_tag_params?>><?php echo $inner?></a>
+			<a <?php echo $full_href?> <?php echo $target . $a_tag_params?>><?php echo $inner?></a>
 			<?php
 			if ($submenu and !empty($submenu)) {
 				$level++;

@@ -40,6 +40,8 @@ class PC_debug {
 	
 	public $debug_level_offset = 0;
 	
+	public static $explored = false;
+	
 //	function __construct($debug) {
 //		$this->debug = $debug;
 //	}
@@ -374,6 +376,21 @@ class PC_debug {
 			$my_string = implode($sep1, $substring_array);
 		}
 		return $my_string;
+	}
+	
+	public function explore(&$var) {
+		require_once CMS_ROOT . 'libs/explore/explore.php';
+		if (!class_exists('PC_explore')) {
+			return;
+		}
+		$s = '';
+		if (!self::$explored) {
+			$s .= PC_explore::get_styles();
+			$s .= PC_explore::get_javascript();
+		}
+		$s .= explore($var);
+		self::$explored = true;
+		return $s;
 	}
 	
 }

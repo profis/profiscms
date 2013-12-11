@@ -93,6 +93,7 @@ header("Content-Type: text/html; charset=utf-8");
 	$settings['plugins_panel'] = null;
 	$settings['site_select'] = null;
 	$settings['ln_select'] = null;
+	$settings['ignore_time_zone'] = v($cfg['ignore_time_zone'], false);
 	$settings['directories'] = $cfg['directories'];
 	//if ($settings['permissions']['admin']) {
 		$settings['plugins'] = $plugins->Get_for_output();

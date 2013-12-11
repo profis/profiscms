@@ -80,7 +80,7 @@ $.fn.focusEnd = function(){
 $(document).ready(function(){
 	var rel_groups = {};
 	var rel_links = {};
-	$(".pc_content a").not('.nolightbox a').each(function(index, link){
+	$(".pc_content a").not('.nolightbox a').not('a.nolightbox').each(function(index, link){
 		var a = $(link);
 		var rel = a.attr('rel');
 		var defaulf_group = 'content';

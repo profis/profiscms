@@ -29,6 +29,10 @@ if (isset($_GET['r5'])) {
 	$site->route[5] = $_GET['r5'];
 }
 
+if (isset($_GET['r6'])) {
+	$site->route[6] = $_GET['r6'];
+}
+
 if (isset($site->route[1]) and strlen($site->route[1]) == 2) {
 	$site->Identify();	
 	if(isset($site->data['languages'][$site->route[1]])) {
@@ -411,7 +415,7 @@ else {
 						require_once($common_file_name);
 						//echo ' ' . $common_class_name;
 						$api = new $common_class_name();
-						$proccessed = $api->process($routes->Get(3), $routes->Get(4), $routes->Get(5));
+						$proccessed = $api->process($routes->Get(3), $routes->Get(4), $routes->Get(5), $routes->Get(6));
 						
 					}
 					if (!$proccessed and @file_exists($file_name)) {
@@ -420,7 +424,7 @@ else {
 						require_once($file_name);
 						//echo ' ' . $class_name;
 						$api = new $class_name();
-						$proccessed = $api->process($routes->Get(3), $routes->Get(4), $routes->Get(5));
+						$proccessed = $api->process($routes->Get(3), $routes->Get(4), $routes->Get(5), $routes->Get(6));
 					}
 					
 					if ($proccessed) {

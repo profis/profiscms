@@ -100,7 +100,7 @@ final class PC_page extends PC_base {
 			$this->debug($this->site->route, 2);
 			if (count($this->site->route) > 2) {
 				return array('controller'=>'core','data'=>404);
-				$this->debug("Redirecting to index, because we have extra routes", 5);
+				$this->debug("404 Redirecting to index, because we have extra routes", 5);
 				$this->core->Redirect_local('', 301);
 			}
 		}
@@ -2205,6 +2205,10 @@ final class PC_page extends PC_base {
 			if (v($menu['permalink'])) {
 				$menu['real_route'] = $menu['route'];
 				$menu['route'] = $menu['permalink'];
+			}
+			
+			if (v($menu['redirect']) and strpos($menu['redirect'], 'http://') === 0) {
+				$menu['route'] = $menu['redirect'];
 			}
 			
 			$this->core->Parse_data_str($menu['redirects_from'], '▓', '░');

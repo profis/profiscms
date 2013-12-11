@@ -1268,7 +1268,7 @@ final class PC_gallery extends PC_base {
 	* @return mixed array with keys "success", "filename", "filedata" on success, or array with key "errors" otherwise.
 	* @see PC_gallery::Sort_path()
 	*/
-	public function Get_file_by_id($id, $logger = null) {
+	public function Get_file_by_id($id, $logger = null, $preserve_key = false) {
 		$returnOne = false;
 		$queryParams = array();
 		if (is_array($id)) {
@@ -1318,7 +1318,13 @@ final class PC_gallery extends PC_base {
 			if (!empty($d['path'])) $d['path'] .= '/';
 			$d['link'] = $d['path'].$d['filename'];
 			$d['type'] = $this->filetypes[$d['extension']];
-			$list[] = $d;
+			if ($preserve_key) {
+				$list[$d['id']] = $d;
+			}
+			else {
+				$list[] = $d;
+			}
+			
 		}
 		$r = array("success"=>true);
 		if ($returnOne) {

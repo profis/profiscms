@@ -324,6 +324,58 @@ class PC_utils {
 	}
 	
 	/**
+	 *
+	 * @param type $my_array
+	 * @param type $param
+	 * @param type $sep1
+	 * @param type $sep2
+	 * @return string 
+	 */
+	static function array_to_string($my_array, $param='', $sep1=',', $sep2=':') {
+		$my_string = '';
+		$substring_array = array();
+
+		if (!is_array($my_array)) {
+			return $my_string;
+		}
+
+		foreach ($my_array as $key => $value) {
+			if ($param == 'only_positive' and $value <= 0)
+				continue;
+			$substring_array[] = $key . $sep2 . $value;
+		}
+
+		if (count($substring_array) > 0) {
+			$my_string = implode($sep1, $substring_array);
+		}
+		return $my_string;
+	}
+	
+	/**
+	 *
+	 * @param type $price_string
+	 * @param type $sep1
+	 * @param type $sep2
+	 * @return type 
+	 */
+	static function string_to_array($price_string, $sep1=',', $sep2=':') {
+		$price_array = array();
+		$price_string = trim($price_string);
+		if (empty($price_string)) {
+			return array();
+		}
+		$price_semi_array = explode($sep1, $price_string);
+
+		foreach ($price_semi_array as $key => $value) {
+			if (trim($value) == '')
+				continue;
+			list($res, $amount) = explode($sep2, $value);
+			$price_array[$res] = $amount;
+		}
+		return $price_array;
+	}
+	
+	/**
 	 * Paging helper. Call order: 1.
 	 * Generate paging definition key value pair array. You should pass result of this method to list getter funtion that supports paging trouth $filter parameter as reference width 'paging' key.
 	 * @param int $cpp item count per page.
