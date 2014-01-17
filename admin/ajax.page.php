@@ -216,7 +216,7 @@ elseif ($action == "update") {
 							}
 							if ($r->rowCount() != 1) {
 								//create new for the first time
-								$r = $db->prepare("INSERT INTO {$cfg['db']['prefix']}content (pid,ln,name,info,info2,info3,title,keywords,description,route,text,last_update,update_by) values(?,?,'','','','','','','','','',?,0)");
+								$r = $db->prepare("INSERT INTO {$cfg['db']['prefix']}content (pid,ln,name,info,info2,info3,info_mobile,title,keywords,description,route,text,last_update,update_by) values(?,?,'','','','','','','','','',?,0)");
 								$success = $r->execute(array($_page['id'], $language, date('Y-m-d H:i:s')));
 								if (!$success) {
 									unset($value[$language]);
@@ -347,7 +347,7 @@ elseif ($action == "update") {
 								if (in_array($field, array('name'))) {
 									$content_value = trim($content_value);
 								}
-								if (in_array($field, array('info','info2','info3','text'))) {
+								if (in_array($field, array('info','info2','info3', 'info_mobile','text'))) {
 									//match all gallery images in text
 									//match example: ="gallery/admin/id/medium/39"
 									
@@ -358,7 +358,9 @@ elseif ($action == "update") {
 									);
 									
 									if (strpos($content_value, 'ymaps.Map') === false) {
-										$patterns[] = '/<script[^>]*?>[\s\S]*?<\/script>/ui';
+										if (!v($cfg['allow_scripts_in_text'])) {
+											$patterns[] = '/<script[^>]*?>[\s\S]*?<\/script>/ui';
+										}
 										$patterns[] = '/<style[^>]*?>[\s\S]*?<\/style>/ui';
 									}
 

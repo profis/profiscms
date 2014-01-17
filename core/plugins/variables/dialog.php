@@ -526,7 +526,7 @@ function mod_variables_click() {
 		//layout: 'fit',
 		flex: 1,
 		border: false,
-		autoEncode: true,
+		//autoEncode: true,
         view: new Ext.grid.GroupingView({
 			enableGroupingMenu: false,
 			enableNoGroups: false,

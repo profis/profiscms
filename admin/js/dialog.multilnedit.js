@@ -108,8 +108,12 @@ PC.dialog.multilnedit = {
 		if (typeof d.params.Save == 'function') {
 			var data = {names: {}, other: {}};
 			var form_is_valid = true;
+			//debugger;
 			w.items.each(function(i){
 				//debugger;
+				if (i._do_not_save) {
+					return true;
+				}
 				if (!i.isValid(false)) {
 					form_is_valid = false;
 				}

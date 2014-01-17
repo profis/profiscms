@@ -14,7 +14,15 @@ function PC_add_validation(form_selector, validation, config) {
 		var first_input_field = false;
 		$.each(validation, function(input_name, validation_rules) {
 			var valid_input = true;
-			var input_field =$(form_selector + " input[name="+input_name+"]" + ', ' + form_selector + " select[name="+input_name+"]" + ', ' + form_selector + " textarea[name="+input_name+"]");
+			var input_name_parts = input_name.split(':');
+			var input_field = false;
+			if (input_name_parts.length == 2 && input_name_parts[0] == 'id') {
+				input_field = $('#' + input_name_parts[1]);
+			}
+			else {
+				input_field =$(form_selector + " input[name="+input_name+"]" + ', ' + form_selector + " select[name="+input_name+"]" + ', ' + form_selector + " textarea[name="+input_name+"]");
+			
+			}
 			if (!input_field || !input_field.length) {
 				return 'continue';	
 			}

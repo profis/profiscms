@@ -296,11 +296,18 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$this->_model->absorb_debug_settings($this);
 		
 		$data = v($_POST['data'], '[]');
+		$base_params = v($_POST['base_params'], '[]');
 		if (!is_array($data)) {
 			$data = json_decode($data, true);
 		}
-		
+		if (!is_array($base_params)) {
+			$base_params = json_decode($base_params, true);
+		}
+		$this->debug('data:');
 		$this->debug($data);
+		
+		$this->debug('base_params:');
+		$this->debug($base_params);
 		
 		$sync_fields = $this->_get_sync_fields();
 		$sync_fields_flipped = array_flip($sync_fields);
@@ -312,6 +319,7 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 				$updated = false;
 				unset($update_data[$id_field]);
 				if (!empty($sync_fields)) {
+					$update_data = array_merge($base_params, $update_data);
 					$update_data = array_intersect_key($update_data, $sync_fields_flipped);
 				}
 				$content = array();
@@ -331,7 +339,9 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 				
 				if (!$updated) {
 					unset($update_data['_content']);
-					$update_data[$id_field] = $id;
+					if ($id_field != 'id') {
+						$update_data[$id_field] = $id;
+					}
 					$this->_model->insert($update_data);
 				}
 			}

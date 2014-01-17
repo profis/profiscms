@@ -290,6 +290,17 @@ Ext.onReady(function(){
 					id: 'db_fld_info3'
 				}]
 			},
+			{	id: 'db_tab_info_mobile',
+				xtype: 'container',
+				title: PC.i18n.tab.info_mobile,
+				title_value: PC.i18n.tab.info_mobile,
+				layout: 'fit',
+				items: [{
+					xtype: 'profis_tinymce',
+					ref: '../../../_fld_info_mobile',
+					id: 'db_fld_info_mobile'
+				}]
+			},
 			{	id: 'db_tab_seo',
 				title: PC.i18n.tab.seo,
 				title_value: PC.i18n.tab.seo,
@@ -873,6 +884,9 @@ Ext.onReady(function(){
 						case 'db_tab_info3':
 							var focus_field = 'db_fld_info3';
 							break;
+						case 'db_tab_info_mobile':
+							var focus_field = 'db_fld_info_mobile';
+							break;	
 						default:
 							var focus_field = 'db_fld_text';
 					}
@@ -1088,7 +1102,7 @@ Ext.onReady(function(){
 	PC.admin = new Ext.Viewport({
 		layout: 'fit',
 		restartTinyMCEs: function() {
-			//Ext.each(['_fld_text', '_fld_info', '_fld_info2', '_fld_info3'], function(i) {
+			//Ext.each(['_fld_text', '_fld_info', '_fld_info2', '_fld_info3', '_fld_info_mobile], function(i) {
 			//	PC.admin[i].restart();
 			//});
 			Ext.each(PC.global.db_flds, function(i) {
@@ -1479,12 +1493,12 @@ function Load_to_editor(ln, original) {
 	//fill page fields
 	Ext.each(PC.global.db_flds, function(i) {
 		var field = Ext.getCmp('db_fld_'+i);
-		if (/^(name|custom_name|info|info2|info3|title|keywords|description|route|permalink|text|ln_redirect)$/.test(i)) {
+		if (/^(name|custom_name|info|info2|info3|info_mobile|title|keywords|description|route|permalink|text|ln_redirect)$/.test(i)) {
 			var source = content_store[i];
 			if (original) field.setValue(source.originalValue);
 			else field.setValue(source.value);
 			//flag editors as not dirty
-			if (/^(info|info2|info3_|text)$/.test(i)) {
+			if (/^(info|info2|info3_|info_mobile|text)$/.test(i)) {
 				//clear undo history
 				tinymce.editors['db_fld_'+i].undoManager.clear();
 				tinymce.editors['db_fld_'+i].isNotDirty = 1;
@@ -1534,6 +1548,9 @@ function Load_to_editor(ln, original) {
 		case 'db_tab_info3':
 			var focus_field = 'db_fld_info3';
 			break;
+		case 'db_tab_info_mobile':
+			var focus_field = 'db_fld_info_mobile';
+			break;	
 		default:
 			var focus_field = 'db_fld_text';
 	}
@@ -1708,7 +1725,7 @@ function Content_dirty() {
 	var dirty = false;
 	Ext.each(PC.global.db_flds, function(i) {
 		//console.log('Checking: '+ i);
-		if (/^(info|info2|info3|text)$/.test(i)) {
+		if (/^(info|info2|info3|info_mobile|text)$/.test(i)) {
 			//if (tinymce.editors[].isDirty()) {
 			if (Ext.getCmp('db_fld_'+i).isDirty()) {
 				dirty = true;
@@ -1749,7 +1766,9 @@ function Content_dirty() {
 		else if(/^(route_lock|published|hot|nomenu)$/.test(i)) {
 			var fieldValue = (field.getValue()?'1':'0');
 		}
-		else var fieldValue = field.getValue();
+		else {
+			var fieldValue = field.getValue();
+		}
 		//console.log('fieldValue: '+ fieldValue);
 		//console.log('get field value: '+ field.getValue());
 		//console.log('store.value: '+ store.value);
@@ -1774,7 +1793,7 @@ function Save_content_to_store(ln_change_to) {
 	Ext.each(PC.global.db_flds, function(i) {
 		if (i == 'publishing_date') return;
 		var field = Ext.getCmp('db_fld_'+i);
-		if (/^(name|custom_name|text|info|info2|info3|title|keywords|description|route|permalink|ln_redirect)$/.test(i)) {
+		if (/^(name|custom_name|text|info|info2|info3|info_mobile|title|keywords|description|route|permalink|ln_redirect)$/.test(i)) {
 			var store = content_store[i];
 			
 		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|source_id|target|date|reference_id)$/.test(i)) {
@@ -1807,7 +1826,7 @@ function Save_content_to_store(ln_change_to) {
 		} else if (/^(route_lock|published|hot|nomenu)$/.test(i)) {
 			store.value = (field.getValue()?'1':'0');
 		//get raw editor values
-		} else if (/^(text|info|info2|info3)$/.test(i)) {
+		} else if (/^(text|info|info2|info3|info_mobile)$/.test(i)) {
 			store.value = field.getRawValue();
 		//just get the value
 		} else store.value = field.getValue();
@@ -1914,7 +1933,7 @@ function Equalize_content_values() {
 }*/
 function Flag_editors_as_clean() {
 	Ext.each(PC.global.db_flds, function(i) {
-		if (/^(info|info2|info3|text)$/.test(i)) {
+		if (/^(info|info2|info3|info_mobile|text)$/.test(i)) {
 			tinymce.editors['db_fld_'+i].isNotDirty = 1;
 		}
 	});

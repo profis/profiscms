@@ -262,10 +262,13 @@ final class PC_gallery extends PC_base {
 		$content_id = (int)$content_id;
 		if ($content_id < 1)
 			$response['errors'][] = "content_id";
-		if (!in_array($content_block, array('info','info2','info3','text')))
+		if (!in_array($content_block, array('info','info2','info3', 'info_mobile', 'text')))
 			$response['errors'][] = "content_block";
 		if (count(v($response['errors'])) != 0) return $response;
 		global $db;
+		if ($content_block == 'info_mobile') {
+			$content_block = 'mobil';
+		}
 		$r = $db->prepare("DELETE FROM {$this->db_prefix}gallery_files_in_use WHERE content_id=:id and content_block=:block");
 		$r->execute(array(
 			'id'=> $content_id,
@@ -887,8 +890,8 @@ final class PC_gallery extends PC_base {
 		$new_path = $this->config['gallery_directory'].'/'.substr($data['path'], 0, -(strlen($data['directory'])+1)).$new_category_directory;
 		$r = $db->prepare("UPDATE {$this->db_prefix}content SET"
 		." text = replace(text, ?, ?), info = replace(info, ?, ?),"
-		." info2 = replace(info2, ?, ?), info3 = replace(info3, ?, ?)");
-		$success = $r->execute(array($path, $new_path, $path, $new_path,$path, $new_path, $path, $new_path));
+		." info2 = replace(info2, ?, ?), info3 = replace(info3, ?, ?), info_mobile = replace(info_mobile, ?, ?)");
+		$success = $r->execute(array($path, $new_path, $path, $new_path,$path, $new_path, $path, $new_path, $path, $new_path));
 		if (!$success) {
 			$response['errors'][] = "database";
 			return $response;
@@ -1102,6 +1105,9 @@ final class PC_gallery extends PC_base {
 			$insert_file_s = $this->prepare("INSERT INTO {$this->db_prefix}gallery_files (filename,extension,category_id,size,date_added,date_modified,date_trashed) VALUES(?,?,?,?,?,?,0)");
 			while (false !== ($file = readdir($handle))) {
 				if (preg_match("#^(category_id_.+|Thumbs.db|\..+)$#ui", $file)) continue;
+				if (strpos($file, '._pc_original_.')) {
+					continue;
+				}
 				$file_path = $path.'/'.$file;
 				if (!is_file($file_path)) continue;
 				$s = $file_s->execute(array($file, $id));

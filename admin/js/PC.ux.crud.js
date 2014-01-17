@@ -37,7 +37,7 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 	},
 
     	
-	get_grid: function () {
+	get_grid_: function () {
 		var plugins = [];
 		var store =  this.get_store();
 		var columns = this.get_grid_columns();

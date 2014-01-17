@@ -108,8 +108,15 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		return this.get_grid();
 	},
 	
+	get_default_ln: function() {
+		return {};
+	},
+        
 	get_ln: function() {
-		return Ext.apply({}, PC.i18n.pc_ux_crud);
+        var ln = {};
+		ln = Ext.apply(ln, PC.i18n.pc_ux_crud);
+		ln = Ext.apply(ln, this.get_default_ln());
+		return ln;
 	},
 	
 	set_titles: function() {
@@ -165,7 +172,7 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		return listeners;
 	},
 	
-	get_grid: function () {
+	get_grid_: function () {
 		var plugins = [];
 		var store =  this.get_store();
 		var columns = this.get_grid_columns();
@@ -185,6 +192,80 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		//this.grid = new Ext.list.ListView(config);
 		this.grid.pc_crud = this;
 		return this.grid;
+	},
+	
+	get_grid: function () {
+		var plugins = [];
+		var store =  this.get_store();
+		var columns = this.get_grid_columns();
+		
+		if (this.row_editing) {
+			plugins.push(this.get_row_editor());
+			var edit_fields = this.get_edit_form_fields({});
+			var edit_field_keys = {};
+			Ext.each(edit_fields, function(field, index) {
+				if (field.name) {
+					edit_field_keys[field.name] = index + 1;
+				}
+			});
+			Ext.each(columns, function(column, index) {
+				if (column.dataIndex && edit_field_keys[column.dataIndex]) {
+					column.editor = edit_fields[edit_field_keys[column.dataIndex] - 1];
+				}
+			});
+			
+		}
+		
+		var config = {
+			store: store,
+			sm: this.get_grid_selection_model(),
+			plugins: plugins,
+			columns: columns,
+			listeners: this.get_grid_listeners()
+		};
+		Ext.apply(config, this.get_grid_config());
+		if (this.grid_id) {
+			config.id = this.grid_id;
+		}
+		if (this.per_page) {
+			config.bbar = new Ext.PagingToolbar({
+				store: store,
+				displayInfo: true,
+				pageSize: this.per_page,
+				prependButtons: true
+			});
+			this._paging = config.bbar;
+		}
+		this.grid = new Ext.grid.GridPanel(config);
+		//this.grid = new Ext.list.ListView(config);
+		this.grid.pc_crud = this;
+		return this.grid;
+	},
+	
+	get_row_editor: function() {
+		
+		var re = new Ext.ux.grid.RowEditor({
+			saveText: 'OK',
+			clicksToEdit: 2,
+			listeners: {
+				afteredit_: Ext.createDelegate(function(editor, changes, record, a3) {
+					var data = {
+						names: {},
+						other: changes
+					};
+					Ext.Ajax.request({
+						url: this.api_url +'edit',
+						params: {
+							id: record.id,
+							data: Ext.util.JSON.encode(data)
+						},
+						method: 'POST',
+						callback: edit_ajax_response_callback
+					});
+				}, this)
+			}
+		});
+		return re;
 	},
 	
 	get_store: function(){
@@ -443,6 +524,16 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		}
 	},
 	
+	get_button_for_refresh: function() {
+		return {	
+			ref: '../action_refresh',
+			icon: 'images/refresh.gif',
+			handler: Ext.createDelegate(function() {
+				this.store.reload();
+			}, this)
+		};
+	},	
+	
 	get_button_for_del: function() {
 		return {	
 			ref: '../action_del',
@@ -620,10 +711,12 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		
 		
 	sync_grid: function() {
+		var post_params = {data: Ext.util.JSON.encode(this.get_store_data(true))};
+		post_params.base_params = Ext.util.JSON.encode(this.grid.store.baseParams);
 		Ext.Ajax.request({
 			url: this.api_url + 'sync',
 			method: 'POST',
-			params: {data: Ext.util.JSON.encode(this.get_store_data(true))},
+			params: post_params,
 			callback: Ext.createDelegate(this.ajax_sync_respone_handler, this)
 		});
 	},	

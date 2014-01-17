@@ -128,6 +128,7 @@ PC.langs.lt = {
 		info: 'Info 1',
 		info2: 'Info 2',
 		info3: 'Info 3',
+		info_mobile: 'Mobiliems',
 		seo: 'SEO',
 		properties: 'Savybės'
 	},

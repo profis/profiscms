@@ -165,6 +165,14 @@ class PC_debug {
 		$this->debug($query, $group_indent);
 	}
 	
+	function debug_time($group_indent = '') {
+		$this->debug('=='. date('Y-m-d H:i:s') .'=============================', $group_indent);
+	}
+	
+	function debug_time_and_ip($group_indent = '') {
+		$this->debug('=='. date('Y-m-d H:i:s') .'===  ' . pc_ip() . '   ===========', $group_indent);
+	}
+	
 	protected function _get_indent_string($indent) {
 		$px = 20 * ($indent);
 		$s = 'style="margin-left:' . $px . 'px;"';

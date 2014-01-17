@@ -130,6 +130,7 @@ PC.langs.en = {
 		info: 'Info 1',
 		info2: 'Info 2',
 		info3: 'Info 3',
+		info_mobile: 'Mobile',
 		seo: 'SEO',
 		properties: 'Properties'
 	},

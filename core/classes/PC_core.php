@@ -530,6 +530,7 @@ final class PC_core extends PC_base {
 			if (isset($d['info'])) $this->page->Parse_html_output($d['info']);
 			if (isset($d['info2'])) $this->page->Parse_html_output($d['info2']);
 			if (isset($d['info3'])) $this->page->Parse_html_output($d['info3']);
+			if (isset($d['info_mobile'])) $this->page->Parse_html_output($d['info_mobile']);
 			if ($all_lns) {
 				$results[$d['ln']][] = $d;
 			}

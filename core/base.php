@@ -47,7 +47,8 @@ include 'base_config.php';
 
 //print_pre($cfg);exit;
 //date_default_timezone_set(v($cfg['timezone'], "Europe/Vilnius"));
-date_default_timezone_set('UTC');
+date_default_timezone_set(v($cfg['timezone'], "UTC"));
+//date_default_timezone_set('UTC');
 
 //enable gzip, if not specified differently
 if (substr_count(v($_SERVER['HTTP_ACCEPT_ENCODING'],''), 'gzip')) if (!core_get('no_gzip')) if (!ini_get('zlib.output_compression')) @ob_start('ob_gzhandler');

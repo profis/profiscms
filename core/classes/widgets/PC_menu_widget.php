@@ -50,6 +50,11 @@ class PC_menu_widget extends PC_widget {
 			if (!isset($menu[$key]['link'])) {
 				$menu[$key]['link'] = $this->page->Get_page_link_from_data($menu_item);
 			}
+			$is_opened = false;
+			if ($this->site->Is_opened($menu_item['pid'])) {
+				$is_opened = true;
+				$menu[$key]['_active'] = true;
+			}
 			if ($this->_config['max_levels'] > 0 and $next_level > $this->_config['max_levels']) {
 				continue;
 			}

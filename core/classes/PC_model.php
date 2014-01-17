@@ -701,11 +701,20 @@ abstract class PC_model extends PC_base{
 			unset($data['_content']);
 		}
 		$this->sanitize($data);
-		$query_params = array_values($data);
 		$sets = array();
 		foreach ($data as $key => $value) {
-			$sets[] = "$key = ?";
+			if (!is_numeric($key)) {
+				$sets[] = "$key = ?";
+			}
+			else {
+				$sets[] = $value;
+				unset($data[$key]);
+			}
+				
 		}
+		
+		$query_params = array_values($data);
+		
 				
 		$limit_s = '';
 		if (v($params['limit'])) {

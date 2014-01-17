@@ -273,6 +273,14 @@ class PC_utils {
 		return $url;
 	}
 	
+	static function absolute_url($url) {
+		global $cfg;
+		if (strpos($url, $cfg['url']['base']) !== 0) {
+			$url = $cfg['url']['base'] . $url;
+		}
+		return $url;
+	}
+	
 	/**
 	 * Strips domain and protocol from url.
 	 * 
@@ -370,6 +378,8 @@ class PC_utils {
 			if (trim($value) == '')
 				continue;
 			list($res, $amount) = explode($sep2, $value);
+			$res = trim($res);
+			$amount = trim($amount);
 			$price_array[$res] = $amount;
 		}
 		return $price_array;
@@ -986,15 +996,23 @@ class PC_utils {
 		
 		$mail = new PHPMailer(); 
 		
-		if (isset($cfg['from_smtp']) and !empty($cfg['from_smtp'])) {
+		if (isset($cfg['from_smtp'])) {
 			require_once $cfg['path']['classes'] . 'class.smtp.php';
-			$logger->debug("setting IsSMTP() and host", 1);
+			$logger->debug("calling IsSMTP()", 1);
 			$mail->IsSMTP();
-			$mail->Host = $cfg['from_smtp'];
+			if (!empty($cfg['from_smtp'])) {
+				$logger->debug("setting host: " . $cfg['from_smtp'], 1);
+				$mail->Host = $cfg['from_smtp'];
+			}
 		}
+		
 		//$mail->SMTPDebug  = 1;
 		$mail->From		= v($params['from_email'], v($cfg['from_email']));
-		$mail->FromName	= v($params['from_name'], v($cfg['from_name']));
+		$from_name = v($params['from_name'], '');
+		if (empty($from_name)) {
+			$from_name = v($cfg['from_name'], '');
+		}
+		$mail->FromName	= $from_name;
 		$mail->Subject	= v($params['subject'], '');
 		
 		$logger->debug("mail->From: " . $mail->From, 1);
@@ -1003,8 +1021,15 @@ class PC_utils {
 		
 		if (isset($cfg['mailer_params']) and is_array($cfg['mailer_params'])) {
 			foreach ($cfg['mailer_params'] as $key => $value) {
-				$logger->debug("setting $key", 1);
-				$mail->$key = $value;
+				if ($key == 'IsSendmail' and $value) {
+					$logger->debug("calling IsSendmail()", 1);
+					$mail->IsSendmail();
+				}
+				else {
+					$logger->debug("setting $key", 1);
+					$mail->$key = $value;
+				}
+				
 			}
 		}	
 		
@@ -1020,7 +1045,24 @@ class PC_utils {
 				$mail->AddAddress($email);
 			}
 		}
-		$result = $mail->Send();
+		
+		if (isset($cfg['mailer_params']) and is_array($cfg['mailer_params']) and v($cfg['mailer_params']['use_mail_function'])) {
+			$headers = "From: {$mail->FromName} <{$mail->From}>". "\r\n"
+				."X-Mailer: ProfisCMS/".PC_VERSION." (PHP/".phpversion().")". "\r\n";
+			$headers  .= 'MIME-Version: 1.0' . "\r\n";
+			$headers .= 'Content-type: text/html; charset=utf-8' . "\r\n";
+				
+			$emails_string = implode(", ", $emails);
+			
+			$logger->debug(" mail($emails_string, {$mail->Subject}, message, $headers)", 2);
+			
+			
+			$result = mail($emails_string, $mail->Subject, $message, $headers);
+		}
+		else {
+			$result = $mail->Send();
+		}
+		
 		if (!$result) {
 			$logger->debug(':(', 2);
 			$logger->debug("error: " . $mail->ErrorInfo, 3);

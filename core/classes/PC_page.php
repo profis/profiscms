@@ -60,7 +60,7 @@ final class PC_page extends PC_base {
 		." WHERE ".(is_null($route)?"p.front>0":($route_is_page_id?"p.id":"c.route")."=? ")
 		." and p.site=? and p.deleted=0 and p.published=1 and (p.date_from is null or p.date_from<=?) and (p.date_to is null or p.date_to>=?)"
 		.(!is_null($route)?" and c.ln=?":"")
-		." GROUP BY ".$this->sql_parser->group_by('p.id,p.front,p.idp,p.controller,p.redirect,redirect_from_home,p.nr,c.id,c.pid,c.ln,c.name,c.info,c.info2,c.info3,c.title,c.keywords,c.description,c.route,c.text,c.last_update,c.update_by,p.date')
+		." GROUP BY ".$this->sql_parser->group_by('p.id,p.front,p.idp,p.controller,p.redirect,redirect_from_home,p.nr,c.id,c.pid,c.ln,c.name,c.info,c.info2,c.info3,c.info_mobile,c.title,c.keywords,c.description,c.route,c.text,c.last_update,c.update_by,p.date')
 		." LIMIT 1");
 		$params = array($this->site->data['id'], $now, $now);
 		if (is_null($route)) array_unshift($params, $this->site->ln);
@@ -90,6 +90,7 @@ final class PC_page extends PC_base {
 				$data['info'] = $source_page_data['info'];
 				$data['info2'] = $source_page_data['info2'];
 				$data['info3'] = $source_page_data['info3'];
+				$data['info_mobile'] = $source_page_data['info_mobile'];
 				$data['canonical_link'] = $this->Get_page_link_by_id($data['source_id']);
 				$this->site->Add_head_part('<link rel="canonical" href="%s" />', $data['canonical_link']);
 			}
@@ -124,7 +125,7 @@ final class PC_page extends PC_base {
 		}
 		
 		$this->_parse_html_page_id = $this->get_id();
-		$this->Parse_html_output($data['text'], $data['info'], $data['info2'], $data['info3']);
+		$this->Parse_html_output($data['text'], $data['info'], $data['info2'], $data['info3'], $data['info_mobile']);
 		$this->Parse_html_output($data['description'], $data['keywords'], $data['title']);
 		//save route path
 		if (!is_array($path)) $path = array();
@@ -252,6 +253,30 @@ final class PC_page extends PC_base {
 		}
 		else return $this->Get_route_data($d['pid'], true);
 		
+	}
+	
+	public function get_url_from_redirect($redirect) {
+		if (preg_match("#^https?://#", $redirect)) {
+			return $redirect;
+		}
+		if (preg_match("#^www\.#", $redirect)) {
+			return 'http://' . $redirect;
+		}
+		
+		$controller_data = $this->get_controller_data_from_id($redirect);
+			
+		$url = '';
+		if ($controller_data and $this->core->Count_hooks('core/page/parse-page-url/'.$controller_data['plugin'])) {
+			$this->core->Init_hooks('core/page/parse-page-url/'.$controller_data['plugin'], array(
+				'url'=> &$url,
+				'id' => $controller_data['id']
+			));
+			if (!empty($url)) {
+				return $url;
+			}
+		}
+		
+		return $this->Get_page_link_by_id($redirect);
 	}
 	
 	/**
@@ -1177,6 +1202,17 @@ final class PC_page extends PC_base {
 				infowindow.open(' . $map_id . ','.$marker_var.');
 			});';
 		}
+		elseif (v($marker->marker_link)) {
+			$marker_url = $this->get_url_from_redirect($marker->marker_link);
+			if ($marker_url) {
+				$new_marker .= "$marker_var.url = '$marker_url';"; 
+				$new_marker .= '
+				google.maps.event.addListener(' . $marker_var . ', "click", function() {
+					window.location.href = this.url;
+				});';
+			}
+		}
+		
 		$category_id = 0;
 		if ($category) {
 			$category_id = $category->id;
@@ -1762,7 +1798,7 @@ final class PC_page extends PC_base {
 		if (!$s) return false;
 		if (!$r->rowCount()) return (is_null($id)?array():false);
 		$list = array();
-		$valid_html_fields = array('text', 'info', 'info2', 'info3');
+		$valid_html_fields = array('text', 'info', 'info2', 'info3', 'info_mobile');
 		$needed_html_fields = array_intersect($valid_html_fields, $fields);
 		$this->_parse_html_page_id = $id;
 		while ($d = $r->fetch()) {
@@ -1776,10 +1812,10 @@ final class PC_page extends PC_base {
 				}
 			}
 			$this->_parse_html_output_params = $parseLinks;
-			if ($parseLinks_param) $this->Parse_html_output($d['text'], $d['info'], $d['info2'], $d['info3']);
+			if ($parseLinks_param) $this->Parse_html_output($d['text'], $d['info'], $d['info2'], $d['info3'], $d['info_mobile']);
 			$list[] = $d;
 		}
-		$valid_html_fields = array('text', 'info', 'info2', 'info3');
+		$valid_html_fields = array('text', 'info', 'info2', 'info3', 'info_mobile');
 
 		
 		if ($includeParents) {
@@ -1887,7 +1923,7 @@ final class PC_page extends PC_base {
 	
 	public function Get_page_anchors_by_id($id, $ln = '') {
 		$anchors = array();
-		$html_fields = array('text', 'info', 'info2', 'info3');
+		$html_fields = array('text', 'info', 'info2', 'info3', 'info_mobile');
 		$page_data = $this->Get_page($id, false, false, false, $html_fields, $ln);
 		if (!is_array($page_data)) {
 			return $anchors;
@@ -2078,6 +2114,7 @@ final class PC_page extends PC_base {
 				'info'=> 'c.info',
 				'info2'=> 'c.info2',
 				'info3'=> 'c.info3',
+				'info_mobile'=> 'c.info_mobile',
 				'text'=> 'c.text',
 				'title'=> 'c.title',
 				'keywords'=> 'c.keywords',
@@ -2116,6 +2153,9 @@ final class PC_page extends PC_base {
 		if (is_array($limit) and isset($limit['perPage'])) {
 			$paging = true;
 			$limit = new PC_paging(v($limit['page'], 1), v($limit['perPage'], 20), v($limit['start'], null));
+			if (isset($function_params['offset'])) {
+				$limit->Set_initial_offset($function_params['offset']);
+			}
 			$limit_s = " {$limit->Get_offset()},{$limit->Get_limit()}";			
 		}
 		
@@ -2199,6 +2239,11 @@ final class PC_page extends PC_base {
 				$parse_params = v($function_params['parse_info3']);
 				$this->Parse_html_output($menu['info3'], $parse_params);
 			}
+			if (isset($menu['info_mobile']) and !v($function_params['no_parse_info_mobile'])) {
+				$parse_params = v($function_params['parse_info_mobile']);
+				$this->Parse_html_output($menu['info_mobile'], $parse_params);
+			}
+			
 			
 			//print_pre($menu);
 			
@@ -2222,7 +2267,7 @@ final class PC_page extends PC_base {
 			$page_model = new PC_page_model();
 			$sources = $page_model->get_all(array(
 				'content' => array(
-					'select' => 'ct.text, ct.info, ct.info2, ct.info3'
+					'select' => 'ct.text, ct.info, ct.info2, ct.info3, ct.info_mobile'
 				),
 				'where' => array(
 					't.id' => $source_ids
@@ -2239,12 +2284,14 @@ final class PC_page extends PC_base {
 						$items[$key]['source_info'] = $sources[$item['source_id']]['info'];
 						$items[$key]['source_info2'] = $sources[$item['source_id']]['info2'];
 						$items[$key]['source_info3'] = $sources[$item['source_id']]['info3'];
+						$items[$key]['source_info_mobile'] = $sources[$item['source_id']]['info_mobile'];
 					
 						$this->_parse_html_page_id = $item['source_id'];
 						$this->Parse_html_output($items[$key]['source_text']);
 						$this->Parse_html_output($items[$key]['source_info']);
 						$this->Parse_html_output($items[$key]['source_info2']);
 						$this->Parse_html_output($items[$key]['source_info3']);
+						$this->Parse_html_output($items[$key]['source_info_mobile']);
 					}
 				}
 			}
@@ -2289,10 +2336,12 @@ final class PC_page extends PC_base {
 			$this->Parse_gallery_files_requests($this->page['info']);
 			$this->Parse_gallery_files_requests($this->page['info2']);
 			$this->Parse_gallery_files_requests($this->page['info3']);
+			$this->Parse_gallery_files_requests($this->page['info_mobile']);
 			$this->Replace_google_map_objects($this->text);
 			$this->Replace_google_map_objects($this->page['info']);
 			$this->Replace_google_map_objects($this->page['info2']);
 			$this->Replace_google_map_objects($this->page['info3']);
+			$this->Replace_google_map_objects($this->page['info_mobile']);
 			//fix anchors
 			$this->text = preg_replace("/href=\"(#[^\"]+)\"/", "href=\"".$this->route[0]."$1\"",  $this->text);
 		}
@@ -2321,6 +2370,7 @@ final class PC_page extends PC_base {
 			if (isset($data['info'])) $this->Parse_html_output($data['info']);
 			if (isset($data['info2'])) $this->Parse_html_output($data['info2']);
 			if (isset($data['info3'])) $this->Parse_html_output($data['info3']);
+			if (isset($data['info_mobile'])) $this->Parse_html_output($data['info_mobile']);
 			return $data;
 		}
 	}
@@ -2372,6 +2422,7 @@ final class PC_page extends PC_base {
 					if (isset($d['info'])) $this->Parse_html_output($d['info']);
 					if (isset($d['info2'])) $this->Parse_html_output($d['info2']);
 					if (isset($d['info3'])) $this->Parse_html_output($d['info3']);
+					if (isset($d['info_mobile'])) $this->Parse_html_output($d['info_mobile']);
 					$data[] = $d;
 				}
 			}

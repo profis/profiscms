@@ -144,7 +144,7 @@ PC.ux.TinyMCE = function(config) {
 				+'select[size|name|required|multiple|disabled|onclick|onfocus|onblur|onchange],'
 				+'option[disabled|label|selected|value=],'
 				+'form[action|accept|accept-charset|enctype|method|pcformsettings]'
-				+'noindex,div[*]',
+				+'noindex,div[*],waavo:iframe[*]',
 			//invalid_elements : "script,style",
 			invalid_elements : "",
 			template_external_list_url: 'example_template_list.js',
@@ -225,7 +225,7 @@ PC.ux.TinyMCE = function(config) {
 				//ed.addCommand('mceGalleryImage', function() {});
 				//remove preloader mask when the last editor has finished loading
 				ed.onPostRender.add(function(ed){
-					if (ed.id == 'db_fld_info3') {
+					if (ed.id == 'db_fld_info_mobile') {
 					//if (ed.id == 'absolut_tinymce') {	
 						Load_home_page_on_tree_load();
 						var mask = Ext.get('loading-mask');

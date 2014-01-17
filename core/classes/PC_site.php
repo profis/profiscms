@@ -88,6 +88,10 @@ final class PC_site extends PC_base {
 		}
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'site/site.html', false, 5);
+		
+		$this->widget_logger = new PC_debug();
+		$this->widget_logger->debug = true;
+		$this->widget_logger->set_instant_debug_to_file($this->cfg['path']['logs'] . 'widgets.html', false, 5);
 	}
 	
 	/**
@@ -702,34 +706,49 @@ final class PC_site extends PC_base {
 	}
 	
 	public function Get_widget_text($widget_name) {
+		$this->widget_logger->debug("Get_widget_text($widget_name)");
 		$args = func_get_args();
 		array_shift($args);
 		$widget = $this->core->Get_object($widget_name, $args);
 		if (!$widget) {
+			$this->widget_logger->debug(":( no widget object", 1);
 			return false;
 		}
-		return $widget->get_text();
+		$widget->absorb_debug_settings($this->widget_logger, 4);
+		$text = $widget->get_text();
+		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
+		return $text;
 	}
 	
 	public function Get_widget_text_from_data($widget_name, $data) {
+		$this->widget_logger->debug("Get_widget_text_from_data($widget_name)");
 		$args = func_get_args();
 		array_shift($args);
 		$data = array_shift($args);
 		$widget = $this->core->Get_object($widget_name, $args);
 		if (!$widget) {
+			$this->widget_logger->debug(":( no widget object", 1);
 			return false;
 		}
-		return $widget->get_text($data);
+		$text = $widget->get_text($data);
+		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
+		return $text;
 	}
 	
 	public function Get_widget_data($widget_name) {
+		$this->widget_logger->debug("Get_widget_data($widget_name)");
 		$args = func_get_args();
 		array_shift($args);
 		$widget = $this->core->Get_object($widget_name, $args);
 		if (!$widget) {
+			$this->widget_logger->debug(":( no widget object", 1);
 			return false;
 		}
-		return $widget->get_data();
+		$data = $widget->get_data();
+		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
+		$this->debug('get_data was called, data keys:', 3);
+		$this->debug(array_keys($data), 4);
+		return $data;
 	}
 	
 	//loaded page

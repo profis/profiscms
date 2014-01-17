@@ -128,6 +128,7 @@ PC.langs.ru = {
 		info: 'Инфо 1',
 		info2: 'Инфо 2',
 		info3: 'Инфо 3',
+		info_mobile: 'Для мобильных',
 		seo: 'SEO',
 		properties: 'Свойства'
 	},

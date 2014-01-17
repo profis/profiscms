@@ -160,6 +160,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}content` (
   `info` text COLLATE utf8_unicode_ci NOT NULL,
   `info2` text COLLATE utf8_unicode_ci NOT NULL,
   `info3` text COLLATE utf8_unicode_ci NOT NULL,
+  `info_mobile` text COLLATE utf8_unicode_ci NOT NULL,
   `title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `keywords` text COLLATE utf8_unicode_ci NOT NULL,
   `description` text COLLATE utf8_unicode_ci NOT NULL,

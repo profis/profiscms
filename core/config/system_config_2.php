@@ -72,7 +72,7 @@ $cfg['core_plugins'] = array(
 );
 
 $cfg['valid_page_fields'] = array(
-	'name', 'custom_name', 'info', 'info2', 'info3', 'title', 'keywords', 
+	'name', 'custom_name', 'info', 'info2', 'info3', 'info_mobile', 'title', 'keywords', 
 	'description', 'route', 'permalink', 'ln_redirect', 'text',
 	'redirect', 'controller', 'route_lock', 'published', 'hot', 
 	'nomenu', 'date_from', 'date_to', 'date', 'reference_id', 

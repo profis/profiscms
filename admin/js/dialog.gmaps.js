@@ -113,7 +113,7 @@ Dialog_markers_crud = Ext.extend(PC.ux.LocalCrud, {
 	
 	get_store_fields: function() {
 		return [
-				'id', 'latitude', 'longitude', 'options', 'icon', 'category', 'text'
+				'id', 'latitude', 'longitude', 'options', 'icon', 'category', 'text', 'marker_link'
 		];
 	},
 	
@@ -167,7 +167,15 @@ Dialog_markers_crud = Ext.extend(PC.ux.LocalCrud, {
 				onTriggerClick: function () {
 					PC.dialog.gmaps.markers_crud.open_category_select_window(this);
 				}
-			}
+			},
+			PC.view_factory.get_shortcut_field({
+				id: 'gmap_dialog_marker_link_field',
+				fieldLabel: 'Link',
+				ref: '../../_gmap_marker_link',
+				_fld: 'marker_link',
+				labelAlign: 'left',
+				anchor: '100%'
+			})
 
 		];
 	},
@@ -846,6 +854,7 @@ PC.dialog.gmaps = {
 				options: '',
 				icon: '',
 				category: '',
+				marker_link: '',
 				text: ''
 			};
 			options.markers = [old_marker];
