@@ -40,7 +40,8 @@ Ext.ux.form.Params = {
 					items.push({fieldLabel: this.ln.maxlength, ref: '../../_maxlength'});
 					items.push({fieldLabel: this.ln.readonly, xtype: 'combo', ref: '../../_readonly',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['readonly',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
 					items.push({fieldLabel: this.ln.required, xtype: 'combo', ref: '../../_required',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: [[false,PC.i18n.no],['required',PC.i18n.yes]]},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
-					items.push({fieldLabel: this.ln.html5_type, xtype: 'combo', ref: '../../_type',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: PC.utils.getComboArrayFromObject(Forms_plugin_data.html5_types)},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
+					items.push({fieldLabel: this.ln.html5_type, xtype: 'combo', ref: '../../_type',mode: 'local',width: 45,store:{xtype:'arraystore',storeId: 'margin_top',fields: ['value', 'display'],idIndex:0,data: PC.utils.getComboArrayFromObject(Ext.apply({text: 'text'}, Forms_plugin_data.html5_types))},editable: false,valueField: 'value',displayField: 'display',value: false,triggerAction: 'all'});
+					//Ext.apply({text: 'text'}, Forms_plugin_data.html5_types)
 				break;
 				case 'password':
 //					items.push({fieldLabel: this.ln.size, ref: '../../_size'});

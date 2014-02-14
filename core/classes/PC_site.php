@@ -155,6 +155,7 @@ final class PC_site extends PC_base {
 		$this->core->Init_hooks('after_load_page', array(
 			'page'=> &$route
 		));
+		$_SESSION['redirect_cycle'] = array();
 		return $route;
 	}
 	/**

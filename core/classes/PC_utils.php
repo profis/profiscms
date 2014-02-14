@@ -252,6 +252,7 @@ class PC_utils {
 	static function getCurrUrl($params = null, $stripGet = false, $path = null, $lang = null) {	
 		global $site;
 		//$ru = ($site && $site->loaded_page) ? $site->loaded_page['route'] : '';
+		
 		$ru = rtrim($site->Get_current_link(), '/');
 		$path = $path ? $path : $ru;
 		if ($params) {

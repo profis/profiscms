@@ -36,6 +36,9 @@ $cfg['path']['public'] = CMS_ROOT;
 $cfg['path']['base'] = str_replace('\\', '/', getcwd()).'/';
 $cfg['path']['system'] =& $cfg['path']['base'];
 foreach ($cfg['directories'] as $k=>$d) {
-	$cfg['path'][$k] = CMS_ROOT . $d.'/';
+	$cfg['path'][$k] = CMS_ROOT . $d;
+	if (!empty($d)) {
+		$cfg['path'][$k] .= '/';
+	}
 }
 require_once('functions.php');

@@ -132,12 +132,25 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	},
 	
 	get_grid_selection_model: function() {
-		return new Ext.grid.RowSelectionModel({
-			listeners: {
-				selectionchange: this.get_grid_selection_change_handler()
-			}
-		});
-	},		
+		if (this.checkable) {
+			return new Ext.grid.CheckboxSelectionModel({
+				listeners: this.get_grid_selection_model_listeners(),
+				editable: false
+			});
+		}
+		else {
+			return new Ext.grid.RowSelectionModel({
+				listeners: this.get_grid_selection_model_listeners()
+			});
+		}
+		
+	},	
+	
+	get_grid_selection_model_listeners: function() {
+		return {
+			selectionchange: this.get_grid_selection_change_handler()
+		}
+	},	
 	
 	get_grid_config: function() {
 		return {
@@ -168,6 +181,14 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		var cell_dblclick_handler = this.get_cell_dblclick_handler();
 		if (cell_dblclick_handler) {
 			listeners.celldblclick = cell_dblclick_handler;
+		}
+		return listeners;
+	},
+	
+	get_store_listeners: function() {
+		var listeners = {};
+		if (this.checkable) {
+			listeners.load =  Ext.createDelegate(this.select_rows, this);
 		}
 		return listeners;
 	},
@@ -216,9 +237,15 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 			
 		}
 		
+		var sm = this.get_grid_selection_model();
+		
+		if (this.checkable) {
+			columns.unshift(sm);
+		}
+		
 		var config = {
 			store: store,
-			sm: this.get_grid_selection_model(),
+			sm: sm,
 			plugins: plugins,
 			columns: columns,
 			listeners: this.get_grid_listeners()
@@ -271,6 +298,7 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	get_store: function(){
 		var config = {
 			autoLoad: this.auto_load,
+			listeners: this.get_store_listeners(),
 			//remoteSort: (this.per_page)?true:false,
 			//root: 'list',
 			//totalProperty: 'total',
@@ -711,7 +739,13 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		
 		
 	sync_grid: function() {
-		var post_params = {data: Ext.util.JSON.encode(this.get_store_data(true))};
+		if (this.checkable) {
+			var post_params = {data: Ext.util.JSON.encode(this.get_selected_data())};
+			post_params.delete_missing = true;
+		}
+		else {
+			var post_params = {data: Ext.util.JSON.encode(this.get_store_data(true))};
+		}
 		post_params.base_params = Ext.util.JSON.encode(this.grid.store.baseParams);
 		Ext.Ajax.request({
 			url: this.api_url + 'sync',
@@ -719,7 +753,7 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 			params: post_params,
 			callback: Ext.createDelegate(this.ajax_sync_respone_handler, this)
 		});
-	},	
+	},
 			
 	ajax_sync_respone_handler: function(opts, success, response) {
 		if (success && response.responseText) {
@@ -748,11 +782,25 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 			
 	ajax_sync_success_respone_handler: function(data) {
 		this.commit_records();
+		if (this.reload_after_sync) {
+			this.store.reload();
+		}
 	},
 		
 	commit_records: function() {
 		this.store.commitChanges();
 	},	
+		
+	select_rows: function() {
+		this._rows_to_select = [];
+		var store_data = this.get_store_data();
+		Ext.iterate(store_data, function(data, index){
+			if (data.checked) {
+				this._rows_to_select.push(index);
+			}
+		}, this);
+		this.grid.getSelectionModel().selectRows(this._rows_to_select);
+		},
 		
 	get_store_data: function(modified_only) {
 		if (modified_only) {
@@ -760,7 +808,11 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		}
 		return Ext.pluck(this.store.data.items, 'data');
 	},		
-			
+		
+	get_selected_data: function() {
+		return Ext.pluck(this.grid.getSelectionModel().getSelections(), 'data');
+	},
+	
 	pc_get_data: function() {
 		var optionAttributes = this.get_store_fields();
 		var rows = this.store.getRange();

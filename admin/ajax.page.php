@@ -216,7 +216,7 @@ elseif ($action == "update") {
 							}
 							if ($r->rowCount() != 1) {
 								//create new for the first time
-								$r = $db->prepare("INSERT INTO {$cfg['db']['prefix']}content (pid,ln,name,info,info2,info3,info_mobile,title,keywords,description,route,text,last_update,update_by) values(?,?,'','','','','','','','','',?,0)");
+								$r = $db->prepare("INSERT INTO {$cfg['db']['prefix']}content (pid,ln,name,info,info2,info3,info_mobile,title,keywords,description,route,text,last_update,update_by) values(?,?,'','','','','','','','','','',?,0)");
 								$success = $r->execute(array($_page['id'], $language, date('Y-m-d H:i:s')));
 								if (!$success) {
 									unset($value[$language]);

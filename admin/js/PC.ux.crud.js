@@ -459,7 +459,23 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 		}
 		return id_array;
 		return ids;
-	}
+	},
+	
+	
+	
+	get_tbar_buttons: function() {
+		var buttons =  [
+			this.get_button_for_add(),
+			this.get_button_for_edit(),
+			this.get_button_for_refresh(),
+			this.get_button_for_del()
+		];
+		if (this.sortable) {
+			buttons.push(this.get_button_for_move_up());
+			buttons.push(this.get_button_for_move_down());
+		}
+		return buttons;
+	},
 	
 });
 

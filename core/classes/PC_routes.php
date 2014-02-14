@@ -100,7 +100,7 @@ final class PC_routes extends PC_debug{
 				if (v($cfg['router']['no_trailing_slash'])) {
 					pc_remove_trailing_slash($this->request);
 				}
-				$_GET[$get_var] = $matches[2];
+				$_REQUEST[$get_var] = $_GET[$get_var] = $matches[2];
 			}
 		}
 		

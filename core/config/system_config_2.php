@@ -17,7 +17,9 @@
 
 
 //directories
+
 $cfg['directories'] =  array(
+	'root' => '',
 	'cms' => 'cms',
 	'admin' => 'admin',
 	'themes' => 'themes',

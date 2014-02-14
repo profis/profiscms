@@ -203,7 +203,10 @@ final class PC_sql_parser extends PC_base {
 	*/
 	public function in($array) {
 		$c = count($array);
-		if (!$c) return false;
+		if (!$c) {
+			return "in('".self::SP1."')";
+			return false;
+		}
 		return 'in('.implode(',', array_fill(0, $c, '?')).')';
 	}
 	

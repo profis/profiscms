@@ -198,6 +198,9 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function get_one($params = array(), $params_2 = array()) {
+		$this->debug('get_one()');
+		$this->debug($params, 1);
+		$this->debug($params_2, 1);
 		if (!is_array($params)) {
 			$id = $params;
 			$params = $params_2;
@@ -213,6 +216,7 @@ abstract class PC_model extends PC_base{
 	
 	public function get_data($id = null, $params = array(), $limit = 0) {
 		$this->debug('get_data()');
+		$this->debug($id, 1);
 		$this->debug($params, 1);
 		$select = 't.*';
 		$join_cc = '';
@@ -244,7 +248,7 @@ abstract class PC_model extends PC_base{
 				if (v($params['group'])) {
 					$params['group'] = ', ' . $params['group'];
 				}
-				$params['group'] = 't.id' . $params['group'];
+				$params['group'] = 't.' . $this->_table_id_col . $params['group'];
 				$select_cc_array = $select_cc;
 				$select_cc = '';
 				if (!is_array($select_cc_array)) {
@@ -268,7 +272,7 @@ abstract class PC_model extends PC_base{
 			if (!empty($select_cc)) {
 				$select_cc = ', ' . $select_cc;
 			}
-			$join_cc = " LEFT JOIN {$this->db_prefix}{$this->_content_table} ct ON ct.{$this->_content_table_relation_col}=t.id " . $join_cc_ln;
+			$join_cc = " LEFT JOIN {$this->db_prefix}{$this->_content_table} ct ON ct.{$this->_content_table_relation_col}=t.".$this->_table_id_col." " . $join_cc_ln;
 		}
 		
 		$query_params = array_merge($query_params, $this->_query_params);
@@ -280,7 +284,7 @@ abstract class PC_model extends PC_base{
 		}
 		//$this->debug($params['where']);
 		if (!is_null($id)) {
-			$params['where'] = array_merge(array('t.id' => $id), $params['where']);
+			$params['where'] = array_merge(array('t.' . $this->_table_id_col => $id), $params['where']);
 			if (!is_array($id)) {
 				$params['limit'] = 1;
 			}
@@ -400,8 +404,7 @@ abstract class PC_model extends PC_base{
 		
 		$s = $r_categories->execute($query_params);
 		if (!$s) {
-			$this->debug($query, 2);
-			$this->debug($query_params, 2);
+			$this->debug_query($query, $query_params, 2);
 			$this->debug('Query failed', 2);
 			return false;
 		}
@@ -461,6 +464,9 @@ abstract class PC_model extends PC_base{
 			$where_strings = array();
 			//$this->debug($where);
 			foreach ($where as $key => $value) {
+				if (is_string($key)) {
+					$key = str_replace('!', ' NOT ', $key);
+				}
 				if (!is_array($value)) {
 					if (is_string($key)) {
 						$where_strings[] = "$key = ? ";
@@ -899,7 +905,7 @@ abstract class PC_model extends PC_base{
 		$this->debug("get_unique_content_field($field, $value)");
 		$orig_value = $value;
 		$params = array(
-			'select' => 't.id',
+			'select' => 't.' . $this->_table_id_col,
 			'content' => true,
 			'ln' => $ln,
 			'limit' => 1,

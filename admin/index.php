@@ -95,6 +95,7 @@ header("Content-Type: text/html; charset=utf-8");
 	$settings['ln_select'] = null;
 	$settings['ignore_time_zone'] = v($cfg['ignore_time_zone'], false);
 	$settings['directories'] = $cfg['directories'];
+	$settings['cfg'] =  PC_utils::filterArray(array('map_lat', 'map_lng'), $cfg) ;
 	//if ($settings['permissions']['admin']) {
 		$settings['plugins'] = $plugins->Get_for_output();
 		$settings['controllers'] = $plugins->Get_controllers_for_output();

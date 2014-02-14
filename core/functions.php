@@ -1342,4 +1342,26 @@ function db_file_import($sql_files) {
 	return $query_count;
 }
 
+function pc_parse_attributes($text) {
+	$attributes = array();
+	$pattern = '#(?(DEFINE)
+			(?<name>[a-zA-Z][a-zA-Z0-9-:]*)
+			(?<value_double>"[^"]+")
+			(?<value_single>\'[^\']+\')
+			(?<value_none>[^\s>]+)
+			(?<value>((?&value_double)|(?&value_single)|(?&value_none)))
+		)
+		(?<n>(?&name))(=(?<v>(?&value)))?#xs';
+
+	if (preg_match_all($pattern, $text, $matches, PREG_SET_ORDER)) {
+		foreach ($matches as $match) {
+			$attributes[$match['n']] = isset($match['v'])
+				? trim($match['v'], '\'"')
+				: null;
+		}
+	}
+
+	return $attributes;
+}
+
 ?>

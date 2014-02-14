@@ -75,6 +75,7 @@ PC.langs.en = {
 	auth: {
 		login: 'Login',
 		password: 'Password',
+		utf_symbols: 'Caution: password with special symbols was attempted',
 		banned_title: 'You are banned',
 		banned_msg: 'Due to the repetitive invalid data entered, you are temporarily banned.<br />Try to log in again in a while.',
 		invalid: 'Invalid username or password specified.',

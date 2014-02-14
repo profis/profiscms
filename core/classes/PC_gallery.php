@@ -2943,12 +2943,23 @@ final class PC_gallery extends PC_base {
 	* @see PC_gallery::Parse_file_request().
 	* @see PC_gallery::Replace_thumbnail_types().
 	*/
-	public function Extract_files_from_text($text, $return_thumbnail_types=null) {
+	public function Extract_files_from_text($text, $return_thumbnail_types=null, $return_attributes = false) {
 		/*if (is_array($return_thumbnail_types)) if (count($return_thumbnail_types)) {
 			$this->Replace_thumbnail_types($text, $return_thumbnail_types);
 		}*/
 		//echo htmlspecialchars('#'.$this->patterns['file_link'].'#i');
 		//preg_match_all('#'.$this->patterns['file_link'].'#i', $text, $m);
+		
+		
+		if ($return_attributes) {
+			$return = array();
+			preg_match_all('#<img([^>]+src="([^"]+)"[^>]*)>#i', $text, $m);
+			foreach ($m[1] as $value) {
+				$return[] = pc_parse_attributes($value);
+			}
+			return $return;
+		}
+		
 		preg_match_all('#<img[^>]+src="([^"]+)"[^>]*>#i', $text, $m);
 		if (!is_null($return_thumbnail_types)) {
 			if (!is_array($return_thumbnail_types)) $return_thumbnail_types = array((string)$return_thumbnail_types);

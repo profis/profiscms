@@ -73,6 +73,7 @@ PC.langs.lt = {
 	auth: {
 		login: 'Prisijungimo vardas',
 		password: 'Slaptažodis',
+		utf_symbols: 'Dėmesio: slaptažodyje panaudoti specialūs simboliai',
 		banned_title: 'Šis vartotojas užblokuotas',
 		banned_msg: 'Dėl neteisingai įvestų duomenų vartotojas laikinai užblokuotas',
 		invalid: 'Neteisingas prisijungimo vardas arba slaptažodis',
@@ -833,7 +834,13 @@ PC.langs.lt = {
 				lang_empty: 'Kalbos pavadinimas negali būti tuščias',
 				lang_none: 'Turi būti bent viena kalba'
 			}
+		},
+		forms: {
+			selfname: 'Išsaugotos formos',
+			ip_address: 'IP adresas',
+			field_contents: 'Lauko turinys'
 		}
+		
 	},
 	no_description: 'Nėra aprašymo',
 	pages: {

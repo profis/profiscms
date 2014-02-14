@@ -148,7 +148,7 @@ final class PC_page extends PC_base {
 		if (!empty($data['ln_redirect'])) {
 			$data['redirect'] = $data['ln_redirect'];
 		}
-		if (!empty($data['redirect'])) {
+		if (!empty($data['redirect']) and empty($data['controller'])) {
 			if (preg_match("#^http://#", $data['redirect'])) {
 				$data = array(
 					'controller'=> 'core',
@@ -162,10 +162,15 @@ final class PC_page extends PC_base {
 			}
 			//parse redirect data
 			
-			$route_data = $this->process_redirect($data, $internal_redirects);
-			if ($route_data) {
-				return $route_data;
+			vv($_SESSION['redirect_cycle']);
+			if (!in_array($data['redirect'], $_SESSION['redirect_cycle'])) {
+				$_SESSION['redirect_cycle'][] = $data['redirect'];
+				$route_data = $this->process_redirect($data, $internal_redirects);
+				if ($route_data) {
+					return $route_data;
+				}
 			}
+			
 		}
 		if (empty($data['controller']) || $data['controller'] == 'menu') $data['controller'] = 'page';
 		return $data;
@@ -1876,7 +1881,7 @@ final class PC_page extends PC_base {
 			return $page_link; 
 		}
 		$route = v($page_data['route']);
-		if (empty($route)) {
+		if (empty($route) and !v($page_data['front'])) {
 			$route = v($page_data['pid']);
 		}
 		if (!empty($route)) {

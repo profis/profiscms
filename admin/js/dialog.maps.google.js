@@ -38,7 +38,7 @@ PC.dialog.maps.google = {
 	
 	get_default_options_when_library_loaded: function() {
 		return {
-			center: new google.maps.LatLng(55.17804878976065, 23.910986328124977),
+			center: new google.maps.LatLng(PC.global.cfg.map_lat, PC.global.cfg.map_lng),
 			mapTypeId: google.maps.MapTypeId.ROADMAP			
 		};
 	},

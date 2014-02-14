@@ -68,6 +68,15 @@
 	background: url("../images/profis32.png") no-repeat 32px -2px;
 }
 
+.login_error {
+	text-align: center;
+	font: 12px Arial;
+	margin: 6px 0 6px 24px;
+	padding-left: 64px;
+	line-height: 24px;
+	background: url("../images/warning_24.png") no-repeat 24px -2px;
+}
+
 .x-form-field-wrap .x-form-folder-trigger {
 	background-image: url("../images/folder-trigger.gif");
 }

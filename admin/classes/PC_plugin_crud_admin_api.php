@@ -105,7 +105,7 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$where = array();
 		$parameters = array();
 		
-		$this->_model = $model = $this->_get_model();
+		$this->_model = $this->_get_model();
 		
 		$params = array(
 			'paging' => &$paging,
@@ -124,9 +124,9 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		
 		$this->_adjust_search($params);
 		
-		$model->absorb_debug_settings($this);
+		$this->_model->absorb_debug_settings($this);
 		$this->_adjust_order_params($params);
-		$this->_out['list'] = $model->get_all($params);
+		$this->_out['list'] = $this->_model->get_all($params);
 		
 		$this->_after_get();
 		
@@ -296,6 +296,7 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$this->_model->absorb_debug_settings($this);
 		
 		$data = v($_POST['data'], '[]');
+		$delete_missing = v($_POST['delete_missing']);
 		$base_params = v($_POST['base_params'], '[]');
 		if (!is_array($data)) {
 			$data = json_decode($data, true);
@@ -311,10 +312,16 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		
 		$sync_fields = $this->_get_sync_fields();
 		$sync_fields_flipped = array_flip($sync_fields);
-		
+		$all_ids = array();
+		$id_field = $this->_model->get_id_field();
 		foreach ($data as $update_data) {
-			$id_field = $this->_model->get_id_field();
 			$id = v($update_data[$id_field]);
+			if ($id) {
+				$id = $this->_model->get_one($id, array(
+					'value' => $id_field
+				));
+				$this->debug('real id from db is: ' . $id);
+			}
 			if (true) {
 				$updated = false;
 				unset($update_data[$id_field]);
@@ -333,18 +340,31 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 				}
 				$update_data['_content'] = $content;
 				if ($id) {
+					$all_ids[] = $id;
 					$updated = $this->_model->update($update_data, $id);
 					$this->debug('update result: ' . $updated, 5);
 				}
-				
-				if (!$updated) {
+				else {
 					unset($update_data['_content']);
 					if ($id_field != 'id') {
 						$update_data[$id_field] = $id;
 					}
-					$this->_model->insert($update_data);
+					$inserted_id = $this->_model->insert($update_data, array(), array('ignore' => true));
+					if ($inserted_id) {
+						$all_ids[] = $inserted_id;
+					}
 				}
 			}
+		}
+		
+		if ($delete_missing and (!empty($all_ids) or empty($data))) {
+			$where = array_intersect_key($base_params, $sync_fields_flipped);
+			if (!empty($all_ids)) {
+				$where[$id_field . '!'] = $all_ids;
+			}
+			$this->_model->delete(array(
+				'where' => $where
+			));
 		}
 		
 		$this->_out['success'] = true;

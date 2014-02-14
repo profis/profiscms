@@ -555,7 +555,6 @@ final class PC_auth extends PC_base {
 					//$hash = hex_hmac_md5($_SESSION['auth_data']['salt'], $f['pass']);
 					//if ($hash == $_POST['auth_hash']) {
 					if ($f['pass'] == $this->users->Encode_password($_POST['auth_pass'])) {
-						echo 'OK';
 						$this->Load_session($f);
 						$this->_is_authenticated = true;
 					}

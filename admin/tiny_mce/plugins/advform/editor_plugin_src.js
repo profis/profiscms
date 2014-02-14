@@ -166,7 +166,7 @@ tinymce.create('tinymce.plugins.AdvancedFormPlugin',
 			if (attrObject['data-adv_input_type']) {
 				attrObject.type = attrObject['data-adv_input_type'];
 			}
-			else if (type != '') {
+			else if (!attrObject['type'] && type != '') {
 				attrObject.type = type;
 			}
 			ob = dom.create('input', attrObject);

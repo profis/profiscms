@@ -78,6 +78,12 @@ else {
 }
 header('Cache-Control: no-cache');
 $error = $auth->Get_error();
+$display_utf_error = false;
+if (!empty($error)) {
+	if (preg_match('/[^\_\-\d\w]/', v($_POST['auth_pass']))) {
+		$display_utf_error = true;
+	}
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html><head>
@@ -201,19 +207,33 @@ $error = $auth->Get_error();
 				}
 			]
 		});
+		
+		var view_items = [
+			{	flex: 1,
+				border: false
+			}, 
+			header, 
+			login_form,
+		];
+		
+		<?php if ($display_utf_error) { ?>
+			view_items.push({
+				xtype: 'box',
+				html: '<div class="login_error">&nbsp; '+PC.i18n.auth.utf_symbols+'<\/div>'
+			});
+	
+		<?php } ?>
+		
+		view_items.push({	flex: 1,
+			border: false
+		});
+		
 		var view = new Ext.Viewport({
 			layout: 'vbox',
 			layoutConfig: {
 				align: 'center'
 			},
-			items: [
-				{	flex: 1,
-					border: false
-				}, header, login_form,
-				{	flex: 1,
-					border: false
-				}
-			]
+			items: view_items
 		});
 		function Can_auth() {
 			if (!banned) {

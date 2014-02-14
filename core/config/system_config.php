@@ -29,6 +29,9 @@ $cfg['timezone'] = 'Europe/Vilnius';
 //development
 $cfg['debug_mode'] = false;
 
+$cfg['map_lat'] = '55.17804878976065';
+$cfg['map_lng'] = '23.910986328124977';
+
 $cfg['debug_output'] = false;
 //$cfg['debug_ip'] = false;
 

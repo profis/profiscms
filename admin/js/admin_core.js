@@ -74,7 +74,6 @@ Ext.onReady(function(){
 				beforeselect: function(cmbbox, rec, ndx) {
 					if (PC.global.site == rec.get('id')) return;
 					return save_prompt(function() {
-						//debugger;
 						PC.global.site = rec.get('id');
 						PC.global.site_select.setValue(PC.global.site);
 						PC.global.page = {};
@@ -636,6 +635,11 @@ Ext.onReady(function(){
 								},
 								autoScroll: true,
 								items: [
+									{
+										xtype: 'hidden',
+										ref: '../../../../../../../_fld_id',
+										id: 'db_fld_id'
+									},
 									{	ref: '../../../../../../../_fld_controller',
 										fieldLabel: PC.i18n.page.type,
 										xtype: 'combo',
@@ -955,6 +959,9 @@ Ext.onReady(function(){
 			Save_content_to_store(null);
 			var request_params = {};
 			request_params.id = PC.global.pid;
+			if (request_params.id != PC.global.page.id.value) {
+				return;
+			}
 			request_params.content = {};
 			Ext.iterate(PC.global.page, function(field, value){
 				//loop through pages of all languages
@@ -992,7 +999,6 @@ Ext.onReady(function(){
 					}
 				}
 			});
-			
 			//console.log(request_params); Ext.Msg.hide(); return;
 			request_params.gmt_offset = new Date().getTimezoneOffset();
 			Ext.Ajax.request({
@@ -1524,7 +1530,7 @@ function Load_to_editor(ln, original) {
 			value = Page_datetime_convert(value, null);
 			field.setValue(value.date);
 			Ext.getCmp('db_fld_time').setValue(value.time);
-		} else if (/^(controller|published|route_lock|hot|nomenu|redirect|source_id|target|reference_id)$/.test(i)) {
+		} else if (/^(id|controller|published|route_lock|hot|nomenu|redirect|source_id|target|reference_id)$/.test(i)) {
 			var source = PC.global.page[i];
 			if (original) field.setValue(source.originalValue);
 			else field.setValue(source.value);

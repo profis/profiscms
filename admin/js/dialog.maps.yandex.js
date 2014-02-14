@@ -37,7 +37,7 @@ PC.dialog.maps.yandex = {
 	
 	get_default_options: function () {
 		return {
-			center: [55.17804878976065, 23.910986328124977],
+			center: [PC.global.cfg.map_lat, PC.global.cfg.map_lng],
 			zoom: 7,
 			behaviors: ['default', 'scrollZoom']
 		}
@@ -176,10 +176,7 @@ PC.dialog.maps.yandex = {
 		myGeocoder.then(
 			function (res) {
 				if (res.geoObjects.getLength()) {
-					var coords = res.geoObjects.get(0).geometry._n;
-					if (!coords) {
-						coords = res.geoObjects.get(0).geometry._zh;
-					}
+					var coords = res.geoObjects.get(0).geometry.getCoordinates();
 					callback(coords);
 					return;
 				}

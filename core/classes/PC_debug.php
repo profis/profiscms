@@ -219,7 +219,7 @@ class PC_debug {
 		if (@file_exists($this->file)) {
 			if ($append or time() - filemtime($this->file) <= $wait_seconds) {
 				$append = true;
-				$this->debug('=='. date('Y-m-d H:i:s') .'=============================');
+				$this->debug_time_and_ip();
 				$this->increase_debug_offset(1);
 			}
 		}
@@ -246,7 +246,7 @@ class PC_debug {
 			$pre_s .= '<head>
 				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 			</head>
-			======================'. date('Y-m-d H:i:s') .'=============================';
+			======================'. date('Y-m-d H:i:s') .'======  ' . pc_ip() . '   ==========================';
 		}
 		try {
 			@file_put_contents($file_name, $pre_s . $this->get_debug_string(), $append);
