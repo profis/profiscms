@@ -732,6 +732,9 @@ function get_dir_url_info() {
 */
 function Validate($type, $input, $extra=false, $options=array()) {
 	switch ($type) {
+		case 'reg':
+			if (preg_match($extra, $input)) return true;
+			break;
 		case 'route':
 			if (preg_match("/[a-ž0-9][a-ž0-9\-_]*[a-ž0-9]/u", $input)) return true;
 			break;

@@ -1427,7 +1427,7 @@ final class PC_gallery extends PC_base {
 		}
 		
 		$this->debug($type, 1);
-		$this->debug('creating: ' . $file_path, 1);
+		$this->debug('creating from: ' . $file_path, 1);
 		$this->last_thumb = $thumb = PhpThumbFactory::create($file_path, array('resizeUp' => true, 'jpegQuality'=>$type['thumbnail_quality']));
 		$this->debug('Current dimensions before resizing:', 3);
 		$this->debug($thumb->currentDimensions, 4);
@@ -2270,7 +2270,7 @@ final class PC_gallery extends PC_base {
 				$file_full_path = $full_path . '/' . $data['filename'];
 				$orig_file_full_path = $this->get_original_file_path($file_full_path);
 				
-				if (file_exists($orig_file_full_path)) {
+				if ($data['filename'] != 'watermark.' . $data['extension'] and file_exists($orig_file_full_path)) {
 					@unlink($file_full_path);
 					$oldumask = umask(self::UMASK);
 					copy($orig_file_full_path, $file_full_path);
@@ -2286,8 +2286,10 @@ final class PC_gallery extends PC_base {
 					if (is_dir($thumbnail_path)) {
 						//delete thumb
 						$delete_thumb_path = $thumbnail_path.'/'.$data['filename'];
+						$delete_thumb_crop_path = $thumbnail_path.'/'.$data['filename'] . '.txt';
 						//echo "\n unlink(".$delete_thumb_path.")";
 						@unlink($delete_thumb_path);
+						@unlink($delete_thumb_crop_path);
 
 					}
 				}

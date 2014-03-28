@@ -10,23 +10,37 @@ class PC_site_user_model extends PC_model {
 		$this->_rules = array(
 			array(
 				'field' => 'email',
-				'rule' => 'unique'
+				'rule' => 'required',
+			),
+			array(
+				'field' => 'email',
+				'rule' => 'unique',
+				'message' => 'input_error_email_exists'
 			),
 			array(
 				'field' => 'password',
-				'rule' => 'password'
+				'rule' => 'password',
+			),
+			array(
+				'field' => 'password',
+				'rule' => 'required',
 			),
 			array(
 				'field' => 'name',
 				'rule' => 'name'
 			),
 			array(
-				'field' => 'login',
-				'rule' => 'required'
+				'field' => 'name',
+				'rule' => 'required',
 			),
 			array(
 				'field' => 'login',
-				'rule' => 'unique'
+				'rule' => 'required',
+			),
+			array(
+				'field' => 'login',
+				'rule' => 'unique',
+				'message' => 'input_error_user_exists'
 			),
 		);
 	}
@@ -40,12 +54,14 @@ class PC_site_user_model extends PC_model {
 			array(
 				'field' => 'login',
 				'filter' => 'trim'
-			),
-			array(
-				'field' => 'password',
-				'filter' => 'remove_empty'
 			)
 		);
+		if ($this->_id) {
+			$this->_filters[] = array(
+				'field' => 'password',
+				'filter' => 'remove_empty'
+			);
+		}
 	}
 	
 	protected function _set_sanitize_filters() {

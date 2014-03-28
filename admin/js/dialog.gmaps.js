@@ -492,7 +492,7 @@ PC.dialog.gmaps = {
 		var panel = this.panel;
 		
 		this.markers_crud = new Dialog_markers_crud({
-			width: 150
+			width: 180
 		});
 		
 		this.markers_crud.map_panel = this.panel;
@@ -580,13 +580,37 @@ PC.dialog.gmaps = {
 			]
 		};
 		
+		this.advanced_tab = {
+			title: 'Advanced',
+			layout: 'form',
+			padding: '6px 3px 3px 3px',
+			border: false,
+			autoScroll: true,
+			bodyCssClass: 'x-border-layout-ct',
+			labelWidth: 120,
+			labelAlign: 'right',
+			defaults: {anchor: '96%', xtype:'textfield'},
+			items: [
+				{	ref: '../../_map_class',
+					fieldLabel: 'Class',
+					xtype: 'combo', 
+					mode: 'local',
+					store: PC.utils.Get_classes_array('div'),
+					triggerAction: 'all'
+				},
+				{	fieldLabel: 'Style',
+					ref: '../../_map_style'
+				}
+			]
+		};
+		
 		this.tabs = {
 			xtype: 'tabpanel',
 			activeTab: 0,
 			//width: 700,
 			//height: 400,
 			flex: 1,
-			items: [this.map_tab, this.options_tab, this.categories_tab],
+			items: [this.map_tab, this.options_tab, this.categories_tab, this.advanced_tab],
 			border: false
 		};
 		
@@ -662,30 +686,19 @@ PC.dialog.gmaps = {
 					{	xtype: 'textfield',
 						id: 'marker_position_geocoder',
 						emptyText: this.ln.geocoder_emptytext,
-						width: 110
+						width: 110,
+						listeners: {
+							specialkey: function(fld, e) {
+								if (e.getKey() == e.ENTER) {
+									PC.dialog.gmaps.search();
+								}
+							}
+						}
 					},
 					{	icon: 'images/Search.png',
+						id: 'search_map_button',
 						handler: function() {
-							var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
-							var address = toolbar.get('marker_position_geocoder').getValue();
-							
-							var callback = function(pos) {
-								if (pos) {
-									if (typeof(pos) != 'string') {
-										//PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
-										panel.map.setCenter(pos);
-										toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos)*1000000)/1000000);
-										toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
-									}
-								}
-							};
-							
-							var error_callback = function(err) {
-								alert(dialog.ln.geocoder_error + err);
-							};
-							
-							PC.dialog.maps[dialog.map_type].search_address(address, callback, error_callback);
-							
+							PC.dialog.gmaps.search();							
 						}
 					},
 					{xtype:'tbseparator'},
@@ -781,6 +794,8 @@ PC.dialog.gmaps = {
 								zoom: PC.dialog.gmaps.panel.map.getZoom(),
 								map_type: PC.dialog.maps[dialog.map_type].get_map_type(PC.dialog.gmaps.panel.map),
 								map_options: PC.dialog.gmaps.window._gmap_map_options.getValue(),
+								map_class: PC.dialog.gmaps.window._map_class.getValue(),
+								map_style: PC.dialog.gmaps.window._map_style.getValue(),
 								marker_options: PC.dialog.gmaps.window._gmap_marker_options.getValue(),
 								marker_image: PC.dialog.gmaps.window._gmap_marker_image.getValue(),
 								categories: new_categories,
@@ -839,6 +854,8 @@ PC.dialog.gmaps = {
 		toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[this.map_type].get_lat_from_pos(pos)*1000000)/1000000);
 		toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[this.map_type].get_lng_from_pos(pos)*1000000)/1000000);
 		PC.dialog.gmaps.window._gmap_map_options.setValue(options.map_options);
+		PC.dialog.gmaps.window._map_class.setValue(options.map_class);
+		PC.dialog.gmaps.window._map_style.setValue(options.map_style);
 		PC.dialog.gmaps.window._gmap_marker_options.setValue(options.marker_options);
 		PC.dialog.gmaps.window._gmap_marker_image.setValue(options.icon);
 		this.original_options_json = Ext.util.JSON.encode([]);
@@ -891,6 +908,8 @@ PC.dialog.gmaps = {
 			//mapTypeId: eval('google.maps.MapTypeId.'+settings.map_type.toUpperCase()),
 			streetViewControl: false,
 			map_options: settings.map_options,
+			map_class: settings.map_class,
+			map_style: settings.map_style,
 			marker_options: settings.marker_options,
 			categories: settings.categories,
 			markers: settings.markers,
@@ -929,5 +948,31 @@ PC.dialog.gmaps = {
 			var submit_button = toolbar.get('gmaps-submit');
 			submit_button.setText('<b>'+this.ln.insert+'</b>');
 		}
+	},
+	
+	search: function() {
+		var dialog = this;
+		var panel = this.panel;
+		
+		var toolbar = PC.dialog.gmaps.window.getBottomToolbar();
+		var address = toolbar.get('marker_position_geocoder').getValue();
+
+		var callback = function(pos) {
+			if (pos) {
+				if (typeof(pos) != 'string') {
+					//PC.dialog.maps[dialog.map_type].set_marker_position(panel.marker, pos);
+					panel.map.setCenter(pos);
+					toolbar.get('marker_position_latitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lat_from_pos(pos)*1000000)/1000000);
+					toolbar.get('marker_position_longitude').setValue(Math.round(PC.dialog.maps[dialog.map_type].get_lng_from_pos(pos)*1000000)/1000000);
+				}
+			}
+		};
+
+		var error_callback = function(err) {
+			alert(dialog.ln.geocoder_error + err);
+		};
+
+		PC.dialog.maps[dialog.map_type].search_address(address, callback, error_callback);
+		return;
 	}
 };

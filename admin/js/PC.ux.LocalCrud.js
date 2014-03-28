@@ -120,7 +120,9 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	},
 	
 	set_titles: function() {
-		this.title = this.ln.title;
+		if (!this.title) {
+			this.title = this.ln.title;
+		}
 	},
 	
 	
@@ -135,7 +137,8 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		if (this.checkable) {
 			return new Ext.grid.CheckboxSelectionModel({
 				listeners: this.get_grid_selection_model_listeners(),
-				editable: false
+				editable: false,
+				checkOnly: true
 			});
 		}
 		else {
@@ -153,9 +156,13 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 	},	
 	
 	get_grid_config: function() {
-		return {
+		var config = {
 			layout: 'fit'
 		};
+		if (this.checkable) {
+			config.deferRowRender = false;
+		}
+		return config;
 	},
 	
 	get_grid_columns: function() {
@@ -181,6 +188,11 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 		var cell_dblclick_handler = this.get_cell_dblclick_handler();
 		if (cell_dblclick_handler) {
 			listeners.celldblclick = cell_dblclick_handler;
+		}
+		if (this.checkable) {
+			listeners.render = Ext.createDelegate(function() {
+				this.store.reload();
+			}, this);
 		}
 		return listeners;
 	},
@@ -799,8 +811,20 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 				this._rows_to_select.push(index);
 			}
 		}, this);
-		this.grid.getSelectionModel().selectRows(this._rows_to_select);
-		},
+		
+		if (!this.grid.rendered) {
+			//this.grid.addListener('render', this.select_rows_when_rendered, this);
+		}
+		else {
+			this.select_rows_when_rendered();
+		}
+		
+	},
+		
+	select_rows_when_rendered: function() {
+		var sm  = this.grid.getSelectionModel();
+		sm.selectRows(this._rows_to_select);
+	},
 		
 	get_store_data: function(modified_only) {
 		if (modified_only) {

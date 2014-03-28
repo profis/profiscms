@@ -32,10 +32,17 @@ function pc_maps_show_category(map_manager, markers, map) {
 	$(markers).each(function(index, marker){
 		map_manager.pc_maps_show_marker(marker, map);
 	});
+	
+	if (typeof pc_maps_show_category_hook == 'function') {
+		pc_maps_show_category_hook(map_manager, markers, map);
+	}
 }
 
 function pc_maps_hide_category(map_manager, markers) {
 	$(markers).each(function(index, marker){
 		map_manager.pc_maps_hide_marker(marker);
 	});
+	if (typeof pc_maps_hide_category_hook == 'function') {
+		pc_maps_hide_category_hook(map_manager, markers);
+	}
 }

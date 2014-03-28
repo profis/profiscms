@@ -16,6 +16,7 @@
 
 final class PC_page extends PC_base {
 	const PAGE_BREAK = '╬';
+	const ALL_PAGES = '__pc_all_pages';
 	public  $text,
 			$data,
 			$page_data,
@@ -25,6 +26,9 @@ final class PC_page extends PC_base {
 			$_gmap_counter = 0,
 			$_media_counter = 1,
 			$_parse_html_page_id = 0;
+	
+	private $_parsed_page_forms = array();
+	
 	public function Init() {
 		//constructor
 	}
@@ -843,6 +847,7 @@ final class PC_page extends PC_base {
 								}
 							}
 							$message = $mailBodyDOM->saveHTML();
+							$message = nl2br($message);
 							
 							PC_utils::debugEmail($pageForm['submitEmails'], $message, $textBody);
 							
@@ -854,15 +859,27 @@ final class PC_page extends PC_base {
 								$mail->AddAddress($submitEmail);
 							}
 							
-							if (isset($this->cfg['from_smtp']) and !empty($this->cfg['from_smtp'])) {
+							
+							if (isset($this->cfg['from_smtp'])) {
+								require_once $this->cfg['path']['classes'] . 'class.smtp.php';
+								$this->debug("calling IsSMTP()", 1);
 								$mail->IsSMTP();
-								$mail->Host = $this->cfg['from_smtp'];
+								if (!empty($this->cfg['from_smtp'])) {
+									$this->debug("setting host: " . $this->cfg['from_smtp'], 1);
+									$mail->Host = $this->cfg['from_smtp'];
+								}
 							}
 							
 							if (isset($this->cfg['mailer_params']) and is_array($this->cfg['mailer_params'])) {
 								foreach ($this->cfg['mailer_params'] as $key => $value) {
-									$this->debug("setting $key", 1);
-									$mail->$key = $value;
+									if ($key == 'IsSendmail' and $value) {
+										$this->debug("calling IsSendmail()", 1);
+										$mail->IsSendmail();
+									}
+									else {
+										$this->debug("setting $key", 1);
+										$mail->$key = $value;
+									}
 								}
 							}	
 							
@@ -901,6 +918,7 @@ final class PC_page extends PC_base {
 						$this->debug(":( {$pageForm['idHash']} is not set in POST", 3);
 					}
 					elseif($_POST[$pageForm['idHash']] != $currentFormSubmitHash) {
+						$this->debug(":( currentFormSubmitHash != {_POST[pageForm['idHash']]}", 3);
 						$this->debug(":( $currentFormSubmitHash != {$_POST[$pageForm['idHash']]}", 3);
 					}
 					
@@ -944,9 +962,13 @@ final class PC_page extends PC_base {
 		// different tabs, submitting both of them from the first time becomes impossible.
 		$currentFormSubmitHash = null;
 		$formSubmitHash_key = $this->_parse_html_page_id . '_' . 'formSubmitHash';
+		$this->debug("formSubmitHash_key: $formSubmitHash_key", 1);
 		if(array_key_exists($formSubmitHash_key, $_SESSION)) {
 			$currentFormSubmitHash = $_SESSION[$formSubmitHash_key];
-			$this->debug("currentFormSubmitHash = _SESSION['$formSubmitHash_key'] [$currentFormSubmitHash]", 1);
+			$this->debug("currentFormSubmitHash = _SESSION['$formSubmitHash_key'] = $currentFormSubmitHash", 1);
+		}
+		else {
+			$this->debug(":( $formSubmitHash_key is not set in SESSION", 1);
 		}
 		
 		$nextFormSubmitHash = time();
@@ -961,11 +983,11 @@ final class PC_page extends PC_base {
 			if ($params === false or in_array('forms', $params)) {
 				$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
 				if ($this->_form_count) {
-					if (v($this->_next_form_submit_hash_already_set)) {
+					if (isset($this->_parsed_page_forms[$this->_parse_html_page_id])) {
 						$this->debug("_SESSION['$formSubmitHash_key'] is already set in this request", 1);
 					}
 					else {
-						$this->_next_form_submit_hash_already_set = true;
+						$this->_parsed_page_forms[$this->_parse_html_page_id] = true;
 						$_SESSION[$formSubmitHash_key] = $nextFormSubmitHash;
 						$this->debug("_SESSION[$formSubmitHash_key] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
 					}
@@ -1450,13 +1472,31 @@ final class PC_page extends PC_base {
 
 		$map_init_js = $this->site->Get_tpl_content('map', 'init.js', array('id' => $id));
 
+		$additional_class = '';
+		$additional_style = '';
+		if (isset($data->map_class)) {
+			$additional_class = ' ' . $data->map_class;
+		}
+		
+		$style = $gmap[2];
+		$style = trim($style);
+		$style = trim($style, ';');
+		if (!empty($style)) {
+			$style .= ';';
+		}
+		
+		if (isset($data->map_style)) {
+			$style .= $data->map_style;
+		}		
+				
 		if ($map_type == 'google') {
 			$vars = array_merge($vars, array(
 				'id' => $id,
 				'filter_el_id' => 'map_filter_' . $id,
 				'width' => $w,
 				'height' => $h,
-				'style' => $gmap[2],
+				'style' => $style,
+				'class' => $additional_class,
 				'filter' => $categories_exist,
 				'js' => '<script type="text/javascript">'
 					.$map_markers
@@ -1479,7 +1519,7 @@ final class PC_page extends PC_base {
 
 			));
 			$map_frame = $this->site->Get_tpl_content('map', $vars);
-			$map_frame_ = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmap[2].'">'
+			$map_frame_ = '<div id="'.$id.'" class="google-map'.$additional_class.'" style="width:'.$w.'px;height:'.$h.'px;'.$gmap[2].'">'
 			.'</div>' 
 			. '<div  id="map_filter_'.$id.'">'. $filter . '</div>';
 		}
@@ -1489,7 +1529,8 @@ final class PC_page extends PC_base {
 				'filter_el_id' => 'map_filter_' . $id,
 				'width' => $w,
 				'height' => $h,
-				'style' => $gmap[2],
+				'style' => $style,
+				'class' => $additional_class,
 				'filter' => $categories_exist,
 				'js' => '<script type="text/javascript">'
 					.$map_markers
@@ -1517,7 +1558,7 @@ final class PC_page extends PC_base {
 
 			));
 			$map_frame = $this->site->Get_tpl_content('map', $vars);
-			$map_frame_ = '<div id="'.$id.'" class="google-map" style="width:'.$w.'px;height:'.$h.'px;'.$gmap[2].'">'
+			$map_frame_ = '<div id="'.$id.'" class="google-map'.$additional_class.'" style="width:'.$w.'px;height:'.$h.'px;'.$gmap[2].'">'
 			.'</div>'
 			. '<div  id="map_filter_'.$id.'">'. $filter . '</div>';
 		}
@@ -1757,6 +1798,9 @@ final class PC_page extends PC_base {
 		if (is_array($id) and empty($id) or is_null($id)) {
 			return array();
 		}
+		if ($id == self::ALL_PAGES) {
+			$id = null;
+		}
 		if (is_array($parseLinks)) {
 			$parseLinks_param = v($parseLinks['links'], true);
 		}
@@ -1805,7 +1849,6 @@ final class PC_page extends PC_base {
 		$list = array();
 		$valid_html_fields = array('text', 'info', 'info2', 'info3', 'info_mobile');
 		$needed_html_fields = array_intersect($valid_html_fields, $fields);
-		$this->_parse_html_page_id = $id;
 		while ($d = $r->fetch()) {
 			if (!empty($fields)) {
 				if (!empty($needed_html_fields)) {
@@ -1816,7 +1859,10 @@ final class PC_page extends PC_base {
 					}
 				}
 			}
+			$this->_parse_html_page_id = v($d['pid'], 0);
 			$this->_parse_html_output_params = $parseLinks;
+			$this->debug($parseLinks);
+			$this->debug(array_keys($d));
 			if ($parseLinks_param) $this->Parse_html_output($d['text'], $d['info'], $d['info2'], $d['info3'], $d['info_mobile']);
 			$list[] = $d;
 		}

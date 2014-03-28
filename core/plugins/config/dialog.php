@@ -150,7 +150,7 @@ function mod_config_click() {
 		}
 	};
 	*/
-	var baseflds = ['title', 'key', 'plugin', 'value'];
+	var baseflds = ['title', {name:'key', sortType:Ext.data.SortTypes.asNatural} , 'plugin', 'value'];
 	var basecols = [
 		{	width: 300,
 			_base: true,
@@ -187,6 +187,7 @@ function mod_config_click() {
 		{	
 			_base: true,
 			dataIndex: 'key',
+			sortable: true,
 			hideable: false,
 			hidden: true
 		},
@@ -858,8 +859,9 @@ function mod_config_click() {
 						for (var x in recs)
 							all_tabs[x].str_store.loadData([ recs[x] ], true);
 					});
-					for (var x in all_tabs)
+					for (var x in all_tabs) {
 						all_tabs[x].str_store.sort('key');
+					}
 					w.ok_btn.enable();
 					return; // OK
 				} catch(e) {};

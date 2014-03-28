@@ -2,6 +2,16 @@
 Ext.BLANK_IMAGE_URL = 'ext/resources/images/default/s.gif';
 // Main application entry point
 
+Ext.apply(Ext.data.SortTypes, {
+    asNatural: function (str) {
+		// Pad all the numbers we can find with 10 zeros to the left, then trim
+        // down to the last 10 digits. A primitive natural sort occurs.
+        // WARN: May do odd things to any numbers longer than 10 digits. It will
+        // also not work as you might expect on decimals.
+        return str.replace(/(\d+)/g, "0000000000$1").replace(/0*(\d{10,})/g, "$1");
+    }
+});
+
 PC_acl_manager = {
 	has_access_to_pages: function() {
 		return PC.global.permissions.admin || PC.global.permissions.pages;
@@ -1113,7 +1123,9 @@ Ext.onReady(function(){
 			//});
 			Ext.each(PC.global.db_flds, function(i) {
 				var fld = Ext.getCmp('db_fld_'+i);
-				if (fld) if (fld.xtype == 'profis_tinymce') fld.restart();
+				if (fld) if (fld.xtype == 'profis_tinymce') {
+					fld.restart();
+				}
 			});
 		},
 		items: [
@@ -1428,7 +1440,10 @@ function Load_page_data(info, data, callback) {
 	return PC.editors.Load(info, data, true, callback);
 }
 function Load_page(data) {
-	if (data == undefined && PC.global.pid == 0) return;
+	if (data == undefined && PC.global.pid == 0) {
+		console.log('Load_page: return');
+		return;
+	}
 	Ext.MessageBox.show({
 		title: PC.i18n.msg.title.loading,
 		msg: PC.i18n.msg.loading,

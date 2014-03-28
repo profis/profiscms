@@ -72,6 +72,15 @@ PC.dialog.multilnedit = {
 						if (params.node != undefined) hookParams.node = params.node;
 						PC.hooks.Init('dialog.multilnedit.beforerender', hookParams);
 					},
+					afterrender: function(window) {
+						if (window.pc_xy) {
+							var all_size = Ext.getBody().getViewSize();
+							var win_pos = window.getPosition();
+							if (window.pc_xy[1] + window.getHeight() > all_size['height']) {
+								window.setPagePosition(window.pc_xy[0], all_size['height'] - window.getHeight());
+							}
+						}
+					},
 					show: function() {
 						var first_field = this.items.items[0];
 						first_field.focus(true);

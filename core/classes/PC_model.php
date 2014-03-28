@@ -1,7 +1,7 @@
 <?php
 
 abstract class PC_model extends PC_base{
-	protected $_id;
+	protected $_id = 0;
 	protected $_table = '';
 	protected $_table_id_col = 'id';
 	protected $_table_parent_col = 'pid';
@@ -43,8 +43,24 @@ abstract class PC_model extends PC_base{
 		$this->_rules = array();
 	}
 	
+	public function add_rule($rule) {
+		$this->_rules[] = $rule;
+	}
+	
+	public function get_rules() {
+		return $this->_rules;
+	}
+	
 	protected function _set_filters() {
 		$this->_filters = array();
+	}
+	
+	public function add_filter($filter) {
+		$this->_filters[] = $filter;
+	}
+	
+	public function get_filters() {
+		return $this->_filters;
 	}
 	
 	protected function _set_sanitize_filters() {
@@ -275,6 +291,10 @@ abstract class PC_model extends PC_base{
 			$join_cc = " LEFT JOIN {$this->db_prefix}{$this->_content_table} ct ON ct.{$this->_content_table_relation_col}=t.".$this->_table_id_col." " . $join_cc_ln;
 		}
 		
+		if (isset($params['join_params'])) {
+			$query_params = array_merge($query_params, $params['join_params']);
+		}
+		
 		$query_params = array_merge($query_params, $this->_query_params);
 		if (!isset($params['where'])) {
 			$params['where'] = array();
@@ -356,9 +376,7 @@ abstract class PC_model extends PC_base{
 			}
 			$join = implode(' ', $params['join']);
 			
-			if (isset($params['join_params'])) {
-				$query_params = array_merge($query_params, $params['join_params']);
-			}
+			
 			
 		}
 		$group_s = '';
@@ -545,11 +563,23 @@ abstract class PC_model extends PC_base{
 	
 	public function validate(array $data, &$validation_data = array()) {
 		$this->debug('validate()');
+		//$this->debug($data, 1);
 		$valid = true;
 		foreach ($this->_rules as $rule_data) {
+			$this->debug($rule_data['field'], 1);
 			$this_valid = true;
 			if (!isset($data[$rule_data['field']])) {
-				$this->debug(':) not is set', 2);
+				if (isset($rule_data['default'])) {
+					$this->debug('setting default', 2);
+					$data[$rule_data['field']] = $rule_data['default'];
+				}
+				else {
+					$this->debug(':) not is set', 2);
+					continue;
+				}
+				
+			}
+			if (isset($validation_data[$rule_data['field']])) {
 				continue;
 			}
 			$value = $data[$rule_data['field']];
@@ -571,6 +601,18 @@ abstract class PC_model extends PC_base{
 				switch ($rule_data['rule']) {
 					case 'required': 
 						$this_valid = !empty($value);
+						break;
+					case 'min_length': 
+						$this_valid = mb_strlen($value) >= v($rule_data['extra']);
+						break;
+					case 'max_length': 
+						$this_valid = mb_strlen($value) <= v($rule_data['extra']);
+						break;
+					case 'required': 
+						$this_valid = !empty($value);
+						break;
+					case 'same_as': 
+						$this_valid = $value == $data[$rule_data['extra']];
 						break;
 					case 'unique':
 						$unique_params = array(
@@ -597,10 +639,9 @@ abstract class PC_model extends PC_base{
 			}
 			
 			if (!$this_valid) {
-				$validation_data[] = array(
-					'field' => $rule_data['field'],
-					'error' => $rule_data['rule']
-				);
+				$new_error = $rule_data;
+				$new_error['error'] = $rule_data['rule'];
+				$validation_data[$rule_data['field']] = $new_error;
 				$valid = $this_valid;
 			}
 			

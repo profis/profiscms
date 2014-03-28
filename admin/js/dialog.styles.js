@@ -1976,7 +1976,18 @@ PC.dialog.styles = {
 											var data = Ext.decode(rspns.responseText);
 											//w.close(); setTimeout(function(){PC.dialog.styles.show()}, 150);
 											//return; //mock aplinka
-											PC.admin.restartTinyMCEs();
+											
+											//PC.global.page = {};
+											//PC.admin._editor_ln_select.disable();
+											//PC.global.pid = 0;
+											
+											//PC.admin.restartTinyMCEs();
+											var save_save_prompt = save_prompt();
+											if (save_save_prompt) {
+												reload_admin();
+											}
+											
+										
 											//w.close();
 											return; // OK
 										} catch(e) {};

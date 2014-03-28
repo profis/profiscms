@@ -344,7 +344,7 @@ else {
 			if (!empty($ln)) {
 				$site->Set_language($ln);
 			}
-			$list = $page->Get_page();
+			$list = $page->Get_page(PC_page::ALL_PAGES);
 			?>
 			<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 			<html xmlns="http://www.w3.org/1999/xhtml">
@@ -376,6 +376,14 @@ else {
 				,"<span style=\"font-size:10pt;color:#888;\"><a href=\"".$site->Get_link($p['route'])."\">žiūrėti svetainėje</a> | puslapio id: ".$p['pid']."</span>\n"
 				,"<div style=\"margin: 10px 0;background:#fff;border:1px solid #ddd;padding:10px;\">".$p['text']."</div></div>\n\n";
 			}
+			
+			if (v($cfg['api_texts_variables'])) {
+				$all_variables = $core->Get_variables();
+				foreach ($all_variables as $key => $value) {
+					echo '<div style=""><div style=\"margin: 10px 0;background:#fff;border:1px solid #ddd;padding:10px;\">'.$value."</div></div>";
+				}
+			}
+			
 			?>
 			</body></html>
 			<?php

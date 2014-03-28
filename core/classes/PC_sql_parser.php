@@ -20,7 +20,7 @@
 final class PC_sql_parser extends PC_base {
 	
 	
-	
+	const DATE_TIME_FORMAT = 'Y-m-d H:i:s';
 	
 	/**
 	 * Separator used in concatenation

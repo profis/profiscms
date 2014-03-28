@@ -12,7 +12,7 @@ define("PC_UF_DEFAULT",			0x00000000);
 define("PC_UF_MUST_ACTIVATE",			0x00000001);
 define("PC_UF_CONFIRM_PASS_CHANGE",		0x00000002);
 
-final class PC_user extends PC_base {
+class PC_user extends PC_base {
 	
 	const PC_UF_DEFAULT = 0x00000000;
 	
@@ -284,7 +284,17 @@ final class PC_user extends PC_base {
 		$this->debug($this->get_callstack(), 3);
 		//validate input
 		$login_after_create = false;
+		$user_model = false;
+		
+		$r = array(
+			'errors' => array()
+		);
+		
 		if (is_array($email)) {
+			$data = $email;
+			if (is_object($password) and $password instanceof PC_model) {
+				$user_model = $password;
+			}
 			$password = v($email['password']);
 			$retyped_password = v($email['retyped_password']);
 			$name = v($email['name']);
@@ -295,50 +305,68 @@ final class PC_user extends PC_base {
 			$login_after_create = v($email['login_after_create'], false);
 			
 			$email = v($email['email']);
+			
 		}
-		if (!Validate('email', $email)) $r['errors'][] = 'email';
-		if (!Validate('password', $password)) $r['errors'][] = 'password';
-		if ($password != $retyped_password) $r['errors'][] = 'retyped_password';
-		if (!Validate('name', $name)) $r['errors'][] = 'name';
-		if (!Validate('name', $login, true)) $r['errors'][] = 'login';
-		if (!$terms_and_conditions) $r['errors'][] = 'terms_and_conditions';
-		if ($captcha !== NULL && v($_SESSION["captcha_code"], microtime()) != $captcha) $r['errors'][] = 'captcha';
-		if (count(v($r['errors']))) {
-			$this->debug(":( Captha problems", 1);
-			return $r;
+		if ($user_model) {
+			//$user_model->filter($data);
+			$validation_data = array();
+			$user_model->validate($data, $validation_data);
+			$r['errors'] = $validation_data;
+			if (count(v($r['errors']))) {
+				$this->debug(":( Model not validated", 1);
+				return $r;
+			}
 		}
-		//prepare
-		$email = strtolower($email);
-		//delete not activatedd accounts first
-		$this->Delete_not_activated_accounts();
-		//check if user exists
-		$r = $this->prepare("SELECT id,email,login FROM {$this->db_prefix}site_users WHERE email=? or login=? LIMIT 1");
-		$s = $r->execute(array($email, $login));
-		if (!$s) {
-			$res['errors'][] = 'database';
-			$this->debug($res,1);
-			return $r;
+		else {
+			if (!Validate('email', $email)) $r['errors'][] = 'email';
+			if (!Validate('password', $password)) $r['errors'][] = 'password';
+			if ($password != $retyped_password) $r['errors'][] = 'retyped_password';
+			if (!Validate('name', $name)) $r['errors'][] = 'name';
+			if (!Validate('name', $login, true)) $r['errors'][] = 'login';
+			if (!$terms_and_conditions) $r['errors'][] = 'terms_and_conditions';
+			if ($captcha !== NULL && v($_SESSION["captcha_code"], microtime()) != $captcha) $r['errors'][] = 'captcha';
+			if (count(v($r['errors']))) {
+				$this->debug(":( Captha problems", 1);
+				return $r;
+			}
+			//prepare
+			$email = strtolower($email);
+			//delete not activatedd accounts first
+			$this->Delete_not_activated_accounts();
+			//check if user exists
+			$r = $this->prepare("SELECT id,email,login FROM {$this->db_prefix}site_users WHERE email=? or login=? LIMIT 1");
+			$s = $r->execute(array($email, $login));
+			if (!$s) {
+				$res['errors'][] = 'database';
+				$this->debug($res,1);
+				return $r;
+			}
+			if ($r->rowCount() == 1) {
+				$d = $r->fetch();
+				if ($d['email'] == $email) $res['errors'][] = 'account_exists';
+				if ($d['login'] == $login) $res['errors'][] = 'login_exists';
+				$this->debug($res, 1);
+				return $res;
+			}
 		}
-		if ($r->rowCount() == 1) {
-			$d = $r->fetch();
-			if ($d['email'] == $email) $res['errors'][] = 'account_exists';
-			if ($d['login'] == $login) $res['errors'][] = 'login_exists';
-			$this->debug($res, 1);
-			return $res;
-		}
+		
+		
 		//prepare
 		$now = time();
 		$encrypted_password = $this->Encode_password($password);
 		$activation_code = md5($email.$this->cfg['salt'].time());
 		//create user
-		$r = $this->prepare("INSERT INTO {$this->db_prefix}site_users (email,password,name,date_registered,last_seen,confirmation,flags,login,banned) VALUES(?,?,?,?,?,?,?,?,0)");
+		$insert_query = "INSERT INTO {$this->db_prefix}site_users (email,password,name,date_registered,last_seen,confirmation,flags,login,banned) VALUES(?,?,?,?,?,?,?,?,0)";
+		$r = $this->prepare($insert_query);
 		$flag = PC_UF_MUST_ACTIVATE;
 		if (isset($this->cfg['site_users']) and v($this->cfg['site_users']['no_confirmation'])) {
 			$flag = PC_UF_DEFAULT;
 		}
-		$s = $r->execute(array($email, $encrypted_password, $name, $now, $now, $activation_code, $flag, $login));
+		$insert_query_params = array($email, $encrypted_password, $name, $now, $now, $activation_code, $flag, $login);
+		$s = $r->execute($insert_query_params);
 		if (!$s) {
 			$res['errors'][] = 'create_account';
+			$res['errors'][] = $this->get_debug_query_string($insert_query, $insert_query_params);
 			$this->debug($res, 1);
 			return $res;
 		}
@@ -378,10 +406,10 @@ final class PC_user extends PC_base {
 			$from_name = v($this->cfg['site_users']['email_sender_name']);
 		}
 		if (empty($from_email)) {
-			$from_email = v($cfg['from_email']);
+			$from_email = v($this->cfg['from_email']);
 		}
 		if (empty($from_name)) {
-			$from_name = v($cfg['from_email']);
+			$from_name = v($this->cfg['from_email']);
 		}
 		
 		$mail->SetFrom($from_email, $from_name);

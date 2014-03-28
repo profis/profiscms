@@ -716,6 +716,8 @@ final class PC_site extends PC_base {
 			return false;
 		}
 		$widget->absorb_debug_settings($this->widget_logger, 4);
+		$widget->set_instant_debug_to_file($this->cfg['path']['logs'] . 'widgets/' . get_class($widget) . '.html', false, 5);
+		
 		$text = $widget->get_text();
 		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
 		return $text;
@@ -731,6 +733,7 @@ final class PC_site extends PC_base {
 			$this->widget_logger->debug(":( no widget object", 1);
 			return false;
 		}
+		$widget->set_instant_debug_to_file($this->cfg['path']['logs'] . 'widgets/' . get_class($widget) . '.html', false, 5);
 		$text = $widget->get_text($data);
 		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
 		return $text;

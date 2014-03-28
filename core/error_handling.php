@@ -73,7 +73,7 @@ function PC_log_error($e, $str) {
 	if (defined('PC_TEST_MODE') and PC_TEST_MODE) {
 		return;
 	}
-	file_put_contents(rtrim(dirname(dirname(__FILE__)), "/\\").'/PC_errors.txt', @date('Y-m-d H:i:s').' - '.$str."\n", FILE_APPEND);
+	@file_put_contents(rtrim(dirname(dirname(__FILE__)), "/\\").'/PC_errors.txt', @date('Y-m-d H:i:s').' - '.$str."\n", FILE_APPEND);
 }
 
 /**

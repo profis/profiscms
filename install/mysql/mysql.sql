@@ -264,7 +264,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}gallery_categories` (
 
 CREATE TABLE IF NOT EXISTS `{prefix}gallery_files` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `filename` varchar(80) COLLATE utf8_unicode_ci NOT NULL,
+  `filename` text COLLATE utf8_unicode_ci NOT NULL,
   `extension` varchar(4) COLLATE utf8_unicode_ci NOT NULL,
   `category_id` mediumint(8) unsigned NOT NULL,
   `size` int(9) unsigned NOT NULL,
