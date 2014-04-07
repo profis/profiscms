@@ -33,6 +33,9 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		}
 		elseif(v($this->_default_order)) {
 			$params['order'] = $this->_default_order;
+			if(v($this->_default_order_direction)) {
+				$params['order_dir'] = $this->_default_order_direction;
+			}
 		}
 	}
 	

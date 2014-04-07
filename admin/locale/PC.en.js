@@ -51,6 +51,7 @@ PC.langs.en = {
 	desc: 'Description',
 	keyword: 'Keyword',
 	keywords: 'Keywords',
+	search_result_preview: 'View in the search results',
 	reference_id: 'Reference ID',
 	from: 'From',
 	to: 'To',

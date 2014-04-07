@@ -49,6 +49,7 @@ PC.langs.ru = {
 	desc: 'Описание',
 	keyword: 'Ключевое слово',
 	keywords: 'Ключевые слова',
+	search_result_preview: 'Вид в результатах поиска',
 	reference_id: 'Идентификационный ID',
 	from: 'От',
 	to: 'До',

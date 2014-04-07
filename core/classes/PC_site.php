@@ -893,8 +893,8 @@ final class PC_site extends PC_base {
 	public function Get_seo_html() {
 		if (!$this->Page_is_loaded()) return false;
 		$list = array();
-		$list['keywords'] = '<meta name="keywords" content="'.v($this->loaded_page['keywords']).'" />';
-		$list['description'] = '<meta name="description" content="'.v($this->loaded_page['description']).'" />';
+		$list['keywords'] = '<meta name="keywords" content="'.pc_e(v($this->loaded_page['keywords'])).'" />';
+		$list['description'] = '<meta name="description" content="'.pc_e(v($this->loaded_page['description'])).'" />';
 		
 		$this->core->Init_hooks('core/site/get-seo-html', array(
 			'list'=> &$list

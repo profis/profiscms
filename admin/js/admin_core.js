@@ -444,6 +444,11 @@ Ext.onReady(function(){
 											editorCfg: {
 												title: PC.i18n.title
 											},
+											listeners: {
+												change: function () {
+													PC.admin.update_google_serp_snippet();
+												}
+											},
 											ref: '../../../../../../../../_fld_title',
 											id: 'db_fld_title'
 										}]
@@ -469,6 +474,11 @@ Ext.onReady(function(){
 												title: PC.i18n.desc,
 												defaults: {
 													height: 50
+												}
+											},
+											listeners: {
+												change: function () {
+													PC.admin.update_google_serp_snippet();
 												}
 											},
 											ref: '../../../../../../../../_fld_description',
@@ -507,6 +517,34 @@ Ext.onReady(function(){
 												}
 											}
 										}]
+									},
+									{
+										xtype: 'box', 
+										autoEl: {cn: PC.i18n.search_result_preview + ':'},
+										style:'margin: 4px;'
+									},
+									{
+										id: 'google_serp_snippet',
+										xtype: 'panel', 
+										tpl: new Ext.XTemplate(
+											'<div class="serp_outer">',
+												'<h3>{title}</h3>',
+												'<idv class="serp_url">',
+													PC.global.BASE_URL,
+												'</div>',
+												'<div class="serp_description">',
+												   '<div class="serp_description_inner">',
+													  '<span>',
+														  '{description}',
+													  '</span>',
+												 '</div>',
+												'</div>',
+											  '</div>'
+									),
+										data: {
+											title: '',
+											description: ''
+										}
 									},
 									{	id: 'db_fld_ln_redirect_title',
 										xtype: 'box',
@@ -1164,6 +1202,15 @@ Ext.onReady(function(){
 					}
 				});
 			}
+		},
+		update_google_serp_snippet: function() {
+			var snippet = Ext.getCmp('google_serp_snippet');
+			if (snippet) {
+				snippet.update({
+					title: pc_shorten_text(Ext.getCmp('db_fld_title').getValue(), 60),
+					description: pc_shorten_text(Ext.getCmp('db_fld_description').getValue(), 160)
+				});
+			}
 		}
 	});
 	//add CTRL + S shortcut to save page
@@ -1552,7 +1599,7 @@ function Load_to_editor(ln, original) {
 		}
 		field.originalValue = field.getValue();
 	});
-	
+	PC.admin.update_google_serp_snippet();
 	Render_redirects_from();
 	//finished loading
 	//content_store.selected_archive = 
@@ -2145,24 +2192,38 @@ function Show_redirect_page_window(return_callback, page_selector_params) {
 		}),
 		listeners: {
 			load: function(node){
-				if (node.id != '0') return;
-				if (select_node_path == undefined) return;
+				var additional_path = '';
+				//console.log('load listener');
+				//console.log(select_node_path);
+				if (node.id != '0') {
+					//console.log('node.id != 0');
+					return;
+				}
+				if (select_node_path == undefined) {
+					//console.log('select_node_path == undefined');
+					return;
+				}
 				if (!select_node_path.length) {
+					//console.log('no length');
 					node.ownerTree.selectPath(PC.tree.component.getNodeById(PC.global.page.id.originalValue).getPath());
 					return;
 				}
 				if (select_node_path.substring(0, 1) == '/') {
+					//console.log('slash');
 					node.ownerTree.selectPath(select_node_path);
 				}
 				else {
 					var path_node = PC.tree.component.getNodeById(select_node_path);
 					if (path_node != undefined) {
+						//console.log('select path');
 						var path = path_node.getPath();
 						node.ownerTree.selectPath(path);
 					}
 					else {
+						//console.log('Get_page_path');
 						Get_page_path(select_node_path, function(path){
-							node.ownerTree.selectPath(path);
+							//console.log(path);
+							node.ownerTree.selectPath(path + '/' + select_node_path);
 						});
 					}
 				}

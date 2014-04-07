@@ -49,6 +49,7 @@ PC.langs.lt = {
 	desc: 'Aprašymas',
 	keyword: 'Raktinis žodis',
 	keywords: 'Raktiniai žodžiai',
+	search_result_preview: 'Vaizdas paieškos rezultatuose',
 	reference_id: 'Sąryšio ID',
 	from: 'Nuo',
 	to: 'Iki',

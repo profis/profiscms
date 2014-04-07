@@ -26,7 +26,26 @@ PC.dialog.links = {
 					onTrigger1Click: function() {
 						//console.log(PC.admin._editor_ln_select.get('db_fld_redirect'));
 						var trigger = this;
+						var select_node_path = null;
+						var ln = false;
+						var field_val = this.getValue().match('pc_page:([^:]+)(?::([a-z]+))?');
+						if (field_val && field_val.length && field_val.length > 1) {
+							select_node_path = field_val[1];
+							if (field_val.length > 2 && field_val[2]) {
+								ln = field_val[2];
+							}
+						}
+						if (this.getValue() == '') {
+							if (PC.global.last_select_page_id && PC.global.last_select_page_lang) {
+								select_node_path = PC.global.last_select_page_id;
+								ln = PC.global.last_select_page_lang;
+								PC.global.last_select_page_id = false;
+								PC.global.last_select_page_lang = false;
+							}
+						}
 						Show_redirect_page_window(function(url, lang, page_id){
+							PC.global.last_select_page_id = page_id;
+							PC.global.last_select_page_lang = lang;
 							trigger.setValue(url);
 							if (page_id) {
 								Ext.Ajax.request({
@@ -43,7 +62,7 @@ PC.dialog.links = {
 									}
 								});
 							}
-						}, {get_route:true});
+						}, {get_route:true, select_node_path: select_node_path, ln: ln});
 					},
 					trigger2Class: 'x-form-link-trigger',
 					onTrigger2Click: function() {

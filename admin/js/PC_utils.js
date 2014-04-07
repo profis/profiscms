@@ -364,3 +364,9 @@ function removeParent(parent) {
 	}
 	return parent.parentNode.removeChild(parent);
 }
+
+function pc_shorten_text(string, max, tail) {
+	max = max || 100;
+	tail = tail || '...';
+	return string.length > max ? string.substr(0,max-1) + tail : string;
+}

@@ -475,7 +475,7 @@ PC.ux.crud = Ext.extend(PC.ux.LocalCrud, {
 			buttons.push(this.get_button_for_move_down());
 		}
 		return buttons;
-	},
+	}
 	
 });
 

@@ -250,3 +250,25 @@ color: #aaa;
 	height: 100%;
 }
 */
+
+#google_serp_snippet {
+	background-color: white;
+	padding: 5px;
+	width: 530px;
+}
+
+.serp_outer h3 {
+	font-size: 14px;
+	color: #1e0fbe;
+}
+
+.serp_url {
+	color: #006621;
+	font-weight: bold;
+}
+
+.serp_description {
+	font-size: 13px;
+	line-height: 1.4;
+	word-wrap: break-word;
+}
