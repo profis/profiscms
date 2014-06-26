@@ -618,16 +618,16 @@ final class PC_core extends PC_base {
 		return $path;
 	}
 	/**
-	* Method used to get an URL by given parameters.
-	* As this method inside calls {@link PC_core::Get_path()}. There are up to three parameters available to submit.
-	* @param string $type given type of the path. A few available like "plugins" or "themes"
-	* @param string $suffix='' given string to be ltrim'ed and added to end of the returned path.
-	* @param mixed $param=null given parameter for specifing path by adding $param parameters at the end of the returned path string.
-	* @return string URL by given parameters.
+	* Builds and returns a URL of a specified type.
+	* @param string $type Type of desired URL. Many types are accepted, but in reality useful are: 'root', 'admin', 'themes', 'libs', 'plugins', 'gallery', 'media', 'uploads'
+	* @param string $suffix Extra suffix to be added to the end of URL. All slashes in the beginning of the suffix will be removed.
+	* @param string|null $param Extra parameter to be used when type is 'plugin' (directory name of plugin) or 'themes' (directory name of theme). by default it has value of NULL which means URL is return for current plugin (if executing any) or theme.
+	* @return string|bool Will return an URL of given type or FALSE in case of error.
+	* @see PC_core::Get_path()
 	*/
-	public function Get_url() {
+	public function Get_url($type, $suffix='', $param=null) {
 		$args = func_get_args();
-		$path = call_user_func_array(array($this, 'Get_path'), $args);
+		$path = $this->Get_path($type, $suffix, $param);
 		if (!$path) return false;
 		return $this->cfg['url']['base'].substr($path, strlen(CMS_ROOT));
 	}
