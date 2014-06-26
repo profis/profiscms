@@ -25,6 +25,8 @@ class PC_user extends PC_base {
 	//session data
 	public $Session_login, $Session_password;
 	
+	public $just_logged_in = false;
+	
 	public function Init() {
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'pc_user.html', null, 7);
@@ -43,6 +45,9 @@ class PC_user extends PC_base {
 		$this->Current_secure = md5($_SERVER['REMOTE_ADDR'].v($_SERVER['HTTP_USER_AGENT']));
 		$this->Post_login = v($_POST['user_login']);
 		$this->Post_password = $this->Sanitize('password', v($_POST['user_password']));
+		if (empty($this->Post_password)) {
+			$this->debug(':( Post_password after sanitizing is empty', 1);
+		}
 		$this->Session_login = v($_SESSION['user_login']);
 		$this->Session_password = Sanitize('md5', v($_SESSION['user_password']));
 		$this->Session_secure = Sanitize('md5', v($_SESSION['user_secure']));
@@ -82,6 +87,7 @@ class PC_user extends PC_base {
 			$login_field_in_clause = 'email';
 		}
 		if (isset($this->Session_login, $this->Session_password) && $this->Session_secure == $this->Current_secure) {
+			$this->debug('session', 1);
 			//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
 			$r = $this->prepare("SELECT id,name FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password=? AND (flags & ?)=0 and banned=0 LIMIT 1");
 			$s = $r->execute(array($this->Session_login, $this->Session_password, PC_UF_MUST_ACTIVATE));
@@ -98,9 +104,11 @@ class PC_user extends PC_base {
 			$this->LoginName = $this->Session_login;
 			$this->Logged_in = true;
 			$this->Get_data();
+			$this->debug(':) From session');
 			return true;
 		}
 		else {
+			$this->debug('not session', 1);
 			$using_cookie = false;
 			$cookie_code = $this->GetCookie();
 			if( $cookie_code !== null ) {
@@ -113,6 +121,7 @@ class PC_user extends PC_base {
 						if( $data["banned"] || ($data["flags"] & PC_UF_MUST_ACTIVATE) != 0 )
 							$using_cookie = false; // in case not activated yet we should just ignore login using cookies
 						else {
+							$this->debug('Setting Post_login from data', 1);
 							$this->Post_login = $data["login"];
 							$this->Post_password = $data["password"];
 						}						
@@ -121,6 +130,7 @@ class PC_user extends PC_base {
 			}
 			
 			if (!empty($this->Post_login) && !empty($this->Post_password)) {
+				$this->debug('Post_login', 1);
 				$this->login_attempt = true;
 				$query = "SELECT id,name,password FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND (flags & ?)=0 and banned=0 LIMIT 1";
 				$query_params = array($this->Post_login, PC_UF_MUST_ACTIVATE);
@@ -130,16 +140,19 @@ class PC_user extends PC_base {
 				if (!$s) {
 					if( $using_cookie ) $this->DelCookie();
 					$this->login_error = 'login';
+					$this->debug(':( User not found');
 					return false;
 				}
 				if ($r->rowCount() != 1) {
 					if( $using_cookie ) $this->DelCookie();
 					$this->login_error = 'login';
+					$this->debug(':( Not one user');
 					return false;
 				}
 				$data = $r->fetch();
 				if ($data['password'] != $this->Post_password) {
 					$this->login_error = 'password';
+					$this->debug(':( Wrong password');
 					return false;
 				}
 				$_SESSION['user_login'] = $this->Post_login;
@@ -148,10 +161,14 @@ class PC_user extends PC_base {
 				$this->ID = $data['id'];
 				$this->LoginName = $this->Post_login;
 				$this->Logged_in = true;
+				$this->just_logged_in = true;
                 $this->Get_data();
 				if( isset($_REQUEST["remember"]) && $_REQUEST["remember"] )
 					$this->SetCookie();
 				return true;
+			}
+			else {
+				$this->debug(':( Post_login is empty: ' . $this->Post_login, 1);
 			}
 			// used cookie, but not logged in ... remove the cookie
 			if( $using_cookie ) $this->DelCookie();
@@ -168,7 +185,9 @@ class PC_user extends PC_base {
 		return true;
 	}
 	public function Is_logged_in() {
-		return (bool)$this->Logged_in;
+		$return = (bool)$this->Logged_in;
+		$this->debug('Is_logged_in: ' . $return);
+		return $return;
 	}
 	public function GetID() {
 		if (!$this->Is_logged_in()) return null;

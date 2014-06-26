@@ -721,7 +721,7 @@ final class PC_core extends PC_base {
 	 * @param int $idIndex
 	 * @return type
 	 */
-	public function Get_object($className, $args=array(), $idIndex=0) {
+	public function Get_object($className, $args=array(), $idIndex=0, $logger = null) {
 		if (!is_array($args)) $args = array($args);
 		$path = array('core', 'objects', $className);
 		if (is_null($idIndex)) {
@@ -730,13 +730,35 @@ final class PC_core extends PC_base {
 			else $idIndex = count($objects);
 		}
 		elseif ($idIndex < 0) $idIndex = 0;
+		if (!is_null($logger)) {
+			$logger->debug('$idIndex: ' . $idIndex);
+		}
 		$path[] = $idIndex;
 		//return already created instance
 		$object = $this->memstore->Get($path);
-		if ($object) return $object;
+		if (!is_null($logger)) {
+			$logger->debug('after memstore get');
+		}
+		if ($object) {
+			if (!is_null($logger)) {
+				$logger->debug('returning object');
+			}
+			return $object;
+		}
+		if (!is_null($logger)) {
+			$logger->debug('will create new instance');
+		}
 		//create new instance
-		if (!class_exists($className)) {
+		//error_reporting(E_ALL);
+		if (!class_exists($className, true)) {
+			if (!is_null($logger)) {
+				$logger->debug(' :( no class name');
+			}
 			return false;
+		}
+			
+		if (!is_null($logger)) {
+			$logger->debug('creating object ' . $className);
 		}
 		$reflectionCls = new ReflectionClass($className);
 		return $this->memstore->Cache($path, $reflectionCls->newInstanceArgs($args));

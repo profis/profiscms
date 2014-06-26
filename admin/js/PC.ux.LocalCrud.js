@@ -327,8 +327,12 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 				idProperty: this.id_property
 			});
 		}
-		this.store = new Ext.data.JsonStore(config);
+		this.store = this._create_store(config);
 		return this.store;
+	},
+	
+	_create_store: function(config) {
+		return new Ext.data.JsonStore(config);
 	},
 	
 	
@@ -572,6 +576,18 @@ PC.ux.LocalCrud = Ext.extend(Ext.Panel, {
 				this.store.reload();
 			}, this)
 		};
+	},	
+	
+	get_button_for_sync: function() {
+		return [
+			{	text: PC.i18n.save,
+				iconCls: 'icon-save',
+				ref: '../_action_sync',
+
+				scope: this,
+				handler: this.sync_grid
+			}
+		];
 	},	
 	
 	get_button_for_del: function() {

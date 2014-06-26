@@ -1426,6 +1426,24 @@ function Load_home_page_on_tree_load() {
 	//nepasiteisino, nes reikia paskui kazkaip eventa trinti: tree.addListener('load', function(){ setTimeout(Load_home_page, 500); });
 }
 function Load_home_page() {
+	if (PC.global.edit_id) {
+		//debugger;
+		var pid = PC.global.edit_id;
+		PC.global.edit_id = false;
+		var tree = PC.tree.component;
+		var node = tree.getNodeById(pid);
+		if (node != undefined) {
+			PC.tree.component.fireEvent('click', node);
+			return;
+		}
+		Get_page_path(pid, function(path){
+			PC.tree.component.expandPath(path, undefined, function(){
+				node = tree.getNodeById(pid);
+				PC.tree.component.fireEvent('click', node);
+			});
+		});
+		return;
+	}
 	var node = PC.tree.component.getRootNode().childNodes[0];
 	if (node == undefined) return;
 	if (node.attributes._front < 1) return;

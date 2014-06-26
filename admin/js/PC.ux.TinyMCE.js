@@ -144,7 +144,7 @@ PC.ux.TinyMCE = function(config) {
 				+'select[size|name|required|multiple|disabled|onclick|onfocus|onblur|onchange],'
 				+'option[disabled|label|selected|value=],'
 				+'form[action|accept|accept-charset|enctype|method|pcformsettings]'
-				+'noindex,div[*],waavo:iframe[*]',
+				+'noindex,div[*],waavo:iframe[*],td[*]',
 			//invalid_elements : "script,style",
 			invalid_elements : "",
 			template_external_list_url: 'example_template_list.js',

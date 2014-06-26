@@ -443,9 +443,10 @@ PC.dialog.links = {
 			this.setFormValue('class', inst.dom.getAttrib(elm, 'class'));
 
 			if (href.charAt(0) == '#') {
+				//debugger;
 				var value = inst.dom.getAttrib(elm, 'href').substr(1);
 				w._anchor.setValue(value);
-				w._anchor.fireEvent('change', w._anchor, value, w._anchor.getValue());
+				w._anchor.fireEvent('change', w._anchor, href, w._anchor.getValue());
 			}
 			w._class.setValue(inst.dom.getAttrib(elm, 'class'));
 			w._target.setValue((inst.dom.getAttrib(elm, 'target') == '_blank'));

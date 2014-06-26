@@ -152,8 +152,15 @@ final class PC_page extends PC_base {
 		if (!empty($data['ln_redirect'])) {
 			$data['redirect'] = $data['ln_redirect'];
 		}
-		if (!empty($data['redirect']) and empty($data['controller'])) {
-			if (preg_match("#^http://#", $data['redirect'])) {
+		$allow_redirect = empty($data['controller']);
+		if (!empty($data['controller'])) {
+			$this->core->Init_hooks('core/allow-controller-redirect/'.$data['controller'], array(
+				'result'=> &$allow_redirect,
+			));
+		}
+		
+		if (!empty($data['redirect']) and $allow_redirect) {
+			if (preg_match("#^http://#", $data['redirect']) and empty($data['controller'])) {
 				$data = array(
 					'controller'=> 'core',
 					'action'=> 'http_redirect',
@@ -167,7 +174,7 @@ final class PC_page extends PC_base {
 			//parse redirect data
 			
 			vv($_SESSION['redirect_cycle']);
-			if (!in_array($data['redirect'], $_SESSION['redirect_cycle'])) {
+			if (!in_array($data['redirect'], v($_SESSION['redirect_cycle'], array()))) {
 				$_SESSION['redirect_cycle'][] = $data['redirect'];
 				$route_data = $this->process_redirect($data, $internal_redirects);
 				if ($route_data) {
@@ -428,6 +435,8 @@ final class PC_page extends PC_base {
 				
 				//print_pre($pageForm['_names']);
 				
+				$submit_names = array();
+				
 				foreach (array('input','textarea','select') as $tagName) {
 					$inputs = $form->getElementsByTagName($tagName);
 					for ($j=0; $j<$inputs->length; $j++) {
@@ -435,6 +444,9 @@ final class PC_page extends PC_base {
 						$fieldName = preg_replace('/\[\]$/ui', '', $field->getAttribute('name'), -1, $multiple);
 						$fieldName = trim($fieldName);
 						$this->debug('$fieldName: ' . $fieldName, 5);
+						if ($tagName == 'input' and $field->getAttribute('type') == 'submit') {
+							$submit_names[] = $fieldName;
+						}
 						if ($tagName == 'input' and $field->getAttribute('type') == 'captcha') {
 							try {
 								$template = $dom->createDocumentFragment();
@@ -818,6 +830,9 @@ final class PC_page extends PC_base {
 								
 							}
 							foreach ($values as $fieldName => $value) {
+								if (in_array($fieldName, $submit_names)) {
+									continue;
+								}
 								$row = $table->appendChild(new DOMElement('tr'));
 								$headCell = $row->appendChild(new DOMElement('th', lang('form_submitted_field_name', $fieldName)));
 								$textBody .= lang('form_submitted_field_name', $fieldName)."\r\n";
@@ -947,6 +962,11 @@ final class PC_page extends PC_base {
 	}
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
+		$logger = false;
+		if (isset($this->_parse_html_output_logger)) {
+			$logger = $this->_parse_html_output_logger;
+			$logger->click('start');
+		}
 		$params = $t2;
 		if (isset($this->_parse_html_output_params) and is_array($this->_parse_html_output_params)) {
 			$params = $this->_parse_html_output_params;
@@ -980,8 +1000,11 @@ final class PC_page extends PC_base {
 		$text =& $$var;
 		while (isset($text) and !is_array($text)) {
 			#
+			if ($logger) $logger->click('starting ' . $var);
 			if ($params === false or in_array('forms', $params)) {
 				$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
+				if ($logger) $logger->click('after forms');
+			
 				if ($this->_form_count) {
 					if (isset($this->_parsed_page_forms[$this->_parse_html_page_id])) {
 						$this->debug("_SESSION['$formSubmitHash_key'] is already set in this request", 1);
@@ -993,10 +1016,11 @@ final class PC_page extends PC_base {
 					}
 				}
 			}
-			
 			if ($params === false or in_array('maps', $params)) {
 				$this->Replace_google_map_objects($text);
+				if ($logger) $logger->click('after maps');
 			}
+			
 				
 			if ($params === false or in_array('gallery', $params)) {
 				$gallery_params = array();
@@ -1004,6 +1028,7 @@ final class PC_page extends PC_base {
 					$gallery_params = $params['gallery_params'];
 				}
 				$this->Parse_gallery_files_requests($text, $gallery_params);
+				if ($logger) $logger->click('after gallery');
 			}
 			else {
 				
@@ -1013,14 +1038,21 @@ final class PC_page extends PC_base {
 			));
 			if ($params === false or in_array('media', $params)) {
 				$this->Replace_media_objects($text);
+				if ($logger) $logger->click('after media');
 			}
 			//fix hash links
-			if (isset($this->route[1])) $text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1], null, false)."$1\"",  $text);
+			if (isset($this->route[1])) {
+				$text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1], null, false)."$1\"",  $text);
+				if ($logger) $logger->click('after href');
+				
+			}
 			//remove default language code from links
 			
 			$text = preg_replace("/(href=\"www\.)/", 'href="http://www.',  $text);			
 			$text = preg_replace("/href=\"".$this->site->default_ln."\//", "href=\"",  $text);
+			if ($logger) $logger->click('after href 2');
 			$this->_decode_links($text);
+			if ($logger) $logger->click('after links');
 			//append prefix to the links from editor
 			//if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
 			
@@ -1028,11 +1060,18 @@ final class PC_page extends PC_base {
 				$pattern = "/href=\"(?!(".preg_quote('new/', '/')."|mailto:|skype:|gallery|http:\/\/|https:\/\/|www\.))/ui";
 				//print_pre($pattern);
 				$text = @preg_replace($pattern, "href=\"".$this->site->link_prefix,  $text);
+				if ($logger) $logger->click('after pseudo links');
 			}
 			//page break
 			$text = str_replace('╬', '<span style="display:none" id="pc_page_break">&nbsp;</span>', $text);
+			if ($logger) $logger->click('after breaks');
 			//prevent bots from seeing raw email addresses
-			$text = preg_replace_callback("#".$this->cfg['patterns']['email']."#i", array($this, 'Encode_email'), $text);
+			if ($params === false or !in_array('do_not_encode_emails', $params)) {
+				if (strpos($text, '@') !== false) {
+					$text = preg_replace_callback("#".$this->cfg['patterns']['email']."#i", array($this, 'Encode_email'), $text);
+					if ($logger) $logger->click('after encode emails');
+				}
+			}
 			#continue to the next arg
 			$tc++;
 			$var = 't'.$tc;
@@ -1221,13 +1260,37 @@ final class PC_page extends PC_base {
 		}
 		$marker_custom_options = '';
 		$marker_var = 'marker_'.$map_id . '_' . $marker->id;
+		$info_window_var = 'infowindow';
+		$open_win_js = '' . $info_window_var . '.setContent("<div style=\'line-height:1.35;overflow:hidden;white-space:nowrap;\'>" + ' . json_encode(nl2br($marker->text)) . '+"</div>");';
+			
 		$new_marker = 'var ' . $marker_var . ' = new google.maps.Marker({map:'.$map_id.',animation:google.maps.Animation.DROP,position: new google.maps.LatLng('.$marker->latitude.','.$marker->longitude.')' . $marker_image . $marker_options . '});';
 		if (v($marker->text)) {
+			if (v($this->cfg['map_open_info_window'])) {
+				$info_window_var = 'infowindow_'.$map_id . '_' . $marker->id;
+				$open_win_js = '';
+			}
+			$open_win_js .= $info_window_var . '.open(' . $map_id . ','.$marker_var.');';
+			
+			if (v($this->cfg['map_open_info_window'])) {
+				$new_marker .= '
+					var  ' . $info_window_var . ' = new google.maps.InfoWindow({
+						content: "<div style=\'line-height:1.35;overflow:hidden;white-space:nowrap;\'>" + ' . json_encode(nl2br($marker->text)) . '+"</div>"
+					});';
+			}
+			
 			$new_marker .= '
 			google.maps.event.addListener(' . $marker_var . ', "click", function() {
-				infowindow.setContent(' . json_encode(nl2br($marker->text)) . ');
-				infowindow.open(' . $map_id . ','.$marker_var.');
-			});';
+				' . $open_win_js . '
+			});
+			';
+			if (v($this->cfg['map_open_info_window'])) {
+				$new_marker .= '
+				' . $marker_var . '._pc_infowindow = ' . $info_window_var . ';
+				google.maps.event.addListenerOnce(' . $map_id . ', "tilesloaded", function() {
+					' . $open_win_js . '
+				});';
+				
+			}
 		}
 		elseif (v($marker->marker_link)) {
 			$marker_url = $this->get_url_from_redirect($marker->marker_link);

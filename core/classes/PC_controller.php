@@ -29,7 +29,7 @@ abstract class PC_controller extends PC_base {
 	}
 	abstract public function Process($data);
 	final public function Get_path() {
-		return $this->core->path['plugins'].$this->name.'/';
+		return $this->core->Get_path('plugins', '', $this->name);
 	}
 	final public function &Render($tpl=null, $return_only=false, $vars = array()) {
 		$tpl_prefix = 'PC_template';

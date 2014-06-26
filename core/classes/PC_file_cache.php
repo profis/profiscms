@@ -27,7 +27,7 @@
 			$this->cacheFolder = trim($this->cacheFolder, "/");
 			if( $this->cacheFolder === "" )
 				throw new Exception("Invalid caching folder setting in configuration");
-			$this->cacheFolder = $cfg["path"]["base"] . "/" . $this->cacheFolder . "/";
+			$this->cacheFolder = CMS_ROOT . $this->cacheFolder . "/";
 		}
 		
 		public function get($key) {

@@ -710,11 +710,13 @@ final class PC_site extends PC_base {
 		$this->widget_logger->debug("Get_widget_text($widget_name)");
 		$args = func_get_args();
 		array_shift($args);
-		$widget = $this->core->Get_object($widget_name, $args);
+		$info = '';
+		$widget = $this->core->Get_object($widget_name, $args, 0, $this->widget_logger);
 		if (!$widget) {
 			$this->widget_logger->debug(":( no widget object", 1);
 			return false;
 		}
+		$this->widget_logger->debug(":)  widget object got", 1);
 		$widget->absorb_debug_settings($this->widget_logger, 4);
 		$widget->set_instant_debug_to_file($this->cfg['path']['logs'] . 'widgets/' . get_class($widget) . '.html', false, 5);
 		

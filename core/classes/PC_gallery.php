@@ -1433,7 +1433,7 @@ final class PC_gallery extends PC_base {
 		$this->debug($thumb->currentDimensions, 4);
 		$crop_data_x = -1;
 		$crop_data_y = -1;
-		if ($type['thumbnail_type'] == "thumbnail" || $type['use_adaptive_resize']) {
+		if ($type['thumbnail_type'] == "thumbnail" || $type['use_adaptive_resize'] == 1) {
 			$resize_to_w = $type['thumbnail_max_w'];
 			$resize_to_h = $type['thumbnail_max_h'];
 			if ($resize_to_w > $thumb->currentDimensions['width']) {
@@ -1461,8 +1461,8 @@ final class PC_gallery extends PC_base {
 			}
 		}
 		else {
-			$resize_to_w = $type['thumbnail_max_w'];
-			$resize_to_h = $type['thumbnail_max_h'];
+			$resize_to_w_orig = $resize_to_w = $type['thumbnail_max_w'];
+			$resize_to_h_orig = $resize_to_h = $type['thumbnail_max_h'];
 			if ($resize_to_w > $thumb->currentDimensions['width']) {
 				$this->debug('Original width is smaller. Reducing resize_to dimmensions:', 3);
 				$resize_to_w = $thumb->currentDimensions['width'];
@@ -1472,6 +1472,26 @@ final class PC_gallery extends PC_base {
 				$this->debug('Original height is smaller. Reducing resize_to dimensions:', 3);
 				$resize_to_h = $thumb->currentDimensions['height'];
 				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
+			}
+			if ($type['use_adaptive_resize'] == 2) {
+				if ($thumb->currentDimensions['width'] > 0 and $thumb->currentDimensions['height'] > 0) {
+					$ratio = $thumb->currentDimensions['width'] / $thumb->currentDimensions['height'];
+					$zoom_w = $resize_to_w / $thumb->currentDimensions['width'];
+					$reduce = $ratio * $zoom_w;
+					if ($reduce > 0) {
+						$resize_to_h /= $reduce;
+					}
+				}
+			}
+			elseif ($type['use_adaptive_resize'] == 3) {
+				if ($thumb->currentDimensions['width'] > 0 and $thumb->currentDimensions['height'] > 0) {
+					$ratio = $thumb->currentDimensions['width'] / $thumb->currentDimensions['height'];
+					$zoom_h = $resize_to_h / $thumb->currentDimensions['height'];
+					$reduce = $ratio * $zoom_h;
+					if ($reduce > 0) {
+						$resize_to_w /= $reduce;
+					}
+				}
 			}
 			$this->debug("thumb->resize($resize_to_w, $resize_to_h)", 2);
 			$thumb->resize($resize_to_w, $resize_to_h);

@@ -1093,7 +1093,9 @@ PC.dialog.gallery = {
 								data: [
 									[0, PC.i18n.dialog.gallery.normal],
 									//[2, PC.i18n.dialog.gallery.semi_adaptive],
-									[1, PC.i18n.dialog.gallery.adaptive]
+									[1, PC.i18n.dialog.gallery.adaptive],
+									[2, PC.i18n.dialog.gallery.normal_fit_width],
+									[3, PC.i18n.dialog.gallery.normal_fit_height]
 								]
 							},
 							displayField: 'name',
@@ -1106,10 +1108,12 @@ PC.dialog.gallery = {
 						},
 						renderer: function(value, metaData, record, rowIndex, colIndex, store) {
 							if (value == '1') {return PC.i18n.dialog.gallery.adaptive}
+							else if (value == '2') {return PC.i18n.dialog.gallery.normal_fit_width}
+							else if (value == '3') {return PC.i18n.dialog.gallery.normal_fit_height}
 							//else if (value == '2') {return PC.i18n.dialog.gallery.semi_adaptive}
 							else return PC.i18n.dialog.gallery.normal;
 						},
-						width: 40
+						width: 100
 					},
 					{	header: '#default group#',
 						dataIndex: 'group',

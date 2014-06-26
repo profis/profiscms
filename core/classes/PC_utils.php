@@ -1035,6 +1035,9 @@ class PC_utils {
 		}	
 		
 		$mail->AltBody = strip_tags($message);
+		if (isset($params['alt_body'])) {
+			$mail->AltBody	= $params['alt_body'];
+		}
 		$mail->CharSet = v($params['charset'], 'utf-8');
 		$mail->MsgHTML($message);
 		

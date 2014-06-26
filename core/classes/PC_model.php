@@ -602,6 +602,9 @@ abstract class PC_model extends PC_base{
 					case 'required': 
 						$this_valid = !empty($value);
 						break;
+					case 'length': 
+						$this_valid = mb_strlen($value) == v($rule_data['extra']);
+						break;
 					case 'min_length': 
 						$this_valid = mb_strlen($value) >= v($rule_data['extra']);
 						break;
@@ -783,6 +786,11 @@ abstract class PC_model extends PC_base{
 			$sets_s = implode(',', $sets);
 			$query = "UPDATE {$this->db_prefix}{$this->_table} SET $sets_s
 				$where_s $limit_s";
+			
+			if (v($params['query_only'])) {
+				return $this->get_debug_query_string($query, $query_params);
+			}
+			
 			$r = $this->prepare($query);
 
 			$this->debug_query($query, $query_params, 1);

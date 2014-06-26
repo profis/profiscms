@@ -6,6 +6,12 @@ RewriteEngine on
 RewriteCond %{REQUEST_URI} ^/admin$
 RewriteRule ^(.*)$ /admin/ [R=301,L]
 
+
+# sitemap.xml
+RewriteCond %{REQUEST_URI} sitemap\.xml
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ api/ [QSA,L]
+
 # robots
 #RewriteCond %{REQUEST_URI} ^.*/robots\.txt/
 #RewriteRule ^(.*)/$ /$1 [R=301,L]

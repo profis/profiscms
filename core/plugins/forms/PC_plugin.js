@@ -1,4 +1,4 @@
-var Plugin = Ext.ns('PC.plugin.'+ CurrentlyParsing);
+//var Plugin = Ext.ns('PC.plugin.'+ CurrentlyParsing);
 Forms_plugin_data = {};
 
 Forms_plugin_data.html5_types = {

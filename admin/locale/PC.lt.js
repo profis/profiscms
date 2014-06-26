@@ -586,6 +586,8 @@ PC.langs.lt = {
 			},
 			resize: 'Apkarpymas',
 			normal: 'Normalus',
+			normal_fit_width: 'Normalus fiksuoto pločio',
+			normal_fit_height: 'Normalus fiksuoto aukščio',
 			adaptive: 'Prisitaikantis',
 			semi_adaptive: 'Pusiau prisitaikantis'
 		},

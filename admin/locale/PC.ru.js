@@ -587,6 +587,8 @@ PC.langs.ru = {
 			resize: 'Кадрирование',
 			normal: 'Нормальный',
 			adaptive: 'Aдаптивный',
+			normal_fit_width: 'Нормальный (по ширине)',
+			normal_fit_height: 'Нормальный (по высоте)',
 			semi_adaptive: 'Полу-aдаптивный'
 		},
 		gmaps: {

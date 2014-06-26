@@ -587,6 +587,8 @@ PC.langs.en = {
 			},
 			resize: 'Resize',
 			normal: 'Normal',
+			normal_fit_width: 'Normal fit to width',
+			normal_fit_height: 'Normal fit to height',
 			adaptive: 'Adaptive',
 			semi_adaptive: 'Semi adaptive'
 		},

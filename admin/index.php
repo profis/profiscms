@@ -85,6 +85,9 @@ header("Content-Type: text/html; charset=utf-8");
 	$settings['admin_languages'] = $admin_languages;
 	$settings['ln'] = $settings['SITES'][0][3][0][0];
 	$settings['pid'] = 0;
+	if (isset($_GET['edit'])) {
+		$settings['edit_id'] = intval($_GET['edit']);
+	}
 	$settings['tree_ln'] = $settings['SITES'][0][3][0][0];
 	$settings['user'] = $_SESSION['auth_data']['user'];
 	$settings['admin_ln'] = $admin_ln;
