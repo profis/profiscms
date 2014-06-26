@@ -726,11 +726,11 @@ final class PC_site extends PC_base {
 	}
 	
 	/**
- +	 * @todo Resolve the problem: the widget instance gets recreated so using $site->Get_widget_text_from_data('mywidget', $site->Get_widget_data('mywidget')) may produce incorrect results. Widget instance caching is disabled due to even worse bugs.
- +	 * @param string $widget_name
- +	 * @param array $data
- +	 * @return string|bool
- +	 */
+ 	 * @todo Resolve the problem: the widget instance gets recreated so using $site->Get_widget_text_from_data('mywidget', $site->Get_widget_data('mywidget')) may produce incorrect results. Widget instance caching is disabled due to even worse bugs.
+ 	 * @param string $widget_name
+ 	 * @param array $data
+ 	 * @return string|bool
+ 	 */
 	public function Get_widget_text_from_data($widget_name, $data) {
 		$this->widget_logger->debug("Get_widget_text_from_data($widget_name)");
 		$args = func_get_args();
