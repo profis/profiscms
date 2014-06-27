@@ -2,22 +2,22 @@
 <phpdoc>
   <files>
     <directory>../</directory>
-	<ignore>../.git/*</ignore>
-	<ignore>../backups/*</ignore>
-	<ignore>../cache/*</ignore>
-	<ignore>../cms_docs/*</ignore>
-	<ignore>../gallery/*</ignore>
-	<ignore>../install/*</ignore>
-	<ignore>../libs/*</ignore>
-	<ignore>../media/*</ignore>
-	<ignore>../plugins/*</ignore>
-	<ignore>../themes/*</ignore>
-	<ignore>../upload/*</ignore>
+	<ignore>.git/*</ignore>
+	<ignore>backups/*</ignore>
+	<ignore>cache/*</ignore>
+	<ignore>cms_docs/*</ignore>
+	<ignore>gallery/*</ignore>
+	<ignore>install/*</ignore>
+	<ignore>libs/*</ignore>
+	<ignore>media/*</ignore>
+	<ignore>plugins/*</ignore>
+	<ignore>themes/*</ignore>
+	<ignore>upload/*</ignore>
   </files>
-  <title>ProfisCMS4 Documentation</title>
+  <title>ProfisCMS4 documentation</title>
   <parser>
 	<target>cache</target>
-	<default-package-name>CMS4</default-package-name>
+	<default-package-name>profis.cms4</default-package-name>
 	<markers>
 		<item>TODO</item>
 		<item>FIXME</item>

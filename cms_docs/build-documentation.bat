@@ -1,2 +1,2 @@
 @echo off
-phpdoc --config="./phpdoc.config.xml"
+CALL phpdoc --config="./phpdoc.config.xml"
