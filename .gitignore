@@ -57,3 +57,6 @@ admin/ext_3_4/
 # Cache
 cache/*
 !cache/.htaccess
+# Documentation
+cms_docs/cache/
+cms_docs/html/

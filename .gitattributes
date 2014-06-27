@@ -1,0 +1,9 @@
+# * text=auto
+
+*.bat text eol=crlf
+*.sh text eol=lf
+
+# *.php
+# *.jpg binary
+# *.png binary
+# *.gif binary

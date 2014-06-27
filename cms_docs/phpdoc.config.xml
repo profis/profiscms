@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdoc>
+  <files>
+    <directory>../</directory>
+	<ignore>../.git/*</ignore>
+	<ignore>../backups/*</ignore>
+	<ignore>../cache/*</ignore>
+	<ignore>../cms_docs/*</ignore>
+	<ignore>../gallery/*</ignore>
+	<ignore>../install/*</ignore>
+	<ignore>../libs/*</ignore>
+	<ignore>../media/*</ignore>
+	<ignore>../plugins/*</ignore>
+	<ignore>../themes/*</ignore>
+	<ignore>../upload/*</ignore>
+  </files>
+  <title>ProfisCMS4 Documentation</title>
+  <parser>
+	<target>cache</target>
+	<default-package-name>CMS4</default-package-name>
+	<markers>
+		<item>TODO</item>
+		<item>FIXME</item>
+	</markers>
+	<extensions>
+		<extension>php</extension>
+	</extensions>
+  </parser>
+  <transformer>
+    <target>html</target>
+  </transformer>
+  <transformations>
+	<template name="clean" />
+  </transformations>
+</phpdoc>
