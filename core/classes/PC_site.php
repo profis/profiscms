@@ -714,7 +714,7 @@ final class PC_site extends PC_base {
 		$widget = $this->core->Get_object($widget_name, $args, null, $this->widget_logger);
 		if (!$widget) {
 			$this->widget_logger->debug(":( no widget object", 1);
-			return false;
+			throw new Exception('Widget "' . $widget_name . '" not found.');
 		}
 		$this->widget_logger->debug(":)  widget object got", 1);
 		$widget->absorb_debug_settings($this->widget_logger, 4);
@@ -729,7 +729,8 @@ final class PC_site extends PC_base {
  	 * @todo Resolve the problem: the widget instance gets recreated so using $site->Get_widget_text_from_data('mywidget', $site->Get_widget_data('mywidget')) may produce incorrect results. Widget instance caching is disabled due to even worse bugs.
  	 * @param string $widget_name
  	 * @param array $data
- 	 * @return string|bool
+ 	 * @return string
+	 * @throws Exception
  	 */
 	public function Get_widget_text_from_data($widget_name, $data) {
 		$this->widget_logger->debug("Get_widget_text_from_data($widget_name)");
@@ -739,7 +740,7 @@ final class PC_site extends PC_base {
 		$widget = $this->core->Get_object($widget_name, $args, null);
 		if (!$widget) {
 			$this->widget_logger->debug(":( no widget object", 1);
-			return false;
+			throw new Exception('Widget "' . $widget_name . '" not found.');
 		}
 		$widget->set_instant_debug_to_file($this->cfg['path']['logs'] . 'widgets/' . get_class($widget) . '.html', false, 5);
 		$text = $widget->get_text($data);
@@ -754,7 +755,7 @@ final class PC_site extends PC_base {
 		$widget = $this->core->Get_object($widget_name, $args, null);
 		if (!$widget) {
 			$this->widget_logger->debug(":( no widget object", 1);
-			return false;
+			throw new Exception('Widget "' . $widget_name . '" not found.');
 		}
 		$data = $widget->get_data();
 		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
