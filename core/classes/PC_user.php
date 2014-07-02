@@ -165,6 +165,12 @@ class PC_user extends PC_base {
                 $this->Get_data();
 				if( isset($_REQUEST["remember"]) && $_REQUEST["remember"] )
 					$this->SetCookie();
+				if( isset($_REQUEST["redirect"]) && $_REQUEST["redirect"] ) {
+					header('307 Temporary Redirect', true, 307);
+					header('Location: ' . $_REQUEST["redirect"]);
+					session_write_close();
+					exit();
+				}
 				return true;
 			}
 			else {
