@@ -43,8 +43,10 @@ class PC_paging_widget extends PC_widget {
 		
 		$prev['link'] = PC_utils::getUrl($prev['link'], $this->_config['get_vars']);
 		
-		$items[] = $first;
-		$items[] = $prev;
+		if( !v($this->_config['disable_first']) )
+			$items[] = $first;
+		if( !v($this->_config['disable_prev']) )
+			$items[] = $prev;
 		
 		for ($i = 1; $i <= $paging['pages']; $i++) {
 			$link = $this->_config['base_url'];
@@ -96,8 +98,10 @@ class PC_paging_widget extends PC_widget {
 		}
 		
 		
-		$items[] = $next;
-		$items[] = $last;
+		if( !v($this->_config['disable_next']) )
+			$items[] = $next;
+		if( !v($this->_config['disable_last']) )
+			$items[] = $last;
 		
 		return $items;
 	}
