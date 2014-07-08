@@ -10,7 +10,7 @@ PC.ux.dateTimeField = Ext.extend(Ext.form.CompositeField, {
 		config.items = [
 			{xtype: 'hidden', width     : 20},
 			{xtype: 'datefield', ref: '_date_from', format: 'Y-m-d', width     : 100},
-			{xtype: 'timefield', ref: '../_time_from', formas: 'H:i', width     : 100}
+			{xtype: 'timefield', ref: '../_time_from', format: 'H:i', width     : 100}
 		];
 		PC.ux.dateTimeField.superclass.constructor.call(this, config);
 	},
