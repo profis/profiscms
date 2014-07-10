@@ -471,6 +471,34 @@ final class PC_database_tree extends PC_base {
 		
 	}
 	
+	public function Delete_ghosts($table, &$params=array()) {
+		$this->core->Init_params($params);
+		$cols = $this->Get_cols($params);
+		
+		$query = "SELECT c.{$cols['id']}  from {$this->db_prefix}$table c
+			LEFT JOIN {$this->db_prefix}$table p ON p.{$cols['id']} = c.{$cols['parent']}
+			WHERE (c.{$cols['pid']} is null or c.{$cols['pid']} = 0) AND p.{$cols['id']} is null";
+		$this->debug($query);
+		echo '<hr />' . $query;
+		$rList = $this->query($query);
+		$deleted = 0;
+		if ($rList) {
+			$shop_manager = $this->core->Get_object('PC_shop_manager');
+			while($d = $rList->fetch()) {
+				print_pre($d);
+				$delete_params = array(
+					'do_not_delete_tree_gap' => true
+				);
+				$delete_result = $shop_manager->categories->Delete_category($d['id'], $delete_params);
+				if ($delete_result) {
+					$deleted++;
+				}
+				//break;
+			}
+		}
+		echo '<hr />' . $deleted . ' Categories were deleted';
+	}
+	
 	public function Recalculate($table, &$params=array()) {
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'tree_recalculate.html');

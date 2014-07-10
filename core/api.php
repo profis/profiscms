@@ -103,6 +103,16 @@ if ($routes->Get(1) == 'admin') {
 					);
 					$tree->Recalculate($routes->Get(3), $params);
 					break;
+				
+				case 'bustghosts':
+					$params = array(
+						'cols'=> array(
+							'parent'=> $routes->Get(4)
+						)
+					);
+					$tree->Delete_ghosts($routes->Get(3), $params);
+					break;
+				
 			}
 			break;
 		case 'plugin':
