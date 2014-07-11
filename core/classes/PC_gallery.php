@@ -1463,32 +1463,50 @@ final class PC_gallery extends PC_base {
 		else {
 			$resize_to_w_orig = $resize_to_w = $type['thumbnail_max_w'];
 			$resize_to_h_orig = $resize_to_h = $type['thumbnail_max_h'];
-			if ($resize_to_w > $thumb->currentDimensions['width']) {
-				$this->debug('Original width is smaller. Reducing resize_to dimmensions:', 3);
+			if ($resize_to_w > $thumb->currentDimensions['width'] and $type['use_adaptive_resize'] != 3) {
+				$this->debug('Original width is smaller. Reducing resize_to dimmensions 2:', 3);
 				$resize_to_w = $thumb->currentDimensions['width'];
 				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
 			}
-			if ($resize_to_h > $thumb->currentDimensions['height']) {
-				$this->debug('Original height is smaller. Reducing resize_to dimensions:', 3);
+			if ($resize_to_h > $thumb->currentDimensions['height'] and $type['use_adaptive_resize'] != 2) {
+				$this->debug('Original height is smaller. Reducing resize_to dimensions 2:', 3);
 				$resize_to_h = $thumb->currentDimensions['height'];
 				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
 			}
 			if ($type['use_adaptive_resize'] == 2) {
 				if ($thumb->currentDimensions['width'] > 0 and $thumb->currentDimensions['height'] > 0) {
 					$ratio = $thumb->currentDimensions['width'] / $thumb->currentDimensions['height'];
+					if ($ratio > 0) {
+						$resize_to_h = $resize_to_w / $ratio;
+						$this->debug("Ration > 0, thas why resize_to_h was calculated to be resize_to_w /ration = {$resize_to_w} / $ratio =  $resize_to_h", 3);
+					
+					}
 					$zoom_w = $resize_to_w / $thumb->currentDimensions['width'];
 					$reduce = $ratio * $zoom_w;
-					if ($reduce > 0) {
-						$resize_to_h /= $reduce;
+					
+							
+					if (false and $reduce > 0) {
+						$this->debug("Ratio = {$thumb->currentDimensions['width']}/{$thumb->currentDimensions['height']} = $ratio", 3);
+						$this->debug("Zoom_w = $resize_to_w/{$thumb->currentDimensions['width']} = $zoom_w", 3);
+						$this->debug("Reduce = $ratio/$zoom_w = $reduce", 3);
+					
+						
+						$resize_to_h = $thumb->currentDimensions['height'] / $reduce;
+						$this->debug("Reduce > 0, thas why resize_to_h was calculated to be thumb->currentDimensions[height] /reduce = {$thumb->currentDimensions['height']} / $reduce =  $resize_to_h", 3);
 					}
 				}
 			}
 			elseif ($type['use_adaptive_resize'] == 3) {
 				if ($thumb->currentDimensions['width'] > 0 and $thumb->currentDimensions['height'] > 0) {
 					$ratio = $thumb->currentDimensions['width'] / $thumb->currentDimensions['height'];
+					if ($ratio > 0) {
+						$resize_to_w = $resize_to_h / $ratio;
+						$this->debug("Ration > 0, thas why resize_to_w was calculated to be resize_to_h /ration = {$resize_to_h} / $ratio =  $resize_to_w", 3);
+					
+					}
 					$zoom_h = $resize_to_h / $thumb->currentDimensions['height'];
 					$reduce = $ratio * $zoom_h;
-					if ($reduce > 0) {
+					if (false and $reduce > 0) {
 						$resize_to_w /= $reduce;
 					}
 				}
