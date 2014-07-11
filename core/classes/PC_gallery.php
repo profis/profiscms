@@ -1536,7 +1536,7 @@ final class PC_gallery extends PC_base {
 		$this->debug('Current dimensions after resizing:', 3);
 		$this->debug($thumb->currentDimensions, 4);
 		$this->debug('imagecopyresampled_params:', 3);
-		$this->debug($thumb->imagecopyresampled_params, 4);
+		$this->debug(v($thumb->imagecopyresampled_params), 4);
 		/*if ($thumbnail_type == "thumbnail" || $thumbnail_type == "large") {
 			if ($type['use_adaptive_resize']) {
 				$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
@@ -1661,7 +1661,7 @@ final class PC_gallery extends PC_base {
 						
 						$rr = $this->chmod($crop_data_file);
 						$rr = $this->chmod($thumb_path);
-												
+											
 						return array("success"=>true);
 					}
 					catch (Exception $e) {
