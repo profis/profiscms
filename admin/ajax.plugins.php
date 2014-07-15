@@ -224,6 +224,8 @@ uasort($mods, 'mods_order');*/
 
 //echo '<pre>'.print_r($mods, true).'</pre>';
 
+header('Content-Type: text/html; charset=utf-8');
+
 foreach ($mods as $k=>$mod) {
 	echo '<div class="mod_icon">';
 	echo '<a onclick="'.htmlspecialchars(@$mod['onclick']).'">';
