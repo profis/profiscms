@@ -297,6 +297,25 @@ class PC_utils {
 		return (!$stripFirstSlash ? '/' : '').$url;
 	}
 	
+	static function urlParamBuild($name, &$value) {
+		$params = '';
+		if( is_array($value) ) {
+			$isSequential = true;
+			$i = 0;
+			foreach( $value as $k => &$v ) {
+				if( $i != $k )
+					$isSequential = false;
+				$i++;
+				if( $v === null )
+					continue;
+				$params .= ($params ? '&' : '') . self::urlParamBuild($name . ($isSequential ? '[]' : ('[' . urlencode($k) . ']')), $v);
+			}
+		}
+		else
+			$params = $name . (($value === '') ? '' : ('=' . urlencode($value)));
+		return $params;
+	}
+	
 	/**
 	 * Converts key value pairs array to query string
 	 * @param array $params key value pairs array
@@ -308,9 +327,9 @@ class PC_utils {
 			return '';
 		}
 		$prm = '';
-		foreach ($params as $k => $v) {
-			if (!$k || is_null($v) || $v === false) continue;
-			$prm .= ($prm ? '&' : '').urlencode($k).(($uv = urlencode($v)) ? ('='.$uv) : '');
+		foreach ($params as $k => &$v) {
+			if (!$k || is_null($v) || $v === false) continue; // TODO: "$v === false" should be either be made 0 or an empty string!
+			$prm .= ($prm ? '&' : '') . self::urlParamBuild(urlencode($k), $v);
 		}
 		$prm = str_replace(array('%2F', '%2C', '%7B', '%24', '%7D'), array('/', ',', '{', '$', '}'), $prm);
 		return $prm ? $prm : false;
