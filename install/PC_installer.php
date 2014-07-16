@@ -81,6 +81,10 @@ class PC_installer {
 		
 	}
 	
+	public function validate_filter() {
+		return function_exists('filter_var');
+	}
+	
 	public function validate_mbstring() {
 		return function_exists('mb_substr');
 	}

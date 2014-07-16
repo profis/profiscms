@@ -11,6 +11,7 @@ $requirements = array(
 	$t['req_pdo_mysql'] => $installer->get_validation_result('pdo_mysql'),
 	$t['req_mod_rewrite'] => $installer->get_validation_result('mod_rewrite'),
 	'mbstring' => $installer->get_validation_result('mbstring'),
+	'filter' => $installer->get_validation_result('filter'),
 	'mcrypt' => $installer->get_validation_result('mcrypt'),
 	'gd (' . $t['req_version'] . ' ' . $installer->min_gd_version . '+)' => $installer->get_validation_result('gd'),
 	'bcmath' => $installer->get_validation_result('bcmath'),

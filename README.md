@@ -29,6 +29,7 @@ PHP Extensions
     bcmath
     PDO
     iconv
+	filter
 
 MySQL Configuration
 
