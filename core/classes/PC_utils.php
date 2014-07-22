@@ -974,8 +974,8 @@ class PC_utils {
 	
 	/**
 	 * Method for sending email. 
-	 * @global type $cfg
-	 * @param string $recipient single or multiple emails separated by semicolon (';')
+	 * @global array $cfg
+	 * @param string|array $recipient single or multiple emails separated by semicolon (';')
 	 * Can be also an array of recipient emails.
 	 * @param string $message
 	 * @param array $params required keys: 'from_email', 'from_name', 'subject'. 
@@ -983,9 +983,10 @@ class PC_utils {
 	 * @param array $tags Template replacements for the message.
 	 * For example if $tags = array('foo' => 'bar'),
 	 * then '{foo}' occurrences will be replaced to 'bar' in the message
+	 * @return bool
 	 */
 	static function sendEmail($recipient, $message, $params = array(), $tags = array()) {
-		global $cfg;
+		global $cfg, $core;
 		$logger = new PC_debug;
 		$logger->debug = true;
 		$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'send_mail.html');
@@ -999,9 +1000,9 @@ class PC_utils {
 			$recipient = str_replace(",", ";", $recipient);
 			$emails = explode(';', $recipient);
 		}
-		
+
 		self::debugEmail($emails, $message);
-		
+
 		$markers = array();
 		foreach ($tags as $key => $tag) {
 			if (is_array($tag)) {
@@ -1011,11 +1012,22 @@ class PC_utils {
 			$markers['{'.$key.'}'] = $tag;
 		}
 		$message = str_replace(array_keys($markers), array_values($markers), $message);
-		
+
+		$layout = null;
+		if( isset($params['layout']) && !empty($params['layout']) && is_file($layoutPath = $core->Get_path('themes', $params['layout'])) )
+			$layout = $layoutPath;
+		else if( isset($cfg['email_layout']) && !empty($cfg['email_layout']) && is_file($layoutPath = $core->Get_path('themes', $cfg['email_layout'])) )
+			$layout = $layoutPath;
+		if( $layout !== null ) {
+			ob_start();
+			include $layout;
+			$message = ob_get_clean();
+		}
+
 		require_once $cfg['path']['classes'] . 'class.phpmailer.php';
-		
-		$mail = new PHPMailer(); 
-		
+
+		$mail = new PHPMailer();
+
 		if (isset($cfg['from_smtp'])) {
 			require_once $cfg['path']['classes'] . 'class.smtp.php';
 			$logger->debug("calling IsSMTP()", 1);
@@ -1025,7 +1037,7 @@ class PC_utils {
 				$mail->Host = $cfg['from_smtp'];
 			}
 		}
-		
+
 		//$mail->SMTPDebug  = 1;
 		$mail->From		= v($params['from_email'], v($cfg['from_email']));
 		$from_name = v($params['from_name'], '');
@@ -1034,11 +1046,11 @@ class PC_utils {
 		}
 		$mail->FromName	= $from_name;
 		$mail->Subject	= v($params['subject'], '');
-		
+
 		$logger->debug("mail->From: " . $mail->From, 1);
 		$logger->debug("mail->FromName: " . $mail->FromName, 1);
 		$logger->debug("mail->Subject: " . $mail->Subject, 1);
-		
+
 		if (isset($cfg['mailer_params']) and is_array($cfg['mailer_params'])) {
 			foreach ($cfg['mailer_params'] as $key => $value) {
 				if ($key == 'IsSendmail' and $value) {
@@ -1049,37 +1061,37 @@ class PC_utils {
 					$logger->debug("setting $key", 1);
 					$mail->$key = $value;
 				}
-				
+
 			}
-		}	
-		
+		}
+
 		$mail->AltBody = strip_tags($message);
 		if (isset($params['alt_body'])) {
 			$mail->AltBody	= $params['alt_body'];
 		}
 		$mail->CharSet = v($params['charset'], 'utf-8');
 		$mail->MsgHTML($message);
-		
+
 		$logger->debug($emails, 1);
-		
+
 		foreach ($emails as $key => $email) {
 			$email = trim($email);
 			if (!empty($email)) {
 				$mail->AddAddress($email);
 			}
 		}
-		
+
 		if (isset($cfg['mailer_params']) and is_array($cfg['mailer_params']) and v($cfg['mailer_params']['use_mail_function'])) {
 			$headers = "From: {$mail->FromName} <{$mail->From}>". "\r\n"
 				."X-Mailer: ProfisCMS/".PC_VERSION." (PHP/".phpversion().")". "\r\n";
 			$headers  .= 'MIME-Version: 1.0' . "\r\n";
 			$headers .= 'Content-type: text/html; charset=utf-8' . "\r\n";
-				
+
 			$emails_string = implode(", ", $emails);
-			
+
 			$logger->debug(" mail($emails_string, {$mail->Subject}, message, $headers)", 2);
-			
-			
+
+
 			$result = mail($emails_string, $mail->Subject, $message, $headers);
 		}
 		else {
