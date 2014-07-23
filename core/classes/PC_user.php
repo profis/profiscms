@@ -24,7 +24,11 @@ class PC_user extends PC_base {
 	public $Post_login, $Post_password;
 	//session data
 	public $Session_login, $Session_password;
-	
+
+	public $login_error = null;
+	public $Session_secure = null;
+	public $Current_secure = null;
+
 	public $just_logged_in = false;
 	
 	public function Init() {
@@ -66,7 +70,7 @@ class PC_user extends PC_base {
 	public function ChangePassword($pass, $user_id=0) {
 		if ($user_id == 0) $user_id = $this->ID;
 		$pass_code = $this->Sanitize('password', $pass);
-		if (emty($pass_code)) {
+		if (empty($pass_code)) {
 			return false;
 		}
 		$r = $this->prepare("UPDATE {$this->db_prefix}site_users SET password=? WHERE id=?");
@@ -131,6 +135,7 @@ class PC_user extends PC_base {
 			
 			if (!empty($this->Post_login) && !empty($this->Post_password)) {
 				$this->debug('Post_login', 1);
+				$this->core->Init_hooks('PC_user/beforeLogin', array('user' => $this));
 				$this->login_attempt = true;
 				$query = "SELECT id,name,password FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND (flags & ?)=0 and banned=0 LIMIT 1";
 				$query_params = array($this->Post_login, PC_UF_MUST_ACTIVATE);
@@ -165,10 +170,11 @@ class PC_user extends PC_base {
                 $this->Get_data();
 				if( isset($_REQUEST["remember"]) && $_REQUEST["remember"] )
 					$this->SetCookie();
+				$this->core->Init_hooks('PC_user/afterLogin', array('user' => $this));
 				if( isset($_REQUEST["redirect"]) && $_REQUEST["redirect"] ) {
-					header('307 Temporary Redirect', true, 307);
-					header('Location: ' . $_REQUEST["redirect"]);
-					session_write_close();
+					@header('307 Temporary Redirect', true, 307);
+					@header('Location: ' . $_REQUEST["redirect"]);
+					@session_write_close();
 					exit();
 				}
 				return true;
@@ -182,12 +188,14 @@ class PC_user extends PC_base {
 	}
 	public function Logout() {
 		$this->debug('Logout()');
+		$this->core->Init_hooks('PC_user/beforeLogout', array('user' => $this));
 		unset($_SESSION['user_login'], $_SESSION['user_password'], $_SESSION['user_secure']);
 		$this->LoginName = '';
 		$this->Data = array();
 		$this->Logged_in = false;
 		if( $this->GetCookie() != null )
 			$this->DelCookie();
+		$this->core->Init_hooks('PC_user/afterLogout', array('user' => $this));
 		return true;
 	}
 	public function Is_logged_in() {
@@ -419,13 +427,10 @@ class PC_user extends PC_base {
 			'activationCode'=> $activation_code
 		);
 	}
+
 	public function Send_activation_code($email, $code) {
-		$mail = new PHPMailer();
-		$mail->SMTPDebug  = 1;
-		$mail->CharSet = "utf-8";
-		
 		$from_email = $from_name = '';
-		
+
 		if (isset($this->cfg['site_users'])) {
 			$from_email = v($this->cfg['site_users']['email_sender_email']);
 			$from_name = v($this->cfg['site_users']['email_sender_name']);
@@ -436,12 +441,9 @@ class PC_user extends PC_base {
 		if (empty($from_name)) {
 			$from_name = v($this->cfg['from_email']);
 		}
-		
-		$mail->SetFrom($from_email, $from_name);
-		$mail->AddAddress($email);
+
 		$subject = lang('activation_code');
-		$mail->Subject = $subject;
-		
+
 		$act_page = $this->page->Get_page("activate-account", true, true);
 		if (empty($act_page)) {
 			$ctrl_pages = $this->page->Get_by_controller('site_users_registration');
@@ -450,35 +452,29 @@ class PC_user extends PC_base {
 			}
 		}
 		$url = $this->cfg['url']['base'] . $this->site->Get_link($act_page["route"]) . 'activate/' . $code . "/";
-		
-		$style= '';
-		
+
 		$body = $this->core->Get_plugin_variable('email_tpl_activation', 'site_users_registration');
-		
+
 		if (empty($body)) {
 			$body = lang('activation_code').': {link}';
 		}
-		
+
 		$markers = array(
 			'{link}' => '<a href="'.$url.'">'.$url.'</a>'
 		);
-		
+
 		$body = str_replace(array_keys($markers), array_values($markers), $body);
-		
-		$mail->MsgHTML('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-			<html>
-				<head>
-					<title>' . $subject . '</title>
-					<meta http-equiv=Content-Type content="text/html; charset=utf-8">
-					' . ($style?"<style><!--\n$style\n--></style>\n\t\t":"") . '</head>
-				<body>' . $body . '</body>
-			</html>');
-		if (!$mail->Send()) return false;
-		return true;
+
+		$params = array(
+			'subject' => $subject,
+			'from_email' => $from_email,
+			'from_name' => $from_name
+		);
+
+		return PC_utils::sendEmail($email, $body, $params);
 	}
+
 	public function Send_pass_change_code($email) {
-		include_once $this->core->cfg["path"]["classes"] . "class.phpmailer.php";
-		
 		$r = $this->prepare("SELECT id FROM {$this->db_prefix}site_users WHERE email=? AND (flags & ?) = 0 LIMIT 1");
 		if( !$r->execute(array($email, PC_UF_MUST_ACTIVATE)) ) return false;
 		if( $r->rowCount() != 1 ) return false;
@@ -505,9 +501,7 @@ class PC_user extends PC_base {
 			$from_name = v($this->cfg['from_email']);
 		}
 		$subject = $this->core->Get_variable('pass_change_confirmation_code', null, 'site_users_pass_change');
-		
-		$style= '';
-		
+
 		$body = $this->core->Get_plugin_variable('email_tpl_pass_change', 'site_users_pass_change');
 		
 		if (empty($body)) {
@@ -527,20 +521,9 @@ class PC_user extends PC_base {
 			'from_name' => $from_name
 		);
 		
-		$message = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-			<html>
-				<head>
-					<title>' . $subject . '</title>
-					<meta http-equiv=Content-Type content="text/html; charset=utf-8">
-					' . ($style?"<style><!--\n$style\n--></style>\n\t\t":"") . '</head>
-				<body>' . $body . '</body>
-			</html>';
-		
-		
-		
-		if (!PC_utils::sendEmail($email, $message, $params)) return false;
-		return true;
+		return PC_utils::sendEmail($email, $body, $params);
 	}
+
 	public function Confirm_password_change($password, $retyped_password, $confirmation_code) {
 		$res = Array("errors" => Array());
 		$r = $this->prepare("SELECT id FROM {$this->db_prefix}site_users WHERE (flags & ?)<>0 AND confirmation=? LIMIT 1");
