@@ -68,6 +68,10 @@ class PC_installer {
 	}
 	
 	public function validate_mod_rewrite() {
+		$sapi = substr(php_sapi_name(), 0, 3);
+		if( $sapi == 'cgi' || $sapi == 'cli' )
+			return true; // assume the server has mod_rewrite since we can't get this information on cli and cgi interfaces.
+		
 		if (function_exists('apache_get_modules')) {
 			return in_array('mod_rewrite', apache_get_modules());
 		}
