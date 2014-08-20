@@ -2221,6 +2221,7 @@ final class PC_page extends PC_base {
 				'pid'=> 'p.id pid',
 				'cid'=> 'c.id cid',
 				'name'=> 'c.name',
+				'custom_name' => 'c.custom_name',
 				'route'=> 'c.route',
 				'permalink'=> 'c.permalink',
 				'nr'=> 'p.nr',
