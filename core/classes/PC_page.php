@@ -2053,7 +2053,7 @@ final class PC_page extends PC_base {
 	
 	public function Load_menu() {
 		$now = time();
-		$query = "SELECT mp.id idp,p.id pid,c.id cid,c.name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id,p.target FROM {$this->db_prefix}pages mp"
+		$query = "SELECT mp.id idp,p.id pid,c.id cid,c.name,c.custom_name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id,p.target FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
 		." AND p.controller!='menu' AND p.nomenu<1"
 		." LEFT JOIN {$this->db_prefix}content c ON pid=p.id AND ln='{$this->site->ln}'"
