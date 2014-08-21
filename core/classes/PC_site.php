@@ -399,7 +399,7 @@ final class PC_site extends PC_base {
 		$this->core->Init_hooks('core/site/headers', array());
 		$this->_output_headers();
 		//add default scripts & styles to queue
-		$this->Add_script('media/jquery-1.8.0.min.js', 100);
+		$this->Add_script('media/jquery.min.js', 100);
 		$this->Add_script('media/swfobject.js', 80);
 		$this->Add_script('media/jquery.prettyPhoto.js');
 		$this->Add_script('media/cms.js', -1);
