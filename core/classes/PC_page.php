@@ -1857,7 +1857,7 @@ final class PC_page extends PC_base {
 		return false;
 	}
 	
-	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false, $includeParents=false, $fields = array(), $lang = '') {
+	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false, $includeParents=false, $fields = array(), $lang = '', $siteId = null) {
 		if (is_array($id) and empty($id) or is_null($id)) {
 			return array();
 		}
@@ -1893,6 +1893,10 @@ final class PC_page extends PC_base {
 			else {
 				$where[] = "reference_id=?";
 				$params[] = $id;
+				if( $siteId !== false ) {
+					$where[] = "p.site=?";
+					$params[] = ($siteId !== null) ? $siteId : $this->site->data['id'];
+				}
 			}
 		}
 		$fields_string = '*';
