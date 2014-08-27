@@ -140,6 +140,12 @@
 	position: absolute;
 	left: 0;
 	top: 0;
+	display: none;
+	-webkit-transition: left 0.2s ease, top 0.2s ease;
+	-moz-transition: left 0.2s ease, top 0.2s ease;
+	-ms-transition: left 0.2s ease, top 0.2s ease;
+	-o-transition: left 0.2s ease, top 0.2s ease;
+	transition: left 0.2s ease, top 0.2s ease;
 }
 
 .pc_gallery_thumb_highlighter {
@@ -152,7 +158,7 @@
 }
 
 .pc_gallery_dark .pc_gallery_thumb_highlighter {
-	border: 3px solid #000000;
+	border: 3px solid #FFFFFF;
 }
 
 .pc_gallery_thumbs_left,

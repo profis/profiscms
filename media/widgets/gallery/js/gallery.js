@@ -10,6 +10,7 @@
 			data.$thumbs = data.$thumbsWrap.find('.pc_gallery_thumbs');
 			data.$highlighter = data.$thumbs.find('.pc_gallery_thumb_highlighter_wrap');
 			data.$imageWrap = $widget.find('.pc_gallery_image_wrap');
+			$widget.data('pc_gallery_widget', data);
 		}
 		return data;
 	};
@@ -52,7 +53,7 @@
 		var count = data.$thumbs.find('li').length;
 		if( count > 0 ) {
 			var index = getSelectedIndex($widget) - 1;
-			if( index <= 0 )
+			if( index < 0 )
 				index = count - 1;
 			selectImage($widget, index);
 		}
@@ -113,8 +114,11 @@
 			var options = $.extend(defaultOptions, arguments[0]);
 			this
 				.each(function() {
-					var $this = $(this);
-					$this.data('pc_gallery_widget', getWidgetData($this));
+					var $widget = $(this);
+					var data = getWidgetData($widget);
+					var $thumb = getSelectedThumbnail($widget);
+					var pos = $thumb.position();
+					data.$highlighter.css({left: pos.left + 'px', top: pos.top + 'px', display: 'block'});
 				})
 				.on('click', '.pc_gallery_preview_left', function(e) {
 					var $widget = $(this).closest('.pc_gallery');
