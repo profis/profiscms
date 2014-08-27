@@ -1711,12 +1711,6 @@ final class PC_page extends PC_base {
 						.'});
 					});
 					</script>';
-					//uppod:
-					/*$media_frame .= "<script type=\"text/javascript\">var flashvars={m:'video',uid:'".$id."',file:'".$base.$src."'".(!empty($poster)?",poster:'".$base.$poster."'":"")
-					.(!empty($skin)?',st:\''.$base.$skin."'":'')."};"
-					."var params={id:'".$id."',wmode:'transparent',allowFullScreen:true,allowScriptAccess:'always'};"
-					."new swfobject.embedSWF('".$base."media/uppod/uppod.swf', '".$id."', ".$w.", ".$h.", '9.0.115', false, flashvars, params);</script>";
-					*/
 				}
 				$media_frame .= '</div></div>';
 				$text = preg_replace('#'.preg_quote($media[0][$a], '#').'#m', $media_frame, $text, 1);

@@ -38,3 +38,19 @@ MySQL Configuration
 Troubleshooting
 ==========
 1. If you get ".htaccess: order not allowed here" error, try to comment "order allow,deny" inside "<Files PC_errors.txt>" directive.
+
+Licensing
+==========
+Profis CMS is distributed under GNU General Public License version 3 (see GNU GENERAL PUBLIC LICENSE.txt).
+
+Profis CMS uses libraries and resources (check out web sites for licensing information):
+	
+	extJS from http://www.sencha.com/
+	jQuery from http://jquery.com/
+	jQuery prettyPhoto plugin from http://www.no-margin-for-errors.com
+	Twitter Bootstrap from http://getbootstrap.com/
+	swfobject from http://code.google.com/p/swfobject/
+	jwplayer from http://www.jwplayer.com/
+	Icons from http://iconmonstr.com/
+	Icons from http://www.famfamfam.com/
+	

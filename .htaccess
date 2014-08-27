@@ -1,6 +1,12 @@
 Options All -Indexes
-php_flag register_globals off
-php_flag display_errors on
+<IfModule mod_php.c>
+	php_flag register_globals off
+	php_flag display_errors on
+</IfModule>
+<IfModule mod_php5.c>
+	php_flag register_globals off
+	php_flag display_errors on
+</IfModule>
 RewriteEngine on
 
 RewriteCond %{REQUEST_URI} ^/admin$
