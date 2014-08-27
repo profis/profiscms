@@ -74,5 +74,16 @@ abstract class PC_widget extends PC_base {
 		
 		//return $this->site->Get_tpl_content($this->get_template_group(), $this->get_template(), $data);
 	}
-	 
+
+	protected function Get_resource_rel_path($resource = null) {
+		return 'widgets/' . $this->_template_group . '/' . $resource;
+	}
+
+	public function Get_resource_path($resource = null) {
+		return $this->core->Get_rel_path('media', $this->Get_resource_rel_path($resource));
+	}
+
+	public function Get_resource_url($resource = null) {
+		return $this->core->Get_url('media', $this->Get_resource_rel_path($resource));
+	}
  }

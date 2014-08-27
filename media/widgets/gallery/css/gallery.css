@@ -1,0 +1,246 @@
+/*
+	To resize gallery override:
+		width and height of .pc_gallery
+
+	To resize thumbnail area override:
+		padding-bottom of .pc_gallery_preview_wrap
+		height of .pc_gallery_controls
+*/
+.pc_gallery {
+	position: relative;
+	width: 100%;
+	height: 600px;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.pc_gallery_light {
+	background-color: #FFFFFF;
+}
+
+.pc_gallery_dark {
+	background-color: #404040;
+}
+
+.pc_gallery_preview_wrap {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	padding-bottom: 100px;
+}
+
+.pc_gallery_preview {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+.pc_gallery_image_wrap {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.pc_gallery_image {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	background-position: center center;
+	background-repeat: no-repeat;
+	-webkit-transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+	-moz-transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+	-ms-transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+	-o-transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+	transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+}
+
+.pc_gallery_controls {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 100px;
+}
+
+.pc_gallery_thumbs_wrap {
+	position: absolute;
+	left: 40px;
+	right: 40px;
+	top: 5px;
+	bottom: 5px;
+}
+
+.pc_gallery_thumbs_wrap2 {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.pc_gallery_thumbs {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	-webkit-transition: left 0.2s ease, top 0.2s ease;
+	-moz-transition: left 0.2s ease, top 0.2s ease;
+	-ms-transition: left 0.2s ease, top 0.2s ease;
+	-o-transition: left 0.2s ease, top 0.2s ease;
+	transition: left 0.2s ease, top 0.2s ease;
+}
+
+.pc_gallery_thumbs ul {
+	position: relative;
+	display: block;
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: auto;
+	white-space: nowrap;
+	margin-left: -5px;
+}
+
+.pc_gallery_thumbs li,
+.pc_gallery_thumb_highlighter_wrap {
+	width: 120px;
+	height: 90px;
+}
+
+.pc_gallery_thumbs li {
+	display: inline-block;
+	margin: 0 0 0 5px;
+	padding: 0;
+	cursor: pointer;
+}
+
+.pc_gallery_thumbs a {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-position: center center;
+	background-repeat: no-repeat;
+	margin: 0;
+	padding: 0;
+	pointer-events: none;
+}
+
+.pc_gallery_thumbs img {
+	display: none;
+}
+
+.pc_gallery_thumb_highlighter_wrap {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.pc_gallery_thumb_highlighter {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	border: 3px solid #C0C0C0;
+}
+
+.pc_gallery_dark .pc_gallery_thumb_highlighter {
+	border: 3px solid #000000;
+}
+
+.pc_gallery_thumbs_left,
+.pc_gallery_thumbs_right,
+.pc_gallery_preview_left,
+.pc_gallery_preview_right,
+.pc_gallery_preview_zoom {
+	position: absolute;
+	background-size: contain;
+	background-position: center center;
+	background-repeat: no-repeat;
+	opacity: 0.5;
+	-webkit-transition: opacity 0.2s ease;
+	-moz-transition: opacity 0.2s ease;
+	-ms-transition: opacity 0.2s ease;
+	-o-transition: opacity 0.2s ease;
+	transition: opacity 0.2s ease;
+	cursor: pointer;
+}
+
+.pc_gallery_thumbs_left,
+.pc_gallery_thumbs_right,
+.pc_gallery_preview_left,
+.pc_gallery_preview_right {
+	top: 50%;
+}
+
+.pc_gallery_preview_zoom {
+	right: 10px;
+	top: 10px;
+	width: 50px;
+	height: 50px;
+	background-image: url(../img/zoom-light.png);
+}
+
+.pc_gallery_dark .pc_gallery_preview_zoom {
+	background-image: url(../img/zoom-dark.png);
+}
+
+.pc_gallery_thumbs_left,
+.pc_gallery_thumbs_right {
+	margin-top: -15px;
+	width: 30px;
+	height: 30px;
+}
+
+.pc_gallery_preview_left,
+.pc_gallery_preview_right {
+	margin-top: -25px;
+	width: 50px;
+	height: 50px;
+}
+
+.pc_gallery_thumbs_left,
+.pc_gallery_preview_left {
+	left: 5px;
+	background-image: url(../img/arrow-left-light.png);
+}
+
+.pc_gallery_preview_left {
+	left: 10px;
+}
+
+.pc_gallery_dark .pc_gallery_thumbs_left,
+.pc_gallery_dark .pc_gallery_preview_left {
+	background-image: url(../img/arrow-left-dark.png);
+}
+
+.pc_gallery_thumbs_right,
+.pc_gallery_preview_right {
+	right: 5px;
+	background-image: url(../img/arrow-right-light.png);
+}
+
+.pc_gallery_preview_right {
+	right: 10px;
+}
+
+.pc_gallery_dark .pc_gallery_thumbs_right,
+.pc_gallery_dark .pc_gallery_preview_right {
+	background-image: url(../img/arrow-right-dark.png);
+}
+
+
+.pc_gallery_thumbs_left:hover,
+.pc_gallery_thumbs_right:hover,
+.pc_gallery_preview_left:hover,
+.pc_gallery_preview_right:hover,
+.pc_gallery_preview_zoom:hover {
+	opacity: 1;
+}
