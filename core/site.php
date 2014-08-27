@@ -24,14 +24,28 @@ $time = microtime(); $time = explode(" ", $time); $time = $time[1] + $time[0]; $
 require_once(CORE_ROOT . 'base.php');
 
 $site->Add_header("Content-Type", "text/html; charset=utf-8");
+ob_start();
 
-//hooks 
 $core->Init_hooks('site_init');
- 
 if ($site->Identify(true) && $site->Render()) {
 	$core->Init_hooks('site_render');
 	require($site->data['tpl']);
+	$core->Init_hooks('site_after_render');
 }
+
+$html = ob_get_clean();
+
+$core->Init_hooks('site_preprocess_html', array(
+	'html' => &$html,
+));
+
+$html = $site->Process_site_html($html);
+
+$core->Init_hooks('site_postprocess_html', array(
+	'html' => &$html,
+));
+
+echo $html;
 
 $time = microtime(); $time = explode(" ", $time); $time = $time[1] + $time[0]; $finish = $time; $totaltime = ($finish - $start);
 $total_time = round($totaltime,3);

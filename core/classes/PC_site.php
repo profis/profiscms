@@ -63,7 +63,9 @@ final class PC_site extends PC_base {
 	*/
 	private $_page_is_loaded = false;
 	public $ln;
-	
+
+	/** @var bool Determines whether default processing should be performed after rendering the page (adding HTML to HEAD and BODY sections). */
+	public $postprocess = true;
 	
 	/**
 	 *
@@ -883,18 +885,60 @@ final class PC_site extends PC_base {
 		$this->loaded_page['title'] = $title;
 		return true;
 	}
-	
+
+	/**
+	 * Generates HTML to be added to HEAD section.
+	 *
+	 * @return null
+	 * @deprecated This method is to be removed since head will be filled automatically in postprocessing.
+	 */
 	public function Get_head() {
-		return '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-			<title>' . $this->Get_title().'</title>
-			<base href="'.htmlspecialchars($this->cfg['url']['base']).'" />'
-			.$this->Get_head_parts()
-			.$this->Get_seo_html()
-			.$this->Get_stylesheets_html(false)
-			.$this->Get_scripts_html()
-			.$this->Get_favicon();
+		return null;
 	}
-	
+
+	/**
+	 * Generates HTML to be added to HEAD section.
+	 *
+	 * @return string HTML that must be added to the HEAD section.
+	 */
+	protected function Get_head_html() {
+		return '
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta charset="utf-8" />
+		<title>' . $this->Get_title().'</title>
+		<base href="'.htmlspecialchars($this->cfg['url']['base']).'" />'
+		.$this->Get_head_parts()
+		.$this->Get_seo_html()
+		.$this->Get_stylesheets_html(false)
+		.$this->Get_scripts_html()
+		.$this->Get_favicon();
+	}
+
+	/**
+	 * Generates HTML to be added to the end of the BODY section.
+	 *
+	 * @return string HTML that must be added to the BODY section.
+	 */
+	protected function Get_body_ending_html() {
+		return '';
+	}
+
+	/**
+	 * Adds needed HTML to HEAD section beginning and BODY section end in provided page HTML.
+	 *
+	 * @param string $html A HTML that needs modification.
+	 * @return string Modified HTML.
+	 */
+	public function Process_site_html($html) {
+		if( $this->postprocess ) {
+			if( ($addHtml = $this->Get_head_html()) !== '' )
+				$html = preg_replace('#<head(|\s[^>]*)>#', '$0' . str_replace(array('\\', '$'), array('\\\\', '\\$'), $addHtml), $html);
+			if( ($addHtml = $this->Get_body_ending_html()) !== '' )
+				$html = preg_replace('#</body(|\s[^>]*)>#', str_replace(array('\\', '$'), array('\\\\', '\\$'), $addHtml) . '$0', $html);
+		}
+		return $html;
+	}
+
 	/**
 	* Method used to get SEO of loaded page.
 	* @return string.

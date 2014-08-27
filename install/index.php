@@ -6,7 +6,7 @@ error_reporting(0);
 require_once '../core/path_constants.php';
 
 define('PC_INSTALL_SEQUENCE', true);
-define('PC_INSTALL_VERSION', '4.4.8');
+define('PC_INSTALL_VERSION', '4.4.9');
 define('PC_CONFIG_FILE', CMS_ROOT . 'config.php');
 define('PC_INSTALL_FOLDER', 'install/');
 define('PC_INSTALL_DIR', CMS_ROOT . PC_INSTALL_FOLDER);

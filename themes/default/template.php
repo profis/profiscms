@@ -1,16 +1,19 @@
 <?php 
 $path = $site->Get_page_path();
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <head>
 	<?php
 	$site->Add_stylesheet($core->Get_theme_path() . 'css/bootstrap.css');
 	$site->Add_stylesheet($core->Get_theme_path() . 'css/style.css');
 	
+	// jQuery is added from /media/jquery.min.js automatically since it is
+	// required by prettyPhoto plugin. Currently version 1.8.0 is used.
+	// Replace that file by any version you need, but be aware that prettyPhoto
+	// plugin might need an update too (if version 1.10+).
 	$site->Add_script($core->Get_theme_path() . 'js/bootstrap.min.js');
 	$site->Add_script($core->Get_theme_path() . 'js/main.js');
-	echo $site->Get_head();
 	?>
 	
 	<!--[if lt IE 9]>
