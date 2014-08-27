@@ -53,4 +53,4 @@ Profis CMS uses libraries and resources (check out web sites for licensing infor
 	jwplayer from http://www.jwplayer.com/
 	Icons from http://iconmonstr.com/
 	Icons from http://www.famfamfam.com/
-	
+	PHPMailer from https://github.com/Synchro/PHPMailer
