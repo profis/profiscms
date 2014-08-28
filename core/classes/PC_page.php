@@ -1744,16 +1744,22 @@ final class PC_page extends PC_base {
 		return $this->memstore->Cache(array('page_pathes', $pid), $path);
 	}
 	
-	public function Get_pages_data($select = '*', $where = '', $where_params = array(), $limit = '') {
+	public function Get_pages_data($select = '*', $where = '', $where_params = array(), $limit = '', $order = null) {
 		$where_s = $where;
-		if (!empty($where_s)) {
-			$where_s = ' WHERE ' . $where_s;
-		}
+		if (!empty($where_s))
+			$where_s = 'WHERE ' . $where_s;
+
 		$limit_s = $limit;
-		if (!empty($limit_s)) {
-			$limit_s = ' LIMIT ' . $limit;
-		}
-		$query = "SELECT $select FROM {$this->db_prefix}pages $where_s $limit_s";
+		if (!empty($limit_s))
+			$limit_s = 'LIMIT ' . $limit_s;
+
+		$order_s = $order;
+		if (!empty($order_s))
+			$order_s = 'ORDER BY ' . $order_s;
+
+		$query = "SELECT $select FROM {$this->db_prefix}pages $where_s $order_s $limit_s";
+
+
 		$r = $this->prepare($query);
 		if( !$r->execute($where_params) ) {
 			$errorInfo = $r->errorInfo();
@@ -1857,7 +1863,7 @@ final class PC_page extends PC_base {
 		return false;
 	}
 	
-	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false, $includeParents=false, $fields = array(), $lang = '', $siteId = null) {
+	public function Get_page($id=null, $parseLinks=true, $use_reference_id=false, $includeParents=false, $fields = array(), $lang = '', $siteId = null, $order = null) {
 		if (is_array($id) and empty($id) or is_null($id)) {
 			return array();
 		}
@@ -1908,7 +1914,9 @@ final class PC_page extends PC_base {
 			." LEFT JOIN {$this->db_prefix}content c ON c.pid=p.id and c.ln=?"
 			.(count($where)?" WHERE ".implode(' and ', $where):"");
 
-			
+		if( is_array($id) && !empty($order) )
+			$query .= ' ORDER BY ' . $order;
+
 		$r = $this->prepare($query);
 		$s = $r->execute($params);
 		if (!$s) return false;
