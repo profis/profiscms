@@ -21,7 +21,7 @@
 		var data = getWidgetData($widget);
 
 		data.$thumbs.find('.active').removeClass('active');
-		var $thumb = data.$thumbs.find('li:nth(' + Math.round(index) + ')');
+		var $thumb = data.$thumbs.find('.pc_gallery_thumb:nth(' + Math.round(index) + ')');
 		$thumb.addClass('active');
 
 		var pos = $thumb.position();
@@ -46,11 +46,13 @@
 		data.$imageWrap.append($newImg);
 		data.$imageWrap.offset(); // force redrawing
 		$newImg.css({opacity: '', left: '0', top: '0'});
+
+		$widget.trigger('pc.widgets.gallery.imagechanged');
 	};
 
 	var selectPrevImage = function($widget) {
 		var data = getWidgetData($widget);
-		var count = data.$thumbs.find('li').length;
+		var count = data.$thumbs.find('.pc_gallery_thumb').length;
 		if( count > 0 ) {
 			var index = getSelectedIndex($widget) - 1;
 			if( index < 0 )
@@ -61,7 +63,7 @@
 
 	var selectNextImage = function($widget) {
 		var data = getWidgetData($widget);
-		var count = data.$thumbs.find('li').length;
+		var count = data.$thumbs.find('.pc_gallery_thumb').length;
 		if( count > 0 ) {
 			var index = getSelectedIndex($widget) + 1;
 			if( index >= count )
@@ -149,7 +151,7 @@
 							pos.left = min;
 						data.$thumbs.css({left: pos.left + 'px'});
 					}
-				}).on('click', 'li', function(e) {
+				}).on('click', '.pc_gallery_thumb', function(e) {
 					e.preventDefault();
 					e.stopPropagation();
 					e.returnValue = false;

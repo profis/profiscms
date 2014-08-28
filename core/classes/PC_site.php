@@ -909,7 +909,7 @@ final class PC_site extends PC_base {
 		<base href="'.htmlspecialchars($this->cfg['url']['base']).'" />'
 		.$this->Get_head_parts()
 		.$this->Get_seo_html()
-		.$this->Get_stylesheets_html(false)
+		.$this->Get_stylesheets_html()
 		.$this->Get_scripts_html()
 		.$this->Get_favicon();
 	}
