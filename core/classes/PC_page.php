@@ -1755,7 +1755,13 @@ final class PC_page extends PC_base {
 		}
 		$query = "SELECT $select FROM {$this->db_prefix}pages $where_s $limit_s";
 		$r = $this->prepare($query);
-		$success = $r->execute($where_params);
+		if( !$r->execute($where_params) ) {
+			$errorInfo = $r->errorInfo();
+			if( !$errorInfo )
+				$errorInfo = $this->db->errorInfo();
+			if( $errorInfo )
+				throw new DbException('[' . $errorInfo[0] . '] ' . $errorInfo[2], $errorInfo[1]);
+		}
 		
 		$single_value = true;
 		if (strpos($select, ',') !== false or strpos($select, '*') === false) {
