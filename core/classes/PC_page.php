@@ -1293,6 +1293,7 @@ final class PC_page extends PC_base {
 			}
 		}
 		elseif (v($marker->marker_link)) {
+			$new_marker .= "$marker_var.marker_link = '{$marker->marker_link}';";
 			$marker_url = $this->get_url_from_redirect($marker->marker_link);
 			if ($marker_url) {
 				$new_marker .= "$marker_var.url = '$marker_url';"; 
