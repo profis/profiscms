@@ -101,7 +101,8 @@ if (!function_exists('PC_autoload')) {
 				}
 				$path = PC_app::$cfg['path']['classes'].$sub_folder.$cls.'.php';
 			}
-			else return false;
+			else if( !is_file($path = PC_app::$cfg['path']['classes'].$cls.'.php') )
+				return false;
 		}
 		else $path =& $class_autoload[$cls_to_lower];
 		if (!is_file($path) and $cls_to_lower == 'pc_utils') {
@@ -111,6 +112,7 @@ if (!function_exists('PC_autoload')) {
 			return false;
 		}
 		require_once($path);
+		return true;
 	}
 
 	spl_autoload_register('PC_autoload');
