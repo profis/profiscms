@@ -313,6 +313,50 @@ final class PC_page extends PC_base {
 		return false;
 	}
 	
+	/**
+	 * This method recursively searches for span node having id 'pc_page_break' and adds that node along with all following
+	 * DOMNodes to the array referenced by $removeQueue parameter.
+	 *
+	 * @param DOMNode $node Root node of the HTMLDocument that must be searched for 'pc_page_break' span.
+	 * @param DOMNode[] $removeQueue Reference to an array where to store nodes that must be removed.
+	 * @param bool $pageBreakEncountered Indicates whether page break node was encountered in earlier calls to this method. Defaults to FALSE.
+	 * @return bool TRUE if page break was encountered during the method call or $pageBreakEncountered parameter was TRUE. FALSE otherwise.
+	 */
+	protected function Find_page_break_and_following_nodes($node, &$removeQueue, $pageBreakEncountered = false) {
+		if( !$pageBreakEncountered && $node instanceof DOMElement )
+			$pageBreakEncountered = ($node->tagName == 'span' && $node->getAttribute('id') == 'pc_page_break');
+		if( $pageBreakEncountered ) {
+			$removeQueue[] = $node;
+			return true;
+		}
+		foreach( $node->childNodes as $child )
+			$pageBreakEncountered = $this->Find_page_break_and_following_nodes($child, $removeQueue, $pageBreakEncountered);
+		return $pageBreakEncountered;
+}
+	
+	/**
+	 * Gets shorter version of given text by removing 'pc_page_break' span along with all the HTML that follows it.
+	 *
+	 * @param string $text HTML containing page break (span with id 'pc_page_break ').
+	 * @return string HTML that goes before the 'pc_page_break' span.
+	 */
+	public function Get_text_before_page_break($text) {
+		$doc = new DOMDocument();
+		$doc->loadHTML($text);
+		$root = $doc->getElementsByTagName('body')->item(0);
+		$queue = array();
+		
+		$this->Find_page_break_and_following_nodes($root, $queue);
+
+		foreach( $queue as $node )
+			$node->parentNode->removeChild($node);
+		
+		$text = '';
+		foreach( $root->childNodes as $node )
+			$text .= $doc->saveXML($node);
+		return $text;
+	}
+	
 	public function Parse_redirect_data($redirect) {
 		if (strpos($redirect, '#') !== false) {
 			$d = explode('#', $redirect);
