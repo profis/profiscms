@@ -173,9 +173,10 @@ final class PC_core extends PC_base {
 		$this->debug($this->get_callstack($call_stack), 3);
 		
 		switch ($type) {
-			case 301: header("HTTP/1.1 301 Moved Permanently"); break;
-			case 403: header("HTTP/1.1 403 Forbidden"); break;
-			case 404: header("HTTP/1.1 404 Not Found"); break;
+			case 301: header("HTTP/1.1 301 Moved Permanently", true, 301); break;
+			case 307: header("HTTP/1.1 307 Moved Temporarily", true, 307); break;
+			case 403: header("HTTP/1.1 403 Forbidden", true, 403); break;
+			case 404: header("HTTP/1.1 404 Not Found", true, 404); break;
 		}
 		session_write_close();
 		header("Location: ".$location);

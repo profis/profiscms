@@ -24,6 +24,9 @@ class PC_user extends PC_base {
 	public $Post_login, $Post_password;
 	//session data
 	public $Session_login, $Session_password;
+	//external authentication provider data
+	public $externalProvider;
+	public $externalUID;
 
 	public $login_error = null;
 	public $Session_secure = null;
@@ -34,7 +37,7 @@ class PC_user extends PC_base {
 	public function Init() {
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'pc_user.html', null, 7);
-		
+
 		$this->Refresh();
 		if (v($_REQUEST['user_logout'])) {
 			$this->Logout();
@@ -53,6 +56,8 @@ class PC_user extends PC_base {
 			$this->debug(':( Post_password after sanitizing is empty', 1);
 		}
 		$this->Session_login = v($_SESSION['user_login']);
+		$this->externalProvider = v($_SESSION['user_ext_provider']);
+		$this->externalUID = v($_SESSION['user_ext_uid']);
 		$this->Session_password = Sanitize('md5', v($_SESSION['user_password']));
 		$this->Session_secure = Sanitize('md5', v($_SESSION['user_secure']));
 		return $this;
@@ -82,33 +87,87 @@ class PC_user extends PC_base {
 		}
 		return true;
 	}
-	public function Login() {
+	public function Login($externalAuthData = null) {
 		$this->debug("Login()");
+		if( $this->Logged_in )
+			return true;
+
 		$login_field_in_select = 'login';
 		$login_field_in_clause = 'login';
 		if (isset($this->cfg['site_users']) and v($this->cfg['site_users']['email_as_login'])) {
 			$login_field_in_select = 'email as login';
 			$login_field_in_clause = 'email';
 		}
-		if (isset($this->Session_login, $this->Session_password) && $this->Session_secure == $this->Current_secure) {
+		if ($this->Session_secure == $this->Current_secure) {
 			$this->debug('session', 1);
-			//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
-			$r = $this->prepare("SELECT id,name FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password=? AND (flags & ?)=0 and banned=0 LIMIT 1");
-			$s = $r->execute(array($this->Session_login, $this->Session_password, PC_UF_MUST_ACTIVATE));
-			if (!$s) {
+			$s = $r = null;
+			if( isset($this->externalProvider, $this->externalUID) ) {
+				//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
+				$r = $this->prepare("SELECT id,name,login,email FROM {$this->db_prefix}site_users_external e INNER JOIN {$this->db_prefix}site_users u ON u.id=e.user_id WHERE e.provider=? AND e.uid=? AND banned=0 LIMIT 1");
+				$s = $r->execute(array($this->externalProvider, $this->externalUID));
+			}
+			else if( isset($this->Session_login, $this->Session_password) ) {
+				//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
+				$r = $this->prepare("SELECT id,name,login,email FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password=? AND (flags & ?)=0 AND banned=0 LIMIT 1");
+				$s = $r->execute(array($this->Session_login, $this->Session_password, PC_UF_MUST_ACTIVATE));
+			}
+
+			if (!$s || $r->rowCount() != 1) {
 				$this->Logout();
 				return false;
 			}
-			if ($r->rowCount() != 1) {
-				$this->Logout();
-				return false;
-			}
+
 			$data = $r->fetch();
 			$this->ID = $data['id'];
-			$this->LoginName = $this->Session_login;
+			$this->LoginName = $data['name'];
 			$this->Logged_in = true;
 			$this->Get_data();
 			$this->debug(':) From session');
+			return true;
+		}
+		else if( is_array($externalAuthData) && isset($externalAuthData['provider'], $externalAuthData['uid']) ) {
+			$this->core->Init_hooks('PC_user/beforeLogin', array('user' => $this, 'externalAuthData' => $externalAuthData));
+
+			$r = $this->prepare("SELECT id,name,login,email,banned FROM {$this->db_prefix}site_users_external e INNER JOIN {$this->db_prefix}site_users u ON u.id=e.user_id WHERE e.provider=? AND e.uid=? LIMIT 1");
+			$s = $r->execute(array($externalAuthData['provider'], $externalAuthData['uid']));
+
+			if (!$s || $r->rowCount() != 1) {
+				$data = $this->createFromExternal($externalAuthData);
+				if( !$data ) {
+					$this->Logout();
+					$this->login_error = 'cannot_auto_register';
+					return false;
+				}
+			}
+			else
+				$data = $r->fetch();
+
+			if( $data['banned'] ) {
+				$this->Logout();
+				$this->login_error = 'banned';
+				return false;
+			}
+
+			$_SESSION['user_secure'] = $this->Current_secure;
+
+			$this->ID = $data['id'];
+			$this->LoginName = $data['name'];
+			$this->externalProvider = $_SESSION['user_ext_provider'] = $externalAuthData['provider'];
+			$this->externalUID = $_SESSION['user_ext_uid'] = $externalAuthData['uid'];
+			$this->Logged_in = true;
+			$this->just_logged_in = true;
+
+			$this->updateMetaDataFromExternal($externalAuthData);
+
+			if( isset($externalAuthData['info']['name']) && $externalAuthData['info']['name'] != $this->LoginName ) {
+				$this->LoginName = $externalAuthData['info']['name'];
+				$cmd = $this->prepare("UPDATE {$this->db_prefix}site_users SET name=? WHERE id=?");
+				$cmd->execute(array($this->LoginName, $this->ID));
+			}
+
+			$this->Get_data();
+			$this->debug(':) From externalAuthData');
+			$this->core->Init_hooks('PC_user/afterLogin', array('user' => $this));
 			return true;
 		}
 		else {
@@ -118,7 +177,10 @@ class PC_user extends PC_base {
 			if( $cookie_code !== null ) {
 				$using_cookie = true;
 				if( $cookie_code !== false ) {
-					$r = $this->prepare("SELECT $login_field_in_select, password, flags, banned FROM {$this->db_prefix}site_users WHERE MD5(CONCAT(login,id,password))=? LIMIT 1");
+					/*
+					 * @todo With big number of users this query will be extremely slow. Cookie authentication should be optimized.
+					 */
+					$r = $this->prepare("SELECT $login_field_in_select, password, flags, banned FROM {$this->db_prefix}site_users WHERE MD5(CONCAT(login,id,password))=? AND password IS NOT NULL LIMIT 1");
 					$s = $r->execute(array($cookie_code));
 					if ($s && $r->rowCount() > 0) {
 						$data = $r->fetch();
@@ -137,7 +199,7 @@ class PC_user extends PC_base {
 				$this->debug('Post_login', 1);
 				$this->core->Init_hooks('PC_user/beforeLogin', array('user' => $this));
 				$this->login_attempt = true;
-				$query = "SELECT id,name,password FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND (flags & ?)=0 and banned=0 LIMIT 1";
+				$query = "SELECT id,name,password FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password IS NOT NULL AND (flags & ?)=0 and banned=0 LIMIT 1";
 				$query_params = array($this->Post_login, PC_UF_MUST_ACTIVATE);
 				$r = $this->prepare($query);
 				//echo $this->get_debug_query_string($query, $query_params);
@@ -164,7 +226,7 @@ class PC_user extends PC_base {
 				$_SESSION['user_password'] = $this->Post_password;
 				$_SESSION['user_secure'] = $this->Current_secure;
 				$this->ID = $data['id'];
-				$this->LoginName = $this->Post_login;
+				$this->LoginName = $data['name'];
 				$this->Logged_in = true;
 				$this->just_logged_in = true;
                 $this->Get_data();
@@ -184,6 +246,7 @@ class PC_user extends PC_base {
 			}
 			// used cookie, but not logged in ... remove the cookie
 			if( $using_cookie ) $this->DelCookie();
+			return true;
 		}
 	}
 	public function Logout() {
@@ -191,6 +254,8 @@ class PC_user extends PC_base {
 		$this->core->Init_hooks('PC_user/beforeLogout', array('user' => $this));
 		unset($_SESSION['user_login'], $_SESSION['user_password'], $_SESSION['user_secure']);
 		$this->LoginName = '';
+		$this->externalProvider = null;
+		$this->externalUID = null;
 		$this->Data = array();
 		$this->Logged_in = false;
 		if( $this->GetCookie() != null )
@@ -427,6 +492,74 @@ class PC_user extends PC_base {
 			'activationCode'=> $activation_code
 		);
 	}
+	public function createFromExternal($externalAuthData) {
+		$time = time();
+		$name = isset($externalAuthData['info']['name']) ? $externalAuthData['info']['name'] : '';
+		$email = isset($externalAuthData['info']['email']) ? $externalAuthData['info']['email'] : null; // just in case if email is not available
+
+		if( $email ) {
+			$cmd = $this->prepare("SELECT 1 FROM {$this->db_prefix}site_users WHERE email=?");
+			if( !$cmd->execute(array($email)) )
+				throw new Exception('Failed to check if email is already registered');
+			if( $cmd->rowCount() > 0 )
+				return null;
+		}
+
+		if( $email ) {
+			$cmd = $this->prepare("INSERT INTO {$this->db_prefix}site_users (email,password,name,date_registered,last_seen,confirmation,flags,login,banned) VALUES(?,NULL,?,?,?,NULL,?,NULL,0)");
+			$result = $cmd->execute(array($email, $name, $time, $time, PC_UF_DEFAULT));
+		}
+		else {
+			$cmd = $this->prepare("INSERT INTO {$this->db_prefix}site_users (email,password,name,date_registered,last_seen,confirmation,flags,login,banned) VALUES(NULL,NULL,?,?,?,NULL,?,NULL,0)");
+			$result = $cmd->execute(array($name, $time, $time, PC_UF_DEFAULT));
+		}
+
+		if( !$result )
+			throw new Exception('Error registering a new external system user');
+
+		$userId = $this->db->lastInsertId($this->sql_parser->Get_sequence('site_users'));
+
+		$this->addExternalAuth($externalAuthData, $userId);
+		$this->updateMetaDataFromExternal($externalAuthData, true, $userId);
+
+		return array(
+			'id' => $userId,
+			'name' => $name,
+			'login' => null,
+			'email' => null,
+			'banned' => 0,
+		);
+	}
+	public function updateMetaDataFromExternal($externalAuthData, $justRegistered = false, $userId = null) {
+		if( !$userId )
+			$userId = $this->ID;
+		if( !$userId )
+			return false;
+
+		$data = array();
+		if( $justRegistered )
+			$fields = array('first_name', 'last_name', 'nickname', 'location', 'description', 'image');
+		else
+			$fields = array('first_name', 'last_name', 'nickname', 'location', 'description', 'image');
+
+		foreach( $fields as $k ) {
+			if( isset($externalAuthData['info'][$k]) )
+				$data[$k] = $externalAuthData['info'][$k];
+		}
+
+		if( !empty($data) )
+			return $this->Set_meta_data($data, $userId);
+		return true;
+	}
+	public function addExternalAuth($externalAuthData, $userId = null) {
+		if( !$userId )
+			$userId = $this->GetID();
+		if( !$userId || !is_array($externalAuthData) || !isset($externalAuthData['provider'], $externalAuthData['uid']) )
+			return false;
+		return $this
+			->prepare("INSERT INTO {$this->db_prefix}site_users_external (user_id,provider,uid) VALUES(?,?,?)")
+			->execute(array($userId, $externalAuthData['provider'], $externalAuthData['uid']));
+	}
 
 	public function Send_activation_code($email, $code) {
 		$from_email = $from_name = '';
@@ -569,5 +702,46 @@ class PC_user extends PC_base {
 		$s = $r->execute(array(PC_UF_MUST_ACTIVATE, time()-$ttl));
 		if (!$s) return false;
 		return true;
+	}
+
+	/**
+	 * Returns an associative array of supported external authenticators.
+	 *
+	 * Example of returned array:
+	 *
+	 * <code>
+	 *   array(
+	 *     'Facebook' => array(
+	 *       'url' => 'http://.../api/plugin/pc_opauth/auth/facebook/',
+	 *       'name' => 'Facebook',
+	 *     ),
+	 *     'Twitter' => array(
+	 *       'url' => 'http://.../api/plugin/pc_opauth/auth/twitter/',
+	 *       'name' => 'Twitter',
+	 *     ),
+	 *   )
+	 * </code>
+	 *
+	 * To gather the list of supported authenticators this method invokes the 'PC_user/registerExternalAuthenticators'
+	 * event (hook), which receives a reference to the list, which must be filled. Example that adds Facebook to the
+	 * list (should be located in PC_plugin.php):
+	 *
+	 * <code>
+	 *   function pc_plugin_pc_opauth_register_strategies($params) {
+	 *     $params['list']['Facebook'] = array( 'url' => $core->Get_url('root', 'api/plugin/pc_opauth/auth/facebook/', 'name' => 'Facebook' );
+	 *   }
+	 *
+	 *   $core->Register_hook('PC_user/registerExternalAuthenticators', 'pc_plugin_pc_opauth_register_strategies');
+	 * </code>
+	 *
+	 * @return array Associative array of supported external authenticators.
+	 */
+	static function getExternalAuthenticators() {
+		global $core;
+		$list = array();
+		$core->Init_hooks('PC_user/registerExternalAuthenticators', array(
+			'list' => &$list,
+		));
+		return $list;
 	}
 }

@@ -403,18 +403,37 @@ CREATE TABLE IF NOT EXISTS `{prefix}path_index` (
 
 CREATE TABLE IF NOT EXISTS `{prefix}site_users` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `password` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+  `email` varchar(255) COLLATE utf8_unicode_ci NULL,
+  `password` varchar(32) COLLATE utf8_unicode_ci NULL,
   `name` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `date_registered` int(10) unsigned NOT NULL,
   `last_seen` int(10) unsigned NOT NULL,
-  `confirmation` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+  `confirmation` varchar(32) COLLATE utf8_unicode_ci NULL,
   `flags` int(10) unsigned NOT NULL,
-  `login` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `login` varchar(100) COLLATE utf8_unicode_ci NULL,
   `banned` smallint(1) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+
+-- 
+-- Table structure for table `{prefix}site_users_external`
+-- 
+
+CREATE TABLE IF NOT EXISTS `{prefix}site_users_external` (
+  `user_id` int(10) unsigned NOT NULL,
+  `provider` varchar(32) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `uid` varchar(64) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`provider`,`uid`),
+  KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- 
+-- Relations for table `{prefix}site_users_external`
+-- 
+
+ALTER TABLE `{prefix}site_users_external`
+  ADD CONSTRAINT `{prefix}site_users_external_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `{prefix}site_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- --------------------------------------------------------
 -- 

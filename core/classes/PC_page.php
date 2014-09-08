@@ -329,8 +329,11 @@ final class PC_page extends PC_base {
 			$removeQueue[] = $node;
 			return true;
 		}
-		foreach( $node->childNodes as $child )
-			$pageBreakEncountered = $this->Find_page_break_and_following_nodes($child, $removeQueue, $pageBreakEncountered);
+		if( !($node instanceof DOMNode) )
+			return false;
+		if( is_array($node->childNodes) )
+			foreach( $node->childNodes as $child )
+				$pageBreakEncountered = $this->Find_page_break_and_following_nodes($child, $removeQueue, $pageBreakEncountered);
 		return $pageBreakEncountered;
 }
 	
@@ -341,6 +344,8 @@ final class PC_page extends PC_base {
 	 * @return string HTML that goes before the 'pc_page_break' span.
 	 */
 	public function Get_text_before_page_break($text) {
+		if( $text == '' )
+			return $text;
 		$doc = new DOMDocument();
 		$doc->loadHTML($text);
 		$root = $doc->getElementsByTagName('body')->item(0);
