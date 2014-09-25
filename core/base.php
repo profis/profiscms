@@ -80,37 +80,30 @@ PC_app::$cfg = $cfg;
 
 if (!function_exists('PC_autoload')) {
 	function PC_autoload($cls) {
-		global $class_autoload;
+		global $class_autoload, $cfg;
 		$cls_to_lower = strtolower($cls);
-		/*
-		if ($cls == 'Class name to debug') {
-			echo 'class name: ' . $cls_to_lower;
-			print_pre($class_autoload);
-			echo isset($class_autoload[$cls_to_lower]);
-		}
-		*/
-		if (!isset($class_autoload[$cls_to_lower])) {
-			if (preg_match("#^PC_[a-zA_Z0-9_]+$#i", $cls)) {
-				global $cfg;
-				$sub_folder = '';
-				if ($cls != 'PC_model' and substr($cls, -6) == '_model') {
-					$sub_folder = 'models/';
-				}
-				if ($cls != 'PC_widget' and substr($cls, -7) == '_widget') {
-					$sub_folder = 'widgets/';
-				}
-				$path = PC_app::$cfg['path']['classes'].$sub_folder.$cls.'.php';
+		if (isset($class_autoload[$cls_to_lower]))
+			$path =& $class_autoload[$cls_to_lower];
+		else if (preg_match("#^PC_[a-zA_Z0-9_]+$#i", $cls)) {
+			$sub_folder = '';
+			if ($cls != 'PC_model' and substr($cls, -6) == '_model') {
+				$sub_folder = 'models/';
 			}
-			else if( !is_file($path = PC_app::$cfg['path']['classes'].$cls.'.php') )
-				return false;
+			if ($cls != 'PC_widget' and substr($cls, -7) == '_widget') {
+				$sub_folder = 'widgets/';
+			}
+			$path = PC_app::$cfg['path']['classes'].$sub_folder.$cls.'.php';
 		}
-		else $path =& $class_autoload[$cls_to_lower];
-		if (!is_file($path) and $cls_to_lower == 'pc_utils') {
+		else if (preg_match("#Exception$#", $cls))
+			$path = PC_app::$cfg['path']['classes'].'exceptions/'.$cls.'.php';
+		else return false;
+		
+		if (!is_file($path) and $cls_to_lower == 'pc_utils')
 			$path = str_replace('PC_Utils.php', 'PC_utils.php', $path);
-		}
-		if (!is_file($path)) {
+
+		if (!is_file($path))
 			return false;
-		}
+
 		require_once($path);
 		return true;
 	}

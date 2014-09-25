@@ -13,6 +13,10 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @var PC_core $core
+ * @var PC_plugins $plugins
+ * @var array $cfg
  */
 require('../admin.php');
 //files to pack
@@ -57,9 +61,11 @@ if (isset($_GET['debug'])) {
 	print_pre($plugins->loaded_plugins);
 }
 foreach ($plugins->loaded_plugins as $plugin) {
+	$plugin_file = $core->Get_path('plugins', 'PC_plugin.js.php', $plugin); // .js.php MUST BE LOADED BEFORE .js!
+	if (is_file($plugin_file)) $plugin_files[] = $plugin_file;
 	$plugin_file = $core->Get_path('plugins', 'PC_plugin.js', $plugin);
 	if (is_file($plugin_file)) $plugin_files[] = $plugin_file;
-	
+
 	$plugin_path = $core->Get_path('plugins', '', $plugin);
 	$this_plugin_files = glob($plugin_path . 'PC_plugin.*.js');
 	
@@ -124,7 +130,7 @@ foreach ($files as $i=>$file) {
 	if ($i == $localizeAt) echo "\n\nPC.utils.localize();\n\n";
 	//if ($i - $localizeAt > 15) break;
 	if ($i >= $pluginsStart && $i < $pluginsEnd) {
-		$plugin_name = preg_match("#/([^/]+)/PC_plugin.js$#i", $file, $m);
+		$plugin_name = preg_match("#/([^/]+)/PC_plugin\\.js(\\.php)?$#i", $file, $m);
 		//print_pre($m);
 		if ($plugin_name) {
 			echo "\nvar CurrentlyParsing = '".$m[1]."';\n";
@@ -134,5 +140,8 @@ foreach ($files as $i=>$file) {
 	}
 	if (v($cfg['debug_mode'])) echo "\n\n/***** $file *****/\n\n";
 	else echo "\n\n";
-	readfile($file);
+	if( preg_match('#\\.php$#i', $file) )
+		include $file;
+	else
+		readfile($file);
 }
