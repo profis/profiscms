@@ -22,6 +22,7 @@ class PC_installer {
 	}
 	
 	public function get_config() {
+		$cfg = array();
 		include CORE_ROOT . 'config/system_config.php';
 		include PC_CONFIG_FILE;
 		include CORE_ROOT . 'config/system_config_2.php';
@@ -31,22 +32,21 @@ class PC_installer {
 	public function import_sql_file($file, $replacements = array()) {
 		global $db;
 		$sql = file_get_contents($file);
-		$success = true;
 		if ($sql) {
-			if (!empty($replacements)) {
+			if (!empty($replacements))
 				$sql = str_replace(array_keys($replacements), array_values($replacements), $sql);
-			}
 			$queries = explode(';', $sql);
 			foreach ($queries as $query) {
-				if (!$success) {
-					return $success;
-				}
+				$query = trim(preg_replace('#^--.*$#', '', $query));
 				if (!empty($query)) {
-					$success = $db->query($query);
+					if( !$db->query($query) ) {
+						echo "Error executing query:<br />" . htmlspecialchars($query);
+						return false;
+					}
 				}
 			}
 		}
-		return $success;
+		return true;
 	}
 	
 	public function validate_php_version(&$value) {

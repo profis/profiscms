@@ -46,6 +46,7 @@ config_real.php
 config_test.php
 media/uppod/
 nbproject/
+.idea/
 logs/
 libs/
 admin/ext/

@@ -2,8 +2,6 @@ RENAME TABLE `{prefix}user_groups` TO `{prefix}auth_groups` ;
 
 RENAME TABLE `{prefix}users` TO `{prefix}auth_users` ;
 
-ALTER TABLE `{prefix}sites` CHANGE `dir` `theme` TINYTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL;
-
 
 /* Create table in target */
 CREATE TABLE `{prefix}auth_permissions`(
@@ -29,10 +27,6 @@ ALTER TABLE `{prefix}content_archive`
 	CHANGE `site` `site` tinyint(4)   NOT NULL DEFAULT 0 after `idp` ;
 
 /* Alter table in target */
-ALTER TABLE `{prefix}gallery_thumbnail_types` 
-	ADD COLUMN `use_adaptive_resize` tinyint(1) unsigned   NOT NULL DEFAULT 1 after `thumbnail_quality` ;
-
-/* Alter table in target */
 ALTER TABLE `{prefix}languages` 
 	CHANGE `site` `site` tinyint(4) unsigned   NOT NULL DEFAULT 1 first ;
 
@@ -54,8 +48,7 @@ CREATE TABLE `{prefix}path_index`(
 /* Alter table in target */
 ALTER TABLE `{prefix}sites` 
 	CHANGE `id` `id` tinyint(4) unsigned   NOT NULL auto_increment first , 
-	CHANGE `editor_background` `editor_background` varchar(10)  COLLATE utf8_unicode_ci NOT NULL after `editor_width` , 
-	ADD COLUMN `active` tinyint(1) unsigned   NOT NULL DEFAULT 1 after `editor_background` ;
+	CHANGE `editor_background` `editor_background` varchar(10)  COLLATE utf8_unicode_ci NOT NULL after `editor_width`;
 
 /* Alter table in target */
 ALTER TABLE `{prefix}variables` 

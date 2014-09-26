@@ -1,14 +1,7 @@
--- phpMyAdmin SQL Dump
--- version 2.9.1.1
--- http://www.phpmyadmin.net
--- 
--- Host: localhost
--- Generation Time: Jan 30, 2013 at 11:58 AM
--- Server version: 5.5.29
--- PHP Version: 5.3.10-1ubuntu3.5
--- 
--- Database: `cms4`
--- 
+--
+-- WARNING: Be sure to update last "INSERT INTO {prefix}db_version ..." statement to match the framework version for
+-- which this SQL file is designed.
+--
 
 -- --------------------------------------------------------
 
@@ -498,6 +491,15 @@ CREATE TABLE IF NOT EXISTS `{prefix}forms` (
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+-- Table structure for table `{prefix}db_version`
+--
+
+CREATE TABLE IF NOT EXISTS `{prefix}db_version` (
+  `plugin` VARCHAR(255) NOT NULL,
+  `version` VARCHAR(32) NOT NULL,
+  PRIMARY KEY (`plugin`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8  COLLATE=utf8_general_ci;
+
 -- 
 -- Dumping data for table `{prefix}variables`
 -- 
@@ -527,3 +529,5 @@ INSERT INTO `{prefix}variables` (`vkey`, `controller`, `site`, `ln`, `value`) VA
 ('form_file_upload_error', 'forms', 0, 'en', 'The file was not uploaded successfully. Please try again or concact the website administrator.'),
 ('form_file_upload_error', 'forms', 0, 'lt', 'Failo įkelti nepavyko. Pabandykite dar kartą arba susisiekite su svetainės administratoriumi.'),
 ('form_file_upload_error', 'forms', 0, 'ru', 'Файл незагружен. Попробуйте еще раз или свяжитесь с администратором сайта.');
+
+INSERT INTO `{prefix}db_version` (`plugin`, `version`) VALUES('', '4.5.0');

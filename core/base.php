@@ -18,14 +18,17 @@ if (phpversion() < 5.2) die('ProfisCMS requires at least PHP 5.2 version.');
 
 global $cfg, $db, $sql_parser;
 
-if (!defined('PC_VERSION')) {
-	require 'version.php';
+require 'version.php';
 
+if( !class_exists('PC_app') ) {
 	class PC_app {
 		static $cfg;
 		static $content_type = "";
 		//static $content_type = "text/html; charset=utf-8";
 	}
+}
+
+if( !function_exists('PC_error_handler') ) {
 	//error handling
 	require('error_handling.php');
 }
