@@ -75,7 +75,89 @@ final class PC_database extends PDO {
 		$query_params[] = $flag_number;
 		return $cond;
 	}
-	
+
+	/**
+	 * Retrieves all available information on table from the database schema and returns it in an associative array.
+	 *
+	 * @param string $tableName name of the table to get information on. Must be without prefix.
+	 * @return array An associative array containing information about the table.
+	 * - 'TABLE_CATALOG'
+	 * - 'TABLE_SCHEMA'
+	 * - 'TABLE_NAME'
+	 * - 'TABLE_TYPE'
+	 * - 'ENGINE'
+	 * - 'VERSION'
+	 * - 'ROW_FORMAT'
+	 * - 'TABLE_ROWS'
+	 * - 'AVG_ROW_LENGTH'
+	 * - 'DATA_LENGTH'
+	 * - 'MAX_DATA_LENGTH'
+	 * - 'INDEX_LENGTH'
+	 * - 'DATA_FREE'
+	 * - 'AUTO_INCREMENT'
+	 * - 'CREATE_TIME'
+	 * - 'UPDATE_TIME'
+	 * - 'CHECK_TIME'
+	 * - 'TABLE_COLLATION'
+	 * - 'CHECKSUM'
+	 * - 'CREATE_OPTIONS'
+	 * - 'TABLE_COMMENT'
+	 *
+	 * @throws DbException
+	 */
+	function getTableInfo($tableName) {
+		global $cfg, $core;
+		$s = $this->prepare($q = "SELECT * FROM `information_schema`.`TABLES` WHERE `TABLE_SCHEMA` = :db AND `TABLE_NAME` = :table");
+		$p = array(
+			'db' => $cfg['db']['name'],
+			'table' => $core->db_prefix . $tableName,
+		);
+		if( !$s->execute($p) )
+			throw new DbException($s->errorInfo(), $q, $p);
+		return $s->fetch();
+	}
+
+	/**
+	 * Retrieves all available information on column from the database schema and returns it in an associative array.
+	 *
+	 * @param string $tableName Name of the table without prefix.
+	 * @param string $columnName Name of the column to get information on.
+	 * @return array An associative array containing information about the column.
+	 * - 'TABLE_CATALOG'
+	 * - 'TABLE_SCHEMA'
+	 * - 'TABLE_NAME'
+	 * - 'COLUMN_NAME'
+	 * - 'ORDINAL_POSITION'
+	 * - 'COLUMN_DEFAULT'
+	 * - 'IS_NULLABLE'
+	 * - 'DATA_TYPE'
+	 * - 'CHARACTER_MAXIMUM_LENGTH'
+	 * - 'CHARACTER_OCTET_LENGTH'
+	 * - 'NUMERIC_PRECISION'
+	 * - 'NUMERIC_SCALE'
+	 * - 'CHARACTER_SET_NAME'
+	 * - 'COLLATION_NAME'
+	 * - 'COLUMN_TYPE'
+	 * - 'COLUMN_KEY'
+	 * - 'EXTRA'
+	 * - 'PRIVILEGES'
+	 * - 'COLUMN_COMMENT'
+	 *
+	 * @throws DbException
+	 */
+	function getColumnInfo($tableName, $columnName) {
+		global $cfg, $core;
+		$s = $this->prepare($q = "SELECT * FROM `information_schema`.`COLUMNS` WHERE `TABLE_SCHEMA` = :db AND `TABLE_NAME` = :table AND `COLUMN_NAME` = :column");
+		$p = array(
+			'db' => $cfg['db']['name'],
+			'table' => $core->db_prefix . $tableName,
+			'column' => $columnName,
+		);
+		if( !$s->execute($p) )
+			throw new DbException($s->errorInfo(), $q, $p);
+		return $s->fetch();
+	}
+
 	/* public function Select() {}
 	public function Insert() {}
 	public function Delete() {}

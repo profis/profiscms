@@ -25,126 +25,123 @@ if( !class_exists('PC_core') )
 if( !isset($cfg['db']['name']) || empty($cfg['db']['name']) )
 	echo 'Please run install script before trying to update.';
 
-$path = dirname(__FILE__) . '/data/update';
+class PC_updater {
+	protected $plugin;
+	protected $path;
 
-function update_filter_version_numbers($filePath) {
-	return preg_replace('#^.*/(.*)\\.[^\\.]*$#s', '$1', $filePath);
-}
-
-function update_get_available_updates($path) {
-	$versions = array();
-	foreach( glob($path . '/*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir )
-		$versions = array_merge($versions, array_map('update_filter_version_numbers', glob($dir . '/*', GLOB_NOSORT)));
-	$versions = array_unique($versions);
-	usort($versions, 'version_compare');
-	return $versions;
-}
-
-$versions = update_get_available_updates($path);
-
-function update_get_table_info($tableName) {
-	global $cfg, $db, $core;
-	$s = $db->prepare($q = "SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA = :db AND TABLE_NAME = :table");
-	$p = array(
-		'db' => $cfg['db']['name'],
-		'table' => $core->db_prefix . $tableName,
-	);
-	if( !$s->execute($p) )
-		throw new DbException($s->errorInfo(), $q, $p);
-	return $s->fetch();
-}
-
-function update_get_column_info($tableName, $columnName) {
-	global $cfg, $db, $core;
-	$s = $db->prepare($q = "SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = :db AND TABLE_NAME = :table AND COLUMN_NAME = :column");
-	$p = array(
-		'db' => $cfg['db']['name'],
-		'table' => $core->db_prefix . $tableName,
-		'column' => $columnName,
-	);
-	if( !$s->execute($p) )
-		throw new DbException($s->errorInfo(), $q, $p);
-	return $s->fetch();
-}
-
-function update_detect_current_schema_version() {
-	global $cfg, $db, $core;
-
-	if( update_get_table_info('db_version') ) {
-		$s = $db->prepare($q = "SELECT `version` FROM `{$core->db_prefix}db_version` WHERE `plugin` = ''");
-		if( !$s->execute() )
-			throw new DbException($s->errorInfo(), $q);
-		if( $f = $s->fetch() )
-			return $f['version'];
-		else
-			throw new Exception('Although `db_version` table exists it does not contain a record with current framework database version.');
+	public function PC_updater($updatesPath, $pluginName = '') {
+		global $core;
+		$this->plugin = $pluginName;
+		$this->path = $updatesPath;
 	}
 
-	if( update_get_table_info('site_users_external') ) {
-		return '4.4.17';
+	public function filterVersionNumber($filePath) {
+		return preg_replace('#^.*/(.*)\\.[^\\.]*$#s', '$1', $filePath);
 	}
 
-	if( update_get_column_info('pages', 'target') ) {
-		return '4.4.5';
+	public function getAvailableUpdates() {
+		$versions = array();
+		if( is_dir($this->path) ) {
+			foreach( glob($this->path . '/*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir )
+				$versions = array_merge($versions, array_map(array($this, 'filterVersionNumber'), glob($dir . '/*', GLOB_NOSORT)));
+			$versions = array_unique($versions);
+			usort($versions, 'version_compare');
+		}
+		return $versions;
 	}
 
-	if( update_get_column_info('pages', 'source_id') ) {
-		return '4.4.4';
+	public function detectCurrentSchemaVersion() {
+		global $cfg, $db, $core;
+		if( $db->getTableInfo('db_version') ) {
+			$s = $db->prepare($q = "SELECT `version` FROM `{$core->db_prefix}db_version` WHERE `plugin` = :plugin");
+			if( !$s->execute($p = array('plugin' => $this->plugin)) )
+				throw new DbException($s->errorInfo(), $q, $p);
+			if( $f = $s->fetch() )
+				return $f['version'];
+			else if( $this->plugin === '' )
+				throw new Exception('Although `db_version` table exists it does not contain a record with current framework database version.');
+		}
+
+		if( is_file($f = $this->path . '/detect.php') ) {
+			$version = include $f;
+			if( $version )
+				return $version;
+		}
+
+		return '';
 	}
 
-	// if all passwords are md5 hashes, then it was updated by script to version 4.4.3
-	$s = $db->prepare($q = "SELECT 1 FROM `{$core->db_prefix}auth_users` WHERE `pass` NOT REGEXP '^[0-9a-f]{32}\$'  LIMIT 1");
-	if( !$s->execute() )
-		throw new DbException($s->errorInfo(), $q);
-	if( !$s->fetch() )
-		return '4.4.3';
+	public function update() {
+		global $cfg, $db, $core;
 
-	if( update_get_column_info('config', 'site') )
-		return '4.4.1';
+		$log = array();
 
-	if( update_get_column_info('content', 'custom_name') )
-		return '4.4.0';
+		$versions = $this->getAvailableUpdates();
+		if( empty($versions) ) {
+			$log[] = "There are no updates or no setup folder in '{$this->plugin}' plugin directory.";
+			return $log;
+		}
 
-	if( update_get_column_info('sites', 'active') )
-		return '4.3.0';
+		$dbVersion = $this->detectCurrentSchemaVersion();
 
-	if( update_get_table_info('auth_permissions') )
-		return '4.2.0';
+		// For the sake of sanity we insert the record with detected version
+		$s = $db->prepare($q = "INSERT IGNORE INTO `{$core->db_prefix}db_version` (`plugin`, `version`) VALUES (:plugin, :version)");
+		if( !$s->execute($p = array('plugin' => $this->plugin, 'version' => $dbVersion)) )
+			throw new DbException($s->errorInfo(), $q, $p);
 
-	return '4.0.0';
+		$s = $db->prepare($q = "UPDATE `{$core->db_prefix}db_version` SET `version` = :version WHERE `plugin` = :plugin");
+		$dbType = v($cfg['db']['type'], 'mysql');
+		// $log[] = "Database type: {$dbType}";
+		$log[] = "Current schema version: {$dbVersion}";
+
+		foreach( $versions as $version ) {
+			if( version_compare($version, $dbVersion) <= 0 ) {
+				$log[] = "Skipping update to {$version}";
+				continue;
+			}
+			if( $this->plugin === '' && version_compare($version, PC_VERSION) > 0 ) {
+				$log[] = "Stopping because next update version ({$version}) is greater than current CMS version (" . PC_VERSION . "). Please update CMS files and try updating once more.";
+				break;
+			}
+			$log[] = "Updating to {$version}\n";
+
+			if( is_file($f = $this->path . '/' . $dbType . '/' . $version . '.sql') ) {
+				$log[] = "Importing SQL file {$f}";
+				db_file_import(array($dbType => $f));
+			}
+			if( is_file($f = $this->path . '/script/' . $version . '.php') ) {
+				$log[] = "Executing PHP script {$f}";
+				include $f;
+			}
+
+			if( !$s->execute($p = array('version' => $version)) )
+				throw new DbException($s->errorInfo(), $q, $p);
+		}
+
+		return $log;
+	}
 }
-
-$dbVersion = update_detect_current_schema_version();
-
-$r = $db->prepare($q = "UPDATE `{$core->db_prefix}db_version` SET `version` = :version WHERE `plugin` = ''");
 
 echo '<pre>';
-$dbType = v($cfg['db']['type'], 'mysql');
-echo "Database type: {$dbType}\n";
-echo "Current framework schema version: {$dbVersion}\n";
 
-foreach( $versions as $version ) {
-	if( version_compare($version, $dbVersion) <= 0 ) {
-		echo "Skipping update to {$version}\n";
-		continue;
-	}
-	if( version_compare($version, PC_VERSION) > 0 ) {
-		echo "Stopping because next update version ({$version}) is greater than current CMS version (" . PC_VERSION . ")\n";
-		break;
-	}
-	echo "Updating to {$version}\n";
+echo "== Updating framework schema ==\n";
+$updater = new PC_updater($core->Get_path('root', '/install/data/update'), '');
+echo implode("\n", $updater->update()) . "\n\n";
 
-	if( is_file($f = $path . '/' . $dbType . '/' . $version . '.sql') ) {
-		echo "  Importing SQL file {$f}\n";
-		db_file_import(array($dbType => $f));
-	}
-	if( is_file($f = $path . '/script/' . $version . '.php') ) {
-		echo "  Executing PHP script {$f}\n";
-		include $f;
-	}
-
-	if( !$r->execute($p = array('version' => $version)) )
-		throw new DbException($s->errorInfo(), $q, $p);
+foreach( glob(CORE_PLUGINS_ROOT . '*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir ) {
+	$pluginName = basename($dir);
+	echo "== Updating core plugin '{$pluginName}' schema ==\n";
+	$updater = new PC_updater($dir . '/setup/update', $pluginName);
+	echo implode("\n", $updater->update()) . "\n\n";
 }
-echo "DONE\n";
+
+foreach( glob(PLUGINS_ROOT . '/*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir ) {
+	$pluginName = basename($dir);
+	echo "== Updating  plugin '{$pluginName}' schema ==\n";
+	$updater = new PC_updater($dir . '/setup/update', $pluginName);
+	echo implode("\n", $updater->update()) . "\n\n";
+}
+
+// $core->Get_path('plugins', '/setup/update', $pluginName)
+
 echo '</pre>';
