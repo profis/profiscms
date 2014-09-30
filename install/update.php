@@ -16,6 +16,9 @@
  * @var PC_database $db
  */
 
+if( isset($_REQUEST['cfg']) ) // check just in case
+	die();
+
 if( !defined('CORE_ROOT') )
 	require dirname(__FILE__) . '/../core/path_constants.php';
 
@@ -24,6 +27,7 @@ if( !class_exists('PC_core') )
 
 if( !isset($cfg['db']['name']) || empty($cfg['db']['name']) )
 	echo 'Please run install script before trying to update.';
+
 
 class PC_updater {
 	protected $plugin;
@@ -64,11 +68,10 @@ class PC_updater {
 
 		if( is_file($f = $this->path . '/detect.php') ) {
 			$version = include $f;
-			if( $version )
-				return $version;
+			return $version;
 		}
 
-		return '';
+		return null;
 	}
 
 	public function update() {
@@ -83,11 +86,17 @@ class PC_updater {
 		}
 
 		$dbVersion = $this->detectCurrentSchemaVersion();
+		if( $dbVersion === null ) {
+			$log[] = "Plugin is not installed (not activated at least one time)";
+			return $log;
+		}
 
-		// For the sake of sanity we insert the record with detected version
-		$s = $db->prepare($q = "INSERT IGNORE INTO `{$core->db_prefix}db_version` (`plugin`, `version`) VALUES (:plugin, :version)");
-		if( !$s->execute($p = array('plugin' => $this->plugin, 'version' => $dbVersion)) )
-			throw new DbException($s->errorInfo(), $q, $p);
+		if( $this->plugin !== '' || version_compare($dbVersion, '4.5.0') >= 0 ) {
+			// For the sake of sanity we insert the record with detected version
+			$s = $db->prepare($q = "INSERT IGNORE INTO `{$core->db_prefix}db_version` (`plugin`, `version`) VALUES (:plugin, :version)");
+			if( !$s->execute($p = array('plugin' => $this->plugin, 'version' => $dbVersion)) )
+				throw new DbException($s->errorInfo(), $q, $p);
+		}
 
 		$s = $db->prepare($q = "UPDATE `{$core->db_prefix}db_version` SET `version` = :version WHERE `plugin` = :plugin");
 		$dbType = v($cfg['db']['type'], 'mysql');
@@ -103,7 +112,7 @@ class PC_updater {
 				$log[] = "Stopping because next update version ({$version}) is greater than current CMS version (" . PC_VERSION . "). Please update CMS files and try updating once more.";
 				break;
 			}
-			$log[] = "Updating to {$version}\n";
+			$log[] = "Updating to {$version}";
 
 			if( is_file($f = $this->path . '/' . $dbType . '/' . $version . '.sql') ) {
 				$log[] = "Importing SQL file {$f}";
@@ -114,8 +123,10 @@ class PC_updater {
 				include $f;
 			}
 
-			if( !$s->execute($p = array('version' => $version)) )
-				throw new DbException($s->errorInfo(), $q, $p);
+			if( $this->plugin !== '' || version_compare($dbVersion, '4.5.0') >= 0 ) {
+				if( !$s->execute($p = array('plugin' => $this->plugin, 'version' => $version)) )
+					throw new DbException($s->errorInfo(), $q, $p);
+			}
 		}
 
 		return $log;
@@ -130,16 +141,20 @@ echo implode("\n", $updater->update()) . "\n\n";
 
 foreach( glob(CORE_PLUGINS_ROOT . '*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir ) {
 	$pluginName = basename($dir);
-	echo "== Updating core plugin '{$pluginName}' schema ==\n";
-	$updater = new PC_updater($dir . '/setup/update', $pluginName);
-	echo implode("\n", $updater->update()) . "\n\n";
+	if( is_dir($dir . '/setup/update') ) {
+		echo "== Updating core plugin '{$pluginName}' schema ==\n";
+		$updater = new PC_updater($dir . '/setup/update', $pluginName);
+		echo implode("\n", $updater->update()) . "\n\n";
+	}
 }
 
 foreach( glob(PLUGINS_ROOT . '/*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir ) {
 	$pluginName = basename($dir);
-	echo "== Updating  plugin '{$pluginName}' schema ==\n";
-	$updater = new PC_updater($dir . '/setup/update', $pluginName);
-	echo implode("\n", $updater->update()) . "\n\n";
+	if( is_dir($dir . '/setup/update') ) {
+		echo "== Updating  plugin '{$pluginName}' schema ==\n";
+		$updater = new PC_updater($dir . '/setup/update', $pluginName);
+		echo implode("\n", $updater->update()) . "\n\n";
+	}
 }
 
 // $core->Get_path('plugins', '/setup/update', $pluginName)

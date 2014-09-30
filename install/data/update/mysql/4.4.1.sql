@@ -1,14 +1,5 @@
 ALTER TABLE `{prefix}config` ADD `site` TINYINT( 3 ) UNSIGNED NOT NULL DEFAULT '0' AFTER `ckey` ;
 
-
-
-
-
-
-
--- Table structure for table `{prefix}forms`
--- 
-
 CREATE TABLE IF NOT EXISTS `{prefix}forms` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `pid` int(11) NOT NULL,
@@ -18,15 +9,6 @@ CREATE TABLE IF NOT EXISTS `{prefix}forms` (
   `ip` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
--- 
--- Dumping data for table `{prefix}forms`
--- 
-
-
--- 
--- Dumping data for table `{prefix}variables`
--- 
 
 INSERT INTO `{prefix}variables` (`vkey`, `controller`, `site`, `ln`, `value`) VALUES
 ('form_submitted_field_name', 'forms', 0, 'en', '%s:'),

@@ -1,4 +1,4 @@
-ALTER TABLE `{prefix}languages` ADD `disabled` SMALLINT( 1 ) UNSIGNED NOT NULL DEFAULT '0';
+ALTER TABLE `{prefix}languages` ADD `disabled` SMALLINT( 1 ) UNSIGNED NOT NULL DEFAULT '0' AFTER `nr`;
 
 ALTER TABLE `{prefix}content` ADD `permalink` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci  NOT NULL AFTER `route` ;
 

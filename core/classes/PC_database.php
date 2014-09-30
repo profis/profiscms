@@ -158,6 +158,45 @@ final class PC_database extends PDO {
 		return $s->fetch();
 	}
 
+	private $transactionNestingLevel = 0;
+
+	public function beginTransaction() {
+		$q = null;
+		if( $this->transactionNestingLevel == 0 )
+			$result = parent::beginTransaction();
+		else
+			$result = $this->exec($q = "SAVEPOINT LEVEL{$this->transactionNestingLevel}");
+		if( !$result )
+			throw new DbTransactionException($this->errorInfo(), $q, null, "Could not begin a transaction");
+		$this->transactionNestingLevel++;
+	}
+
+	public function commit() {
+		if( $this->transactionNestingLevel == 0 )
+			throw new DbTransactionException(null, null, null, "Inconsistent number of beginTransaction() and commit() / rollBack() calls. Please check your code so that only one commit() or rollBack() method is called per transaction that was started with beginTransaction().");
+		$this->transactionNestingLevel--;
+		$q = null;
+		if( $this->transactionNestingLevel == 0 )
+			$result = parent::commit();
+		else
+			$result = $this->exec($q = "RELEASE SAVEPOINT LEVEL{$this->transactionNestingLevel}");
+		if( !$result )
+			throw new DbTransactionException($this->errorInfo(), $q, null, "Could not commit a transaction");
+	}
+
+	public function rollBack() {
+		if( $this->transactionNestingLevel == 0 )
+			throw new DbTransactionException(null, null, null, "Inconsistent number of beginTransaction() and commit() / rollBack() calls. Please check your code so that only one commit() or rollBack() method is called per transaction that was started with beginTransaction().");
+		$this->transactionNestingLevel--;
+		$q = null;
+		if ($this->transactionNestingLevel == 0)
+			$result = parent::rollBack();
+		else
+			$result = $this->exec($q = "ROLLBACK TO SAVEPOINT LEVEL{$this->transactionNestingLevel}");
+		if( !$result )
+			throw new DbTransactionException($this->errorInfo(), $q, null, "Could not roll back a transaction");
+	}
+
 	/* public function Select() {}
 	public function Insert() {}
 	public function Delete() {}

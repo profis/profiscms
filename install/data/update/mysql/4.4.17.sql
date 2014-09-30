@@ -1,6 +1,6 @@
 ALTER TABLE `{prefix}site_users` CHANGE `email` `email` VARCHAR(255) COLLATE utf8_unicode_ci NULL;
-ALTER TABLE `{prefix}site_users` CHANGE `password` `password` VARCHAR(100) COLLATE utf8_unicode_ci NULL;
-ALTER TABLE `{prefix}site_users` CHANGE `login` `login` VARCHAR(32) COLLATE utf8_unicode_ci NULL;
+ALTER TABLE `{prefix}site_users` CHANGE `password` `password` VARCHAR(32) COLLATE utf8_unicode_ci NULL;
+ALTER TABLE `{prefix}site_users` CHANGE `login` `login` VARCHAR(100) COLLATE utf8_unicode_ci NULL;
 ALTER TABLE `{prefix}site_users` CHANGE `confirmation` `confirmation` VARCHAR(32) COLLATE utf8_unicode_ci NULL;
 
 CREATE TABLE IF NOT EXISTS `{prefix}site_users_external` (

@@ -55,7 +55,10 @@ try {
 	if (!empty($config['db_port'])) {
 		$port = 'port='.$config['db_port'].';';
 	}
-	$db = new PDO("mysql:host=".$config['db_host'] . ";" . $port . "dbname=".$config['db_name'], $config['db_user'], $config['db_pass']);
+
+	include_once CORE_ROOT . 'classes/PC_database.php';
+
+	$db = new PC_database("mysql:host=".$config['db_host'] . ";" . $port . "dbname=".$config['db_name'], $config['db_user'], $config['db_pass']);
 	$db->query("SET NAMES '".$cfg['db']['charset']."'");
 } catch (PDOException $e) {
 	$error = '<strong>' . $t['install_failed_db'] . '</strong><br />' . $t['install_error'] . ': <p><strong>'. $e->getMessage() ."</strong></p>";
