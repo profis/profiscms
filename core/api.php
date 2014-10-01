@@ -1,4 +1,17 @@
 <?php
+/**
+ * @var array $cfg
+ * @var PC_core $core
+ * @var PC_site $site
+ * @var PC_page $page
+ * @var PC_routes $routes
+ * @var PC_plugins $plugins
+ * @var PC_cache $cache
+ * @var PC_auth $auth
+ * @var PC_database $db
+ */
+use \Profis\CMS\SiteMap;
+
 require_once 'path_constants.php';
 
 require("base.php");
@@ -251,9 +264,6 @@ if ($routes->Get(1) == 'admin') {
 				'ipmd5' => 'admin/api/ipmd5',
 				'pass' => 'admin/api/pass',
 				'debug' => 'admin/api/dbg',
-				'debug' => 'admin/api/dbg',
-				'debug' => 'admin/api/dbg',
-				'ip' => 'admin/api/ip',
 				'debug-email' => 'admin/api/debug-email',
 				'send test email' => 'admin/api/send_test_email',
 				'error' => 'admin/api/error',
@@ -315,7 +325,7 @@ if ($routes->Get(1) == 'admin') {
 			echo 'register_globals = ' . ini_get('register_globals') . "\n<br />";
 			echo 'max_execution_time = ' . ini_get('max_execution_time') . "\n<br />";
 			echo 'post_max_size = ' . ini_get('post_max_size') . "\n<br />";
-			echo 'post_max_size+1 = ' . (ini_get('post_max_size')+1) . "\n<br />";
+			echo 'post_max_size+1 = ' . ((int)ini_get('post_max_size')+1) . "\n<br />";
 			//echo 'post_max_size in bytes = ' . return_bytes(ini_get('post_max_size')) . '<br />';
 			echo '<hr />';
 			echo 'log_errors = ' . ini_get('log_errors') . "\n<br />";
@@ -369,7 +379,7 @@ else {
 				?>
 			</head>
 			<body style="padding:20px; background:#eee">
-			<center style="font-size:14pt;">
+			<div style="font-size:14pt;text-align:center;">
 				<?php
 				$a=0;
 				foreach ($site->Get_languages() as $code=>$ln) {
@@ -378,7 +388,7 @@ else {
 					echo '<a href="api/texts/'.$code.'/">'.$ln.'</a>';
 				}
 				?>
-			</center>
+			</div>
 			<?php
 			if (count($list)) foreach ($list as $p) {
 				//print_pre($p);
@@ -481,15 +491,21 @@ else {
 			}
 			break;
 		case 'sitemap':
-			function Get_sub_list($pid) {
-				global $page;
+			function Map_sub_list($pid, &$site_languages, SiteMap $map) {
+				global $page, $core;
 				$list = array();
-				foreach ($page->Get_submenu($pid) as $p) {
+				foreach ($page->Get_submenu($pid, array(), false, false, true) as $p) {
 					if (v($p['pid'])) {
-						$list[$p['pid']] = $p;
-						$list += Get_sub_list($p['pid']);
+						if( !$p['nositemap'] )
+							$map->addPage($p['pid'], $site_languages, 'weekly', ($p['hot'] > 0) ? 0.8 : 0.5);
+						if( $p['controller'] )
+							$core->Init_hooks('sitemap.generate.' . $p['controller'], array(
+								'pageId' => $p['pid'],
+								'languages' => &$site_languages,
+								'map' => $map
+							));
+						Map_sub_list($p['pid'], $site_languages, $map);
 					}
-					
 				}
 				return $list;
 			}
@@ -497,33 +513,7 @@ else {
 				echo 'This site is turned off, so you can`t view its` sitemap.';
 				exit;
 			}
-			///*
-			header ("Content-Type:text/xml");
-			echo '<?xml version="1.0" encoding="UTF-8"?>';
-			echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-			//*/
-			$page->Load_menu();
-			$list = array();
-			//print_pre($page->menus);
-			//break;
-			foreach ($page->menus as $menu) {
-				foreach ($menu as $p) {
-					$list[$p['pid']] = $p;
-					$list += Get_sub_list($p['pid']);
-				}
-			}
-			$ids = array();
-			foreach ($list as $p) {
-				if (v($p['pid'])) {
-					$ids[] = $p['pid'];
-				}
-				continue;
-				/*echo '<url>'."\r\n";
-				echo '<loc>'.$cfg['url']['base'].$site->Get_link($p['route']).'</loc>'."\r\n";
-				echo '<changefreq>weekly</changefreq>'."\r\n";
-				if ((int)$p['hot'] > 0) echo '<priority>0.8</priority>'."\r\n";
-				echo '</url>'."\r\n";*/
-			}
+
 			$ln_model = new PC_language_model();
 			$site_languages = $ln_model->get_all(array(
 				'where' => array(
@@ -532,27 +522,33 @@ else {
 				),
 				'value' => 'ln',
 			));
-			foreach ($site_languages as $key => $site_language) {
-				$site_languages[$key] = "'$site_language'";
+
+			header ("Content-Type:text/xml");
+
+			$map = new SiteMap();
+			$map->open();
+
+			$page->Load_menu(true);
+			$list = array();
+
+			foreach ($page->menus as $menu) {
+				foreach ($menu as $p) {
+					if( !$p['nositemap'] )
+						$map->addPage($p['pid'], $site_languages, 'weekly', ($p['hot'] > 0) ? 0.8 : 0.5);
+					if( $p['controller'] )
+						$core->Init_hooks('sitemap.generate.' . $p['controller'], array(
+							'pageId' => $p['pid'],
+							'languages' => &$site_languages,
+							'map' => $map
+						));
+					Map_sub_list($p['pid'], $site_languages, $map);
+				}
 			}
-			$query = "SELECT pid,route,ln FROM {$cfg['db']['prefix']}content WHERE pid in(".implode(',', $ids).") AND ln in (".implode(',', $site_languages).")";
-			$r = $db->query($query);
-			if (!$r) {
-				header('HTTP/1.1 503 Service Temporarily Unavailable');
-				exit;
-			}
-			
-			while ($d = $r->fetch()) {
-				echo '<url>'."\r\n";
-				echo '<loc>'.$cfg['url']['base'].$site->Get_link($d['route'], $d['ln']).'</loc>'."\r\n";
-				echo '<changefreq>weekly</changefreq>'."\r\n";
-				if ((int)$list[$d['pid']]['hot'] > 0) echo '<priority>0.8</priority>'."\r\n";
-				echo '</url>'."\r\n";
-			}
-			?>
-			</urlset> 
-			<?php
+
+			$map->close();
+
 			break;
+
 		//case 'get-online-users':
 		//case 'page':
 		/*

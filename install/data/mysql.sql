@@ -349,6 +349,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}pages` (
   `published` int(1) NOT NULL DEFAULT '1',
   `hot` int(1) NOT NULL DEFAULT '0',
   `nomenu` int(1) NOT NULL DEFAULT '0',
+  `nositemap` INT(1) NOT NULL DEFAULT 0,
   `deleted` int(1) NOT NULL DEFAULT '0',
   `date_from` int(10) unsigned DEFAULT NULL,
   `date_to` int(10) unsigned DEFAULT NULL,
@@ -530,4 +531,4 @@ INSERT INTO `{prefix}variables` (`vkey`, `controller`, `site`, `ln`, `value`) VA
 ('form_file_upload_error', 'forms', 0, 'lt', 'Failo įkelti nepavyko. Pabandykite dar kartą arba susisiekite su svetainės administratoriumi.'),
 ('form_file_upload_error', 'forms', 0, 'ru', 'Файл незагружен. Попробуйте еще раз или свяжитесь с администратором сайта.');
 
-INSERT INTO `{prefix}db_version` (`plugin`, `version`) VALUES('', '4.5.0');
+INSERT INTO `{prefix}db_version` (`plugin`, `version`) VALUES('', '4.5.2');

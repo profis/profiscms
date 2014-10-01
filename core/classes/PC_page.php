@@ -2107,11 +2107,11 @@ final class PC_page extends PC_base {
 		return $anchors;
 	}
 	
-	public function Load_menu() {
+	public function Load_menu($include_nomenu = false) {
 		$now = time();
-		$query = "SELECT mp.id idp,p.id pid,c.id cid,c.name,c.custom_name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id,p.target FROM {$this->db_prefix}pages mp"
+		$query = "SELECT mp.id idp,p.id pid,c.id cid,c.name,c.custom_name,c.route,c.permalink,p.nr,p.hot,h.id redirect_from_home,p.controller,p.redirect,p.reference_id,p.target,p.nositemap FROM {$this->db_prefix}pages mp"
 		." LEFT JOIN {$this->db_prefix}pages p ON p.idp = mp.id"
-		." AND p.controller!='menu' AND p.nomenu<1"
+		." AND p.controller!='menu'" . ($include_nomenu ? '' : ' AND p.nomenu<1')
 		." LEFT JOIN {$this->db_prefix}content c ON pid=p.id AND ln='{$this->site->ln}'"
 		//check if home page rediects to this page
 		." LEFT JOIN {$this->db_prefix}pages h ON h.front=1 and h.redirect=".$this->sql_parser->cast('p.id', 'text')
@@ -2301,7 +2301,8 @@ final class PC_page extends PC_base {
 				'reference_id'=> 'p.reference_id',
 				'source_id'=> 'p.source_id',
 				'target'=> 'p.target',
-				'nomenu'=> 'p.nomenu'
+				'nomenu'=> 'p.nomenu',
+				'nositemap'=> 'p.nositemap',
 			);
 			$retrieve_fields = '';
 			for ($a=0; $a<$fields_count; $a++) {
