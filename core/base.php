@@ -81,13 +81,36 @@ $class_autoload = array(
 
 PC_app::$cfg = $cfg;
 
-if (!function_exists('PC_autoload')) {
-	function PC_autoload($cls) {
-		global $class_autoload, $cfg;
+if (!function_exists('PC_autoload_classmap')) {
+	function PC_autoload_classmap($cls) {
+		global $class_autoload;
 		$cls_to_lower = strtolower($cls);
-		if (isset($class_autoload[$cls_to_lower]))
-			$path =& $class_autoload[$cls_to_lower];
-		else if (preg_match("#^PC_[a-zA_Z0-9_]+$#i", $cls)) {
+		if( isset($class_autoload[$cls_to_lower]) ) {
+			$path = $class_autoload[$cls_to_lower];
+			if( is_file($path) ) {
+				require_once $path;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function PC_autoload_namespaces($cls) {
+		if( strpos($cls, '\\') !== false ) {
+			$cls = ltrim($cls, '\\');
+			if( DS != '\\' )
+				$cls = str_replace('\\', DS, $cls);
+			$path = PC_app::$cfg['path']['namespaces'] . DS . $cls . '.php';
+			if( is_file($path) ) {
+				require_once $path;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function PC_autoload_core($cls) {
+		if (preg_match("#^PC_[a-zA_Z0-9_]+$#i", $cls)) {
 			$sub_folder = '';
 			if ($cls != 'PC_model' and substr($cls, -6) == '_model') {
 				$sub_folder = 'models/';
@@ -96,22 +119,29 @@ if (!function_exists('PC_autoload')) {
 				$sub_folder = 'widgets/';
 			}
 			$path = PC_app::$cfg['path']['classes'].$sub_folder.$cls.'.php';
+			if( is_file($path) ) {
+				require_once $path;
+				return true;
+			}
 		}
-		else if (preg_match("#Exception$#", $cls))
-			$path = PC_app::$cfg['path']['classes'].'exceptions/'.$cls.'.php';
-		else return false;
-		
-		if (!is_file($path) and $cls_to_lower == 'pc_utils')
-			$path = str_replace('PC_Utils.php', 'PC_utils.php', $path);
-
-		if (!is_file($path))
-			return false;
-
-		require_once($path);
-		return true;
+		return false;
 	}
 
-	spl_autoload_register('PC_autoload');
+	function PC_autoload_exceptions($cls) {
+		if (preg_match("#^[^\\\\]+Exception$#", $cls)) {
+			$path = PC_app::$cfg['path']['classes'].'exceptions/'.$cls.'.php';
+			if( is_file($path) ) {
+				require_once $path;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	spl_autoload_register('PC_autoload_classmap');
+	spl_autoload_register('PC_autoload_namespaces');
+	spl_autoload_register('PC_autoload_core');
+	spl_autoload_register('PC_autoload_exceptions'); // this will be removed once exceptions move out to namespaces area
 }
 
 

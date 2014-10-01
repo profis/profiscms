@@ -24,6 +24,7 @@ $cfg['directories'] =  array(
 	'admin' => 'admin',
 	'themes' => 'themes',
 	'classes' => CORE_DIR . DS . 'classes',
+	'namespaces' => CORE_DIR . DS . 'namespaces',
 	'libs' => 'libs',
 	'logs' => 'logs',
 	'plugins' => 'plugins',
