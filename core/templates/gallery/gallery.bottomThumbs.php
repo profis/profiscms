@@ -10,25 +10,25 @@ if( $startIndex >= ($cnt = count($data['images'])) )
 if( $startIndex < 0 )
 	$startIndex = 0;
 ?>
-<div class="pc_gallery pc_gallery_bottom_thumbs pc_gallery_<?php echo $data['style']; ?> clearfix" data-previewmode="<?php echo $data['previewMode']; ?>">
-	<div class="pc_gallery_preview_wrap"><?php // pad_bottom, absolute ?>
-		<div class="pc_gallery_preview"><?php // size, relative ?>
-			<div class="pc_gallery_image_wrap"><?php // overflow ?>
-				<div class="pc_gallery_image" style="background-size: <?php echo $data['previewMode']; ?>; <?php echo isset($data['images'][$startIndex]) ? htmlspecialchars('background-image: url(' . $this->chooseImageFromData($data['images'][$startIndex], 'preview', $data) . ');') : ''; ?>"></div>
+<div class="pc_gallery pcgw-bottom-thumbs pcgw-<?php echo $data['style']; ?> clearfix" data-previewmode="<?php echo $data['previewMode']; ?>">
+	<div class="pcgw-preview-wrap"><?php // pad_bottom, absolute ?>
+		<div class="pcgw-preview"><?php // size, relative ?>
+			<div class="pcgw-image-wrap"><?php // overflow ?>
+				<div class="pcgw-image" style="background-size: <?php echo $data['previewMode']; ?>; <?php echo isset($data['images'][$startIndex]) ? htmlspecialchars('background-image: url(' . $this->chooseImageFromData($data['images'][$startIndex], 'preview', $data) . ');') : ''; ?>"></div>
 			</div>
-			<div class="pc_gallery_preview_left"></div>
-			<div class="pc_gallery_preview_right"></div>
-			<div class="pc_gallery_preview_zoom"></div>
+			<div class="pcgw-left"></div>
+			<div class="pcgw-right"></div>
+			<div class="pcgw-zoom"></div>
 		</div>
 	</div>
-	<div class="pc_gallery_controls">
-		<div class="pc_gallery_thumbs_wrap"><?php // size, absolute ?>
-			<div class="pc_gallery_thumbs_wrap2"><?php // overflow, relative ?>
-				<div class="pc_gallery_thumbs"><?php // slides ?>
-					<div class="pc_gallery_thumbs_cont"><?php
+	<div class="pcgw-controls">
+		<div class="pcgw-thumbs-wrap"><?php // size, absolute ?>
+			<div class="pcgw-thumbs-wrap2"><?php // overflow, relative ?>
+				<div class="pcgw-thumbs"><?php // slides ?>
+					<div class="pcgw-thumbs-cont"><?php
 						foreach( $data['images'] as $idx => $imgData ) {
 							?><div
-								class="pc_gallery_thumb<?php echo ($idx == $startIndex) ? ' active' : ''; ?>"
+								class="pcgw-thumb<?php echo ($idx == $startIndex) ? ' active' : ''; ?>"
 								data-preview="<?php echo htmlspecialchars($this->chooseImageFromData($imgData, 'preview', $data)); ?>"
 								data-original="<?php echo htmlspecialchars($imgData['']); ?>"
 							><a
@@ -47,13 +47,13 @@ if( $startIndex < 0 )
 							/></a></div><?php
 						}
 					?></div>
-					<div class="pc_gallery_thumb_highlighter_wrap"><?php // absolute ?>
-						<div class="pc_gallery_thumb_highlighter"><?php // relative ?><?php echo $data['highlighterMarkup']; ?></div>
+					<div class="pcgw-highlighter-wrap"><?php // absolute ?>
+						<div class="pcgw-highlighter"><?php // relative ?><?php echo $data['highlighterMarkup']; ?></div>
 					</div>
 				</div>
 			</div>
 		</div>
-		<div class="pc_gallery_thumbs_left"></div>
-		<div class="pc_gallery_thumbs_right"></div>
+		<div class="pcgw-left"></div>
+		<div class="pcgw-right"></div>
 	</div>
 </div>

@@ -2257,7 +2257,7 @@ final class PC_page extends PC_base {
 	}
 	
 	public function Get_submenu_part($id, $fields=array(), &$limit=false, $include_content=true, $include_nomenu=false, $order = "mp.nr,p.nr", $function_params = array(), $addWhere = null) {
-		if (!empty($fields) and !in_array('permalink', $fields)) {
+		if ($include_content && !empty($fields) && !in_array('permalink', $fields)) {
 			$fields[] = 'permalink';
 		}
 		//if (!empty($fields) and !in_array('pid', $fields)) {
@@ -2378,7 +2378,8 @@ final class PC_page extends PC_base {
 		$params = array_merge($params, $additional_params);
 		$this->get_debug_query_string($query, $params);
 		$success = $r->execute($params);
-		if (!$success) return false;
+		if (!$success)
+			throw new DbException($r->errorInfo(), $query, $params);
 		
 		if ($paging) {
 			$rTotal = $this->query("SELECT FOUND_ROWS()");
@@ -2419,7 +2420,7 @@ final class PC_page extends PC_base {
 			
 			//print_pre($menu);
 			
-			if (v($menu['permalink'])) {
+			if ($include_content && v($menu['permalink'])) {
 				$menu['real_route'] = $menu['route'];
 				$menu['route'] = $menu['permalink'];
 			}

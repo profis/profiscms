@@ -699,9 +699,9 @@ final class PC_core extends PC_base {
 		if (!$hooks) return false;
 		return count($hooks);
 	}
-	#callbacks (search ar naudojama kur nors?)
+
 	public function Register_callback($event, $callback) {
-		$this->_callbacks[(string)$event][] = $callback;
+		$this->_callbacks[(string)$event] = $callback;
 		return true;
 	}
 	public function Init_callback($event, $params=array()) {

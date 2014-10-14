@@ -6,10 +6,10 @@
 		var data = $widget.data('pc_gallery_widget');
 		if( data == null ) {
 			data = {};
-			data.$thumbsWrap = $widget.find('.pc_gallery_thumbs_wrap2');
-			data.$thumbs = data.$thumbsWrap.find('.pc_gallery_thumbs');
-			data.$highlighter = data.$thumbs.find('.pc_gallery_thumb_highlighter_wrap');
-			data.$imageWrap = $widget.find('.pc_gallery_image_wrap');
+			data.$thumbsWrap = $widget.find('.pcgw-thumbs-wrap2');
+			data.$thumbs = data.$thumbsWrap.find('.pcgw-thumbs');
+			data.$highlighter = data.$thumbs.find('.pcgw-highlighter-wrap');
+			data.$imageWrap = $widget.find('.pcgw-image-wrap');
 			$widget.data('pc_gallery_widget', data);
 		}
 		return data;
@@ -21,18 +21,18 @@
 		var data = getWidgetData($widget);
 
 		data.$thumbs.find('.active').removeClass('active');
-		var $thumb = data.$thumbs.find('.pc_gallery_thumb:nth(' + Math.round(index) + ')');
+		var $thumb = data.$thumbs.find('.pcgw-thumb:nth(' + Math.round(index) + ')');
 		$thumb.addClass('active');
 
 		var pos = $thumb.position();
 		data.$highlighter.css({left: pos.left + 'px', top: pos.top + 'px'});
 
-		var $currentImg = data.$imageWrap.find('.pc_gallery_image:not(.pc_gallery_disposed)');
+		var $currentImg = data.$imageWrap.find('.pcgw-image:not(.pcgw-disposed)');
 
-		$currentImg.addClass('.pc_gallery_disposed').css({opacity: 0});
+		$currentImg.addClass('.pcgw-disposed').css({opacity: 0});
 		setTimeout(function() { $currentImg.remove(); }, 10000); // remove disposed images in 10 seconds
 
-		var $newImg = $('<div />').addClass('pc_gallery_image').css({
+		var $newImg = $('<div />').addClass('pcgw-image').css({
 			opacity: 0,
 			'background-size': $widget.data('previewmode'),
 			'background-image': 'url(' + $thumb.data('preview') + ')'
@@ -52,7 +52,7 @@
 
 	var selectPrevImage = function($widget) {
 		var data = getWidgetData($widget);
-		var count = data.$thumbs.find('.pc_gallery_thumb').length;
+		var count = data.$thumbs.find('.pcgw-thumb').length;
 		if( count > 0 ) {
 			var index = getSelectedIndex($widget) - 1;
 			if( index < 0 )
@@ -63,7 +63,7 @@
 
 	var selectNextImage = function($widget) {
 		var data = getWidgetData($widget);
-		var count = data.$thumbs.find('.pc_gallery_thumb').length;
+		var count = data.$thumbs.find('.pcgw-thumb').length;
 		if( count > 0 ) {
 			var index = getSelectedIndex($widget) + 1;
 			if( index >= count )
@@ -122,15 +122,15 @@
 					var pos = $thumb.position();
 					data.$highlighter.css({left: pos.left + 'px', top: pos.top + 'px', display: 'block'});
 				})
-				.on('click', '.pc_gallery_preview_left', function(e) {
+				.on('click', '.pcgw-preview .pcgw-left', function(e) {
 					var $widget = $(this).closest('.pc_gallery');
 					selectPrevImage($widget);
 				})
-				.on('click', '.pc_gallery_preview_right', function(e) {
+				.on('click', '.pcgw-preview .pcgw-right', function(e) {
 					var $widget = $(this).closest('.pc_gallery');
 					selectNextImage($widget);
 				})
-				.on('click', '.pc_gallery_thumbs_left', function(e) {
+				.on('click', '.pcgw-controls .pcgw-left', function(e) {
 					var data = getWidgetData($(e.target).closest('.pc_gallery'));
 					var pos = data.$thumbs.position();
 					if( pos.left < 0 ) {
@@ -140,7 +140,7 @@
 						data.$thumbs.css({left: pos.left + 'px'});
 					}
 				})
-				.on('click', '.pc_gallery_thumbs_right', function(e) {
+				.on('click', '.pcgw-controls .pcgw-right', function(e) {
 					var data = getWidgetData($(e.target).closest('.pc_gallery'));
 					var pos = data.$thumbs.position();
 					var w = data.$thumbsWrap.width();
@@ -151,7 +151,7 @@
 							pos.left = min;
 						data.$thumbs.css({left: pos.left + 'px'});
 					}
-				}).on('click', '.pc_gallery_thumb', function(e) {
+				}).on('click', '.pcgw-thumb', function(e) {
 					e.preventDefault();
 					e.stopPropagation();
 					e.returnValue = false;
@@ -159,7 +159,7 @@
 					var $widget = $thumb.closest('.pc_gallery');
 					selectImage($widget, $thumb.index());
 					return false;
-				}).on('click', '.pc_gallery_preview_zoom', function(e) {
+				}).on('click', '.pcgw-zoom', function(e) {
 					var $widget = $(this).closest('.pc_gallery');
 					zoomImageIn($widget);
 				});

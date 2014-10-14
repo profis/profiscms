@@ -1,0 +1,265 @@
+$widgetWidth: 100%;
+$widgetHeight: 600px;
+
+$thumbButtonSize: 30px;
+$previewButtonSize: 50px;
+$zoomButtonSize: 50px;
+
+$thumbButtonOffset: 10px;
+$previewButtonOffset: 5px;
+$zoomButtonOffset: 10px;
+
+$thumbWidth: 120px;
+$thumbHeight: 90px;
+$thumbSpacing: 5px;
+
+$thumbsOffset: $thumbButtonSize + $thumbButtonOffset * 2;
+$controlsHeight: $thumbHeight + $thumbSpacing * 2;
+
+// Themed variables
+
+$highlighterBorderDark: 3px solid #FFFFFF;
+$leftArrowDark: url(../img/arrow-left-dark.png);
+$rightArrowDark: url(../img/arrow-right-dark.png);
+$zoomDark: url(../img/zoom-dark.png);
+
+$highlighterBorderLight: 3px solid #C0C0C0;
+$leftArrowLight: url(../img/arrow-left-light.png);
+$rightArrowLight: url(../img/arrow-right-light.png);
+$zoomLight: url(../img/zoom-light.png);
+
+// The code
+
+%button {
+	position: absolute;
+	background-size: contain;
+	background-position: center center;
+	background-repeat: no-repeat;
+	opacity: 0.5;
+	-webkit-transition: opacity 0.2s ease;
+	-moz-transition: opacity 0.2s ease;
+	-ms-transition: opacity 0.2s ease;
+	-o-transition: opacity 0.2s ease;
+	transition: opacity 0.2s ease;
+	cursor: pointer;
+	&:hover {
+		opacity: 1;
+	}
+}
+
+%movementTransitions {
+	position: absolute;
+	left: 0;
+	top: 0;
+	-webkit-transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+	-moz-transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+	-ms-transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+	-o-transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+	transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
+}
+
+@mixin button($width, $height) {
+	@extend %button;
+	width: $width;
+	height: $height;
+}
+
+@mixin buttonVAligned($width, $height) {
+	@include button($width, $height);
+	top: 50%;
+	margin-top: -$height / 2;
+}
+
+@mixin buttonHAligned($width, $height) {
+	@include button($width, $height);
+	left: 50%;
+	margin-left: -$width / 2;
+}
+
+.pc_gallery {
+	position: relative;
+	width: $widgetWidth;
+	height: $widgetHeight;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+
+	&.pcgw-bottom-thumbs {
+		.pcgw-preview-wrap {
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			padding-bottom: $controlsHeight;
+
+			.pcgw-preview {
+				position: relative;
+				width: 100%;
+				height: 100%;
+
+				.pcgw-image-wrap {
+					position: relative;
+					width: 100%;
+					height: 100%;
+					overflow: hidden;
+
+					.pcgw-image {
+						@extend %movementTransitions;
+						width: 100%;
+						height: 100%;
+						background-position: center center;
+						background-repeat: no-repeat;
+					}
+				}
+
+				.pcgw-left {
+					@include buttonVAligned($previewButtonSize, $previewButtonSize);
+					left: $previewButtonOffset;
+				}
+
+				.pcgw-right {
+					@include buttonVAligned($previewButtonSize, $previewButtonSize);
+					right: $previewButtonOffset;
+				}
+
+				.pcgw-zoom {
+					@include button($zoomButtonSize, $zoomButtonSize);
+					right: $zoomButtonOffset;
+					top: $zoomButtonOffset;
+				}
+			}
+		}
+
+		.pcgw-controls {
+			position: absolute;
+			bottom: 0;
+			width: 100%;
+			height: $controlsHeight;
+
+			.pcgw-thumbs-wrap {
+				position: absolute;
+				left: $thumbsOffset;
+				right: $thumbsOffset;
+				top: $thumbSpacing;
+				bottom: $thumbSpacing;
+
+				.pcgw-thumbs-wrap2 {
+					position: relative;
+					width: 100%;
+					height: 100%;
+					overflow: hidden;
+
+					.pcgw-thumbs {
+						@extend %movementTransitions;
+						height: 100%;
+
+						.pcgw-thumbs-cont {
+							position: relative;
+							display: block;
+							margin: 0;
+							padding: 0;
+							height: 100%;
+							width: auto;
+							white-space: nowrap;
+							margin-left: -$thumbSpacing;
+
+							.pcgw-thumb {
+								width: $thumbWidth;
+								height: $thumbHeight;
+								display: inline-block;
+								margin: 0 0 0 $thumbSpacing;
+								padding: 0;
+								cursor: pointer;
+							}
+						}
+
+						.pcgw-highlighter-wrap {
+							@extend %movementTransitions;
+							width: $thumbWidth;
+							height: $thumbHeight;
+							display: none;
+
+							.pcgw-highlighter {
+								position: absolute;
+								left: 0;
+								top: 0;
+								right: 0;
+								bottom: 0;
+							}
+						}
+
+						a {
+							display: block;
+							width: 100%;
+							height: 100%;
+							background-position: center center;
+							background-repeat: no-repeat;
+							margin: 0;
+							padding: 0;
+							pointer-events: none;
+						}
+
+						img {
+							display: none;
+						}
+					}
+				}
+			}
+
+			.pcgw-left {
+				@include buttonVAligned($thumbButtonSize, $thumbButtonSize);
+				left: $thumbButtonOffset;
+			}
+
+			.pcgw-right {
+				@include buttonVAligned($thumbButtonSize, $thumbButtonSize);
+				right: $thumbButtonOffset;
+			}
+		}
+	}
+
+	&.pcgw-dark {
+		background-color: #404040;
+
+		.pcgw-left {
+			background-image: $leftArrowDark;
+		}
+
+		.pcgw-right {
+			background-image: $rightArrowDark;
+		}
+
+		.pcgw-zoom {
+			background-image: $zoomDark;
+		}
+
+		.pcgw-highlighter {
+			border: $highlighterBorderDark;
+		}
+	}
+
+	&.pc_gallery_light {
+		background-color: #FFFFFF;
+
+		.pcgw-left {
+			background-image: $leftArrowLight;
+		}
+
+		.pcgw-right {
+			background-image: $rightArrowLight;
+		}
+
+		.pcgw-zoom {
+			background-image: $zoomLight;
+		}
+
+		.pcgw-highlighter {
+			border: $highlighterBorderLight;
+		}
+	}
+}
+
