@@ -3,7 +3,7 @@
 
 class PC_installer {
 	
-	public $min_php_version = '5.2';
+	public $min_php_version = '5.3';
 	public $min_mysql_version = '5.1.x';
 	public $min_gd_version = '2';
 	
@@ -51,7 +51,7 @@ class PC_installer {
 	
 	public function validate_php_version(&$value) {
 		$value = 'PHP ' . PHP_VERSION;
-		return (PHP_VERSION >= $this->min_php_version);
+		return version_compare(PHP_VERSION, $this->min_php_version) >= 0;
 	}
 	
 	public function validate_pdo() {
