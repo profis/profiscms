@@ -25,12 +25,14 @@ class PC_paging_widget extends PC_widget {
 		
 		$first = array(
 			'label' => $this->_config['label_for_first_page'],
-			'link' => PC_utils::getUrl($this->_config['base_url'], $this->_config['get_vars'])
+			'link' => PC_utils::getUrl($this->_config['base_url'], $this->_config['get_vars']),
+			'class' => 'first',
 		);
 		
 		$prev = array(
 			'label' => $this->_config['label_for_prev_page'],
-			'link' => $this->_config['base_url']
+			'link' => $this->_config['base_url'],
+			'class' => 'prev',
 		);
 		
 		if ($paging['pi'] <= 1) {
@@ -61,13 +63,15 @@ class PC_paging_widget extends PC_widget {
 				$items[] = array(
 					'label' => $i,
 					//'disabled' => true,
-					'active' => true
+					'active' => true,
+					'class' => 'page',
 				);
 			}
 			else {
 				$items[] = array(
 					'label' => $i,
-					'link' => $link
+					'link' => $link,
+					'class' => 'page',
 				);
 			}
 				//echo '<a href="' . htmlspecialchars(PC_utils::getCurrUrl(array('page' => $i))) . '" title="' . $i . '">' . $i . '</a>';
@@ -76,6 +80,7 @@ class PC_paging_widget extends PC_widget {
 		$next_page = min($paging['pages'], $paging['pi'] + 1);
 		$next = array(
 			'label' => $this->_config['label_for_next_page'],
+			'class' => 'next',
 		);
 		if ($next_page > $paging['pi']) {
 			$next['link'] = pc_append_route($this->_config['base_url'], 'page' . $next_page);
@@ -87,6 +92,7 @@ class PC_paging_widget extends PC_widget {
 			
 		$last = array(
 			'label' => $this->_config['label_for_last_page'],
+			'class' => 'last',
 		);
 		
 		if ($paging['pi'] < $paging['pages']) {
