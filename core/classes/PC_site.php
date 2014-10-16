@@ -438,16 +438,9 @@ final class PC_site extends PC_base {
 				if (is_file($tpl)) require($tpl);
 				//generate without template
 				else if ($p) {
-					echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
-						.'<html xmlns="http://www.w3.org/1999/xhtml" style="height:100%;">'
+					echo '<!DOCTYPE html>'
+						.'<html lang="' . $this->ln . '" style="min-height: 100%; height: 100%;">'
 						.'<head>'
-						.'<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />'
-						.'<title>'.$this->Get_title().'</title>'
-						.'<base href="'.htmlspecialchars($this->cfg['url']['base']).'" />'
-						.$this->Get_seo_html()
-						.$this->Get_stylesheets_html()
-						.$this->Get_scripts_html()
-						.$this->Get_favicon()
 						.(!empty($p['info'])?'<style type="text/css">'.html_entity_decode(strip_tags($p['info'])).'</style>':'')
 					.'</head><body style="height:100%;padding:0;margin:0;"><table class="pc_content" width="100%" height="100%"><tr valign="middle"><td width="30%">&nbsp;</td><td class="pc_content">';
 					echo $p['text'].'</td><td width="30%">&nbsp;</td></tr></table></body></html>';

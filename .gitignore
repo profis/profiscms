@@ -25,14 +25,6 @@ plugins/*
 !plugins/index.php
 themes/*
 !themes/default/
-themes/default/*
-!themes/default/css/
-!themes/default/js/
-!themes/default/fonts/
-!themes/index.php
-!themes/default/config.php
-!themes/default/template.php
-!themes/default/404.php
 upload/*
 !upload/.htaccess
 !upload/web.config
