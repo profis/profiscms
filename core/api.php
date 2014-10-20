@@ -494,7 +494,7 @@ else {
 			function Map_sub_list($pid, &$site_languages, SiteMap $map) {
 				global $page, $core;
 				$list = array();
-				foreach ($page->Get_submenu($pid, array(), false, false, true) as $p) {
+				foreach ($page->Get_submenu($pid, array('pid', 'controller', 'nositemap', 'hot'), false, false, true) as $p) {
 					if (v($p['pid'])) {
 						if( !$p['nositemap'] )
 							$map->addPage($p['pid'], $site_languages, 'weekly', ($p['hot'] > 0) ? 0.8 : 0.5);
