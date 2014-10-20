@@ -1,0 +1,77 @@
+$fontOpenSans: "Open Sans";
+$fontOpenSansCondensed: "Open Sans Condensed";
+$fontUbuntu: "Ubuntu";
+
+// font weights
+$lightWeight: 300;
+$normalWeight: normal; // 400
+$mediumWeight: 500;
+$semiBoldWeight: 600;
+$boldWeight: bold; // 700
+$extraBoldWeight: 800;
+
+// window width at which .container changes sizes
+$gridXSWidth: 768px;
+$gridSMWidth: 992px;
+$gridMDWidth: 1200px;
+
+// outer width of the .container
+$containerXSWidth: 100%;
+$containerSMWidth: $gridXSWidth - 18px;
+$containerMDWidth: $gridSMWidth - 22px;
+$containerLGWidth: $gridMDWidth - 30px;
+
+// inner width of the .container
+$contentSMWidth: $containerSMWidth - 30px;
+$contentMDWidth: $containerMDWidth - 30px;
+$contentLGWidth: $containerLGWidth - 30px;
+
+@mixin setFont($fontSize, $fontWeight, $fontFamily, $letterSpacing: 0) {
+	font-family: $fontFamily, sans-serif;
+	font-weight: $fontWeight;
+	@if( $fontSize != undefined ) {
+		font-size: $fontSize;
+	}
+	@if( $letterSpacing != 0 ) {
+		letter-spacing: $letterSpacing;
+	}
+}
+
+@mixin size($width: auto, $height: auto) {
+	@if( $width != auto ) {
+		width: $width;
+	}
+	@if( $height != auto ) {
+		height: $height;
+	}
+}
+
+@mixin absBlock($x, $y, $width: auto, $height: auto, $horizontal: left, $vertical: top) {
+	position: absolute;
+	display: block;
+	#{$horizontal}: $x;
+	#{$vertical}: $y;
+	@include size($width, $height);
+}
+
+@mixin sprite($x, $y, $image: unchanged) {
+	@if( $image != unchanged ) {
+		background-image: $image;
+		background-repeat: no-repeat;
+	}
+	background-position: (0-$x) (0-$y);
+}
+
+@mixin transition($style) {
+	-webkit-transition: $style;
+	-moz-transition: $style;
+	-ms-transition: $style;
+	-o-transition: $style;
+	transition: $style;
+}
+
+@mixin cover() {
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}

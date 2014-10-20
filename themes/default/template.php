@@ -1,18 +1,26 @@
-<?php 
+<?php
+/**
+ * @var PC_core $core
+ * @var PC_site $site
+ * @var PC_page $page
+ * @var PC_gallery $gallery
+ * @var PC_cache $cache
+ * @var PC_plugins $plugins
+ */
 $path = $site->Get_page_path();
 ?>
 <!DOCTYPE html>
 <html>
 <head>
 	<?php
-	$site->Add_stylesheet($core->Get_theme_path() . 'css/bootstrap.css');
-	$site->Add_stylesheet($core->Get_theme_path() . 'css/style.css');
+	$site->Add_stylesheet($core->Get_theme_path() . 'css/bootstrap.css', 2);
+	$site->Add_stylesheet($core->Get_theme_path() . 'css/style.min.css');
 	
 	// jQuery is added from /media/jquery.min.js automatically since it is
 	// required by prettyPhoto plugin. Currently version 1.8.0 is used.
 	// Replace that file by any version you need, but be aware that prettyPhoto
 	// plugin might need an update too (if version 1.10+).
-	$site->Add_script($core->Get_theme_path() . 'js/bootstrap.min.js');
+	$site->Add_script($core->Get_theme_path() . 'js/bootstrap.min.js', 2);
 	$site->Add_script($core->Get_theme_path() . 'js/main.js');
 	?>
 	
@@ -20,7 +28,6 @@ $path = $site->Get_page_path();
 	  <script src="../../assets/js/html5shiv.js"></script>
 	  <script src="../../assets/js/respond.min.js"></script>
 	<![endif]-->
-	
 </head>
 
 <body>
@@ -73,15 +80,17 @@ $path = $site->Get_page_path();
 				<div class="col-md-3 col-sm-3">
 				
 					<?php
-					echo $site->Get_widget_text('PC_plugin_pc_shop_currency_selector_widget', array(
-					
-					));
+						if( $plugins->Is_active('pc_shop') )
+							echo $site->Get_widget_text('PC_plugin_pc_shop_currency_selector_widget', array(
+
+							));
 					?>
 					
 					<?php
-					echo $site->Get_widget_text('PC_plugin_pc_shop_search_form_widget', array(
-					
-					));
+						if( $plugins->Is_active('pc_shop') )
+							echo $site->Get_widget_text('PC_plugin_pc_shop_search_form_widget', array(
+
+							));
 					?>
 					
 					<!-- INFORMATION MENU -->
@@ -102,9 +111,10 @@ $path = $site->Get_page_path();
 					
 					
 					<?php
-					echo $site->Get_widget_text('PC_plugin_pc_shop_mini_basket_widget', array(
-						'cart_page_ref' => ''
-					));
+						if( $plugins->Is_active('pc_shop') )
+							echo $site->Get_widget_text('PC_plugin_pc_shop_mini_basket_widget', array(
+								'cart_page_ref' => ''
+							));
 					?>
 				</div>
 				
