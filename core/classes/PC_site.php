@@ -79,7 +79,13 @@ final class PC_site extends PC_base {
 	 * @var array
 	 */
 	protected $_head_parts = array();
-	
+
+	/** @var string */
+	protected $viewportWidth = 'device-width';
+
+	/** @var int */
+	protected $viewportMaxScale = 4;
+
 	/**
 	* Method used to initialize a page. Inside this method is called PC_site::Load().
 	* @see PC_site::Load()
@@ -899,7 +905,8 @@ final class PC_site extends PC_base {
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<meta charset="utf-8" />
 		<title>' . $this->Get_title().'</title>
-		<base href="'.htmlspecialchars($this->cfg['url']['base']).'" />'
+		<base href="'.htmlspecialchars($this->cfg['url']['base']).'" />
+		<meta name="viewport" content="width=' . $this->viewportWidth . ', initial-scale=1, maximum-scale=' . $this->viewportMaxScale . ', user-scalable=' . (($this->viewportMaxScale > 1) ? '1' : '0') . '"/>'
 		.$this->Get_head_parts()
 		.$this->Get_seo_html()
 		.$this->Get_stylesheets_html()
@@ -1517,7 +1524,25 @@ final class PC_site extends PC_base {
 			header("$key: " . $value);
 		}
 	}
-	
+
+	/**
+	 * Sets viewport width and scale properties for mobile devices.
+	 *
+	 * @param string $width Width of the viewport. May be either a whole positive number or 'device-width'. Defaults to 'device-width'.
+	 * @param float $maxScale Maximum scale of the viewport when zooming in. Must be a number greater than 1. Defaults to 4.
+	 */
+	public function setViewport($width = 'device-width', $maxScale = 4.0) {
+		if( $width == 'device-width' ) {
+			$this->viewportWidth = $width;
+		}
+		else {
+			$this->viewportWidth = intval($width);
+			if( $this->viewportWidth <= 0 )
+				$this->viewportWidth = 'device-width';
+		}
+		$this->viewportMaxScale = max(floatval($maxScale), 1);
+	}
+
 	/**
 	* Method used to add some custom data cache. This method uses PC_memstore::Cache() method.
 	* param mixed $key given key to add to cache with given $data.
