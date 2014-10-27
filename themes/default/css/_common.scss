@@ -70,8 +70,24 @@ $contentLGWidth: $containerLGWidth - 30px;
 	transition: $style;
 }
 
-@mixin cover() {
-	background-position: center center;
-	background-repeat: no-repeat;
+@mixin cover($left: center, $top: center, $image: unchanged) {
+	@if( $image == unchanged ) {
+		background-position: $left $top;
+		background-repeat: no-repeat;
+	}
+	@else {
+		background: $image no-repeat $left $top;
+	}
 	background-size: cover;
+}
+
+@mixin contain($left: center, $top: center, $image: unchanged) {
+	@if( $image == unchanged ) {
+		background-position: $left $top;
+		background-repeat: no-repeat;
+	}
+	@else {
+		background: $image no-repeat $left $top;
+	}
+	background-size: contain;
 }

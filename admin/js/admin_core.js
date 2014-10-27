@@ -2568,7 +2568,8 @@ function debug_alert(o) {
 			s = s.substr(0, 64)+'...';
 		a = a + s + "\n";
 	}
-	alert(a);
+	try { console.log(a); }
+	catch(ex) {}
 }
 
 
