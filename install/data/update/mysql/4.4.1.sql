@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}forms` (
   `time` datetime NOT NULL,
   `ip` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 INSERT INTO `{prefix}variables` (`vkey`, `controller`, `site`, `ln`, `value`) VALUES
 ('form_submitted_field_name', 'forms', 0, 'en', '%s:'),

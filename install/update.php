@@ -116,7 +116,11 @@ class PC_updater {
 
 			if( is_file($f = $this->path . '/' . $dbType . '/' . $version . '.sql') ) {
 				$log[] = "Importing SQL file {$f}";
+				ob_start();
 				db_file_import(array($dbType => $f));
+				$result = ob_get_clean();
+				if( $result !== "" )
+					$log[] = $result;
 			}
 			if( is_file($f = $this->path . '/script/' . $version . '.php') ) {
 				$log[] = "Executing PHP script {$f}";
@@ -127,6 +131,8 @@ class PC_updater {
 				if( !$s->execute($p = array('plugin' => $this->plugin, 'version' => $version)) )
 					throw new DbException($s->errorInfo(), $q, $p);
 			}
+
+			$dbVersion = $version;
 		}
 
 		return $log;
@@ -135,9 +141,25 @@ class PC_updater {
 
 echo '<pre>';
 
+echo "== Ensuring that all tables in schema have InnoDB engine ==\n";
+
+$cmd = $db->prepare($q = "SELECT `TABLE_NAME`, `ENGINE` FROM `information_schema`.`TABLES` WHERE `TABLE_SCHEMA`=:dbName");
+if( !$cmd->execute($p = array('dbName' => $cfg['db']['name']) ) )
+	throw new DbException($cmd->errorInfo(), $q, $p);
+while( $table = $cmd->fetch() ) {
+	if( $table['ENGINE'] != 'InnoDB' && $core->db_prefix !== '' && mb_strpos($table['TABLE_NAME'], $core->db_prefix) === 0 ) {
+		echo "Changing engine for " . $table['TABLE_NAME'] . "\n";
+		$engineCmd = $db->prepare($q = "ALTER TABLE `" . $table['TABLE_NAME'] . "` ENGINE=InnoDB;");
+		if( !$engineCmd->execute() )
+			throw new DbException($engineCmd->errorInfo(), $q, $p);
+	}
+}
+echo "Done.\n\n";
+
 echo "== Updating framework schema ==\n";
 $updater = new PC_updater($core->Get_path('root', '/install/data/update'), '');
 echo implode("\n", $updater->update()) . "\n\n";
+echo "Done.\n\n";
 
 foreach( glob(CORE_PLUGINS_ROOT . '*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir ) {
 	$pluginName = basename($dir);
@@ -145,6 +167,7 @@ foreach( glob(CORE_PLUGINS_ROOT . '*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir ) {
 		echo "== Updating core plugin '{$pluginName}' schema ==\n";
 		$updater = new PC_updater($dir . '/setup/update', $pluginName);
 		echo implode("\n", $updater->update()) . "\n\n";
+		echo "Done.\n\n";
 	}
 }
 
@@ -154,6 +177,7 @@ foreach( glob(PLUGINS_ROOT . '/*', GLOB_ONLYDIR | GLOB_NOSORT) as $dir ) {
 		echo "== Updating  plugin '{$pluginName}' schema ==\n";
 		$updater = new PC_updater($dir . '/setup/update', $pluginName);
 		echo implode("\n", $updater->update()) . "\n\n";
+		echo "Done.\n\n";
 	}
 }
 

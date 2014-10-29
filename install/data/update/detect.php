@@ -10,6 +10,10 @@ if( $db->getTableInfo('site_users_external') ) {
 	return '4.4.17';
 }
 
+if( $db->getColumnInfo('content', 'info_mobile') ) {
+	return '4.4.6b';
+}
+
 if( $db->getColumnInfo('pages', 'target') ) {
 	return '4.4.5';
 }

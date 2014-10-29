@@ -11,7 +11,7 @@ CREATE TABLE `{prefix}auth_permissions`(
 	`user_id` int(10) unsigned NULL  , 
 	`data` text COLLATE utf8_unicode_ci NOT NULL  , 
 	KEY `permissions_id`(`user_id`) 
-) ENGINE=MyISAM DEFAULT CHARSET='utf8' COLLATE='utf8_unicode_ci';
+) ENGINE=InnoDB DEFAULT CHARSET='utf8' COLLATE='utf8_unicode_ci';
 
 INSERT INTO `{prefix}auth_permissions` (`plugin`, `name`, `group_id`, `user_id`, `data`) VALUES 
 ('core', 'access_admin', NULL, 1, '1'),
@@ -42,7 +42,7 @@ CREATE TABLE `{prefix}path_index`(
 	`pid` int(10) unsigned NOT NULL  , 
 	`ln` varchar(2) COLLATE utf8_unicode_ci NOT NULL  , 
 	`path` text COLLATE utf8_unicode_ci NOT NULL  
-) ENGINE=MyISAM DEFAULT CHARSET='utf8' COLLATE='utf8_unicode_ci';
+) ENGINE=InnoDB DEFAULT CHARSET='utf8' COLLATE='utf8_unicode_ci';
 
 
 /* Alter table in target */

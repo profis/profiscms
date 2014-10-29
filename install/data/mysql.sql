@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}auth_groups` (
   `groupname` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `groupname` (`groupname`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- 
 -- Dumping data for table `{prefix}auth_groups`
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}auth_log` (
   KEY `ip` (`ip`),
   KEY `success` (`success`),
   KEY `username` (`user_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}auth_users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   KEY `group_id` (`group_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- 
 -- Dumping data for table `{prefix}auth_users`
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}comments` (
   `checksum` char(32) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `site` (`site`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}content` (
   KEY `tree_id` (`pid`),
   KEY `ln` (`ln`),
   KEY `route` (`route`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -187,7 +187,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}content_archive` (
   PRIMARY KEY (`id`),
   KEY `tree_id` (`tree_id`),
   KEY `ln` (`ln`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -225,7 +225,8 @@ CREATE TABLE IF NOT EXISTS `{prefix}forms` (
   `time` datetime NOT NULL,
   `ip` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 
 -- --------------------------------------------------------
 
@@ -247,7 +248,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}gallery_categories` (
   KEY `parent` (`parent`),
   KEY `lft` (`lft`,`rgt`),
   KEY `date_trashed` (`date_trashed`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -268,7 +269,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}gallery_files` (
   KEY `category_id` (`category_id`),
   KEY `date_trashed` (`date_trashed`),
   KEY `size` (`size`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -368,7 +369,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}pages` (
   KEY `site` (`site`),
   KEY `date_from` (`date_from`,`date_to`),
   KEY `reference_id` (`reference_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- 
 -- Dumping data for table `{prefix}pages`
@@ -408,7 +409,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}site_users` (
   `banned` smallint(1) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- 
 -- Table structure for table `{prefix}site_users_external`
@@ -442,7 +443,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}sites` (
   `editor_background` varchar(10) COLLATE utf8_unicode_ci NOT NULL,
   `active` tinyint(1) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- 
 -- Dumping data for table `{prefix}sites`
@@ -479,18 +480,6 @@ CREATE TABLE IF NOT EXISTS `{prefix}variables` (
   KEY `site` (`site`,`ln`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
--- Table structure for table `{prefix}forms`
--- 
-
-CREATE TABLE IF NOT EXISTS `{prefix}forms` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `pid` int(11) NOT NULL,
-  `form_id` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `data` text COLLATE utf8_unicode_ci NOT NULL,
-  `time` datetime NOT NULL,
-  `ip` int(11) unsigned NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- Table structure for table `{prefix}db_version`
 --
