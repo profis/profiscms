@@ -35,11 +35,11 @@ if (count($menu)) {
 		}
 		$full_href = 'href="'. $link . '"';
 		
-		$inner = $menu_item['name'];
-			
-		$target = '';
+		$inner = htmlspecialchars($menu_item['name']);
+		$a_tag_params .= ' title="' . $inner . '"';
+		
 		if (v($menu_item['target'])) {
-			$target = 'target="_blank" ';
+			$a_tag_params .= ' target="_blank"';
 		}
 		
 		if ($submenu and !empty($submenu) and v($this_config['li_class_with_submenu'])) {
@@ -54,14 +54,14 @@ if (count($menu)) {
 				$full_href = 'href';
 			}
 			if (v($this_config['a_tag_params_with_submenu'])) {
-				$a_tag_params = $this_config['a_tag_params_with_submenu'];
+				$a_tag_params .= ' ' . $this_config['a_tag_params_with_submenu'];
 			}
 		}
 		
 		
 		?>
 		<li class="<?php echo implode(' ', $li_classes)?>">
-			<a <?php echo $full_href?> <?php echo $target . $a_tag_params?>><?php echo $inner?></a>
+			<a <?php echo $full_href . $a_tag_params?>><?php echo $inner?></a>
 			<?php
 			if ($submenu and !empty($submenu)) {
 				$level++;
