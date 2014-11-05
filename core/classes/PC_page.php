@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
+use \Profis\Db\DbException;
+
 final class PC_page extends PC_base {
 	const PAGE_BREAK = '╬';
 	const ALL_PAGES = '__pc_all_pages';

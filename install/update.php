@@ -142,13 +142,23 @@ class PC_updater {
 echo '<pre>';
 
 echo "== Ensuring that all tables in schema have InnoDB engine ==\n";
-
+$cmdSearchIndex = $db->prepare($qsi = "SELECT `INDEX_NAME` FROM `information_schema`.`STATISTICS` WHERE `TABLE_SCHEMA`=:dbName AND `TABLE_NAME`=:tableName AND `INDEX_TYPE` = 'FULLTEXT'");
 $cmd = $db->prepare($q = "SELECT `TABLE_NAME`, `ENGINE` FROM `information_schema`.`TABLES` WHERE `TABLE_SCHEMA`=:dbName");
 if( !$cmd->execute($p = array('dbName' => $cfg['db']['name']) ) )
 	throw new DbException($cmd->errorInfo(), $q, $p);
 while( $table = $cmd->fetch() ) {
 	if( $table['ENGINE'] != 'InnoDB' && $core->db_prefix !== '' && mb_strpos($table['TABLE_NAME'], $core->db_prefix) === 0 ) {
 		echo "Changing engine for " . $table['TABLE_NAME'] . "\n";
+
+		if( !$cmdSearchIndex->execute($p = array('dbName' => $cfg['db']['name'], 'tableName' => $table['TABLE_NAME']) ) )
+			throw new DbException($cmdSearchIndex->errorInfo(), $qsi, $p);
+		while( $index = $cmdSearchIndex->fetch() ) {
+			echo "  removing FULLTEXT index '" . $index['INDEX_NAME'] . "'\n";
+			$indexCmd = $db->prepare($q = "ALTER TABLE `" . $table['TABLE_NAME'] . "` DROP INDEX `" . $index['INDEX_NAME'] . "`;");
+			if( !$indexCmd->execute() )
+				throw new DbException($indexCmd->errorInfo(), $q, $p);
+		}
+
 		$engineCmd = $db->prepare($q = "ALTER TABLE `" . $table['TABLE_NAME'] . "` ENGINE=InnoDB;");
 		if( !$engineCmd->execute() )
 			throw new DbException($engineCmd->errorInfo(), $q, $p);

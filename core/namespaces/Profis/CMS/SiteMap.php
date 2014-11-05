@@ -1,6 +1,28 @@
 <?php
+# ProfisCMS - Opensource Content Management System Copyright (C) 2011 JSC "ProfIS"
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http:#www.gnu.org/licenses/>.
+
 namespace Profis\CMS;
 
+use \Profis\Db\DbException;
+
+/**
+ * Class SiteMap
+ *
+ * @package Profis\CMS
+ */
 class SiteMap extends \Google\SiteMap {
 	protected $pages = array();
 
@@ -34,7 +56,7 @@ class SiteMap extends \Google\SiteMap {
 	/**
 	 * Adds URLs of all queued pages to the site map and cleans page queue.
 	 *
-	 * @throws \DbException In case of a database usage error.
+	 * @throws DbException In case of a database usage error.
 	 * @throws \RuntimeException When SiteMap::open() was not called before calling this method.
 	 * @see addPage()
 	 */
@@ -43,7 +65,7 @@ class SiteMap extends \Google\SiteMap {
 		if( !empty($this->pages) ) {
 			$s = $db->prepare($q = "SELECT pid,route,ln FROM {$cfg['db']['prefix']}content WHERE (pid,ln) IN(" . implode(',', array_keys($this->pages)) . ")");
 			if( !$s->execute() )
-				throw new \DbException($s->errorInfo(), $q);
+				throw new DbException($s->errorInfo(), $q);
 
 			while( $row = $s->fetch() ) {
 				$key = "(" . $row['pid'] . ",'" . $row['ln'] . "')";
@@ -56,7 +78,7 @@ class SiteMap extends \Google\SiteMap {
 	/**
 	 * Flushes the page queue and closes the site map XML.
 	 *
-	 * @throws \DbException In case of a database usage error.
+	 * @throws DbException In case of a database usage error.
 	 * @throws \RuntimeException When SiteMap::open() was not called before calling this method.
 	 * @see open()
 	 */

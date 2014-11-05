@@ -1,4 +1,8 @@
 <?php
+
+use \Profis\Db\DbException;
+use \Profis\Db\DbTransactionException;
+
 class PC_database_fields {
 	private $_fields = array();
 	public function Register($table, $field, $params=array()) {
