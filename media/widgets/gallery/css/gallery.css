@@ -176,19 +176,19 @@
 .pc_gallery.pcgw-dark .pcgw-highlighter {
   border: 3px solid #FFFFFF;
 }
-.pc_gallery.pc_gallery_light {
+.pc_gallery.pcgw-light {
   background-color: #FFFFFF;
 }
-.pc_gallery.pc_gallery_light .pcgw-left {
+.pc_gallery.pcgw-light .pcgw-left {
   background-image: url(../img/arrow-left-light.png);
 }
-.pc_gallery.pc_gallery_light .pcgw-right {
+.pc_gallery.pcgw-light .pcgw-right {
   background-image: url(../img/arrow-right-light.png);
 }
-.pc_gallery.pc_gallery_light .pcgw-zoom {
+.pc_gallery.pcgw-light .pcgw-zoom {
   background-image: url(../img/zoom-light.png);
 }
-.pc_gallery.pc_gallery_light .pcgw-highlighter {
+.pc_gallery.pcgw-light .pcgw-highlighter {
   border: 3px solid #C0C0C0;
 }
 
