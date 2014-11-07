@@ -24,19 +24,30 @@ namespace Profis\Utils;
  * @package Profis\Utils
  */
 class HTML {
-	public static function openTag($tagName, $attributes = array(), $hasNoClosingTag = false) {
-		$html = '<' . $tagName;
+	public static function buildTagAttributes($attributes, $prefix = '') {
+		$html = array();
 		foreach( $attributes as $key => $value ) {
 			if( $value === null )
 				continue;
-			if( $value === false )
-				$value = 0;
-			else if( $value === true )
-				$value = 1;
-			if( is_object($value) )
-				$value = $value->__toString();
-			$html .= ' ' . $key . '="' . str_replace('"', '&quot;', htmlspecialchars($value)) . '"';
+			if( is_array($value) ) {
+				$html[] = self::buildTagAttributes($value, $prefix . $key . '-');
+			}
+			else {
+				if( is_object($value) ) {
+					/** @var object $value */
+					$value = $value->__toString();
+				}
+				$html[] = $prefix . $key . '="' . htmlspecialchars($value) . '"';
+			}
 		}
+		return implode(' ', $html);
+	}
+
+	public static function openTag($tagName, $attributes = array(), $hasNoClosingTag = false) {
+		$html = '<' . $tagName;
+		$attrHtml = self::buildTagAttributes($attributes);
+		if( $attrHtml != '' )
+			$html .= ' ' . $attrHtml;
 		return $html . ($hasNoClosingTag ? ' />' : '>');
 	}
 	
