@@ -28,7 +28,9 @@ class PC_user extends PC_base {
 	public $externalProvider;
 	public $externalUID;
 
+	/** @var string Can be either NULL or one of following values: 'login', 'password', 'banned' or 'cannot_auto_register'. */
 	public $login_error = null;
+
 	public $Session_secure = null;
 	public $Current_secure = null;
 
@@ -242,6 +244,14 @@ class PC_user extends PC_base {
 				return true;
 			}
 			else {
+				if( isset($_POST['user_login']) && empty($this->Post_login) ) {
+					$this->login_error = 'login';
+					return false;
+				}
+				if( isset($_POST['user_password']) && empty($this->Post_password) ) {
+					$this->login_error = 'password';
+					return false;
+				}
 				$this->debug(':( Post_login is empty: ' . $this->Post_login, 1);
 			}
 			// used cookie, but not logged in ... remove the cookie
