@@ -1,5 +1,7 @@
 <?php
 
+use \Profis\Db\DbException;
+
 abstract class PC_model extends PC_base{
 	protected $_id = 0;
 	protected $_table = '';
@@ -424,7 +426,7 @@ abstract class PC_model extends PC_base{
 		if (!$s) {
 			$this->debug_query($query, $query_params, 2);
 			$this->debug('Query failed', 2);
-			return false;
+			throw new DbException($r_categories->errorInfo(), $query, $query_params);
 		}
 
 		if ($paging) {
