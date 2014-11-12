@@ -28,7 +28,7 @@ class DbException extends \Exception {
 	protected $params = null;
 	protected $errorInfo = null;
 
-	public function DbException($errorInfo = null, $query = null, $params = null, $message = 'Failed to execute query', $previousException = null) {
+	public function __construct($errorInfo = null, $query = null, $params = null, $message = 'Failed to execute query', $previousException = null) {
 		global $cfg;
 
 		$this->query = $query;
