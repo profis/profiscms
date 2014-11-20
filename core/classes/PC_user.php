@@ -316,8 +316,14 @@ class PC_user extends PC_base {
 		return '';
 	}
 	public function Get_data($user_id=0, $refresh=false, $keys=null) {
-		if (!$this->Logged_in) return false;
-		if ($user_id == 0) $user_id = $this->ID;
+		if ($this->Logged_in) {
+			if ($user_id == 0)
+				$user_id = $this->ID;
+		}
+		else {
+			if ($user_id == 0)
+				return false;
+		}
 		if ($user_id == $this->ID && !empty($this->Data) && !$refresh) {
 			return $this->Data;
 		}
@@ -482,17 +488,27 @@ class PC_user extends PC_base {
 		$this->Set_meta_data($meta, $account_id);
 		if( isset($_REQUEST["remember"]) && $account_id )
 			$this->SetCookie($account_id, $login, $encrypted_password);
+
+		$this->core->Init_hooks('PC_user.registered', array(
+			'userId' => $account_id,
+		));
+
 		if ($flag == PC_UF_MUST_ACTIVATE) {
 			$this->Send_activation_code($email, $activation_code);
 		}
-		elseif ($login_after_create) {
-			$login_string = $login;
-			if (isset($this->cfg['site_users']) and v($this->cfg['site_users']['email_as_login'])) {
-				$login_string = $email;
+		else {
+			$this->core->Init_hooks('PC_user.activated', array(
+				'userId' => $account_id,
+			));
+			if ($login_after_create) {
+				$login_string = $login;
+				if (isset($this->cfg['site_users']) and v($this->cfg['site_users']['email_as_login'])) {
+					$login_string = $email;
+				}
+				$_POST['user_login'] = $login_string;
+				$_POST['user_password'] = $password;
+				$this->Refresh()->Login();
 			}
-			$_POST['user_login'] = $login_string;
-			$_POST['user_password'] = $password;
-			$this->Refresh()->Login();
 		}
 		$this->debug('User has been created', 1);
 		
@@ -531,6 +547,13 @@ class PC_user extends PC_base {
 
 		$this->addExternalAuth($externalAuthData, $userId);
 		$this->updateMetaDataFromExternal($externalAuthData, true, $userId);
+
+		$this->core->Init_hooks('PC_user.registered', array(
+			'userId' => $userId,
+		));
+		$this->core->Init_hooks('PC_user.activated', array(
+			'userId' => $userId,
+		));
 
 		return array(
 			'id' => $userId,
@@ -735,9 +758,13 @@ class PC_user extends PC_base {
 		$s = $r->execute(array($code, PC_UF_MUST_ACTIVATE));
 		if (!$s) return false;
 		$data = $r->fetch();
+		if( !$data ) return false;
 		$r = $this->prepare("UPDATE {$this->db_prefix}site_users SET confirmation=null, flags=(flags & ?) WHERE id=?");
 		$s = $r->execute(array( ~(PC_UF_MUST_ACTIVATE | PC_UF_CONFIRM_PASS_CHANGE), $data["id"]));
 		if (!$s) return false;
+		$this->core->Init_hooks('PC_user.activated', array(
+			'userId' => $data['id'],
+		));
 		if ($login) {
 			$_POST['user_login'] = $data['login'];
 			$_POST['user_password'] = $data['password'];
