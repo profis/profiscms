@@ -464,6 +464,9 @@ CREATE TABLE IF NOT EXISTS `{prefix}site_users_meta` (
   PRIMARY KEY (`id`,`mkey`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+ALTER TABLE `{prefix}site_users_meta`
+	ADD CONSTRAINT `{prefix}site_users_meta_ibfk_1` FOREIGN KEY (`id`) REFERENCES `{prefix}site_users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
 -- --------------------------------------------------------
 
 -- 

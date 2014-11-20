@@ -38,24 +38,36 @@ Plugin_site_users_crud = Ext.extend(PC.ux.right_side_crud, {
 	},
 	
 	get_store_fields: function() {
-		return [
+		var fields = [
 				'id', 'email', 'login', 'name', 'date_registered', 'last_seen', 'confirmation', 'banned', 'flags',
 				{name: 'confirmed', mapping: 'confirmation', convert: this.Isset},
 				{name: 'status', mapping: 'id', convert: Ext.createDelegate(this.Status_icon, this)},
 				{name: '_date_registered', mapping: 'date_registered', convert: this.Time_to_date},
 				{name: '_last_seen', mapping: 'last_seen', convert: this.Time_to_date}
 		];
+
+		for( var i = 0; i < PC_plugin_site_users_meta_fields.length; i++ ) {
+			fields.push('meta_' + PC_plugin_site_users_meta_fields[i]);
+		}
+
+		return fields;
 	},
 	
 	get_grid_columns: function() {
-		return [
+		var columns = [
 			{header: '&nbsp;', dataIndex: 'status', width: 30},
 			{header: this.ln.email, dataIndex: 'email', width: 150},
 			{header: this.ln.login, dataIndex: 'login', width: 120},
-			{header: this.ln.name, dataIndex: 'name', width: 120},
+			{header: this.ln.name, dataIndex: 'name', width: 120}
+		];
+		for( var i = 0; i < PC_plugin_site_users_meta_fields.length; i++ ) {
+			columns.push({header: PC_plugin_site_users_meta_fields[i], dataIndex: 'meta_' + PC_plugin_site_users_meta_fields[i]});
+		}
+		columns.push(
 			{header: this.ln.date_registered, dataIndex: '_date_registered'},
 			{header: this.ln.last_login, dataIndex: '_last_seen'}
-		];
+		);
+		return columns;
 	},
 	
 	get_add_form_fields: function(edit_mode) {
@@ -63,7 +75,7 @@ Plugin_site_users_crud = Ext.extend(PC.ux.right_side_crud, {
 		if (edit_mode) {
 			allow_blank_if_edit = true;
 		}
-		return [
+		var fields = [
 			{	_fld: 'email',
 				ref: '_email',
 				name: 'email',
@@ -82,7 +94,17 @@ Plugin_site_users_crud = Ext.extend(PC.ux.right_side_crud, {
 				ref: '_name',
 				name: 'name',
 				fieldLabel: this.ln.name
-			},
+			}
+		];
+		for( var i = 0; i < PC_plugin_site_users_meta_fields.length; i++ ) {
+			fields.push({
+				_fld: 'meta_' + PC_plugin_site_users_meta_fields[i],
+				ref: '_meta_' + PC_plugin_site_users_meta_fields[i],
+				name: 'meta_' + PC_plugin_site_users_meta_fields[i],
+				fieldLabel: PC_plugin_site_users_meta_fields[i]
+			});
+		}
+		fields.push(
 			{	_fld: 'password',
 				ref: '_password',
 				name: 'password',
@@ -106,7 +128,9 @@ Plugin_site_users_crud = Ext.extend(PC.ux.right_side_crud, {
 				fieldLabel: this.ln.banned,
 				inputValue: 1
 			}
-		];
+		);
+
+		return fields;
 	}
 }); 
 

@@ -12,6 +12,7 @@ function site_users_install($controller) {
 	
 	$core->Set_config_if('no_confirmation', '', 'site_users');
 	$core->Set_config_if('email_as_login', '', 'site_users');
-	
+	$core->Set_config_if('admin_editable_meta', '', 'site_users');
+
 	return true;
 }

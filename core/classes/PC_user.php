@@ -617,6 +617,47 @@ class PC_user extends PC_base {
 		return PC_utils::sendEmail($email, $body, $params);
 	}
 
+	public function Send_username($email) {
+		$r = $this->prepare("SELECT login  FROM {$this->db_prefix}site_users WHERE email=? AND (flags & ?) = 0 LIMIT 1");
+		if( !$r->execute(array($email, PC_UF_MUST_ACTIVATE)) ) return false;
+		if( $r->rowCount() != 1 ) return false;
+		$login = $r->fetchColumn();
+
+		$from_email = $from_name = '';
+
+		if (isset($this->cfg['site_users'])) {
+			$from_email = v($this->cfg['site_users']['email_sender_email']);
+			$from_name = v($this->cfg['site_users']['email_sender_name']);
+		}
+		if (empty($from_email)) {
+			$from_email = v($this->cfg['from_email']);
+		}
+		if (empty($from_name)) {
+			$from_name = v($this->cfg['from_email']);
+		}
+		$subject = $this->core->Get_variable('your_username', null, 'site_users_remind_username');
+
+		$body = $this->core->Get_plugin_variable('email_tpl_remind_username', 'site_users_remind_username');
+
+		if (empty($body)) {
+			$body = $this->core->Get_variable('your_username', null, 'site_users_remind_username').': {username}';
+		}
+
+		$markers = array(
+			'{username}' => htmlspecialchars($login),
+		);
+
+		$body = str_replace(array_keys($markers), array_values($markers), $body);
+
+		$params = array(
+			'subject' => $subject,
+			'from_email' => $from_email,
+			'from_name' => $from_name
+		);
+
+		return PC_utils::sendEmail($email, $body, $params);
+	}
+
 	public function Send_pass_change_code($email) {
 		$r = $this->prepare("SELECT id FROM {$this->db_prefix}site_users WHERE email=? AND (flags & ?) = 0 LIMIT 1");
 		if( !$r->execute(array($email, PC_UF_MUST_ACTIVATE)) ) return false;
