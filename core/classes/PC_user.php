@@ -316,13 +316,10 @@ class PC_user extends PC_base {
 		return '';
 	}
 	public function Get_data($user_id=0, $refresh=false, $keys=null) {
-		if ($this->Logged_in) {
-			if ($user_id == 0)
-				$user_id = $this->ID;
-		}
-		else {
-			if ($user_id == 0)
+		if (!$user_id) {
+			if (!$this->Logged_in)
 				return false;
+			$user_id = $this->ID;
 		}
 		if ($user_id == $this->ID && !empty($this->Data) && !$refresh) {
 			return $this->Data;

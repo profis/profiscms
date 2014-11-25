@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
+use \Profis\Web\Url;
 
 if (version_compare(phpversion(), "5.3") < 0) die('ProfisCMS requires at least PHP 5.3 version.');
 
@@ -150,6 +151,7 @@ if (!function_exists('PC_autoload_classmap')) {
 
 include 'base_session.php';
 
+Url::$basePath = $cfg['base_path'];
 
 $HTTPS = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS'])!='off';
 $PROTOCOL = $HTTPS ? 'https://' : 'http://';
