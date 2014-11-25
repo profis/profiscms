@@ -43,6 +43,12 @@ class PC_params_errors {
 }
 
 class PC_params {
+	/** @var \PC_params_errors */
+	public $errors = null;
+
+	/** @var \PC_paging  */
+	public $paging = null;
+
 	public function __construct($params) {
 		$this->errors = new PC_params_errors;
 		if (is_array($params)) foreach ($params as $p=>&$v) {

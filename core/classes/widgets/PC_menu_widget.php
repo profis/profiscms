@@ -55,27 +55,27 @@ class PC_menu_widget extends PC_widget {
 				$is_opened = true;
 				$menu[$key]['_active'] = true;
 			}
-			if ($this->_config['max_levels'] > 0 and $next_level > $this->_config['max_levels']) {
+			if ($this->_config['max_levels'] > 0 && $next_level > $this->_config['max_levels']) {
 				continue;
 			}
-			if ($this->_config['submenu_for_all'] or $this->site->Is_opened($menu_item['pid'])) {
+			if ($this->_config['submenu_for_all'] || $this->site->Is_opened($menu_item['pid'])) {
 				if ($this->site->Is_opened($menu_item['pid'])) {
 					$menu[$key]['_active'] = true;
 				}
-				$fields = array_merge($this->_config['fields'], $this->_config['additional_fields']);
-				$menu[$key]['_submenu'] = $this->page->Get_submenu($menu_item['pid'], $fields);
-				if (empty($menu[$key]['_submenu'])) {
-					$additional_menu = $this->site->Get_data('additional_menu_' . $menu_item['pid']);
-					if ($additional_menu) {
-						$menu[$key]['_submenu'] = $additional_menu;
+				if( v($menu_item['controller']) != 'pc_timeline' ) {
+					$fields = array_merge($this->_config['fields'], $this->_config['additional_fields']);
+					$menu[$key]['_submenu'] = $this->page->Get_submenu($menu_item['pid'], $fields);
+					if (empty($menu[$key]['_submenu'])) {
+						$additional_menu = $this->site->Get_data('additional_menu_' . $menu_item['pid']);
+						if ($additional_menu) {
+							$menu[$key]['_submenu'] = $additional_menu;
+						}
+					}
+					else {
+						$this->_build_menu($menu[$key]['_submenu'], $next_level);
 					}
 				}
-				else {
-					$this->_build_menu($menu[$key]['_submenu'], $next_level);
-				}
-				
 			}
-			
 		}
 	}
 	

@@ -1951,6 +1951,7 @@ final class PC_page extends PC_base {
 				}
 			}
 		}
+		$where[] = 'p.published=1';
 		$fields_string = '*';
 		if (!empty($fields)) {
 			$fields_string = implode(',', $fields);
