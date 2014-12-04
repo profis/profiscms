@@ -1501,6 +1501,7 @@ final class PC_site extends PC_base {
 		$html = '';
 		$html .= "<script type=\"text/javascript\">
 			var PC_base_url = '".$this->Get_home_link()."';
+			var PC_ln = '".$this->ln."';
 		</script>\n";
 		foreach ($this->_scripts as $script=>$priority)
 		$html .= "<script type=\"text/javascript\" src=\"$script\"></script>\n";

@@ -13,7 +13,7 @@ class PC_menu_widget extends PC_widget {
 			'wrap' => '<ul>|</ul>',
 			'submenu_for_all' => false,
 			
-			'fields' => array("pid", "idp", "name", "route", "permalink"),
+			'fields' => array("pid", "idp", "name", "route", "permalink", "reference_id"),
 			'additional_fields' => array()
 		);
 	}

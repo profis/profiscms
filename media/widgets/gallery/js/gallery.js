@@ -110,6 +110,12 @@
 						ret = getSelectedIndex($(this).closest('.pc_gallery'));
 					});
 					return ret;
+				case 'zoomIn':
+					var ret = null;
+					$(this).each(function() {
+						ret = zoomImageIn($(this).closest('.pc_gallery'));
+					});
+					return ret;
 			}
 		}
 		else {
@@ -123,14 +129,20 @@
 					data.$highlighter.css({left: pos.left + 'px', top: pos.top + 'px', display: 'block'});
 				})
 				.on('click', '.pcgw-preview .pcgw-left', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
 					var $widget = $(this).closest('.pc_gallery');
 					selectPrevImage($widget);
 				})
 				.on('click', '.pcgw-preview .pcgw-right', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
 					var $widget = $(this).closest('.pc_gallery');
 					selectNextImage($widget);
 				})
 				.on('click', '.pcgw-controls .pcgw-left', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
 					var data = getWidgetData($(e.target).closest('.pc_gallery'));
 					var pos = data.$thumbs.position();
 					if( pos.left < 0 ) {
@@ -141,6 +153,8 @@
 					}
 				})
 				.on('click', '.pcgw-controls .pcgw-right', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
 					var data = getWidgetData($(e.target).closest('.pc_gallery'));
 					var pos = data.$thumbs.position();
 					var w = data.$thumbsWrap.width();
@@ -160,6 +174,8 @@
 					selectImage($widget, $thumb.index());
 					return false;
 				}).on('click', '.pcgw-zoom', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
 					var $widget = $(this).closest('.pc_gallery');
 					zoomImageIn($widget);
 				});
