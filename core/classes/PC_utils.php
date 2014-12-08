@@ -984,18 +984,12 @@ class PC_utils {
 	 * For example if $tags = array('foo' => 'bar'),
 	 * then '{foo}' occurrences will be replaced to 'bar' in the message
 	 * @return bool
+	 * @throws \Exception
 	 */
 	static function sendEmail($recipient, $message, $params = array(), $tags = array()) {
 		global $cfg, $core;
-		$logger = new PC_debug;
-		$logger->debug = true;
-		$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'send_mail.html');
-		//$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'send_mail.html', true, 10);
-		$logger->debug('sendEmail');
-		
-		if (is_array($recipient)) {
+		if (is_array($recipient))
 			$emails = $recipient;
-		}
 		else {
 			$recipient = str_replace(",", ";", $recipient);
 			$emails = explode(';', $recipient);
@@ -1030,12 +1024,9 @@ class PC_utils {
 
 		if (isset($cfg['from_smtp'])) {
 			require_once $cfg['path']['classes'] . 'class.smtp.php';
-			$logger->debug("calling IsSMTP()", 1);
 			$mail->IsSMTP();
-			if (!empty($cfg['from_smtp'])) {
-				$logger->debug("setting host: " . $cfg['from_smtp'], 1);
+			if (!empty($cfg['from_smtp']))
 				$mail->Host = $cfg['from_smtp'];
-			}
 		}
 
 		//$mail->SMTPDebug  = 1;
@@ -1047,21 +1038,12 @@ class PC_utils {
 		$mail->FromName	= $from_name;
 		$mail->Subject	= v($params['subject'], '');
 
-		$logger->debug("mail->From: " . $mail->From, 1);
-		$logger->debug("mail->FromName: " . $mail->FromName, 1);
-		$logger->debug("mail->Subject: " . $mail->Subject, 1);
-
 		if (isset($cfg['mailer_params']) and is_array($cfg['mailer_params'])) {
 			foreach ($cfg['mailer_params'] as $key => $value) {
-				if ($key == 'IsSendmail' and $value) {
-					$logger->debug("calling IsSendmail()", 1);
+				if ($key == 'IsSendmail' and $value)
 					$mail->IsSendmail();
-				}
-				else {
-					$logger->debug("setting $key", 1);
+				else
 					$mail->$key = $value;
-				}
-
 			}
 		}
 
@@ -1072,12 +1054,33 @@ class PC_utils {
 		$mail->CharSet = v($params['charset'], 'utf-8');
 		$mail->MsgHTML($message);
 
-		$logger->debug($emails, 1);
-
 		foreach ($emails as $key => $email) {
 			$email = trim($email);
-			if (!empty($email)) {
+			if (!empty($email))
 				$mail->AddAddress($email);
+		}
+
+		if( isset($params['attachments']) ) {
+			foreach( $params['attachments'] as $attachment ) {
+				if( isset($attachment['path']) )
+					$mail->addAttachment($attachment['path'], v($attachment['name'], ''), v($attachment['encoding'], 'base64'), v($attachment['type'], ''), v($attachment['disposition'], 'attachment'));
+				else if( isset($attachment['data']) )
+					$mail->addStringAttachment($attachment['data'], v($attachment['name'], ''), v($attachment['encoding'], 'base64'), v($attachment['type'], ''), v($attachment['disposition'], 'attachment'));
+				else
+					throw new Exception('Attachments must have either "path" or "data" parameter');
+			}
+		}
+
+		if( isset($params['images']) ) {
+			foreach( $params['images'] as $image ) {
+				if( !isset($image['cid']) )
+					throw new Exception('Embedded images must have "cid" parameter');
+				if( isset($image['path']) )
+					$mail->addEmbeddedImage($image['path'], $image['cid'], v($image['name'], ''), v($image['encoding'], 'base64'), v($image['type'], ''), v($image['disposition'], 'inline'));
+				else if( isset($image['data']) )
+					$mail->addStringEmbeddedImage($image['data'], $image['cid'], v($image['name'], ''), v($image['encoding'], 'base64'), v($image['type'], ''), v($image['disposition'], 'inline'));
+				else
+					throw new Exception('Embedded images must have either "path" or "data" parameter');
 			}
 		}
 
@@ -1089,20 +1092,15 @@ class PC_utils {
 
 			$emails_string = implode(", ", $emails);
 
-			$logger->debug(" mail($emails_string, {$mail->Subject}, message, $headers)", 2);
-
 
 			$result = mail($emails_string, $mail->Subject, $message, $headers);
+			if (!$result)
+				self::$last_send_email_error = 'Mail function returned FALSE';
 		}
 		else {
 			$result = $mail->Send();
-		}
-		
-		if (!$result) {
-			$logger->debug(':(', 2);
-			$logger->debug("error: " . $mail->ErrorInfo, 3);
-			$logger->debug(print_r(error_get_last(), true), 3);
-			self::$last_send_email_error = $mail->ErrorInfo;
+			if (!$result)
+				self::$last_send_email_error = $mail->ErrorInfo;
 		}
 		return $result;
 	}

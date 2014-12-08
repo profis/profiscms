@@ -15,6 +15,12 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
 abstract class PC_controller extends PC_base {
+	/** @var string */
+	public $name = '';
+
+	/** @var string */
+	public $text = '';
+
 	public function Init($do_not_bind_to_site = false) {
 		if ($do_not_bind_to_site) {
 			$this->text = '';
@@ -27,10 +33,12 @@ abstract class PC_controller extends PC_base {
 		$offset = intval(strpos($this_class, 'pc_controller_'));
 		$this->name = substr($this_class, $offset + strlen('PC_controller_'));
 	}
+
 	abstract public function Process($data);
 	final public function Get_path() {
 		return $this->core->Get_path('plugins', '', $this->name);
 	}
+
 	final public function &Render($tpl=null, $return_only=false, $vars = array()) {
 		$tpl_prefix = 'PC_template';
 		$tpl_file = '';
@@ -47,38 +55,30 @@ abstract class PC_controller extends PC_base {
 				}
 			}
 		}
-		
-		$this->debug('$tpl_path:', 2);
-		$this->debug($tpl_path, 2);
-		if ($return_only !== null) {
-			$this->debug('Output_start', 3);
+
+		if ($return_only !== null)
 			$this->Output_start();
-		}
-		
-		//print_pre();
-		if (!empty($vars)) {
-			foreach ($vars as $key => $var) {
-				$$key = $var;
-			}
-		}
-		$this->debug('including template', 2);
-		@require($tpl_path);
+
+		if (is_array($vars))
+			extract($vars);
+
+		require($tpl_path);
+
 		if ($return_only === null) {
-			$this->debug('return', 3);
-			return;
+			$null = null;
+			return $null;
 		}
+
 		if ($return_only) {
-			$this->debug('Output end to $text', 3);
+			$text = '';
 			$this->Output_end($text);
 			return $text;
 		}
-		else {
-			$this->debug('Output end to $this->text', 3);
-			$this->Output_end($this->text);
-			//$this->debug($this->text, 5);
-			return $this->text;
-		}
+
+		$this->Output_end($this->text);
+		return $this->text;
 	}
+
 	/* Also include specified template while calling $this->Render() */
 	final public function Include_template($tpl, $vars = array()) {
 		$this->Render($tpl, null, $vars);
