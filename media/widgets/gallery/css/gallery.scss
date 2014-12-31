@@ -1,51 +1,51 @@
-$widgetWidth: 100%;
-$widgetHeight: 600px;
+@import "_mixins.scss";
 
-$thumbButtonSize: 30px;
-$previewButtonSize: 50px;
-$zoomButtonSize: 50px;
+@include pc_gallery_widget_set_sizes(
+	100%, 600px,						// width and height of the widget
+	30px, 30px,							// arrow button in thumbs/controls area width and height
+	50px, 50px,							// arrow button in preview area width and height
+	50px, 50px,							// zoom button width and height
+	10px,								// distance of arrows in thumbs/controls area from widget edge
+	5px,								// distance of arrows in preview area from widget edge
+	10px,								// distance of the zoom button from edges
+	120px, 90px,						// width and height of thumbnails
+	5px,								// space between thumbnails
+	5px,								// space between thumbnails and preview area
+	5px,								// space between thumbnails and widget edge (bottom)
+	10px,								// space between thumbnails and arrow buttons
+	0, 0, 0, 0,							// top, right, bottom and left margins of the image in the preview area
+	0, 0, 0, 0							// top, right, bottom and left margins of highlighter within a thumbnail
+);
 
-$thumbButtonOffset: 10px;
-$previewButtonOffset: 5px;
-$zoomButtonOffset: 10px;
+@include pc_gallery_widget_set_style(
+	light,								// style name
+	none, #FFFFFF,						// border and background of the whole gallery area
+	none, transparent,					// border and background of preview area
+	none, transparent,					// border and background color of preview image
+	none, transparent,					// border and background of thumbs/controls area
+	none, transparent,					// border and background color of thumbnail
+	3px solid #C0C0C0, transparent,		// border and background of highlighter
+	url(../img/arrow-left-light.png),	// left arrow image in preview area (inherit = use default)
+	url(../img/arrow-right-light.png),	// right arrow image in preview area (inherit = use default)
+	url(../img/zoom-light.png),			// zoom button image (inherit = use default)
+	inherit,							// left arrow image in thumbs area (inherit = same as in preview area)
+	inherit								// right arrow image in thumbs area (inherit = same as in preview area)
+);
 
-$thumbWidth: 120px;
-$thumbHeight: 90px;
-$thumbSpacing: 5px;
-
-$thumbsOffset: $thumbButtonSize + $thumbButtonOffset * 2;
-$controlsHeight: $thumbHeight + $thumbSpacing * 2;
-
-// Themed variables
-
-$highlighterBorderDark: 3px solid #FFFFFF;
-$leftArrowDark: url(../img/arrow-left-dark.png);
-$rightArrowDark: url(../img/arrow-right-dark.png);
-$zoomDark: url(../img/zoom-dark.png);
-
-$highlighterBorderLight: 3px solid #C0C0C0;
-$leftArrowLight: url(../img/arrow-left-light.png);
-$rightArrowLight: url(../img/arrow-right-light.png);
-$zoomLight: url(../img/zoom-light.png);
-
-// The code
-
-%button {
-	position: absolute;
-	background-size: contain;
-	background-position: center center;
-	background-repeat: no-repeat;
-	opacity: 0.5;
-	-webkit-transition: opacity 0.2s ease;
-	-moz-transition: opacity 0.2s ease;
-	-ms-transition: opacity 0.2s ease;
-	-o-transition: opacity 0.2s ease;
-	transition: opacity 0.2s ease;
-	cursor: pointer;
-	&:hover {
-		opacity: 1;
-	}
-}
+@include pc_gallery_widget_set_style(
+	dark,								// style name
+	none, #404040,						// border and background of the whole gallery area
+	none, transparent,					// border and background of preview area
+	none, transparent,					// border and background color of preview image
+	none, transparent,					// border and background of thumbs/controls area
+	none, transparent,					// border and background of thumbnail
+	3px solid #FFFFFF, transparent,		// border and background of highlighter
+	url(../img/arrow-left-dark.png),	// left arrow image in preview area (inherit = use default)
+	url(../img/arrow-right-dark.png),	// left arrow image in preview area (inherit = use default)
+	url(../img/zoom-dark.png),			// zoom button image (inherit = use default)
+	inherit,							// left arrow image in thumbs area (inherit = same as in preview area)
+	inherit								// right arrow image in thumbs area (inherit = same as in preview area)
+);
 
 %movementTransitions {
 	position: absolute;
@@ -58,34 +58,18 @@ $zoomLight: url(../img/zoom-light.png);
 	transition: opacity 0.2s ease, left 0.2s ease, top 0.2s ease;
 }
 
-@mixin button($width, $height) {
-	@extend %button;
-	width: $width;
-	height: $height;
-}
-
-@mixin buttonVAligned($width, $height) {
-	@include button($width, $height);
-	top: 50%;
-	margin-top: -$height / 2;
-}
-
-@mixin buttonHAligned($width, $height) {
-	@include button($width, $height);
-	left: 50%;
-	margin-left: -$width / 2;
-}
-
 .pc_gallery {
 	position: relative;
-	width: $widgetWidth;
-	height: $widgetHeight;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+
+	* {
+		box-sizing: border-box;
+	}
 
 	&.pcgw-bottom-thumbs {
 		.pcgw-preview-wrap {
@@ -94,7 +78,6 @@ $zoomLight: url(../img/zoom-light.png);
 			top: 0;
 			width: 100%;
 			height: 100%;
-			padding-bottom: $controlsHeight;
 
 			.pcgw-preview {
 				position: relative;
@@ -102,9 +85,7 @@ $zoomLight: url(../img/zoom-light.png);
 				height: 100%;
 
 				.pcgw-image-wrap {
-					position: relative;
-					width: 100%;
-					height: 100%;
+					position: absolute;
 					overflow: hidden;
 
 					.pcgw-image {
@@ -116,36 +97,28 @@ $zoomLight: url(../img/zoom-light.png);
 					}
 				}
 
-				.pcgw-left {
-					@include buttonVAligned($previewButtonSize, $previewButtonSize);
-					left: $previewButtonOffset;
+				.pcgw-left, .pcgw-right, .pcgw-zoom {
+					opacity: 0;
 				}
 
-				.pcgw-right {
-					@include buttonVAligned($previewButtonSize, $previewButtonSize);
-					right: $previewButtonOffset;
-				}
+				&:hover {
+					.pcgw-left, .pcgw-right, .pcgw-zoom {
+						opacity: 0.5;
 
-				.pcgw-zoom {
-					@include button($zoomButtonSize, $zoomButtonSize);
-					right: $zoomButtonOffset;
-					top: $zoomButtonOffset;
+						&:hover {
+							opacity: 1;
+						}
+					}
 				}
 			}
 		}
-
 		.pcgw-controls {
 			position: absolute;
 			bottom: 0;
 			width: 100%;
-			height: $controlsHeight;
 
 			.pcgw-thumbs-wrap {
 				position: absolute;
-				left: $thumbsOffset;
-				right: $thumbsOffset;
-				top: $thumbSpacing;
-				bottom: $thumbSpacing;
 
 				.pcgw-thumbs-wrap2 {
 					position: relative;
@@ -165,13 +138,9 @@ $zoomLight: url(../img/zoom-light.png);
 							height: 100%;
 							width: auto;
 							white-space: nowrap;
-							margin-left: -$thumbSpacing;
 
 							.pcgw-thumb {
-								width: $thumbWidth;
-								height: $thumbHeight;
 								display: inline-block;
-								margin: 0 0 0 $thumbSpacing;
 								padding: 0;
 								cursor: pointer;
 							}
@@ -179,16 +148,10 @@ $zoomLight: url(../img/zoom-light.png);
 
 						.pcgw-highlighter-wrap {
 							@extend %movementTransitions;
-							width: $thumbWidth;
-							height: $thumbHeight;
 							display: none;
 
 							.pcgw-highlighter {
 								position: absolute;
-								left: 0;
-								top: 0;
-								right: 0;
-								bottom: 0;
 							}
 						}
 
@@ -210,55 +173,12 @@ $zoomLight: url(../img/zoom-light.png);
 				}
 			}
 
-			.pcgw-left {
-				@include buttonVAligned($thumbButtonSize, $thumbButtonSize);
-				left: $thumbButtonOffset;
+			.pcgw-left, .pcgw-right {
+				opacity: 0.5;
+				&:hover {
+					opacity: 1;
+				}
 			}
-
-			.pcgw-right {
-				@include buttonVAligned($thumbButtonSize, $thumbButtonSize);
-				right: $thumbButtonOffset;
-			}
-		}
-	}
-
-	&.pcgw-dark {
-		background-color: #404040;
-
-		.pcgw-left {
-			background-image: $leftArrowDark;
-		}
-
-		.pcgw-right {
-			background-image: $rightArrowDark;
-		}
-
-		.pcgw-zoom {
-			background-image: $zoomDark;
-		}
-
-		.pcgw-highlighter {
-			border: $highlighterBorderDark;
-		}
-	}
-
-	&.pcgw-light {
-		background-color: #FFFFFF;
-
-		.pcgw-left {
-			background-image: $leftArrowLight;
-		}
-
-		.pcgw-right {
-			background-image: $rightArrowLight;
-		}
-
-		.pcgw-zoom {
-			background-image: $zoomLight;
-		}
-
-		.pcgw-highlighter {
-			border: $highlighterBorderLight;
 		}
 	}
 }

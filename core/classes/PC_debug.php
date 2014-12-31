@@ -11,57 +11,88 @@ if (!function_exists('v')) {
 	}
 }
 
+/**
+ * Class PC_debug
+ *
+ * @deprecated
+ */
 class PC_debug {
+	/** @deprecated */
 	public $debug = false;
+	/** @deprecated */
 	public $debug_forced = false;
+	/** @deprecated */
 	public $debug_level = 0;
+	/** @deprecated */
 	public $debug_groups = array();
+	/** @deprecated */
 	public $debug_state_stack = array();
+	/** @deprecated */
 	public $debug_string_stack = array();
+	/** @deprecated */
 	public $debug_string = '';
+	/** @deprecated */
 	public $debug_wrap_all_begin = '<div>';
+	/** @deprecated */
 	public $debug_wrap_all_end = '</div>';
+	/** @deprecated */
 	public $debug_entity_wrap_begin = '<div #indent_string#>';
+	/** @deprecated */
 	public $debug_entity_wrap_end = '</div>';
-	
+
+	/** @deprecated */
 	public $exec_times = array();
+	/** @deprecated */
 	public $inner_exec_times_summaries = array();
+	/** @deprecated */
 	public $group_time_data = array();
+	/** @deprecated */
 	var $exec_times_wrap_all_begin = '<div>';
+	/** @deprecated */
 	var $exec_times_wrap_all_end = '</div>';
+	/** @deprecated */
 	var $exec_times_wrap_begin = '<div #indent_string#>';
+	/** @deprecated */
 	var $exec_times_wrap_end = '</div>';
-	
-	
+
+
+	/** @deprecated */
 	public $last_time = 0;
 
+	/** @deprecated */
 	public $instant_debug_to_file = false;
+	/** @deprecated */
 	public $file = '';
-	
+
+	/** @deprecated */
 	public $debug_level_offset = 0;
-	
+
+	/** @deprecated */
 	public static $explored = false;
 	
 //	function __construct($debug) {
 //		$this->debug = $debug;
 //	}
 
-	
+	/** @deprecated */
 	public function set_console_debug() {
 		$this->debug_wrap_all_begin = '';
 		$this->debug_wrap_all_end = '';
 		$this->debug_entity_wrap_begin = "\n";
 		$this->debug_entity_wrap_end = '';
 	}
-	
+
+	/** @deprecated */
 	public function set_debug_offset($ofset = 0) {
 		$this->debug_level_offset = $ofset;
 	}
-	
+
+	/** @deprecated */
 	public function increase_debug_offset($incr = 1) {
 		$this->debug_level_offset += $incr;
 	}
-	
+
+	/** @deprecated */
 	public function absorb_debug_settings(PC_debug $logger, $debug_level_offset = 0) {
 		$this->debug = $logger->debug;
 		$this->debug_forced = $logger->debug_forced;
@@ -70,13 +101,8 @@ class PC_debug {
 		$this->debug_level = $logger->debug_level;
 		$this->debug_level_offset = $logger->debug_level_offset + $debug_level_offset;
 	}
-	
-	/**
-	 *
-	 * @param string $string
-	 * @param string $group_indent = ''
-	 * @return <type>
-	 */
+
+	/** @deprecated */
 	function debug($string, $group_indent = '') {
 		global $cfg;
 		if (!$this->debug_forced) {
@@ -129,7 +155,8 @@ class PC_debug {
 			$this->clear_debug_string();
 		}
 	}
-	
+
+	/** @deprecated */
 	function get_debug_query_string($query, $params) {
 		$keys = array();
 		$values = array();
@@ -159,30 +186,36 @@ class PC_debug {
 		$query = preg_replace($string_keys, $string_values, $query);
 		return $query;
 	}
-	
+
+	/** @deprecated */
 	function debug_query($query, $params, $group_indent = '') {
 		$query = $this->get_debug_query_string($query, $params);			
 		$this->debug($query, $group_indent);
 	}
-	
+
+	/** @deprecated */
 	function debug_time($group_indent = '') {
 		$this->debug('=='. date('Y-m-d H:i:s') .'=============================', $group_indent);
 	}
-	
+
+	/** @deprecated */
 	function debug_time_and_ip($group_indent = '') {
 		$this->debug('=='. date('Y-m-d H:i:s') .'===  ' . pc_ip() . '   ===========', $group_indent);
 	}
-	
+
+	/** @deprecated */
 	protected function _get_indent_string($indent) {
 		$px = 20 * ($indent);
 		$s = 'style="margin-left:' . $px . 'px;"';
 		return $s;
 	}
-	
+
+	/** @deprecated */
 	public function set_debug($debug) {
 		$this->debug = $debug;
 	}
-	
+
+	/** @deprecated */
 	function get_debug_string($forced = false) {
 		if ($forced or !empty($this->debug_string)) {
 			$class = '';
@@ -192,11 +225,13 @@ class PC_debug {
 			return $this->debug_wrap_all_begin . '<strong>Class: ' . $class . '</strong>' .  $this->debug_string . $this->debug_wrap_all_end;
 		}
 	}
-	
+
+	/** @deprecated */
 	function clear_debug_string() {
 		$this->debug_string = '';
 	}
 
+	/** @deprecated */
 	function set_new_debug($debug) {
 		array_push($this->debug_state_stack, $this->debug);
 		array_push($this->debug_string_stack, $this->debug_string);
@@ -204,6 +239,7 @@ class PC_debug {
 		$this->debug = $debug;
 	}
 
+	/** @deprecated */
 	function restore_debug() {
 		if (!empty($this->debug_state_stack)) {
 			$this->debug = array_pop($this->debug_state_stack);
@@ -212,7 +248,8 @@ class PC_debug {
 			$this->debug_string = array_pop($this->debug_string_stack);
 		}
 	}
-	
+
+	/** @deprecated */
 	function set_instant_debug_to_file($file_name, $append = null, $wait_seconds = 0) {
 		$this->instant_debug_to_file = true;
 		$this->file = $file_name;
@@ -226,7 +263,8 @@ class PC_debug {
 		
 		$this->file_put_debug($this->file, $append);
 	}
-	
+
+	/** @deprecated */
 	function file_put_debug($file_name = '', $append = null) {
 		global $cfg;
 		if (!$this->debug_forced) {
@@ -256,12 +294,14 @@ class PC_debug {
 		}
 		
 	}
-	
+
+	/** @deprecated */
 	function clear_time_data() {
 		$this->exec_times = array();
 		$this->group_time_data = array();
 	}
-	
+
+	/** @deprecated */
 	public function get_callstack($backtrace = null) {
 		if (is_null($backtrace)) {
 			$backtrace = debug_backtrace();
@@ -274,13 +314,8 @@ class PC_debug {
 		}
 		return $s;
 	}
-	
-		/**
-	 * Rememeber intermiate time
-	 *
-	 * @param string $title
-	 * @return string
-	 */
+
+	/** @deprecated */
 	function click($title='', $group = '', $inner_times_summary = '') {
 		$mtime = microtime();
 		$mtime = explode(" ", $mtime);
@@ -314,10 +349,7 @@ class PC_debug {
 		return $mtime;
 	}
 
-	/**
-	 * Get all times summary
-	 * @return string
-	 */
+	/** @deprecated */
 	function get_exec_times_summary() {
 		$string = '';
 		if (is_array($this->exec_times)) {
@@ -355,7 +387,8 @@ class PC_debug {
 		
 		return $this->exec_times_wrap_all_begin . $string . $this->exec_times_wrap_all_end;
 	}
-	
+
+	/** @deprecated */
 	public static function round_time($time) {
 		$time = floatval($time);
 		if ($time < 0.00001 or strpos($time, 'E') !== false) {
@@ -366,7 +399,8 @@ class PC_debug {
 		}
 		return $time;
 	}
-	
+
+	/** @deprecated */
 	public static function array_to_string($my_array, $sep1=',', $sep2=':') {
 		$my_string = '';
 
@@ -385,7 +419,8 @@ class PC_debug {
 		}
 		return $my_string;
 	}
-	
+
+	/** @deprecated */
 	public function explore(&$var) {
 		require_once CMS_ROOT . 'libs/explore/explore.php';
 		if (!class_exists('PC_explore')) {
@@ -400,7 +435,7 @@ class PC_debug {
 		self::$explored = true;
 		return $s;
 	}
-	
+
 }
 
 ?>

@@ -1,0 +1,230 @@
+%pc_gallery_widget_button {
+	position: absolute;
+	background-size: contain;
+	background-position: center center;
+	background-repeat: no-repeat;
+	-webkit-transition: opacity 0.2s ease;
+	-moz-transition: opacity 0.2s ease;
+	-ms-transition: opacity 0.2s ease;
+	-o-transition: opacity 0.2s ease;
+	transition: opacity 0.2s ease;
+	cursor: pointer;
+}
+
+@mixin pc_gallery_widget_set_sizes(
+	$widgetWidth: 100%, $widgetHeight: 600px,
+	$thumbButtonWidth: 30px, $thumbButtonHeight: 30px,
+	$previewButtonWidth: 50px, $previewButtonHeight: 50px,
+	$zoomButtonWidth: 50px, $zoomButtonHeight: 50px,
+	$thumbButtonOffset: 10px,
+	$previewButtonOffset: 5px,
+	$zoomButtonOffset: 10px,
+	$thumbWidth: 120px, $thumbHeight: 90px,
+	$thumbSpacing: 5px,
+	$thumbMarginTop: 5px,
+	$thumbMarginBottom: 5px,
+	$thumbOffset: 10px,
+	$previewImageMarginTop: 0, $previewImageMarginRight: 0, $previewImageMarginBottom: 0, $previewImageMarginLeft: 0,
+	$highlighterMarginTop: 0, $highlighterMarginRight: 0, $highlighterMarginBottom: 0, $highlighterMarginLeft: 0
+)
+{
+	.pc_gallery {
+		width: $widgetWidth;
+		height: $widgetHeight;
+
+		&.pcgw-bottom-thumbs {
+			$thumbContainerOffset: $thumbButtonOffset + $thumbButtonHeight + $thumbOffset;
+			$controlsHeight: $thumbMarginTop + $thumbHeight + $thumbMarginBottom;
+			$previewImageWidth: $widgetWidth - $previewImageMarginRight - $previewImageMarginLeft;
+			$previewImageHeight: $widgetHeight - $previewImageMarginTop - $previewImageMarginBottom - $controlsHeight;
+
+			.pcgw-preview-wrap {
+				padding-bottom: $controlsHeight;
+
+				.pcgw-preview {
+					.pcgw-image-wrap {
+						top: $previewImageMarginTop;
+						right: $previewImageMarginRight;
+						bottom: $previewImageMarginBottom;
+						left: $previewImageMarginLeft;
+					}
+					.pcgw-left, .pcgw-right {
+						@extend %pc_gallery_widget_button;
+						width: $previewButtonWidth;
+						height: $previewButtonHeight;
+						top: $previewImageMarginTop + ($previewImageHeight - $previewButtonHeight) / 2;
+					}
+
+					.pcgw-left {
+						left: $previewButtonOffset;
+					}
+
+					.pcgw-right {
+						right: $previewButtonOffset;
+					}
+
+					.pcgw-zoom {
+						@extend %pc_gallery_widget_button;
+						width: $zoomButtonWidth;
+						height: $zoomButtonHeight;
+						right: $zoomButtonOffset;
+						top: $zoomButtonOffset;
+					}
+				}
+			}
+
+			.pcgw-controls {
+				height: $controlsHeight;
+
+				.pcgw-thumbs-wrap {
+					left: $thumbContainerOffset;
+					right: $thumbContainerOffset;
+					top: $thumbMarginTop;
+					bottom: $thumbMarginBottom;
+
+					.pcgw-thumbs-wrap2 {
+						.pcgw-thumbs {
+							.pcgw-thumbs-cont {
+								margin-left: -$thumbSpacing;
+
+								.pcgw-thumb {
+									width: $thumbWidth;
+									height: $thumbHeight;
+									margin: 0 0 0 $thumbSpacing;
+								}
+							}
+
+							.pcgw-highlighter-wrap {
+								width: $thumbWidth;
+								height: $thumbHeight;
+								.pcgw-highlighter {
+									top: $highlighterMarginTop;
+									right: $highlighterMarginRight;
+									bottom: $highlighterMarginBottom;
+									left: $highlighterMarginLeft;
+								}
+							}
+						}
+					}
+				}
+
+				.pcgw-left, .pcgw-right {
+					@extend %pc_gallery_widget_button;
+					width: $thumbButtonWidth;
+					height: $thumbButtonHeight;
+					top: $thumbMarginTop + ($thumbHeight - $thumbButtonHeight) / 2;
+				}
+
+				.pcgw-left {
+					left: $thumbButtonOffset;
+				}
+
+				.pcgw-right {
+					right: $thumbButtonOffset;
+				}
+			}
+		}
+	}
+}
+
+@mixin pc_gallery_widget_set_style(
+	$styleName: light,
+	$widgetBorder: none, $widgetBackground: #FFFFFF,
+	$previewAreaBorder: none, $previewAreaBackground: transparent,
+	$previewImageBorder: none, $previewImageBackground: transparent,
+	$controlsAreaBorder: none, $controlsAreaBackground: transparent,
+	$thumbBorder: none, $thumbBackground: transparent,
+	$highlighterBorder: 3px solid #C0C0C0, $highlighterBackground: transparent,
+	$previewLeftArrow: url(../img/arrow-left-light.png),
+	$previewRightArrow: url(../img/arrow-right-light.png),
+	$zoomButtonImage: url(../img/zoom-light.png),
+	$thumbsLeftArrow: inherit,
+	$thumbsRightArrow: inherit
+)
+{
+	@if( $thumbsLeftArrow == "inherit" ) {
+		$thumbsLeftArrow: $previewLeftArrow;
+	}
+	@if( $thumbsRightArrow == "inherit" ) {
+		$thumbsRightArrow: $previewRightArrow;
+	}
+
+	.pc_gallery {
+		&.pcgw-#{$styleName} {
+			border: $widgetBorder;
+			background: $widgetBackground;
+
+			.pcgw-preview {
+				border: $previewAreaBorder;
+				background: $previewAreaBackground;
+			}
+
+			.pcgw-preview-wrap {
+				.pcgw-left {
+					@if( $previewLeftArrow == "none" ) {
+						display: none;
+					}
+					@else if( $previewLeftArrow != "inherit" ) {
+						background-image: $previewLeftArrow;
+					}
+				}
+
+				.pcgw-right {
+					@if( $previewRightArrow == "none" ) {
+						display: none;
+					}
+					@else if( $previewRightArrow != "inherit" ) {
+						background-image: $previewRightArrow;
+					}
+				}
+			}
+
+			.pcgw-controls {
+				background: $controlsAreaBorder;
+				background: $controlsAreaBackground;
+
+				.pcgw-left {
+					@if( $thumbsLeftArrow == "none" ) {
+						display: none;
+					}
+					@else if( $thumbsLeftArrow != "inherit" ) {
+						background-image: $thumbsLeftArrow;
+					}
+				}
+
+				.pcgw-right {
+					@if( $thumbsRightArrow == "none" ) {
+						display: none;
+					}
+					@else if( $thumbsRightArrow != "inherit" ) {
+						background-image: $thumbsRightArrow;
+					}
+				}
+			}
+
+			.pcgw-image {
+				border: $previewImageBorder;
+				background-color: $previewImageBackground;
+			}
+
+			.pcgw-zoom {
+				@if( $zoomButtonImage == "none" ) {
+					display: none;
+				}
+				@else if( $zoomButtonImage != "inherit" ) {
+					background-image: $zoomButtonImage;
+				}
+			}
+
+			.pcgw-thumb {
+				border: $thumbBorder;
+				background-color: $thumbBackground;
+			}
+
+			.pcgw-highlighter {
+				border: $highlighterBorder;
+				background: $highlighterBackground;
+			}
+		}
+	}
+}

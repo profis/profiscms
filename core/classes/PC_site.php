@@ -73,6 +73,8 @@ final class PC_site extends PC_base {
 	 */
 	protected $_headers = array();
 	
+	/** @var string Path to desired favicon. Will search for it automatically if evaluates to FALSE. */
+	public $faviconPath = null;
 	
 	/**
 	 *
@@ -964,6 +966,16 @@ final class PC_site extends PC_base {
 		//}
 		return implode("\n", $list) . "\n";
 	}
+
+	/**
+	 * Sets the path to the favicon that should be used.
+	 *
+	 * @param string $path Path to the favicon file. It will be detected automatically on site postprocessing if the path evaluates to FALSE.
+	 */
+	public function Set_favicon($path) {
+		$this->faviconPath = $path;
+	}
+
 	/**
 	* Method used to get favicon HTML markup
 	* @return string HTML markup if theme has one, FALSE otherwise.
@@ -973,7 +985,9 @@ final class PC_site extends PC_base {
 		if (!$path) return false;
 
 		$publicPath = '';
-		if (is_file($path."favicon.ico")) {
+		if( $this->faviconPath && is_file($this->faviconPath) )
+			$publicPath = $this->faviconPath;
+		if (empty($publicPath) && is_file($path."favicon.ico")) {
 			$publicPath = $this->Get_theme_path($theme)."favicon.ico";
 		}
 		if (empty($publicPath)) {

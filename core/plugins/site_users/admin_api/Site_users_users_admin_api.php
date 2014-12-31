@@ -10,6 +10,14 @@ class Site_users_users_admin_api extends PC_plugin_crud_admin_api {
 	
 	protected $_valid_fields = array('email', 'login', 'name', 'password', 'banned');
 	
+	protected function _get_available_order_columns() {
+		return array(
+			'email' => 'email',
+			'login' => 'login',
+			'name' => 'name',
+		);
+	}
+	
 	/**
 	 * 
 	 */

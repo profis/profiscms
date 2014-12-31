@@ -55,13 +55,13 @@ Plugin_site_users_crud = Ext.extend(PC.ux.right_side_crud, {
 	
 	get_grid_columns: function() {
 		var columns = [
-			{header: '&nbsp;', dataIndex: 'status', width: 30},
-			{header: this.ln.email, dataIndex: 'email', width: 150},
-			{header: this.ln.login, dataIndex: 'login', width: 120},
-			{header: this.ln.name, dataIndex: 'name', width: 120}
+			{header: '&nbsp;', dataIndex: 'status', width: 30, sortable: false},
+			{header: this.ln.email, dataIndex: 'email', width: 150, sortable: true},
+			{header: this.ln.login, dataIndex: 'login', width: 120, sortable: true},
+			{header: this.ln.name, dataIndex: 'name', width: 120, sortable: true}
 		];
 		for( var i = 0; i < PC_plugin_site_users_meta_fields.length; i++ ) {
-			columns.push({header: PC_plugin_site_users_meta_fields[i], dataIndex: 'meta_' + PC_plugin_site_users_meta_fields[i]});
+			columns.push({header: PC_plugin_site_users_meta_fields[i], dataIndex: 'meta_' + PC_plugin_site_users_meta_fields[i], sortable: false});
 		}
 		columns.push(
 			{header: this.ln.date_registered, dataIndex: '_date_registered'},
