@@ -67,12 +67,12 @@ class ComplexStringComparer implements IComparer {
 		$c2 = count($d2);
 		$cnt = ($c1<$c2)?$c1:$c2;
 		for( $i=0; $i<$cnt; $i++ ) {
-			if( $d1[$i]["value"] === $d2[$i]["value"] && $d1[$i]["type"] == $d2[$i]["type"] )
+			if( $d1[$i][0] === $d2[$i][0] && $d1[$i][1] == $d2[$i][1] )
 				continue;
-			if( $d1[$i]["type"] != $d2[$i]["type"] || $d1[$i]["type"] == 2 )
-				$result = $this->compareStrings($d1[$i]["value"],$d2[$i]["value"]);
+			if( $d1[$i][1] != $d2[$i][1] || !$d1[$i][1] )
+				$result = $this->compareStrings($d1[$i][0],$d2[$i][0]);
 			else
-				$result = intval($d1[$i]["value"]) - intval($d2[$i]["value"]);
+				$result = intval($d1[$i][0]) - intval($d2[$i][0]);
 			if( $result != 0 )
 				return $result;
 		}
@@ -100,26 +100,14 @@ class ComplexStringComparer implements IComparer {
 	 * @return array An array of decomposed string components.
 	 */
 	static function decomposeString($str) {
-		$type = 0;
-		$ln = strlen($str);
-		$i = 0;
-		$data = Array();
-		$tmp_str = "";
-		while( $i<=$ln ) {
-			$c = ($i<$ln)?$str[$i]:"";
-			$ctype = ($c !== "")?(is_numeric($c)?1:2):0;
-			if( $type != $ctype ) {
-				if( $tmp_str ) {
-					$dat = Array();
-					$dat["type"] = $type;
-					$dat["value"] = $tmp_str;
-					$data[] = $dat;
-				}
-				$tmp_str = "";
-				$type = $ctype;
+		$data = array();
+		if( preg_match_all('#([0-9]+|[^0-9]+)#su', $str, $mtc) ) {
+			foreach($mtc[0] as $part) {
+				$data[] = array(
+					$part,
+					is_numeric($part),
+				);
 			}
-			$tmp_str .= $c;
-			$i++;
 		}
 		return $data;
 	}
