@@ -161,16 +161,12 @@ abstract class PC_model extends PC_base{
 		$queryParams[] = $value;
 		$queryParams[] = $ln;
 
-		$this->debug_query($query, $queryParams, 1);
-		
 		$s = $r_category->execute($queryParams);
 		if (!$s) {
-			$this->debug(':(', 2);
 			return false;
 		}
 
 		if ($d = $r_category->fetchColumn()) {
-			$this->debug(':)', 2);
 			return $d;
 		}
 		return false;
@@ -181,12 +177,10 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function get_id_from_field($name, $value, $limit = 1) {
-		$this->debug("get_id_from_field($name, $value)");
 		$memstore_group = 'get_id_from_field: ' . $this->_table;
 		$memstore_key =  $name . $value . $limit;
 		$stored =& $this->memstore->Get($memstore_group, $memstore_key);
 		if ($stored) {
-			$this->debug('value found in memstore', 1);
 			return $stored;
 		}
 		
@@ -197,8 +191,6 @@ abstract class PC_model extends PC_base{
 		
 		$queryParams[] = $value;
 
-		$this->debug_query($query, $queryParams, 1);
-		
 		$s = $r_category->execute($queryParams);
 		if (!$s) return false;
 
@@ -210,15 +202,10 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function get_all($params = array()) {
-		$this->debug('get_all()');
-		$this->debug($params, 1);
 		return $this->get_data(null, $params);
 	}
 	
 	public function get_one($params = array(), $params_2 = array()) {
-		$this->debug('get_one()');
-		$this->debug($params, 1);
-		$this->debug($params_2, 1);
 		if (!is_array($params)) {
 			$id = $params;
 			$params = $params_2;
@@ -233,9 +220,6 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function get_data($id = null, $params = array(), $limit = 0) {
-		$this->debug('get_data()');
-		$this->debug($id, 1);
-		$this->debug($params, 1);
 		$select = 't.*';
 		$join_cc = '';
 		$select_cc = '';
@@ -304,7 +288,6 @@ abstract class PC_model extends PC_base{
 		if (!is_array($params['where'])) {
 			$params['where'] = array($params['where']);
 		}
-		//$this->debug($params['where']);
 		if (!is_null($id)) {
 			$params['where'] = array_merge(array('t.' . $this->_table_id_col => $id), $params['where']);
 			if (!is_array($id)) {
@@ -409,23 +392,16 @@ abstract class PC_model extends PC_base{
 			$where_s $group_s $order_s $limit_s";
 		$r_categories = $this->prepare($query);
 
-		$this->debug_query($query, $query_params, 1);
-		
 		if (isset($params['query_only']) and $params['query_only']) {
 			if (isset($params['get_query_params'])) {
 				$params['get_query_params'] = $query_params;
 				return $query;
 			}
-			return $this->get_debug_query_string($query, $query_params);
+			return $query . ' ' . print_r($query_params, true);
 		}
-		
-		//echo "\n";
-		//echo $this->get_debug_query_string($query, $query_params);
-		
+
 		$s = $r_categories->execute($query_params);
 		if (!$s) {
-			$this->debug_query($query, $query_params, 2);
-			$this->debug('Query failed', 2);
 			throw new DbException($r_categories->errorInfo(), $query, $query_params);
 		}
 
@@ -482,7 +458,6 @@ abstract class PC_model extends PC_base{
 		$where_clause = '';
 		if (is_array($where)) {
 			$where_strings = array();
-			//$this->debug($where);
 			foreach ($where as $key => $value) {
 				if (is_string($key)) {
 					$key = str_replace('!', ' NOT ', $key);
@@ -564,19 +539,14 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function validate(array $data, &$validation_data = array()) {
-		$this->debug('validate()');
-		//$this->debug($data, 1);
 		$valid = true;
 		foreach ($this->_rules as $rule_data) {
-			$this->debug($rule_data['field'], 1);
 			$this_valid = true;
 			if (!isset($data[$rule_data['field']])) {
 				if (isset($rule_data['default'])) {
-					$this->debug('setting default', 2);
 					$data[$rule_data['field']] = $rule_data['default'];
 				}
 				else {
-					$this->debug(':) not is set', 2);
 					continue;
 				}
 				
@@ -587,16 +557,11 @@ abstract class PC_model extends PC_base{
 			$value = $data[$rule_data['field']];
 			if (!is_array($value)) {
 				if (v($rule_data['empty_allowed']) and empty($value)) {
-					$this->debug(':) empty allowed', 2);
 					continue;
 				}
 			}
-			$this->debug($rule_data, 1);
-			$this->debug('value is: ' . $value, 2);
 			$general_validation = Validate($rule_data['rule'], $value, v($rule_data['extra'], false), v($rule_data['params'], array()));
-			$this->debug("general_validation: " . $general_validation, 3);
 			if ($general_validation !== 0) {
-				$this->debug('validated by general function', 4);
 				$this_valid = $general_validation;
 			}
 			else {
@@ -630,9 +595,7 @@ abstract class PC_model extends PC_base{
 							$unique_params['where'][] = 't.' . $this->_table_id_col . ' <> ?';
 							$unique_params['query_params'][] = $this->_id;
 						}
-						$this->debug_level_offset += 4;
 						$duplicate_data = $this->get_all($unique_params);
-						$this->debug_level_offset -= 4;
 						if ($duplicate_data) {
 							$this_valid = false;
 						}
@@ -661,9 +624,6 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function filter_value_by_filter(&$value, $filter) {
-		$this->debug("filter_value_by_filter()", 8);
-		$this->debug($value, 9);
-		$this->debug($filter, 9);
 		if (is_array($filter)) {
 			$filter_name = $filter['filter'];
 		}
@@ -692,7 +652,6 @@ abstract class PC_model extends PC_base{
 				break;
 
 			default:
-				$this->debug('General Sanitize', 10);
 				$value = Sanitize($filter_name, $value,  v($filter['extra'], null));
 				break;
 		}
@@ -731,9 +690,6 @@ abstract class PC_model extends PC_base{
 	}
 	
 	public function update(array $data, $params = array()) {
-		$this->debug('update()');
-		$this->debug($data, 1);
-		$this->debug($params, 1);
 		$entity_id = false;
 		if (!is_array($params)) {
 			$entity_id = $params;
@@ -784,44 +740,33 @@ abstract class PC_model extends PC_base{
 		if (!empty($where_s)) {
 			$where_s = ' WHERE ' . $where_s;
 		}
+
 		if (!empty($sets)) {
 			$sets_s = implode(',', $sets);
 			$query = "UPDATE {$this->db_prefix}{$this->_table} SET $sets_s
 				$where_s $limit_s";
 			
 			if (v($params['query_only'])) {
-				return $this->get_debug_query_string($query, $query_params);
+				return $query . ' ' . print_r($query_params, true);
 			}
 			
 			$r = $this->prepare($query);
-
-			$this->debug_query($query, $query_params, 1);
-
-			$edited = $r->execute($query_params);
-			$edited_count = $r->rowCount();
+			$success = $r->execute($query_params);
 		}
 		else {
-			$edited = true;
-			$edited_count = 1;
+			$success = true;
 		}
 		
 		
-		$this->debug('id -', 9);$this->debug($entity_id, 10);
-		$this->debug('edited -', 9);$this->debug($edited, 10);
-		//$this->debug('-', 9);$this->debug(!empty($content), 10);
-		//$this->debug('-', 9);$this->debug(is_array($content), 10);
-		//$this->debug('-', 9);$this->debug(!empty($this->_content_table), 10);
-		
-		if ($entity_id and $edited and !empty($content) and is_array($content) and !empty($this->_content_table)) {
+		if ($entity_id and $success and !empty($content) and is_array($content) and !empty($this->_content_table)) {
 			foreach ($content as $ln => $ln_values) {
 				$sets = array();
 				foreach ($ln_values as $key => $value) {
 					$sets[] = "$key = ?";
 				}
-				if (empty($sets)) {
+				if (empty($sets))
 					continue;
-				}
-				
+
 				$query_select = "SELECT * FROM {$this->db_prefix}{$this->_content_table} WHERE $this->_content_table_relation_col = ? AND $this->_content_table_ln_col = ?";
 				$r_select = $this->prepare($query_select);
 				$params_select = array($entity_id, $ln);
@@ -832,8 +777,7 @@ abstract class PC_model extends PC_base{
 					$query = "UPDATE {$this->db_prefix}{$this->_content_table} SET $sets_s WHERE $this->_content_table_relation_col = ? AND $this->_content_table_ln_col = ?";
 					$query_params = array_merge(array_values($ln_values), array($entity_id, $ln));
 					$r = $this->prepare($query);
-					$this->debug_query($query, $query_params, 2);
-					$s = $r->execute($query_params);
+					$success = $r->execute($query_params);
 				}
 				else {
 					$insert_fields = array_merge(array_keys($ln_values), array($this->_content_table_relation_col, $this->_content_table_ln_col));
@@ -843,18 +787,16 @@ abstract class PC_model extends PC_base{
 					$query = "INSERT INTO {$this->db_prefix}{$this->_content_table} ($insert_fields) values ($insert_values)";
 					$query_params = array_merge(array_values($ln_values), array($entity_id, $ln));
 					$r = $this->prepare($query);
-					$this->debug_query($query, $query_params, 2);
-					$s = $r->execute($query_params);
+					$success = $r->execute($query_params);
 				}
-				
+				if( !$success )
+					break;
 			}
 		}
-		return $edited_count;
+		return $success;
 	}
 	
 	public function insert(array $data, array $content = array(), $params = array()) {
-		$this->debug('insert()');
-		$this->debug($data);
 		$count = count($data);
 		if (!$count) {
 			return false;
@@ -869,8 +811,7 @@ abstract class PC_model extends PC_base{
 		}
 		$query = "INSERT $ignore INTO {$this->db_prefix}{$this->_table} ($fields) VALUES ($values)";
 		$r = $this->prepare($query);
-		$this->debug_query($query, $data, 1);
-		
+
 		$s = $r->execute($data);
 		if (!$s) {
 			return false;
@@ -885,7 +826,6 @@ abstract class PC_model extends PC_base{
 				$query = "INSERT IGNORE INTO {$this->db_prefix}{$this->_content_table} ($this->_content_table_relation_col, $this->_content_table_ln_col, $fields) VALUES ($values)";
 				$query_params = array_merge(array($id, $ln), array_values($ln_values));
 				$r = $this->prepare($query);
-				$this->debug_query($query, $query_params, 2);
 				$s = $r->execute($query_params);
 			}
 		}
@@ -938,22 +878,19 @@ abstract class PC_model extends PC_base{
 			}
 			$query = "DELETE FROM {$this->db_prefix}{$this->_content_table} $content_where_s";
 			$r = $this->prepare($query);
-			$this->debug_query($query, $content_query_params, 2);
 			$s = $r->execute($content_query_params);
 		}
 		
 		
 		$query = "DELETE FROM {$this->db_prefix}{$this->_table} $where_s $limit_s";
 		$r = $this->prepare($query);
-		$this->debug_query($query, $query_params, 1);
-		
+
 		$deleted = $s = $r->execute($query_params);
 				
 		return $deleted;
 	}
 	
 	public function get_unique_content_field($ln, $field, $value, $scope = array()) {
-		$this->debug("get_unique_content_field($field, $value)");
 		$orig_value = $value;
 		$params = array(
 			'select' => 't.' . $this->_table_id_col,
@@ -972,10 +909,7 @@ abstract class PC_model extends PC_base{
 			$params['where'][$field] = $value;
 			$item = $this->get_all($params);
 		}
-		$this->debug("unique_content_field: $value", 1);
 		return $value;
 	}
 	
 }
-
-?>
