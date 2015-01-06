@@ -1,4 +1,8 @@
-.pc_gallery.pcgw-bottom-thumbs .pcgw-preview-wrap .pcgw-preview .pcgw-left, .pc_gallery.pcgw-bottom-thumbs .pcgw-preview-wrap .pcgw-preview .pcgw-right, .pc_gallery.pcgw-bottom-thumbs .pcgw-preview-wrap .pcgw-preview .pcgw-zoom, .pc_gallery.pcgw-bottom-thumbs .pcgw-controls .pcgw-left, .pc_gallery.pcgw-bottom-thumbs .pcgw-controls .pcgw-right {
+.pc_gallery {
+  width: 100%;
+  height: 600px;
+}
+.pc_gallery .pcgw-left, .pc_gallery .pcgw-right, .pc_gallery .pcgw-zoom {
   position: absolute;
   background-size: contain;
   background-position: center center;
@@ -9,11 +13,6 @@
   -o-transition: opacity 0.2s ease;
   transition: opacity 0.2s ease;
   cursor: pointer;
-}
-
-.pc_gallery {
-  width: 100%;
-  height: 600px;
 }
 .pc_gallery.pcgw-bottom-thumbs .pcgw-preview-wrap {
   padding-bottom: 100px;

@@ -1,4 +1,4 @@
-%pc_gallery_widget_button {
+@mixin pc_gallery_widget_button {
 	position: absolute;
 	background-size: contain;
 	background-position: center center;
@@ -32,10 +32,13 @@
 		width: $widgetWidth;
 		height: $widgetHeight;
 
+		.pcgw-left, .pcgw-right, .pcgw-zoom {
+			@include pc_gallery_widget_button;
+		}
+
 		&.pcgw-bottom-thumbs {
 			$thumbContainerOffset: $thumbButtonOffset + $thumbButtonHeight + $thumbOffset;
 			$controlsHeight: $thumbMarginTop + $thumbHeight + $thumbMarginBottom;
-			$previewImageWidth: $widgetWidth - $previewImageMarginRight - $previewImageMarginLeft;
 			$previewImageHeight: $widgetHeight - $previewImageMarginTop - $previewImageMarginBottom - $controlsHeight;
 
 			.pcgw-preview-wrap {
@@ -49,7 +52,6 @@
 						left: $previewImageMarginLeft;
 					}
 					.pcgw-left, .pcgw-right {
-						@extend %pc_gallery_widget_button;
 						width: $previewButtonWidth;
 						height: $previewButtonHeight;
 						top: $previewImageMarginTop + ($previewImageHeight - $previewButtonHeight) / 2;
@@ -64,7 +66,6 @@
 					}
 
 					.pcgw-zoom {
-						@extend %pc_gallery_widget_button;
 						width: $zoomButtonWidth;
 						height: $zoomButtonHeight;
 						right: $zoomButtonOffset;
@@ -109,7 +110,6 @@
 				}
 
 				.pcgw-left, .pcgw-right {
-					@extend %pc_gallery_widget_button;
 					width: $thumbButtonWidth;
 					height: $thumbButtonHeight;
 					top: $thumbMarginTop + ($thumbHeight - $thumbButtonHeight) / 2;
