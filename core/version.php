@@ -1,3 +1,3 @@
 <?php
 	if (!defined('PC_VERSION'))
-		define('PC_VERSION', '4.6.10');
+		define('PC_VERSION', '4.6.11');

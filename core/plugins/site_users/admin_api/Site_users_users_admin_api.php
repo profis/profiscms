@@ -15,6 +15,8 @@ class Site_users_users_admin_api extends PC_plugin_crud_admin_api {
 			'email' => 'email',
 			'login' => 'login',
 			'name' => 'name',
+			'_date_registered' => 'date_registered',
+			'_last_seen' => 'last_seen',
 		);
 	}
 	
@@ -55,11 +57,6 @@ class Site_users_users_admin_api extends PC_plugin_crud_admin_api {
 		return isset($cfg['site_users']['admin_editable_meta']) ? (is_array($cfg['site_users']['admin_editable_meta']) ? $cfg['site_users']['admin_editable_meta'] : array_map('trim', explode(',', $cfg['site_users']['admin_editable_meta']))) : array();
 	}
 	
-	public function test() {
-		$this->_out['test'] = 'Martynas';
-	}
-
-
 	public function create() {
 		global $core;
 

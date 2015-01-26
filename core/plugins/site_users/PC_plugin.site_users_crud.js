@@ -64,8 +64,8 @@ Plugin_site_users_crud = Ext.extend(PC.ux.right_side_crud, {
 			columns.push({header: PC_plugin_site_users_meta_fields[i], dataIndex: 'meta_' + PC_plugin_site_users_meta_fields[i], sortable: false});
 		}
 		columns.push(
-			{header: this.ln.date_registered, dataIndex: '_date_registered'},
-			{header: this.ln.last_login, dataIndex: '_last_seen'}
+			{header: this.ln.date_registered, dataIndex: '_date_registered', sortable: true},
+			{header: this.ln.last_login, dataIndex: '_last_seen', sortable: true}
 		);
 		return columns;
 	},
