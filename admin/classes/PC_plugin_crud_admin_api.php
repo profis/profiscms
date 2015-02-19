@@ -178,9 +178,10 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		$validation_data = array();
 		$valid = $this->_model->validate($data['other'], $validation_data);
 		if (!$valid) {
+			$vd = reset($validation_data);
 			$this->_out['success'] = false;
-			$this->_out['error'] = $validation_data[0]['error'];
-			$this->_out['error_data'] = $validation_data[0];
+			$this->_out['error'] = $vd['error'];
+			$this->_out['error_data'] = $vd;
 			return;
 		}
 		
