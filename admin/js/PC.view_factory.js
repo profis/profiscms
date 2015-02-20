@@ -76,6 +76,8 @@ PC.view_factory = {
 		}
 		field_config.onTrigger2Click = function() {
 			Ext.getCmp(field_config.id).setRawValue('');
+			if( typeof(field_config.onResetClick) == 'function' )
+				field_config.onResetClick.call(this);
 		};
 		var field = new Ext.form.TwinTriggerField(field_config);
 		return field;
