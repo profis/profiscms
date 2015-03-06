@@ -37,7 +37,7 @@
 		}
 
 		&.pcgw-bottom-thumbs {
-			$thumbContainerOffset: $thumbButtonOffset + $thumbButtonHeight + $thumbOffset;
+			$thumbContainerOffset: $thumbButtonOffset + $thumbButtonWidth + $thumbOffset;
 			$controlsHeight: $thumbMarginTop + $thumbHeight + $thumbMarginBottom;
 			$previewImageHeight: $widgetHeight - $previewImageMarginTop - $previewImageMarginBottom - $controlsHeight;
 
