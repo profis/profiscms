@@ -103,6 +103,7 @@ final class PC_plugins extends PC_base {
 			}
 			//save plugin summary
 			$this->list['all'][$plugin] = array(
+				'path' => $plugin_path,
 				'has_controller'=> $has_controller
 			);
 		}

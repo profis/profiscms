@@ -97,14 +97,29 @@ if (!function_exists('PC_autoload_classmap')) {
 	}
 
 	function PC_autoload_namespaces($cls) {
+		global $plugins;
 		if( strpos($cls, '\\') !== false ) {
 			$cls = ltrim($cls, '\\');
 			if( DS != '\\' )
 				$cls = str_replace('\\', DS, $cls);
-			$path = PC_app::$cfg['path']['namespaces'] . DS . $cls . '.php';
+			$classPath = $cls . '.php';
+			$path = PC_app::$cfg['path']['namespaces'] . DS . $classPath;
 			if( is_file($path) ) {
 				require_once $path;
 				return true;
+			}
+			if( !isset(PC_app::$cfg['path']['plugin_namespaces']) ) {
+				PC_app::$cfg['path']['plugin_namespaces'] = array();
+				foreach( $plugins->Get(null, true) as $plugin ) {
+					if( is_dir($basePath = $plugin['path'] . 'namespaces') )
+						PC_app::$cfg['path']['plugin_namespaces'][] = $basePath . DS;
+				}
+			}
+			foreach( PC_app::$cfg['path']['plugin_namespaces'] as $basePath ) {
+				if( is_file($path = $basePath . $classPath) ) {
+					require_once $path;
+					return true;
+				}
 			}
 		}
 		return false;
