@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
 use \Profis\Db\DbException;
+use \Profis\Web\Url;
 
 final class PC_page extends PC_base {
 	const PAGE_BREAK = '╬';
@@ -28,13 +29,13 @@ final class PC_page extends PC_base {
 			$_gmap_counter = 0,
 			$_media_counter = 1,
 			$_parse_html_page_id = 0;
-	
+
 	private $_parsed_page_forms = array();
-	
+
 	public function Init() {
 		//constructor
 	}
-	
+
 	/**
 	 * Method for getting page id
 	 * @return int
@@ -45,7 +46,7 @@ final class PC_page extends PC_base {
 		}
                 return false;
 	}
-	
+
 	public function Get_route_data($route=null, $route_is_page_id=false, $path=array(), $internal_redirects=true) {
 		$this->debug = true;
 		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'router/route.html', false, 25);
@@ -115,7 +116,7 @@ final class PC_page extends PC_base {
 		$this->debug($data, 6);
 		$this->core->Parse_data_str($data['routes'], '▓', '░');
 		$this->core->Parse_data_str($data['permalinks'], '▓', '░');
-		
+
 		//pc_page_break
 		$page_parts = explode(self::PAGE_BREAK, $data['text']);
 		$page_part_count = count($page_parts);
@@ -129,7 +130,7 @@ final class PC_page extends PC_base {
 				));
 			}
 		}
-		
+
 		$this->_parse_html_page_id = $this->get_id();
 		$this->Parse_html_output($data['text'], $data['info'], $data['info2'], $data['info3'], $data['info_mobile']);
 		$this->Parse_html_output($data['description'], $data['keywords'], $data['title']);
@@ -144,13 +145,13 @@ final class PC_page extends PC_base {
 		if (!empty($route)) {
 			if ($data['front']) return array('controller'=>'core','data'=>404);
 		}
-		
+
 		if (!empty($data['permalink']) and strpos($_SERVER['REQUEST_URI'], $data['permalink'])=== false and !empty($data['route']) and $data['permalink'] != $data['route']) {
 			$redirect_link = $data['permalink'] . $this->cfg['trailing_slash'];
 			$this->debug("Redirecting to permalink {$data['permalink']}: $redirect_link", 5);
 			$this->core->Redirect_local($redirect_link, 301);
 		}
-		
+
 		if (!empty($data['ln_redirect'])) {
 			$data['redirect'] = $data['ln_redirect'];
 		}
@@ -160,7 +161,7 @@ final class PC_page extends PC_base {
 				'result'=> &$allow_redirect,
 			));
 		}
-		
+
 		if (!empty($data['redirect']) and $allow_redirect) {
 			if (preg_match("#^http://#", $data['redirect']) and empty($data['controller'])) {
 				$data = array(
@@ -174,7 +175,7 @@ final class PC_page extends PC_base {
 				return $data;
 			}
 			//parse redirect data
-			
+
 			vv($_SESSION['redirect_cycle']);
 			if (!in_array($data['redirect'], v($_SESSION['redirect_cycle'], array()))) {
 				$_SESSION['redirect_cycle'][] = $data['redirect'];
@@ -183,14 +184,14 @@ final class PC_page extends PC_base {
 					return $route_data;
 				}
 			}
-			
+
 		}
 		if (empty($data['controller']) || $data['controller'] == 'menu') $data['controller'] = 'page';
 		return $data;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param type $data
 	 * @param type $internal_redirects
 	 * @param type $append_range
@@ -201,7 +202,7 @@ final class PC_page extends PC_base {
 		if (empty($data['redirect'])) {
 			return false;
 		}
-		
+
 		if (preg_match("#^http://#", $data['redirect'])) {
 			$r_data = array(
 				'controller'=> 'core',
@@ -214,9 +215,9 @@ final class PC_page extends PC_base {
 			$this->core->Do_action($r_data['action'], $r_data['data']);
 			return $r_data;
 		}
-		
+
 		$controller_data = $this->get_controller_data_from_id($data['redirect']);
-			
+
 		$url = '';
 		if ($controller_data and $this->core->Count_hooks('core/page/parse-page-url/'.$controller_data['plugin'])) {
 			$this->core->Init_hooks('core/page/parse-page-url/'.$controller_data['plugin'], array(
@@ -239,11 +240,11 @@ final class PC_page extends PC_base {
 					return false;
 				}
 				//echo $url; exit;
-		
+
 				$this->core->Redirect_local($url, 301);
 			}
 		}
-			
+
 		$d = $this->Parse_redirect_data($data['redirect']);
 		//shouldnt redirects be done internally?
 		if (!$internal_redirects && !v($data['front'])) {
@@ -255,7 +256,7 @@ final class PC_page extends PC_base {
 				if ($append_range) {
 					$url .= $this->routes->Get_range(2); //all except first
 				}
-				
+
 			}
 			else {
 				$url .= $this->routes->Get_request();
@@ -270,9 +271,9 @@ final class PC_page extends PC_base {
 			$this->core->Redirect($url, 301);
 		}
 		else return $this->Get_route_data($d['pid'], true);
-		
+
 	}
-	
+
 	public function get_url_from_redirect($redirect) {
 		if (preg_match("#^https?://#", $redirect)) {
 			return $redirect;
@@ -280,9 +281,9 @@ final class PC_page extends PC_base {
 		if (preg_match("#^www\.#", $redirect)) {
 			return 'http://' . $redirect;
 		}
-		
+
 		$controller_data = $this->get_controller_data_from_id($redirect);
-			
+
 		$url = '';
 		if ($controller_data and $this->core->Count_hooks('core/page/parse-page-url/'.$controller_data['plugin'])) {
 			$this->core->Init_hooks('core/page/parse-page-url/'.$controller_data['plugin'], array(
@@ -293,10 +294,10 @@ final class PC_page extends PC_base {
 				return $url;
 			}
 		}
-		
+
 		return $this->Get_page_link_by_id($redirect);
 	}
-	
+
 	/**
 	 * Returns array with keys <ul><li>plugin</li><li>id</li></ul>
 	 * @param type $node_id
@@ -314,7 +315,7 @@ final class PC_page extends PC_base {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * This method recursively searches for span node having id 'pc_page_break' and adds that node along with all following
 	 * DOMNodes to the array referenced by $removeQueue parameter.
@@ -338,7 +339,7 @@ final class PC_page extends PC_base {
 				$pageBreakEncountered = $this->Find_page_break_and_following_nodes($child, $removeQueue, $pageBreakEncountered);
 		return $pageBreakEncountered;
 }
-	
+
 	/**
 	 * Gets shorter version of given text by removing 'pc_page_break' span along with all the HTML that follows it.
 	 *
@@ -352,18 +353,18 @@ final class PC_page extends PC_base {
 		$doc->loadHTML($text);
 		$root = $doc->getElementsByTagName('body')->item(0);
 		$queue = array();
-		
+
 		$this->Find_page_break_and_following_nodes($root, $queue);
 
 		foreach( $queue as $node )
 			$node->parentNode->removeChild($node);
-		
+
 		$text = '';
 		foreach( $root->childNodes as $node )
 			$text .= $doc->saveXML($node);
 		return $text;
 	}
-	
+
 	public function Parse_redirect_data($redirect) {
 		if (strpos($redirect, '#') !== false) {
 			$d = explode('#', $redirect);
@@ -399,8 +400,8 @@ final class PC_page extends PC_base {
 		}
 		catch(Exception $e) {
 
-		} 
-		
+		}
+
 		/*
 		 * Generate informational array about all forms on the page
 		 * and add honeypot fields to each form.
@@ -409,13 +410,13 @@ final class PC_page extends PC_base {
 
 		$this->debug("length: " . $formElements->length, 1);
 		//$this->_form_count = $formElements->length;
-		
+
 		if ($formElements->length) {
 			//$this->debug($this->get_callstack());
 			if ($this->debug) {
 				//@file_put_contents($this->cfg['path']['logs'] . 'text_2.html', $text);
 			}
-			
+
 			$pageForms = array();
 			for ($i=0; $i<$formElements->length; $i++) {
 				$form = $formElements->item($i);
@@ -440,54 +441,54 @@ final class PC_page extends PC_base {
 				}
 				$formIdHash = 'pc_' . md5($formId.'_honeypot');
 				$pageForm = array('status' => array('status' => 'initialized'), 'id' => $formId, 'idHash' => $formIdHash, 'submitEmails' => $formSubmitEmails, 'thankYouText' => $thankYouText, 'custom_emails' => $custom_emails, 'DOMElement' => &$form, 'fields' => array());
-				
-				
+
+
 				$innerHTML = '';
-				$children = $form->childNodes; 
-				foreach ($children as $child) { 
+				$children = $form->childNodes;
+				foreach ($children as $child) {
 					$tmp_doc = new DOMDocument();
-					$tmp_doc->preserveWhiteSpace = false; 
+					$tmp_doc->preserveWhiteSpace = false;
 					//$tmp_doc = new DOMDocument('1.0', 'utf-8');
 					//$child->setAttribute ("content","UTF-8");
-					$tmp_doc->appendChild($tmp_doc->importNode($child,true));        
-					//$innerHTML .= $tmp_doc->saveHTML(); 
+					$tmp_doc->appendChild($tmp_doc->importNode($child,true));
+					//$innerHTML .= $tmp_doc->saveHTML();
 					$innerHTML .= html_entity_decode($tmp_doc->saveHTML(),ENT_QUOTES,"UTF-8");
-				} 
+				}
 				//echo remove_utf8_accents($innerHTML);
-				
+
 				//$innerHTML = mb_convert_encoding($innerHTML, 'HTML-ENTITIES', 'UTF-8');
 				//$innerHTML = iconv('ASCII', 'UTF-8//IGNORE', $innerHTML);
-				
+
 				$name_matches = array();
 				preg_match_all('/name\s?=\s?"([^"]+)"/ui', $innerHTML, $name_matches);
 				//preg_match_all('/name\s?=\s?"([\p{L}\p{Z}\p{N}\-\,\.\s]+)"/ui', $innerHTML, $name_matches);
 				//$innerHTML = '<input style="width: 250px;" title="Vardas, pavardė" required="required" name="pavardė" type="text" data-msg-required="Šis laukas privalomas.">';
 				$this->debug("mb_detect_encoding(string_for_matching): " . mb_detect_encoding($innerHTML), 8);
 				//preg_match_all('/name\s?=\s?"([\p{L}]+)"/ui', $innerHTML, $name_matches);
-				
+
 				//print_r($name_matches);
 				//exit;
-				
+
 				$pageForm['_names'] = $name_matches[1];
-				
+
 				$this->debug("matched names:", 4);
 				$this->debug($pageForm['_names'], 5);
-				
+
 				$matched_page_form_names = $pageForm['_names'];
-				
+
 				//echo remove_utf8_accents('Rückfahrt');
 				foreach ($pageForm['_names'] as $key => $value) {
 					$pageForm['_names'][$key] = preg_replace('/\[\]$/ui', '', $pageForm['_names'][$key], -1, $multiple);
 					$pageForm['_names'][$key] = trim($pageForm['_names'][$key]);
 				}
-				
+
 				$this->debug("names after processing:", 4);
 				$this->debug($pageForm['_names'], 5);
-				
+
 				//print_pre($pageForm['_names']);
-				
+
 				$submit_names = array();
-				
+
 				foreach (array('input','textarea','select') as $tagName) {
 					$inputs = $form->getElementsByTagName($tagName);
 					for ($j=0; $j<$inputs->length; $j++) {
@@ -512,19 +513,19 @@ final class PC_page extends PC_base {
 									<input type="hidden" name="recaptcha_response_field"
 										value="manual_challenge" />
 								 </noscript>');
-								
+
 								$field->parentNode->replaceChild($template, $field);
-								
+
 								$pageForm['fields']['captcha'] = array(
 									'type' => 'captcha'
 								);
-								
+
 							}
 							catch(Exception $e) {
 
-							} 
-							
-							
+							}
+
+
 						}
 						elseif ($fieldName != '' and $fieldName != 'recaptcha_challenge_field') {
 							$type = ($tagName == 'input') ? $field->getAttribute('type') : $tagName;
@@ -532,11 +533,11 @@ final class PC_page extends PC_base {
 							$nameAttribute = 'pc_' . md5($fieldName);
 							$field->setAttribute('name', $nameAttribute . ($multiple?'[]':''));
 							$pageForm['fields'][$fieldName]['multiple'] = $multiple;
-							
+
 							if ($type == 'tel') {
 								$field->setAttribute('pattern', '[\+]?[\d-\s]+');
 							}
-							
+
 							//$element = array();
 							//$element['type'] = ($tagName == 'input' ? $field->getAttribute('type') : $tagName);
 							//$element['required'] = $field->hasAttribute('required');
@@ -577,19 +578,19 @@ final class PC_page extends PC_base {
 							}
 						}
 						else {
-							
+
 						}
 					}
 				}
-				
+
 				$honeyPotField = $form->appendChild(new DOMElement('input'));
 				$honeyPotField->setAttribute('name', $formIdHash);
 				$honeyPotField->setAttribute('type', 'hidden');
 				$honeyPotField->setAttribute('value', $nextFormSubmitHash);
-				
+
 				$pageForms[] = $pageForm;
 			}
-			
+
 			/*
 			 * Process all forms in an array: check if each one has been
 			 * submitted and validate the data if so.
@@ -603,9 +604,9 @@ final class PC_page extends PC_base {
 					$pageForm['status']['status'] = 'submitted';
 					$values = array();
 					$files = array();
-					
+
 					$new_fields = array();
-					
+
 					foreach ($pageForm['_names'] as $kk => $_name) {
 						$mathed_name = false;
 						if (isset($matched_page_form_names[$kk])) {
@@ -613,7 +614,7 @@ final class PC_page extends PC_base {
 						}
 						/*
 						foreach ($pageForm['fields'] as $field => $field_data) {
-							
+
 							ob_start();
 							var_dump($field);
 							$s1 = ob_get_clean();
@@ -623,7 +624,7 @@ final class PC_page extends PC_base {
 							ob_start();
 							var_dump($mathed_name);
 							$s3 = ob_get_clean();
-							
+
 							$this->debug('attribute->name:' . $s1, 8);
 							$this->debug('processed name from preg_match_all' . $s2, 8);
 							$this->debug('raw name from preg_match_all' . $s3, 8);
@@ -632,7 +633,7 @@ final class PC_page extends PC_base {
 							$this->debug("mb_detect_encoding($mathed_name): " . mb_detect_encoding($mathed_name), 8);
 							$this->debug("'$field' == '$_name': " . ($field == $_name), 8);
 							$this->debug("strcmp ('$field', '$_name'): " . strcmp ( $field, $_name), 8);
-							 
+
 						}*/
 						if (isset($pageForm['fields'][$_name]) || array_key_exists($_name, $pageForm['fields'])) {
 							$this->debug(" :) $_name is set in _names ", 6);
@@ -649,16 +650,16 @@ final class PC_page extends PC_base {
 							$this->debug(" :( $_name is not set in _names ", 6);
 						}
 					}
-					
+
 					$this->debug("new_fields keys:", 4);
 					$this->debug(array_keys($new_fields), 5);
-					
+
 					$this->debug("pageForm['fields'] keys:", 4);
 					$this->debug(array_keys($pageForm['fields']), 5);
-					
+
 					$new_fields = array_merge($new_fields, $pageForm['fields']);
 					$pageForm['fields'] = $new_fields;
-					
+
 					foreach ($pageForm['fields'] as $fieldName => &$field) {
 						if ($field['type'] == 'file') {
 							$error = false;
@@ -857,16 +858,26 @@ final class PC_page extends PC_base {
 							if (isset($this->cfg['from_name']) and !empty($this->cfg['from_name'])) {
 								$mail->FromName = $this->cfg['from_name'];
 							}
-							
+
 							$mail->Subject = lang('form_submitted_subject', $pageForm['id']);
-														
+
 							$mailBodyDOM = new DOMDocument;
 							$mailBodyDOM->loadHTML('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html><head><meta http-equiv="Content-type" content="text/html; charset=utf-8" /></head><body></body></html>');
 							$body = $mailBodyDOM->getElementsByTagName('body')->item(0);
-							
+
 							$body->appendChild(new DOMElement('p', lang('form_submitted_heading')));
 							$body->appendChild(new DOMElement('p', lang('form_submitted_text', $pageForm['id'], $this->page_data['name'])));
 							$textBody = lang('form_submitted_heading') . "\r\n\r\n" . lang('form_submitted_text', $pageForm['id'], $this->page_data['name']) . "\r\n\r\n";
+
+							$currentUrl = Url::getCurrentUrl();
+							$currentUrl = $currentUrl->getAbsoluteUrl();
+
+							$textBody .= $currentUrl . '\r\n\r\n';
+
+							$body->appendChild($p = new DOMElement('p'));
+							$p->appendChild($a = new DOMElement('a', htmlspecialchars($currentUrl)));
+							$a->setAttribute('href', $currentUrl);
+
 							$table = $body->appendChild(new DOMElement('table'));
 							$this->debug('$values:', 3);
 							$this->debug($values, 3);
