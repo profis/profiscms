@@ -3,6 +3,9 @@
  * @var array $items
  * @var int $max_page
  */
+
+use \Profis\Utils\HTML;
+
 if( v($max_page) <= 1 )
 	return;
 ?>
@@ -18,7 +21,7 @@ if( v($max_page) <= 1 )
 			if( isset($item['class']) )
 				$li_classes[] = $item['class'];
 			$li_class = implode(' ', $li_classes);
-			?><li class="<?php echo $li_class ?>"><a href="<?php echo v($item['link']) ?>"><?php echo $item['label'] ?></a></li><?php
+			echo HTML::tag('li', array('class' => $li_class), HTML::link($item['label'], v($item['disabled']) ? '' : v($item['link']), array('title' => '')));
 		}
 	?></ul>
 </div>
