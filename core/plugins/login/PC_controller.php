@@ -19,10 +19,6 @@ final class PC_controller_login extends PC_controller {
 	//$data contains all information about the loaded page from the database table `pages`
 	//$data masyve sudeta visa puslapio, kuris naudoja pasirinkta route'a, informacija.
 	public function Process($data) {
-		if (isset($_GET['debug'])) {
-			$this->debug = true;
-			$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'login_controller_log.html', false, 5);
-		}
 		/*print_pre($this);
 		print_pre($data); //lets see what's inside
 		//here we're setting page <title> text

@@ -11,9 +11,6 @@ $auth = new PC_auth;
 
 $plugins = new PC_plugins;
 
-$plugins->debug = true;
-$plugins->set_instant_debug_to_file($cfg['path']['logs'] . 'base/plugins.html');
-
 $plugins->Scan();
 
 

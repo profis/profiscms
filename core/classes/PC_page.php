@@ -48,9 +48,6 @@ final class PC_page extends PC_base {
 	}
 
 	public function Get_route_data($route=null, $route_is_page_id=false, $path=array(), $internal_redirects=true) {
-		$this->debug = true;
-		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'router/route.html', false, 25);
-		$this->debug("Get_route_data($route)");
 		$now = time();
 		$r = $this->prepare("SELECT p.date,p.front,p.id pid, p.id page_id,p.idp,c.*,p.hot,p.controller,p.redirect,h.id redirect_from_home,p.nr,p.reference_id,p.source_id,"
 		.$this->sql_parser->group_concat($this->sql_parser->concat_ws('░', 'routes.ln', 'routes.route'), array('separator'=>'▓'))." routes"
@@ -82,7 +79,6 @@ final class PC_page extends PC_base {
 		}
 		$data = $r->fetch();
 		if ($data['source_id'] > 0) {
-			$this->debug('source_id = ' . $data['source_id'], 1);
 			$page_model = new PC_page_model();
 			$source_page_data = $page_model->get_one(array(
 				'content' => true,
@@ -92,7 +88,6 @@ final class PC_page extends PC_base {
 				)
 			));
 			if ($source_page_data and !empty($source_page_data)) {
-				$this->debug('Setting new text fields from source page', 1);
 				$data['text'] = $source_page_data['text'];
 				$data['info'] = $source_page_data['info'];
 				$data['info2'] = $source_page_data['info2'];
@@ -104,16 +99,11 @@ final class PC_page extends PC_base {
 		}
 		$this->page_data = $data;
 		if (!$route_is_page_id and empty($data['controller'])) {
-			$this->debug('Controller is empty', 1);
-			$this->debug($this->site->route, 2);
 			if (count($this->site->route) > 2) {
 				return array('controller'=>'core','data'=>404);
-				$this->debug("404 Redirecting to index, because we have extra routes", 5);
 				$this->core->Redirect_local('', 301);
 			}
 		}
-		$this->debug('page_data', 5);
-		$this->debug($data, 6);
 		$this->core->Parse_data_str($data['routes'], '▓', '░');
 		$this->core->Parse_data_str($data['permalinks'], '▓', '░');
 
@@ -148,7 +138,6 @@ final class PC_page extends PC_base {
 
 		if (!empty($data['permalink']) and strpos($_SERVER['REQUEST_URI'], $data['permalink'])=== false and !empty($data['route']) and $data['permalink'] != $data['route']) {
 			$redirect_link = $data['permalink'] . $this->cfg['trailing_slash'];
-			$this->debug("Redirecting to permalink {$data['permalink']}: $redirect_link", 5);
 			$this->core->Redirect_local($redirect_link, 301);
 		}
 
@@ -388,7 +377,6 @@ final class PC_page extends PC_base {
 		if (v($this->cfg['do_not_process_forms'])) {
 			return;
 		}
-		$this->debug("Process_forms(current_hash: $currentFormSubmitHash, next_hash: $nextFormSubmitHash)");
 		$dom = new DOMDocument();
 		/* Create a fictional XHTML document with just the contents of $text in the body.
 		 * Both DOCTYPE and character set definition are necessary for all the magic to work properly.
@@ -408,22 +396,14 @@ final class PC_page extends PC_base {
 		 */
 		$formElements = $dom->getElementsByTagName('form');
 
-		$this->debug("length: " . $formElements->length, 1);
 		//$this->_form_count = $formElements->length;
 
 		if ($formElements->length) {
-			//$this->debug($this->get_callstack());
-			if ($this->debug) {
-				//@file_put_contents($this->cfg['path']['logs'] . 'text_2.html', $text);
-			}
-
 			$pageForms = array();
 			for ($i=0; $i<$formElements->length; $i++) {
 				$form = $formElements->item($i);
 				$formId = $form->getAttribute('id');
 				$formSettings = json_decode($form->getAttribute('pcformsettings'), true);
-				$this->debug('$formSettings:', 3);
-				$this->debug($formSettings, 4);
 				$form->removeAttribute('pcformsettings');
 				$formSubmitEmails = array();
 				$thankYouText = '';
@@ -463,16 +443,12 @@ final class PC_page extends PC_base {
 				preg_match_all('/name\s?=\s?"([^"]+)"/ui', $innerHTML, $name_matches);
 				//preg_match_all('/name\s?=\s?"([\p{L}\p{Z}\p{N}\-\,\.\s]+)"/ui', $innerHTML, $name_matches);
 				//$innerHTML = '<input style="width: 250px;" title="Vardas, pavardė" required="required" name="pavardė" type="text" data-msg-required="Šis laukas privalomas.">';
-				$this->debug("mb_detect_encoding(string_for_matching): " . mb_detect_encoding($innerHTML), 8);
 				//preg_match_all('/name\s?=\s?"([\p{L}]+)"/ui', $innerHTML, $name_matches);
 
 				//print_r($name_matches);
 				//exit;
 
 				$pageForm['_names'] = $name_matches[1];
-
-				$this->debug("matched names:", 4);
-				$this->debug($pageForm['_names'], 5);
 
 				$matched_page_form_names = $pageForm['_names'];
 
@@ -481,9 +457,6 @@ final class PC_page extends PC_base {
 					$pageForm['_names'][$key] = preg_replace('/\[\]$/ui', '', $pageForm['_names'][$key], -1, $multiple);
 					$pageForm['_names'][$key] = trim($pageForm['_names'][$key]);
 				}
-
-				$this->debug("names after processing:", 4);
-				$this->debug($pageForm['_names'], 5);
 
 				//print_pre($pageForm['_names']);
 
@@ -495,7 +468,6 @@ final class PC_page extends PC_base {
 						$field = $inputs->item($j);
 						$fieldName = preg_replace('/\[\]$/ui', '', $field->getAttribute('name'), -1, $multiple);
 						$fieldName = trim($fieldName);
-						$this->debug('$fieldName: ' . $fieldName, 5);
 						if ($tagName == 'input' and $field->getAttribute('type') == 'submit') {
 							$submit_names[] = $fieldName;
 						}
@@ -597,10 +569,7 @@ final class PC_page extends PC_base {
 			 */
 			foreach ($pageForms as &$pageForm) {
 				$this->_form_count++;
-				$this->debug($_POST, 2);
-				$this->debug("pageForm['idHash']: {$pageForm['idHash']}, [$currentFormSubmitHash]", 2);
 				if (array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == $currentFormSubmitHash)) {
-					$this->debug("submited", 3);
 					$pageForm['status']['status'] = 'submitted';
 					$values = array();
 					$files = array();
@@ -625,37 +594,16 @@ final class PC_page extends PC_base {
 							var_dump($mathed_name);
 							$s3 = ob_get_clean();
 
-							$this->debug('attribute->name:' . $s1, 8);
-							$this->debug('processed name from preg_match_all' . $s2, 8);
-							$this->debug('raw name from preg_match_all' . $s3, 8);
-							$this->debug("mb_detect_encoding($field): " . mb_detect_encoding($field), 8);
-							$this->debug("mb_detect_encoding($_name): " . mb_detect_encoding($_name), 8);
-							$this->debug("mb_detect_encoding($mathed_name): " . mb_detect_encoding($mathed_name), 8);
-							$this->debug("'$field' == '$_name': " . ($field == $_name), 8);
-							$this->debug("strcmp ('$field', '$_name'): " . strcmp ( $field, $_name), 8);
-
 						}*/
 						if (isset($pageForm['fields'][$_name]) || array_key_exists($_name, $pageForm['fields'])) {
-							$this->debug(" :) $_name is set in _names ", 6);
 							$new_fields[$_name] = $pageForm['fields'][$_name];
 							unset($pageForm['fields'][$_name]);
 						}
 						elseif ($mathed_name and isset($pageForm['fields'][$mathed_name]) || array_key_exists($mathed_name, $pageForm['fields'])) {
-							$this->debug(" :) $mathed_name is in matched_page_form_names ", 6);
 							$new_fields[$mathed_name] = $pageForm['fields'][$mathed_name];
 							unset($pageForm['fields'][$mathed_name]);
 						}
-						else {
-							//echo "$_name is not set in _names ";
-							$this->debug(" :( $_name is not set in _names ", 6);
-						}
 					}
-
-					$this->debug("new_fields keys:", 4);
-					$this->debug(array_keys($new_fields), 5);
-
-					$this->debug("pageForm['fields'] keys:", 4);
-					$this->debug(array_keys($pageForm['fields']), 5);
 
 					$new_fields = array_merge($new_fields, $pageForm['fields']);
 					$pageForm['fields'] = $new_fields;
@@ -840,17 +788,14 @@ final class PC_page extends PC_base {
 							$r = $this->prepare($query);
 							$query_params = array($this->page_data['page_id'], $pageForm['id'], json_encode($values), ip2long($_SERVER['REMOTE_ADDR']));
 							$s = $r->execute($query_params);
-							$this->debug_query($query, $query_params, 4);
 							if (!$s) {
 								$pageForm['status'] = array('status' => 'error', 'errors'=>array('database'));
 							} else {
 								$pageForm['status'] = array('status'=> 'saved');
 							}
-							$this->debug($pageForm['status'], 3);
 						}
 					}
 					if ($pageForm['status']['status'] == 'saved') {
-						$this->debug("saved", 3);
 						if (!empty($pageForm['submitEmails'])) {
 							$mail = new PHPMailer();
 							$mail->CharSet = "utf-8";
@@ -879,12 +824,9 @@ final class PC_page extends PC_base {
 							$a->setAttribute('href', $currentUrl);
 
 							$table = $body->appendChild(new DOMElement('table'));
-							$this->debug('$values:', 3);
-							$this->debug($values, 3);
 							if (!empty($pageForm['custom_emails'])) {
 								foreach ($pageForm['custom_emails'] as $custom_email_data) {
 									if (isset($values[$custom_email_data['name']]) and $values[$custom_email_data['name']] == $custom_email_data['value']) {
-										$this->debug('changing submit emails to ' . $custom_email_data['emails'], 3);
 										$pageForm['submitEmails'] = explode(';', $custom_email_data['emails']);
 										break;
 									}
@@ -928,10 +870,6 @@ final class PC_page extends PC_base {
 							
 							PC_utils::debugEmail($pageForm['submitEmails'], $message, $textBody);
 							
-							$this->debug("sending to:", 4);
-							$this->debug($pageForm['submitEmails'], 4);
-							//$this->debug("email text:" . $textBody, 4);
-							
 							foreach ($pageForm['submitEmails'] as $submitEmail) {
 								$mail->AddAddress($submitEmail);
 							}
@@ -939,10 +877,8 @@ final class PC_page extends PC_base {
 							
 							if (isset($this->cfg['from_smtp'])) {
 								require_once $this->cfg['path']['classes'] . 'class.smtp.php';
-								$this->debug("calling IsSMTP()", 1);
 								$mail->IsSMTP();
 								if (!empty($this->cfg['from_smtp'])) {
-									$this->debug("setting host: " . $this->cfg['from_smtp'], 1);
 									$mail->Host = $this->cfg['from_smtp'];
 								}
 							}
@@ -950,11 +886,9 @@ final class PC_page extends PC_base {
 							if (isset($this->cfg['mailer_params']) and is_array($this->cfg['mailer_params'])) {
 								foreach ($this->cfg['mailer_params'] as $key => $value) {
 									if ($key == 'IsSendmail' and $value) {
-										$this->debug("calling IsSendmail()", 1);
 										$mail->IsSendmail();
 									}
 									else {
-										$this->debug("setting $key", 1);
 										$mail->$key = $value;
 									}
 								}
@@ -966,16 +900,12 @@ final class PC_page extends PC_base {
 							if (!$mail->Send()) {
 								$pageForm['status'] = array('status' => 'error', 'errors'=>array('email'));
 								// echo 'Mailer error: ' . $mail->ErrorInfo;
-								$this->debug("error: " . $mail->ErrorInfo, 4);
-								$this->debug(print_r(error_get_last(), true), 5);
 							} else {
 								$pageForm['status'] = array('status' => 'sent');
-								$this->debug(":) sent", 6);
 							}
 						}
 						
 						if (!empty($pageForm['thankYouText'])) {
-							$this->debug('Thank you text', 3);
 							// The following two lines allow to use HTML in the thank you text
 							$thankYouDiv = $dom->createDocumentFragment();
 							@$thankYouDiv->appendXML('<div class="pc_form_thank_you">' . $pageForm['thankYouText'] . '</div>');
@@ -986,19 +916,9 @@ final class PC_page extends PC_base {
 						}
 						$this->site->Register_data('saved_form', $pageForm);
 					}
-					$this->debug('$pageForm:', 2);
-					$this->debug($pageForm, 3);
 				}
 				else {
 					//array_key_exists($pageForm['idHash'], $_POST) && ($_POST[$pageForm['idHash']] == $currentFormSubmitHash)
-					if (!array_key_exists($pageForm['idHash'], $_POST)) {
-						$this->debug(":( {$pageForm['idHash']} is not set in POST", 3);
-					}
-					elseif($_POST[$pageForm['idHash']] != $currentFormSubmitHash) {
-						$this->debug(":( currentFormSubmitHash != {_POST[pageForm['idHash']]}", 3);
-						$this->debug(":( $currentFormSubmitHash != {$_POST[$pageForm['idHash']]}", 3);
-					}
-					
 				}
 			}
 			
@@ -1024,11 +944,6 @@ final class PC_page extends PC_base {
 	}
 	//single method that parses gallery file requests, replaces google maps objects, trims page break etc.
 	public function Parse_html_output(&$t1, &$t2=null, &$t3=null, &$t4=null, &$t5=null) {
-		$logger = false;
-		if (isset($this->_parse_html_output_logger)) {
-			$logger = $this->_parse_html_output_logger;
-			$logger->click('start');
-		}
 		$params = $t2;
 		if (isset($this->_parse_html_output_params) and is_array($this->_parse_html_output_params)) {
 			$params = $this->_parse_html_output_params;
@@ -1037,22 +952,16 @@ final class PC_page extends PC_base {
 		elseif (!is_array($params)) {
 			$params = false;
 		}
-		$this->debug("Parse_html_output()");
 		// prevent double-submitting of forms. This goes here and not in Process_forms()
 		// because we run Process_forms() multiple times for each page load.
 		// This has a side-effect that if the user has multiple pages open in
 		// different tabs, submitting both of them from the first time becomes impossible.
 		$currentFormSubmitHash = null;
 		$formSubmitHash_key = $this->_parse_html_page_id . '_' . 'formSubmitHash';
-		$this->debug("formSubmitHash_key: $formSubmitHash_key", 1);
 		if(array_key_exists($formSubmitHash_key, $_SESSION)) {
 			$currentFormSubmitHash = $_SESSION[$formSubmitHash_key];
-			$this->debug("currentFormSubmitHash = _SESSION['$formSubmitHash_key'] = $currentFormSubmitHash", 1);
 		}
-		else {
-			$this->debug(":( $formSubmitHash_key is not set in SESSION", 1);
-		}
-		
+
 		$nextFormSubmitHash = time();
 						
 		//$this->page_data['pid']
@@ -1062,25 +971,18 @@ final class PC_page extends PC_base {
 		$text =& $$var;
 		while (isset($text) and !is_array($text)) {
 			#
-			if ($logger) $logger->click('starting ' . $var);
 			if ($params === false or in_array('forms', $params)) {
 				$this->Process_forms($text, $currentFormSubmitHash, $nextFormSubmitHash);
-				if ($logger) $logger->click('after forms');
-			
+
 				if ($this->_form_count) {
-					if (isset($this->_parsed_page_forms[$this->_parse_html_page_id])) {
-						$this->debug("_SESSION['$formSubmitHash_key'] is already set in this request", 1);
-					}
-					else {
+					if (!isset($this->_parsed_page_forms[$this->_parse_html_page_id])) {
 						$this->_parsed_page_forms[$this->_parse_html_page_id] = true;
 						$_SESSION[$formSubmitHash_key] = $nextFormSubmitHash;
-						$this->debug("_SESSION[$formSubmitHash_key] = nextFormSubmitHash; [$nextFormSubmitHash]", 1);
 					}
 				}
 			}
 			if ($params === false or in_array('maps', $params)) {
 				$this->Replace_google_map_objects($text);
-				if ($logger) $logger->click('after maps');
 			}
 			
 				
@@ -1090,7 +992,6 @@ final class PC_page extends PC_base {
 					$gallery_params = $params['gallery_params'];
 				}
 				$this->Parse_gallery_files_requests($text, $gallery_params);
-				if ($logger) $logger->click('after gallery');
 			}
 			else {
 				
@@ -1100,21 +1001,17 @@ final class PC_page extends PC_base {
 			));
 			if ($params === false or in_array('media', $params)) {
 				$this->Replace_media_objects($text);
-				if ($logger) $logger->click('after media');
 			}
 			//fix hash links
 			if (isset($this->route[1])) {
 				$text = preg_replace("/href=\"(#[^\"]+)\"/ui", "href=\"".$this->site->Get_link($this->route[1], null, false)."$1\"",  $text);
-				if ($logger) $logger->click('after href');
-				
+
 			}
 			//remove default language code from links
 			
 			$text = preg_replace("/(href=\"www\.)/", 'href="http://www.',  $text);			
 			$text = preg_replace("/href=\"".$this->site->default_ln."\//", "href=\"",  $text);
-			if ($logger) $logger->click('after href 2');
 			$this->_decode_links($text);
-			if ($logger) $logger->click('after links');
 			//append prefix to the links from editor
 			//if (isset($this->route[1])) $text = preg_replace("/href=\"/ui", "href=\"".$this->site->link_prefix,  $text);
 			
@@ -1122,16 +1019,13 @@ final class PC_page extends PC_base {
 				$pattern = "/href=\"(?!(".preg_quote('new/', '/')."|mailto:|skype:|gallery|http:\/\/|https:\/\/|www\.))/ui";
 				//print_pre($pattern);
 				$text = @preg_replace($pattern, "href=\"".$this->site->link_prefix,  $text);
-				if ($logger) $logger->click('after pseudo links');
 			}
 			//page break
 			$text = str_replace('╬', '<span style="display:none" id="pc_page_break">&nbsp;</span>', $text);
-			if ($logger) $logger->click('after breaks');
 			//prevent bots from seeing raw email addresses
 			if ($params === false or !in_array('do_not_encode_emails', $params)) {
 				if (strpos($text, '@') !== false) {
 					$text = preg_replace_callback("#".$this->cfg['patterns']['email']."#i", array($this, 'Encode_email'), $text);
-					if ($logger) $logger->click('after encode emails');
 				}
 			}
 			#continue to the next arg
@@ -1586,7 +1480,6 @@ final class PC_page extends PC_base {
 							};
 						}
 					};'
-					//. 'debugger;'
 					.'$(document).ready(ready_callback('.$map_var_name.', category_markers, no_category_markers));';
 
 		if (!$categories_exist) {
@@ -1634,7 +1527,6 @@ final class PC_page extends PC_base {
 						.'var infowindow = new google.maps.InfoWindow();'
 						.$markers
 						//.'new google.maps.Marker({map:'.$id.',animation:google.maps.Animation.DROP,position: options_'.$id.'.center' . $marker_image . $marker_custom_options . '});'
-						//.'debugger;'
 						.$map_init_js
 						. $filter_js
 					.'});'
@@ -1674,7 +1566,6 @@ final class PC_page extends PC_base {
 						'
 						.$categories
 						.$markers
-						//.'debugger;'
 						.$filter_js
 						.'
 					}
@@ -1700,8 +1591,6 @@ final class PC_page extends PC_base {
 		$google_map_object = '/<object( style="(.+?)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase=".+?">'."\s*".'(?:<param name="map_type" value="(.+?)" \/>)?'."\s*".'<param name="map_data" value="(.+?)" \/>'."\s*".'<param name="src" value=".+?" \/>\s*(<param name="map_type" value="(.+?)" \/>)?\s*<embed( style="(.+?)")? src=".+?" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
 		//$google_map_object = '/<object( style="([^"]*)")? width="([0-9]+[a-z%]*?)" height="([0-9]+[a-z%]*?)" classid="clsid:google-map" codebase="([^"]*)">'."\s*".'(?:<param name="map_type" value="([^"]*)" \/>)?'."\s*".'<param name="map_data" value="([^"]*)" \/>'."\s*".'<param name="src" value="([^"]*)" \/>\s*(<param name="map_type" value="([^"]*)" \/>)?\s*<embed( style="([^"]*)")? src="([^"]*)" type="application\/google-map" width="[0-9]+[a-z%]*?" height="[0-9]+[a-z%]*?">.*?<\/embed>'."\s*".'<\/object>/miu';
 		
-		$this->debug("google_map_object pattern:", 1);
-		$this->debug(htmlspecialchars($google_map_object), 2);
 		//htmlspecialchars($text);
 		
 		if (strlen($text) > 7000) {
@@ -1732,9 +1621,6 @@ final class PC_page extends PC_base {
 			}
 		}
 
-		$this->debug('preg_last_error():', 3);
-		$this->debug(preg_last_error(), 4);
-		
 		return true;
 	}
 	public function Replace_media_objects(&$text) {
@@ -1890,8 +1776,6 @@ final class PC_page extends PC_base {
 		$query = "SELECT pid, ln FROM {$this->db_prefix}content WHERE $name = ? $where_ln LIMIT 1";
 		$r_category = $this->prepare($query);
 		
-		$this->debug_query($query, $queryParams);
-		
 		$s = $r_category->execute($queryParams);
 		if (!$s) return false;
 
@@ -1909,8 +1793,6 @@ final class PC_page extends PC_base {
 		$queryParams[] = $id;
 		$queryParams[] = $ln;
 
-		$this->debug_query($query, $queryParams);
-		
 		$s = $r_category->execute($queryParams);
 		if (!$s) return false;
 
@@ -1994,8 +1876,6 @@ final class PC_page extends PC_base {
 			}
 			$this->_parse_html_page_id = v($d['pid'], 0);
 			$this->_parse_html_output_params = $parseLinks;
-			$this->debug($parseLinks);
-			$this->debug(array_keys($d));
 			if ($parseLinks_param) $this->Parse_html_output($d['text'], $d['info'], $d['info2'], $d['info3'], $d['info_mobile']);
 			$list[] = $d;
 		}
@@ -2135,7 +2015,6 @@ final class PC_page extends PC_base {
 		." ORDER BY mp.nr,p.nr";
 		$r = $this->prepare($query);
 		$query_params = array($this->site->data['id']);
-		//echo $this->get_debug_query_string($query, $query_params);
 		$s = $r->execute($query_params);
 		if (!$s) return false;
 		//if there's no menu, just leave empty menus array and return
@@ -2390,7 +2269,6 @@ final class PC_page extends PC_base {
 		if (!is_array($id)) $params[] = $id;
 		if (is_array($id) && !count($id)) return false;
 		$params = array_merge($params, $additional_params);
-		$this->get_debug_query_string($query, $params);
 		$success = $r->execute($params);
 		if (!$success)
 			throw new DbException($r->errorInfo(), $query, $params);

@@ -20,8 +20,6 @@ error_reporting(0); //ensure PHP won't output any error data and won't destroy J
 $cfg['core']['no_login_form'] = true; //don't output login form if there's no active session
 
 require_once('admin.php'); //ensure the user is authorized, otherwise stop executing this script
-//$auth->debug = true;
-//$auth->set_instant_debug_to_file($cfg['path']['base'] . 'logs/auth/auth_for_ajax_gallery_php.html', false, 5);
 if (!$auth->Authorize('core', 'admin') and !$auth->Authorize('core', 'access_admin')) {
 	die('No access');
 }
@@ -498,15 +496,6 @@ elseif ($action == "get_resize_ratio_for_cropping_image") {
 			}
 		}
 	}
-}
-elseif ($action == 'debug_tree') {
-	$db_tree = $core->Get_object('PC_database_tree');
-	$db_tree->Debug('gallery_categories', array(
-		'cols'=> array(
-			'name'=> 'category',
-			'parent'=> 'parent'
-		)
-	));
 }
 elseif ($action == 'get_file') {
 	$output = $gallery->Get_file_by_id($_POST['id']);

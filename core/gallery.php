@@ -109,11 +109,6 @@ else {
 	require_once 'path_constants.php';
 	require_once 'base.php';
 
-	$logger = new PC_debug();
-	$logger->debug = true;
-	$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'gallery/gallery_php.html', false, 5);
-	$logger->debug($galleryRequest);	
-	
 	if ($galleryRequest == 'index.php') {
 		header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found"); return;
 	}

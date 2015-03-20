@@ -1,5 +1,7 @@
 <?php
 /**
+ * @var PC_paging_widget $this
+ * @var string $tpl_group
  * @var array $items
  * @var int $max_page
  */

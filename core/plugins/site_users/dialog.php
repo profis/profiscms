@@ -25,13 +25,6 @@ $plugin_file = $plugin_url . basename(__FILE__);
 
 $plugin_path = $cfg['url']['base'].$cfg['directories']['core_plugins_www'].'/'.$plugin_name;
 
-if (!isset($logger)) {
-	$logger = new PC_debug();
-	$logger->debug = true;
-	$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'plugins/site_users.html', false, 5);
-}
-$logger->debug('Starting plugin dialog', 3);
-
 if (!function_exists('huge_rand')) {
 	function huge_rand($limit) {
 		$n = strlen($limit) - 2;

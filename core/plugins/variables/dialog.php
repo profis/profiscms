@@ -129,7 +129,6 @@ function mod_variables_click() {
 	function ed_sk(fld, e) {
 		// copied from Editor::onSpecialKey()
 		if (e.getKey() == e.ENTER) {
-			//debugger;
 			//e.stopEvent(); // wtf doesn't work, grid still gets it
 			fld.gridEditor.completeEdit();
 			//if (fld.gridEditor.triggerBlur) fld.gridEditor.triggerBlur();

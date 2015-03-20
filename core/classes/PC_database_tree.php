@@ -24,7 +24,6 @@ final class PC_database_tree extends PC_base {
 		//check methods of getting values from PC_gallery->Move_category();
 	}
 	public function Insert($table, $parentId=0, $position=0, $data=array(), &$params=array()) {
-		$this->debug("Insert(table: $table, parentId: $parentId, position: $position)");
 		$this->core->Init_params($params);
 		$cols = $this->Get_cols($params);
 		
@@ -115,7 +114,6 @@ final class PC_database_tree extends PC_base {
 		$rUpdateLeft = $this->prepare($query);
 		//create the gap for the node to move in
 		$query_params = array(2, $moveAfter);
-		$this->debug_query($query, $query_params, 1);
 		$rUpdateLeft->execute($query_params);
 		if (!$rUpdateLeft) {
 			$params->errors->Add('database', "Update `{$cols['left']}` values");
@@ -126,12 +124,9 @@ final class PC_database_tree extends PC_base {
 		$query_update_right = $query = "UPDATE {$this->db_prefix}$table SET {$cols['right']}={$cols['right']}+? WHERE {$cols['right']}>?";
 		$rUpdateRight = $this->prepare($query);
 		$query_params = array(2, $moveAfter);
-		$this->debug_query($query, $query_params, 1);
 		$rUpdateRight->execute($query_params);
 		if (!$rUpdateRight) {
-			$this->debug('Failed tu update rigth', 1);
 			$query_params = array(-2, $moveAfter);
-			$this->debug_query($query, $query_params, 1);
 			$rUpdateLeft->execute($query_params);
 			$params->errors->Add('database', "Update `{$cols['right']}` values");
 			return false;
@@ -151,13 +146,9 @@ final class PC_database_tree extends PC_base {
 		$query = "INSERT INTO {$this->db_prefix}$table (".implode(',', array_keys($insert)).") VALUES(".implode(',', array_fill(0, count($insert), '?')).")";
 		$r = $this->prepare($query);
 		$query_params = array_values($insert);
-		$this->debug_query($query, $query_params, 1);
 		$s = $r->execute($query_params);
 		if (!$s) {
-			$this->debug(':( Failed to insert new item', 1);
 			$query_params = array(-2, $moveAfter);
-			$this->debug_query($query_update_left, $query_params, 1);
-			$this->debug_query($query_update_right, $query_params, 1);
 			$rUpdateLeft->execute($query_params);
 			$rUpdateRight->execute($query_params);
 			$params->errors->Add('database', 'Insert new node');
@@ -167,8 +158,6 @@ final class PC_database_tree extends PC_base {
 		return $id;
 	}
 	public function Move($table, $id, $parentId, $position=0, &$params=array()) {
-		$this->debug("Move(table: $table, id: $id, parentId: $parentId, position: $position)");
-		$this->debug($params, 1);
 		$this->core->Init_params($params);
 		$cols = $this->Get_cols($params);
 		//select category to move
@@ -177,8 +166,6 @@ final class PC_database_tree extends PC_base {
 		if (!$s) return false;
 		if (!$rCategory->rowCount()) return false;
 		$c = $rCategory->fetch();
-		$this->debug('Category:', 1);
-		$this->debug($c, 2);
 		//calculate the gap
 		$gap = $c['rgt']-$c['lft']+1;
 		//get all subchild ids
@@ -190,7 +177,6 @@ final class PC_database_tree extends PC_base {
 		unset($subId, $rSub);
 		//get anchor side value
 		$anchor = $this->Get_anchor($table, $parentId, $position, $params);
-		$this->debug('So anchor is: ' . $anchor, 1);
 		if ($anchor === false) return false;
 		//check if not trying to move category inside itself
 		if ($anchor > $c[$cols['left']] && $anchor < $c[$cols['right']]) return false;
@@ -198,44 +184,34 @@ final class PC_database_tree extends PC_base {
 		$difference = $anchor - $c['lft'] + 1;
 		if ($difference == 0) return true;
 		//create gap to move in
-		$this->debug('Create gap to move in');
 		$queryParams = array_merge(array($gap, $anchor), $subIds);
 		$query = "UPDATE {$this->db_prefix}{$table} SET lft=lft+? WHERE lft>? AND id not ".$this->sql_parser->in($subIds);
-		$this->debug_query($query, $queryParams, 1);
 		$rUpdateLeft = $this->prepare($query);
 		$rUpdateLeft->execute($queryParams);
 		
 		$query = "UPDATE {$this->db_prefix}{$table} SET rgt=rgt+? WHERE rgt>? AND id not ".$this->sql_parser->in($subIds);
 		$rUpdateRight = $this->prepare($query);
-		$this->debug_query($query, $queryParams, 1);
 		$rUpdateRight->execute($queryParams);
 		
-		$this->debug('move nodes by difference');
 		$query = "UPDATE {$this->db_prefix}{$table} SET {$cols['left']}={$cols['left']}+?, {$cols['right']}={$cols['right']}+? WHERE {$cols['id']} ".$this->sql_parser->in($subIds);
 		$rMove = $this->prepare($query);
 		$query_params = array_merge(array($difference, $difference), $subIds);
-		$this->debug_query($query, $query_params, 1);
 		$rMove->execute($query_params);
 		
 		if ($c[$cols['parent']] != $parentId) {
-			$this->debug('update parent id');
 			$query = "UPDATE {$this->db_prefix}{$table} SET {$cols['parent']}=? WHERE {$cols['id']}=?";
 			$query_params = array($parentId, $id);
-			$this->debug_query($query, $query_params, 1);
 			$this->prepare($query)->execute($query_params);
 		}
 		
-		$this->debug('delete gap left after moving nodes from it');
 		$query = "UPDATE {$this->db_prefix}{$table} SET lft=lft-? WHERE lft>?";
 		$rUpdateLeft = $this->prepare($query);
 		$query_params = array($gap, $c['rgt']);
-		$this->debug_query($query, $query_params, 1);
 		$rUpdateLeft->execute($query_params);
 		
 		$query = "UPDATE {$this->db_prefix}{$table} SET rgt=rgt-? WHERE rgt>?";
 		$rUpdateRight = $this->prepare($query);
 		$query_params = array($gap, $c['rgt']);
-		$this->debug_query($query, $query_params, 1);
 		$rUpdateRight->execute($query_params);
 		return true;
 	}
@@ -299,7 +275,6 @@ final class PC_database_tree extends PC_base {
 	 * @return boolean|int
 	 */
 	public function Get_anchor($table, $parentId=0, $position=0, &$params=array()) {
-		$this->debug("Get_anchor($table, $parentId, $position)", 1);
 		$this->core->Init_params($params);
 		$cols = $this->Get_cols($params);
 		
@@ -307,7 +282,6 @@ final class PC_database_tree extends PC_base {
 			$r = $this->prepare("SELECT {$cols['right']} FROM {$this->db_prefix}{$table} WHERE {$cols['id']}=? and {$cols['parent']}=? LIMIT 1");
 			$s = $r->execute(array($position, $parentId));
 			if (!$s) return false;
-			$this->debug('Return rgt of position', 1);
 			return $r->fetchColumn();
 		}
 		
@@ -321,13 +295,10 @@ final class PC_database_tree extends PC_base {
 					return false;
 				}
 				$anchor = $r->fetchColumn();
-				$this->debug("Max right (position 0):" . $anchor, 2);
-				
 			}
 			//first node
 			elseif ($position == -1) {
 				$anchor = 0;
-				$this->debug("Position -1:" . $anchor, 2);
 			}
 			else {
 				$params->errors->Add('position', 'Temporary unavailable');
@@ -363,7 +334,6 @@ final class PC_database_tree extends PC_base {
 			$parent = $r->fetch();
 			if ($parent[$cols['right']]-$parent[$cols['left']] == 1) {
 				$anchor = $parent[$cols['left']];
-				$this->debug("(Parent leaf) Parent left:" . $anchor, 2);
 			}
 			else {
 				if ($position == 0) {
@@ -374,11 +344,9 @@ final class PC_database_tree extends PC_base {
 						return false;
 					}
 					$anchor = $r->fetchColumn();
-					$this->debug("Max right (between)" . $anchor, 2);
 				}
 				elseif ($position == -1) {
 					$anchor = $parent[$cols['left']];
-					$this->debug("(Parent not leaf) Parent left" . $anchor, 2);
 				}
 				else {
 					//This will never happen to shop_categories
@@ -390,11 +358,9 @@ final class PC_database_tree extends PC_base {
 					}
 					if ($r->rowCount() == 1) {
 						$anchor = $r->fetchColumn()-1;
-						$this->debug("Row count is one, left: " . $anchor, 2);
 					}
 					else {
 						$anchor = $parent[$cols['right']]-1;
-						$this->debug("Max right - 1: " . $anchor, 2);
 					}
 				}
 			}
@@ -403,48 +369,39 @@ final class PC_database_tree extends PC_base {
 		return $anchor;
 	}
 	public function Create_gap($table, $afterLeft) {
-		$this->debug("Create_gap($table, $afterLeft)", 3);
 		//update left values
 		$query = "UPDATE {$this->db_prefix}$table SET lft=lft+? WHERE lft>?";
 		$rUpdateLeft = $this->prepare($query);
 		//create the gap for the node to move in
 		$query_params = array(2, $afterLeft);
-		$this->debug_query($query, $query_params, 4);
 		$rUpdateLeft->execute($query_params);
 		if (!$rUpdateLeft) return false;
 		//update right values
 		$query = "UPDATE {$this->db_prefix}$table SET rgt=rgt+? WHERE rgt>?";
 		$rUpdateRight = $this->prepare($query);
 		$query_params = array(2, $afterLeft);
-		$this->debug_query($query, $query_params, 4);
 		$rUpdateRight->execute($query_params);
 		if (!$rUpdateRight) {
 			$query_params = array(-2, $afterLeft);
-			$this->debug_query($query, $query_params, 5);
 			$rUpdateLeft->execute($query_params);
 			return false;
 		}
 		return true;
 	}
 	public function Delete_gap($table, $afterLeft, $gap=2) {
-		$this->debug("Delete_gap($table, $afterLeft, $gap)", 3);
-		
 		$query = "DELETE FROM {$this->db_prefix}$table WHERE lft>? AND rgt<?";
 		$rUpdateLeft = $this->prepare($query);
 		$query_params = array($afterLeft + 1, $afterLeft + $gap);
-		$this->debug_query($query, $query_params, 4);
 		$rUpdateLeft->execute($query_params);
 		
 		$query = "UPDATE {$this->db_prefix}$table SET lft=lft-? WHERE lft>?";
 		$rUpdateLeft = $this->prepare($query);
 		$query_params = array((int)$gap, $afterLeft);
-		$this->debug_query($query, $query_params, 4);
 		$rUpdateLeft->execute($query_params);
 		
 		$query = "UPDATE {$this->db_prefix}$table SET rgt=rgt-? WHERE rgt>?";
 		$rUpdateRight = $this->prepare($query);
 		$query_params = array((int)$gap, $afterLeft);
-		$this->debug_query($query, $query_params, 4);
 		$rUpdateRight->execute($query_params);
 		return true;
 	}
@@ -459,7 +416,6 @@ final class PC_database_tree extends PC_base {
 			$order_s = ' ORDER by ' . $cols['left'] . ' ';
 		}
 		$query = "SELECT {$cols['pid']},{$cols['parent']},{$cols['id']} FROM {$this->db_prefix}".$table. $where . $order_s;
-		$this->debug($query);
 		//echo '<hr />' . $query;
 		$rList = $this->query($query);
 		if ($rList) {
@@ -478,7 +434,6 @@ final class PC_database_tree extends PC_base {
 		$query = "SELECT c.{$cols['id']}  from {$this->db_prefix}$table c
 			LEFT JOIN {$this->db_prefix}$table p ON p.{$cols['id']} = c.{$cols['parent']}
 			WHERE (c.{$cols['pid']} is null or c.{$cols['pid']} = 0) AND p.{$cols['id']} is null";
-		$this->debug($query);
 		echo '<hr />' . $query;
 		$rList = $this->query($query);
 		$deleted = 0;
@@ -500,8 +455,6 @@ final class PC_database_tree extends PC_base {
 	}
 	
 	public function Recalculate($table, &$params=array()) {
-		$this->debug = true;
-		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'tree_recalculate.html');
 		$this->core->Init_params($params);
 		$cols = $this->Get_cols($params);
 		//escape $table first!
@@ -534,21 +487,17 @@ final class PC_database_tree extends PC_base {
 	
 	protected function _recalculate_item($table, $cols, $d, $rUpdate) {
 		if (isset($this->anchors[$d[$cols['id']]])) {
-			$this->debug(':( no anchor', 2);
 			return;
 		}
 		$my_parent_id = $d[$cols['parent']];
 		if ($my_parent_id != 0 and !isset($this->anchors[$my_parent_id])) {
 			$this->_recalculate_item($table, $cols, $this->dd[$my_parent_id], $rUpdate);
 		}
-		$this->debug($d, 1);
 		$setAfter = $this->Get_anchor($table, $d[$cols['parent']]);
-		$this->debug("setAfter: $setAfter ", 1);
 		$this->anchors[$d[$cols['id']]] = $setAfter;
 		if ($setAfter === false) return;
 		if ($this->Create_gap($table, $setAfter)) {
 			$query_params = array($setAfter+1, $setAfter+2, $d[$cols['id']]);
-			$this->debug_query($this->_update_query, $query_params, 2);
 			$s = $rUpdate->execute($query_params);
 			if (!$s) {
 				$this->Delete_gap($table, $setAfter);

@@ -1,6 +1,6 @@
 <?php
 
-class Excel_builder extends PC_debug{
+class Excel_builder {
 
 	/**
 	 *
@@ -43,8 +43,7 @@ class Excel_builder extends PC_debug{
 	
 		// @header("Content-Type: application/vnd.ms-excel");
 		$this->_output_file = $this->lib_dir . "tmp/" . uniqid("", true) . ".xlsx";
-		$this->debug($this->_output_file);
-		
+
 		$sheet = $this->_wb->addSheet($sheet_name);
 
 		$this->_write_labels($sheet, $labels);
@@ -99,8 +98,6 @@ class Excel_builder extends PC_debug{
 		//ob_end_clean(); // stop the buffering
 
 		$file_name = $this->file_name .  "_" . date("Y-m-d_H-i-s") . ".xlsx";
-		
-		$this->debug('Will output ' . $this->_output_file . ' as ' . $file_name);
 		
 		//@header("Content-Type: application/force-download");
 		@header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");

@@ -10,13 +10,11 @@
  
 function markInvalid(element, message, forced) {
 	try {
-		//debugger;
 		if (forced) {
 			 throw "forced";
 		}
 		element.setCustomValidity(message);
 	} catch(e) {
-		//debugger;
 		var $$ = $(element);
 		if(typeof $$.data('backupBackgroundColor') === 'undefined') {
 			$$.data('backupBackgroundColor', $$.css('backgroundColor'));

@@ -1,4 +1,9 @@
 <?php
+/**
+ * @var PC_menu_widget $this
+ * @var string $tpl_group
+ * @var array $menu
+ */
 if (count($menu)) {
 	$level_wrap_end_var_name = 'this_wrap_end_' . $level;
 	$this_config = $this->_config;

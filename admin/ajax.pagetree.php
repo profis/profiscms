@@ -18,8 +18,6 @@ $cfg['core']['no_login_form'] = true;
 require_once 'admin.php';
 $full_access = true;
 /* @var $auth PC_auth */ 
-$auth->debug = true;
-$auth->set_instant_debug_to_file($cfg['path']['logs'] . 'auth/auth_for_ajax_pagetree_php.html', false, 5);
 if (!$auth->Authorize_access_to_pages()) {
 	die('No access');
 	$full_access = false;
@@ -32,8 +30,6 @@ $out = array();
 
 require_once 'classes/Page_manager.php';
 $page_manager = new Page_manager();
-
-$page_manager->set_debug($auth->debug);
 
 // ****************************************************************
 // PAGES: GET SUBNODES
@@ -89,8 +85,6 @@ if (isset($_POST['node'])) {
 	
 	$out = $page_manager->get_accessible_children($site_id, $id, $page_tree_params);
 	echo json_encode($out);
-	$auth->debug('Debug from page manager:', 3);
-	$auth->debug($page_manager->get_debug_string(), 3);
 	exit;
 }
 
@@ -109,8 +103,6 @@ if (isset($_POST['new']) && isset($_POST['site'])) {
 			'error' => 'authorization failed for page_node'
 		);
 		echo json_encode($out);
-		$auth->debug('Debug from page manager:', 3);
-		$auth->debug($page_manager->get_debug_string(), 3);
 		exit;
 	}
 	$site_data = $site->Get($_POST['site'], true, true);

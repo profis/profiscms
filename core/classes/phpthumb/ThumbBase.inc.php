@@ -32,7 +32,7 @@
  * @package PhpThumb
  * @subpackage Core
  */
-abstract class ThumbBase extends PC_debug
+abstract class ThumbBase
 {
 	/**
 	 * All imported objects

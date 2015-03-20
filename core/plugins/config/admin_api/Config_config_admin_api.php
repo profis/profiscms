@@ -9,8 +9,7 @@ class Config_config_admin_api extends PC_plugin_admin_api {
 	public function get($controller) {
 		
 		$model = new PC_config_model();
-		$model->absorb_debug_settings($this);
-		
+
 		$this->_out['data'] = $model->get_all(array(
 			'where' => array(
 				'plugin' => $controller,
@@ -26,11 +25,9 @@ class Config_config_admin_api extends PC_plugin_admin_api {
 	
 	public function save($controller) {
 		$data = json_decode($_POST['data'], true);
-		$this->debug($data);
-		
+
 		$model = new PC_config_model();
-		$model->absorb_debug_settings($this);
-		
+
 		foreach ($data as $key => $value) {
 			$model->update(array(
 				'value' => $value
@@ -45,7 +42,6 @@ class Config_config_admin_api extends PC_plugin_admin_api {
 			}
 			$this->core->Init_hooks('plugin/config/after-update/' . $controller . ':' . $key, array(
 				'value'=> &$value,
-				'logger' => &$this
 			));
 		}
 		

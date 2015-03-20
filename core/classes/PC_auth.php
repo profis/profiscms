@@ -745,16 +745,8 @@ final class PC_auth extends PC_base {
 	* @see PC_auth_permisions::Authorize().
 	*/
 	public function Authorize() {
-		$this->debug('Authorize()');
 		$args = func_get_args();
-		$this->debug($args, 1);
 		$result = call_user_func_array(array($this->permissions, 'Authorize'), $args);
-		if ($result) {
-			$this->debug(':) Authorized' , 2);
-		}
-		else {
-			$this->debug(':( Did not authorize' , 2);
-		}
 		return $result;
 	}
 	

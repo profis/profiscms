@@ -1,4 +1,10 @@
 <?php
+/**
+ * @var PC_page $this
+ * @var string $tpl_group
+ * @var string $text
+ * @var int $total_pages
+ */
 echo $text;
 ?>
 <br />

@@ -65,7 +65,6 @@ final class PC_plugins extends PC_base {
 	}
 	
 	protected function _scan_plugin_dir($directory, $include_core = false) {
-		$this->debug("_scan_plugin_dir($directory)");
 		//scan plugins directory
 		$dir = opendir($directory);
 		if (!$dir) {
@@ -80,7 +79,6 @@ final class PC_plugins extends PC_base {
 		if ($include_core) {
 			$all_plugins = array_merge($all_plugins, $this->cfg['core_plugins']);
 		}
-		$this->debug($all_plugins, 2);
 		foreach ($all_plugins as $plugin) {
 			//check if plugin path is valid (is directory)
 			$plugin_path = $this->path['plugins'].$plugin;
@@ -120,7 +118,6 @@ final class PC_plugins extends PC_base {
 	* @see PC_plugins::Load().
 	*/
 	public function Scan() {
-		$this->debug('Scan()');
 		//unset previously loaded plugins
 		$this->list = array(
 			'all'=> array(),
@@ -130,12 +127,7 @@ final class PC_plugins extends PC_base {
 		$this->_scan_plugin_dir($this->path['core_plugins'], true);
 		//create list of active plugins
 		$active_plugins = array_merge($this->cfg['active_plugins'], $this->cfg['core_plugins']);
-		$this->debug('active plugins:', 1);
-		$this->debug($active_plugins, 1);
-		
-		$this->debug('all plugins:', 1);
-		$this->debug($this->list['all'], 1);
-		
+
 		if (count($active_plugins)) foreach ($active_plugins as &$plugin) {
 			if (!$this->Exists($plugin)) {
 				unset($plugin);
@@ -170,7 +162,6 @@ final class PC_plugins extends PC_base {
 	* @return bool TRUE in case of successfull plugin load and FALSE otherwise.
 	*/
 	public function Load($plugin) {
-		$this->debug("Load($plugin)");
 		$plugins =& $this;
 		$core =& $this->core;
 		$site =& $this->site;
@@ -178,14 +169,12 @@ final class PC_plugins extends PC_base {
 		$routes =& $this->routes;
 		$route =& $this->routes->routes;
 		
-		if ($this->Is_loaded($plugin)) {
-			$this->debug(":( is not loaded", 1);
+		if ($this->Is_loaded($plugin))
 			return true;
-		};
-		if (!$this->Is_active($plugin)) {
-			$this->debug(":( is not active", 1);
+
+		if (!$this->Is_active($plugin))
 			return false;
-		};
+
 		$path = $this->Get_plugin_path($plugin);
 		
 		//$plugin_name could be used in PC_plugin.php file scope
@@ -210,7 +199,6 @@ final class PC_plugins extends PC_base {
 		}
 		//init plugin
 		$plugin_init_file = $path.'PC_plugin.php';
-		$this->debug($plugin_init_file, 3);
 		//$this->site->Add_stylesheet('plugin_custom.css');
 		if (is_file($plugin_init_file)) {
 			require_once($plugin_init_file);
@@ -286,7 +274,6 @@ final class PC_plugins extends PC_base {
 	* @see PC_plugins::Is_locked().
 	*/
 	public function Is_active($plugin) {
-		$this->debug("Is_active($plugin)");
 		if (isset($this->list['active'][$plugin]) || $this->Is_locked($plugin)) return true;
 		return false;
 	}

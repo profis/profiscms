@@ -16,10 +16,6 @@ require_once 'path_constants.php';
 
 require("base.php");
 
-$logger = new PC_debug();
-$logger->debug = true;
-$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'api.html');
-
 error_reporting(E_ALL);
 
 if (isset($_GET['r1'])) {
@@ -50,7 +46,6 @@ if (isset($site->route[1]) and strlen($site->route[1]) == 2) {
 	$site->Identify();	
 	if(isset($site->data['languages'][$site->route[1]])) {
 		$site->Set_language($site->route[1]);
-		$logger->debug('ln first route: Site language now is ' . $site->ln, 1);
 		$routes->Shift();
 	}
 }
@@ -58,13 +53,9 @@ if (isset($site->route[1]) and strlen($site->route[1]) == 2) {
 if ($routes->Get(1) == 'admin') {
 	$ln = v($_GET['ln']);
 	if (!empty($ln)) {
-		$logger->debug('Setting language to ' . $ln, 1);
 		$site->Identify();
 		$site->Set_language($ln);
-		
-		$logger->debug('Site language now is ' . $site->ln, 1);
 	}
-	$logger->debug('Admin api');
 	//administrator API
 	$routes->Shift(2);
 	require(CMS_ROOT . "admin/admin.php");
@@ -93,6 +84,7 @@ if ($routes->Get(1) == 'admin') {
 			print_pre($_SERVER);
 			break;
 		case 'tree':
+			/** @var PC_database_tree $tree */
 			$tree = $core->Get_object('PC_database_tree');
 			switch ($routes->Get(2)) {
 				case 'debug':
@@ -137,7 +129,6 @@ if ($routes->Get(1) == 'admin') {
 				$pluginName_up = strtoupper(substr($pluginName, 0, 1)) . substr($pluginName, 1);
 			}
 			
-			$logger->debug('Plugin ' . $pluginName, 1);
 			if (!empty($pluginName)) {
 				if ($plugins->Is_active($pluginName)) {
 					$apiPath = $core->Get_path('plugins', 'PC_api_admin.php', $pluginName);
@@ -157,30 +148,22 @@ if ($routes->Get(1) == 'admin') {
 						$class_name = $pluginName_up . '_' . $routes->Get(1) . '_admin_api';
 						$file_name = $plugin_api_path . "$class_name.php";
 
-						$logger->debug('filename: ' . $file_name, 2);
-						
 						if (@file_exists($file_name)) {
-							$logger->debug('File exists', 3);
-							
 							require_once $cfg['path']['admin'] . 'classes/Page_manager.php';
 							$page_manager = new Page_manager();
-							$page_manager->set_debug(true);
-							
+
 							require_once $cfg['path']['admin'] . 'classes/PC_plugin_admin_api.php';
 							require_once $cfg['path']['admin'] . 'classes/PC_plugin_crud_admin_api.php';
 							
 							$plugin_common_api_class_path = $plugin_api_path . $pluginName_up . '_admin_api.php';
-							$logger->debug('common filename: ' . $plugin_common_api_class_path, 2);
 							if (@file_exists($plugin_common_api_class_path)) {
-								$logger->debug('File exists', 3);
 								@require_once $plugin_common_api_class_path;
 							}
 							
 							require_once($file_name);
 							
 							$extend_api_hook = 'plugin/' . $pluginName . '/extend-admin-api/' . $routes->Get(1);
-							$logger->debug('extend_api_hook: ' . $extend_api_hook, 4);
-							
+
 							$extend_admin_api_class = '';
 							$extend_admin_api_path = '';
 							$core->Init_hooks($extend_api_hook, array(
@@ -189,7 +172,6 @@ if ($routes->Get(1) == 'admin') {
 							));
 							if (!empty($extend_admin_api_class)) {
 								$extend_file_path = $extend_admin_api_path . '/' . $extend_admin_api_class . '.php';
-								$logger->debug('extend_file_path: ' . $extend_file_path, 5);
 								require_once $extend_admin_api_path . '/' . $extend_admin_api_class . '.php';
 								$class_name = $extend_admin_api_class;
 							}
@@ -201,32 +183,17 @@ if ($routes->Get(1) == 'admin') {
 								@mkdir($plugin_api_log_dir);
 							}
 							$log_file = $plugin_api_log_dir . '/admin_'.$routes->Get(1) . '_' . $routes->Get(2) .'_api.html';
-							$logger->debug('Log file: ' . $log_file, 3);
+							/** @var PC_base $api */
 							$api = new $class_name($page_manager);
-							$api->debug = true;
-							$api->set_instant_debug_to_file($log_file);
 							$proccessed = $api->process($routes->Get(3), $routes->Get(4), $routes->Get(5));
-
-							$api->set_debug_offset(0);
-							$api->debug('Page manager debug:');
-							$api->debug($page_manager->get_debug_string(), 1);
-
-							$api->debug('api output:');
-							$api->debug($api->get_output(), 1);
-							
-							
-							//$api->file_put_debug($log_file);
 
 							if ($proccessed) {
 								$out = $api->get_output();
-								$logger->debug('Api output:', 5);
-								$logger->debug($out);
 								//$out['log_file'] = $log_file;
 								echo json_encode($out);
 								exit;
 							}
 							else {
-								$logger->debug(':( Api could not be processed', 4);
 								$out = array();
 								$out['success'] = false;
 								$out['error'] = 'Invalid action';
@@ -284,16 +251,6 @@ if ($routes->Get(1) == 'admin') {
 			}
 			$table = '<table>' . $table . '</table>';
 			echo $table;
-			break;
-		case 'debug':
-		case 'dbg':
-			$debug_logger = new PC_debug();
-			$debug_logger->debug = true;
-			//$debug_logger->debug_forced = true;
-			$debug_logger->debug('Test');
-			echo '$cfg[debug_output] = ' . v($cfg['debug_output']) . "\n<br />";
-			echo '$cfg[debug_ip] = ' . v($cfg['debug_ip']) . "\n<br />";
-			echo 'get_debug_string(): ' . $debug_logger->get_debug_string() . "\n<br />";
 			break;
 		case 'email':
 		case 'debug-email':

@@ -94,9 +94,6 @@ final class PC_gallery extends PC_base {
 		$this->patterns['thumbnail_type'] = "[a-z0-9][a-z0-9\-_]{0,".($this->config['max_thumbnail_type_length']-2)."}[a-z0-9]";
 		$this->patterns['file_link'] = '('.$this->patterns['category_path'].'\/)?'.'(thumb-('.$this->patterns['thumbnail_type'].')\/|(small|large|thumbnail))?'.$this->patterns['filename']; // path + thumbnail_type + filename
 		
-		
-		$this->debug = true;
-		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'gallery/pc_gallery.html', false, 5);
 		$this->gallery_dir_chmod = v($this->cfg['gallery_dir_chmod'], self::PERM);
 		$this->gallery_file_chmod = v($this->cfg['gallery_file_chmod'], self::PERM);
 		
@@ -104,8 +101,6 @@ final class PC_gallery extends PC_base {
 	
 	public function mkdir($dest) {
 		$oldumask = umask(self::UMASK);
-		$this->debug("old_umask: $oldumask", 1);
-		$this->debug("mkdir($dest, $this->gallery_dir_chmod)", 1);
 		$result = mkdir($dest, $this->gallery_dir_chmod);
 		umask($oldumask);
 		return $result;
@@ -113,8 +108,6 @@ final class PC_gallery extends PC_base {
 	
 	public function chmod($dest) {
 		$oldumask = umask(self::UMASK);
-		$this->debug("old_umask: $oldumask", 1);
-		$this->debug("chmod($dest, $this->gallery_dir_chmod)", 1);
 		$result = chmod($dest, $this->gallery_dir_chmod);
 		umask($oldumask);
 		return $result;
@@ -334,7 +327,6 @@ final class PC_gallery extends PC_base {
 	* @see PC_gallery::Generate_unique_category_directory();
 	*/
 	private function Create_directory($category, $path) {
-		$this->debug("<u>Create_directory($category, $path)</u>");
 		if (strlen($category) < 2) {
 			$response['errors'][] = "category";
 			return $response;
@@ -1189,7 +1181,6 @@ final class PC_gallery extends PC_base {
 	* @see PhpThumbFactory::show()
 	*/
 	public function Output_image_for_cropping($filename, $category_path) {
-		$this->debug("Output_image_for_cropping($filename, $category_path)");
 		try {
 			$file_path = '';
 			if (!empty($category_path))
@@ -1202,7 +1193,6 @@ final class PC_gallery extends PC_base {
 			echo $currentDimensions['width'] * $ratio.'<br />';
 			return;*/
 			//$ratio = max($currentDimensions['width'], $currentDimensions['height']) / $this->config['image_for_croping_max_dimensions'];
-			$this->debug($this->config);
 			$thumb->resize($this->config['image_for_croping_max_dimensions'], $this->config['image_for_croping_max_dimensions']);
 			$thumb->show();
 			return array("success"=>true);
@@ -1269,12 +1259,13 @@ final class PC_gallery extends PC_base {
 	}
 	
 	/**
-	* Method used to get information about given file from appropriate DB tables.
-	* @param int $id given file to id to get
-	* @return mixed array with keys "success", "filename", "filedata" on success, or array with key "errors" otherwise.
-	* @see PC_gallery::Sort_path()
-	*/
-	public function Get_file_by_id($id, $logger = null, $preserve_key = false) {
+	 * Method used to get information about given file from appropriate DB tables.
+	 * @param int $id given file to id to get
+	 * @param bool $preserve_key
+	 * @return mixed array with keys "success", "filename", "filedata" on success, or array with key "errors" otherwise.
+	 * @see PC_gallery::Sort_path()
+	 */
+	public function Get_file_by_id($id, $preserve_key = false) {
 		$returnOne = false;
 		$queryParams = array();
 		if (is_array($id)) {
@@ -1303,11 +1294,7 @@ final class PC_gallery extends PC_base {
 			WHERE f.id".(is_array($id)?' '.$this->sql_parser->in($id):'=?')
 			."GROUP BY f.id,f.size,f.extension,f.filename,f.category_id";
 		$r = $this->prepare($query);
-		if (!is_null($logger)) {
-			$logger->debug('Get_file_by_id query:');
-			$logger->debug_query($query, $queryParams);
-		}
-		
+
 		$success = $r->execute($queryParams);
 		if (!$success) {
 			$response['errors'][] = "database";
@@ -1411,8 +1398,6 @@ final class PC_gallery extends PC_base {
 	}
 	
 	public function Get_crop_data($file_path, $thumb_type) {
-		$this->debug("Get_crop_data($file_path, ");
-		$this->debug($thumb_type, 1);
 		if (is_array($thumb_type)) {
 			$type = $thumb_type;
 		}
@@ -1426,35 +1411,23 @@ final class PC_gallery extends PC_base {
 			$direction = $type['direction'];
 		}
 		
-		$this->debug($type, 1);
-		$this->debug('creating from: ' . $file_path, 1);
 		$this->last_thumb = $thumb = PhpThumbFactory::create($file_path, array('resizeUp' => true, 'jpegQuality'=>$type['thumbnail_quality']));
-		$this->debug('Current dimensions before resizing:', 3);
-		$this->debug($thumb->currentDimensions, 4);
 		$crop_data_x = -1;
 		$crop_data_y = -1;
 		if ($type['thumbnail_type'] == "thumbnail" || $type['use_adaptive_resize'] == 1) {
 			$resize_to_w = $type['thumbnail_max_w'];
 			$resize_to_h = $type['thumbnail_max_h'];
 			if ($resize_to_w > $thumb->currentDimensions['width']) {
-				$this->debug('Original width is smaller. Reducing resize_to dimmensions:', 3);
 				$ratio = $resize_to_w / $thumb->currentDimensions['width'];
-				$this->debug("Resize ratio: $resize_to_w / {$thumb->currentDimensions['width']} = " . $ratio, 4);
 				$resize_to_h = round($resize_to_h / $ratio);
 				$resize_to_w = $thumb->currentDimensions['width'];
 				$dimensions_were_reduced = true;
-				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
 			}
 			if ($resize_to_h > $thumb->currentDimensions['height']) {
-				$this->debug('Original height is smaller. Reducing resize_to dimensions:', 3);
 				$ratio = $resize_to_h / $thumb->currentDimensions['height'];
-				$this->debug("Resize ratio: $resize_to_h / {$thumb->currentDimensions['height']} = " . $ratio, 4);
 				$resize_to_w = round($resize_to_w / $ratio);
 				$resize_to_h = $thumb->currentDimensions['height'];
-				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
 			}
-			$this->debug("thumb->adaptiveResize($resize_to_w, $resize_to_h)", 2);
-			$thumb->absorb_debug_settings($this, 8);
 			$thumb->adaptiveResize($resize_to_w, $resize_to_h, $direction);
 			if ($direction == 'top') {
 				$crop_data_y = 0;
@@ -1464,35 +1437,23 @@ final class PC_gallery extends PC_base {
 			$resize_to_w_orig = $resize_to_w = $type['thumbnail_max_w'];
 			$resize_to_h_orig = $resize_to_h = $type['thumbnail_max_h'];
 			if ($resize_to_w > $thumb->currentDimensions['width'] and $type['use_adaptive_resize'] != 3) {
-				$this->debug('Original width is smaller. Reducing resize_to dimmensions 2:', 3);
 				$resize_to_w = $thumb->currentDimensions['width'];
-				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
 			}
 			if ($resize_to_h > $thumb->currentDimensions['height'] and $type['use_adaptive_resize'] != 2) {
-				$this->debug('Original height is smaller. Reducing resize_to dimensions 2:', 3);
 				$resize_to_h = $thumb->currentDimensions['height'];
-				$this->debug("New resize to dimmensions: $resize_to_w and $resize_to_h", 3);
 			}
 			if ($type['use_adaptive_resize'] == 2) {
 				if ($thumb->currentDimensions['width'] > 0 and $thumb->currentDimensions['height'] > 0) {
 					$ratio = $thumb->currentDimensions['width'] / $thumb->currentDimensions['height'];
 					if ($ratio > 0) {
 						$resize_to_h = $resize_to_w / $ratio;
-						$this->debug("Ration > 0, thas why resize_to_h was calculated to be resize_to_w /ration = {$resize_to_w} / $ratio =  $resize_to_h", 3);
-					
 					}
 					$zoom_w = $resize_to_w / $thumb->currentDimensions['width'];
 					$reduce = $ratio * $zoom_w;
 					
 							
 					if (false and $reduce > 0) {
-						$this->debug("Ratio = {$thumb->currentDimensions['width']}/{$thumb->currentDimensions['height']} = $ratio", 3);
-						$this->debug("Zoom_w = $resize_to_w/{$thumb->currentDimensions['width']} = $zoom_w", 3);
-						$this->debug("Reduce = $ratio/$zoom_w = $reduce", 3);
-					
-						
 						$resize_to_h = $thumb->currentDimensions['height'] / $reduce;
-						$this->debug("Reduce > 0, thas why resize_to_h was calculated to be thumb->currentDimensions[height] /reduce = {$thumb->currentDimensions['height']} / $reduce =  $resize_to_h", 3);
 					}
 				}
 			}
@@ -1501,8 +1462,6 @@ final class PC_gallery extends PC_base {
 					$ratio = $thumb->currentDimensions['width'] / $thumb->currentDimensions['height'];
 					if ($ratio > 0) {
 						$resize_to_w = $resize_to_h / $ratio;
-						$this->debug("Ration > 0, thas why resize_to_w was calculated to be resize_to_h /ration = {$resize_to_h} / $ratio =  $resize_to_w", 3);
-					
 					}
 					$zoom_h = $resize_to_h / $thumb->currentDimensions['height'];
 					$reduce = $ratio * $zoom_h;
@@ -1511,7 +1470,6 @@ final class PC_gallery extends PC_base {
 					}
 				}
 			}
-			$this->debug("thumb->resize($resize_to_w, $resize_to_h)", 2);
 			$thumb->resize($resize_to_w, $resize_to_h);
 		}
 		$crop_data['x'] = ($thumb->originalImageInfo[0]/2)-($thumb->currentDimensions['width']/2);
@@ -1527,16 +1485,6 @@ final class PC_gallery extends PC_base {
 			$crop_data['y'] = $crop_data_y;
 		}
 		
-		$this->debug('$crop_data:', 3);
-		$this->debug($crop_data, 4);
-		
-		$this->debug('newDimensions:', 3);
-		$this->debug($thumb->getNewDimensions(), 4);
-
-		$this->debug('Current dimensions after resizing:', 3);
-		$this->debug($thumb->currentDimensions, 4);
-		$this->debug('imagecopyresampled_params:', 3);
-		$this->debug(v($thumb->imagecopyresampled_params), 4);
 		/*if ($thumbnail_type == "thumbnail" || $thumbnail_type == "large") {
 			if ($type['use_adaptive_resize']) {
 				$thumb->adaptiveResize($type['thumbnail_max_w'], $type['thumbnail_max_h']);
@@ -1576,8 +1524,6 @@ final class PC_gallery extends PC_base {
 	* @see PC_gallery::Get_thumbnail_types()
 	*/
 	public function Output_file($filename, $category_path, $thumbnail_type='', $file, $file_data = false) {
-		$this->debug("Output_file($filename, $category_path, $thumbnail_type)");
-		$this->debug($file, 1);
 		$set = ini_set('memory_limit', '512M');
 		if (!empty($thumbnail_type) && !preg_match('/^'.$this->patterns['thumbnail_type'].'$/', $thumbnail_type)) {
 			$response['errors'][] = "thumbnail_type";
@@ -1622,10 +1568,8 @@ final class PC_gallery extends PC_base {
 						$file_path .= $filename;
 						
 						$crop_data_path = $file_dir.'thumb-'.$thumbnail_type.'/'.$filename.'.txt';
-						$this->debug('$crop_data_path: ' . $crop_data_path, 2);
 						//$output['crop_data_path'] = $crop_data_path;
 						if (is_array($file_data) and is_file($crop_data_path)) {
-							$this->debug(':) file exists!', 3);
 							$crop_data = file_get_contents($crop_data_path);
 							$crop_data_n = explode('|', $crop_data);
 							$crop_data = array();
@@ -1640,17 +1584,13 @@ final class PC_gallery extends PC_base {
 							$crop_data = $this->Get_crop_data($file_path, $type);
 						}
 						
-						$this->debug("crop data:", 2);
-						$this->debug($crop_data, 3);
-						
 						$thumb = $this->last_thumb;
 						
 						$thumb_path = $thumbnail_path.'/'.$filename;
 						
 						
 						$old_umask = umask(self::UMASK);
-						$this->debug("old_umask: $old_umask");
-						
+
 						$thumb->save($thumb_path);
 						umask($old_umask);
 						
@@ -1961,7 +1901,6 @@ final class PC_gallery extends PC_base {
 						GROUP BY image_id
 						ORDER BY album.album_lft
 						LIMIT 30");*/
-					//echo $this->get_debug_query_string($query, array());
 					$success = $r->execute();
 				}
 				else {
@@ -1976,7 +1915,6 @@ final class PC_gallery extends PC_base {
 						WHERE $cat_where f.date_trashed=0 $file_ids_clause
 						GROUP BY f.id,f.filename,f.extension,f.category_id,f.size,f.date_added,f.date_modified,f.date_trashed";
 					$r = $db->prepare($query);
-					//echo $this->get_debug_query_string($query, $file_ids);
 					$success = $r->execute($file_ids);
 				}
 				
@@ -1990,10 +1928,8 @@ final class PC_gallery extends PC_base {
 				}
 				else {
 					$category_model = new PC_gallery_category_model();
-					$category_model->debug = true;
 					$category_data = $category_model->get_data($category_id);
-					//echo $category_model->get_debug_string();
-				
+
 					if ($category_data) {
 						$cat_where = ' category.lft >= ? AND category.rgt <= ? AND ';
 						$cat_params[] = $category_data['lft'];
@@ -2011,7 +1947,6 @@ final class PC_gallery extends PC_base {
 					WHERE $cat_where f.date_trashed=0
 					GROUP BY f.id,f.filename,f.extension,f.category_id,f.size,f.date_added,f.date_modified,f.date_trashed";
 				$r = $db->prepare($query);
-				//echo $this->get_debug_query_string($query, $cat_params);
 				$success = $r->execute($cat_params);
 			}
 		}
@@ -2038,7 +1973,6 @@ final class PC_gallery extends PC_base {
 			LEFT JOIN {$this->db_prefix}gallery_categories path ON category.lft between path.lft and path.rgt
 			WHERE category.id=? LIMIT 1";
 		$query_params = array($category_id);
-		//echo $this->get_debug_query_string($query, $query_params);
 		$r = $db->prepare($query);
 		$success = $r->execute($query_params);
 		if (!$success) {
@@ -2076,7 +2010,6 @@ final class PC_gallery extends PC_base {
 				$watermark = $full_path . 'watermark.bmp';
 			}
 			if (!empty($watermark)) {
-				$this->debug('Watermark in gallery: ' . $watermark, 2);
 				continue;
 			}
 		}
@@ -2085,8 +2018,6 @@ final class PC_gallery extends PC_base {
 	
 	public function add_watermark($file_path, $watermark) {
 		if (!empty($watermark)) {
-			$this->debug('Watermark: ' . $watermark, 2);
-			$this->debug('Will put watermark on ' . $file_path, 2);
 			$thumb = PhpThumbFactory::create($file_path);
 			$watermark_obj = PhpThumbFactory::create($watermark);
 			$thumb->addWatermark($watermark_obj, 'center', 100, 0, 0);
@@ -2104,9 +2035,6 @@ final class PC_gallery extends PC_base {
 	* @see PC_gallery::Sort_path()
 	*/
 	public function Upload_file($category_id, &$temp_file) {
-		$this->debug("Upload_file()");
-		$this->debug($temp_file, 1);
-		$this->debug($_POST, 1);
 		$category_id = (int)$category_id;
 		if ($category_id < 0)
 			$response['errors'][] = "category_id";
@@ -2121,7 +2049,6 @@ final class PC_gallery extends PC_base {
 			$pathinfo['basename'] = substr($pathinfo["basename"], 1);
 			$pathinfo['filename'] = substr($pathinfo["filename"], 1);
 			if (!preg_match('/^'.$this->patterns['filename'].'$/ui', $pathinfo['basename'])) {
-				$this->debug(' :( filename did not passed pattern ' . $this->patterns['filename'], 4);
 				$response['errors'][] = "filename";
 			}
 				
@@ -2160,7 +2087,6 @@ final class PC_gallery extends PC_base {
 		$r = $this->Generate_unique_filename($temp_file['name'], $file_path);
 		
 		if (!$r['success']) {
-			$this->debug(' :( Could not generate unique file name ', 4);
 			$response['errors'][] = "filename";
 			return $response;
 		}
@@ -2187,7 +2113,6 @@ final class PC_gallery extends PC_base {
 				$watermark = '';
 			}
 			$original_file_path =  $file_path_parts['dirname'] . '/' . $file_path_parts['filename'] . '._pc_original_.' . $file_path_parts['extension'];
-			$this->debug("making original: copy('$uploaded_file_path', '$original_file_path')", 2);
 			copy($uploaded_file_path, $original_file_path);
 			$this->chmod($original_file_path);
 			if (!empty($watermark)) {
@@ -2411,7 +2336,6 @@ final class PC_gallery extends PC_base {
 	* @return mixed array with key "success" on success, or array with key "errors" otherwise.
 	*/
 	public function Move_file($file_id, $category_id) {
-		$this->debug($file_id, $category_id);
 		$file_id = (int)$file_id;
 		if ($file_id < 1) $response['errors'][] = "file_id";
 		$category_id = (int)$category_id;
@@ -2592,8 +2516,6 @@ final class PC_gallery extends PC_base {
 				@rename($old_name, $new_name);
 			}
 		}
-		$this->debug('Files_to_rename:', 2);
-		$this->debug($files_to_rename, 3);
 		return array('success'=>true,'name'=>$name);
 	}
 	// thumbnails
@@ -2702,10 +2624,6 @@ final class PC_gallery extends PC_base {
 	* @see PhpThumbFactory
 	*/
 	public function Crop_thumbnail($file_id, $thumbnail_type, $x_start, $y_start, $width, $height) {
-		$this->debug = true;
-		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'gallery/pc_gallery_crop.html', false, 5);
-		$this->debug("Crop_thumbnail($file_id, $thumbnail_type, $x_start, $y_start, $width, $height)");
-		
 		if (!preg_match('/^'.$this->patterns['thumbnail_type'].'$/', $thumbnail_type))
 			$response['errors'][] = "thumbnail_type";
 		$x_start = (int)$x_start;

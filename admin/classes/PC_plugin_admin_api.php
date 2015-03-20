@@ -108,7 +108,6 @@ abstract class PC_plugin_admin_api extends PC_base{
 			$method = 'default_action';
 		}
 		$method = str_replace('-', '_', $method);
-		$this->debug('Method: ' . $method);
 		$this->_method = $method;
 		if (method_exists($this, $this->_method)) {
 			try {

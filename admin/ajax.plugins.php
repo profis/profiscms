@@ -18,12 +18,6 @@
 $cfg['core']['no_login_form'] = true;
 require_once 'admin.php';
 
-$logger = new PC_debug();
-$logger->debug = true;
-$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'plugins/ajax.plugins.html', false, 5);
-
-$plugins->absorb_debug_settings($logger);
-
 $action = isset($_GET['action'])?$_GET['action']:(isset($_POST['action'])?$_POST['action']:'');
 if ($action == 'update') {
 	if (!$auth->Authorize('core', 'admin')) {
@@ -45,8 +39,6 @@ if ($action == 'update') {
 				if ($plugin_data[1] != $is_activated) {
 					if ($plugin_data[1]) {
 						if ($plugins->Activate($plugin_data[0])) {
-							$logger->debug('Activating', 3);
-							$logger->debug($plugin_data, 4);
 							$out['activated'][] = $plugin_data[0];
 							$plugin_folder = $core->Get_path('plugins', '', $plugin_data[0]);
 							$plugin_setup_file = $plugin_folder . 'PC_setup.php';
@@ -76,9 +68,7 @@ if ($action == 'update') {
 							if (file_exists($plugin_setup_file)) {
 								require($plugin_setup_file);
 								$plugin_install_function = $plugin_data[0].'_install';
-								$logger->debug($plugin_install_function, 4);
 								if (function_exists($plugin_install_function)) {
-									$logger->debug('install function exists', 5);
 									call_user_func($plugin_install_function, $plugin_data[0]);
 								}
 							}
@@ -94,9 +84,7 @@ if ($action == 'update') {
 							if (file_exists($plugin_setup_file)) {
 								require($plugin_setup_file);
 								$plugin_uninstall_function = $plugin_data[0].'_uninstall';
-								$logger->debug($plugin_uninstall_function, 4);
 								if (function_exists($plugin_uninstall_function)) {
-									$logger->debug('uninstall function exists', 5);
 									call_user_func($plugin_uninstall_function, $plugin_data[0]);
 								}
 							}
@@ -129,61 +117,41 @@ if (!is_array($_plugins)) {
 }
 $_core_plugins = glob(CORE_PLUGINS_ROOT . '*/dialog.php');
 
-//$logger->debug('$_plugins:', 1);
-//$logger->debug($_plugins, 1);
-//
-//$logger->debug('$_core_plugins:', 1);
-//$logger->debug($_core_plugins, 1);
-
 if ($_core_plugins) {
 	$_plugins = array_merge($_plugins, $_core_plugins);
 	//$_plugins = array_merge($_core_plugins, $_plugins);
 }
-
-$logger->debug('$_plugins:', 1);
-$logger->debug($_plugins, 1);
-
-$logger->debug('Active plugins:', 5);
-$logger->debug($cfg['active_plugins'], 5);
 
 $mods = array();
 $adminAuthorized = $auth->Authorize('core', 'admin');
 foreach ($_plugins as &$p) {
 	preg_match('#(.+)[\/|\\\\](.+)\/#i', $p, $k);
 	//preg_match('#(.+)\/(.+)\/#i', $p, $k);
-	$logger->debug('Matches:', 14);
-	$logger->debug($k, 15);
 	$p = array(
 		'type'=> $k[1],
 		'name'=> $k[2],
 		'path'=> $p
 	);
-	$logger->debug('<hr />', 5);
-	$logger->debug($p, 5);
 	//check if plugin is activated
-	if (!$plugins->Is_active($p['name'])) {
-		$logger->debug(":( Plugin {$p['name']} is not active");
+	if (!$plugins->Is_active($p['name']))
 		continue;
-	};
-	if (!$adminAuthorized) if (!$auth->Authorize('core', 'plugins', $p['name'])) {
-		$logger->debug(":( Plugin {$p['name']} is not accessible (authorization failed)");
+
+	if (!$adminAuthorized) if (!$auth->Authorize('core', 'plugins', $p['name']))
 		continue;
-	}
+
 	//unset previously included plugin configuration & include new plugin
 	unset($mod);
 	$plugins->setCurrentlyParsing($p['name']);
 	$plugin_dir = $cfg['path']['plugins'].$p['name'];
 	$plugin_dir = $p['type'].'/'.$p['name'];
-	$logger->debug("chdir($plugin_dir)", 2);
 	chdir($plugin_dir);
 	include $p['path'];
 	chdir($cfg['path']['system']);
 	$plugins->clearCurrentlyParsing();
 	//check if plugin configuration is defined, if not - continue to the other plugin
-	if (!isset($mod) || !is_array($mod)) {
-		$logger->debug(":( Mod is not an array");
+	if (!isset($mod) || !is_array($mod))
 		continue;
-	};
+
 	//default plugin name
 	if (!isset($mod['name'])) $mod['name'] = $p['name'];
 	// find plugin icon
@@ -206,8 +174,6 @@ foreach ($_plugins as &$p) {
 		$mod['icon'] = 'images/plugin.default.png';
 	} while(0);
 	//assign plugin
-	$logger->debug('mod:', 2);
-	$logger->debug($mod, 2);
 	$mods[$p['name']] = $mod;
 }
 

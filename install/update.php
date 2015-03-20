@@ -16,6 +16,8 @@
  * @var PC_database $db
  */
 
+use \Profis\Db\DbException;
+
 if( isset($_REQUEST['cfg']) ) // check just in case
 	die();
 

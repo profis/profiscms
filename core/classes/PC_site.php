@@ -96,12 +96,6 @@ final class PC_site extends PC_base {
 		if (!is_null($id)) {
 			$this->Load($id);
 		}
-		$this->debug = true;
-		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'site/site.html', false, 5);
-		
-		$this->widget_logger = new PC_debug();
-		$this->widget_logger->debug = true;
-		$this->widget_logger->set_instant_debug_to_file($this->cfg['path']['logs'] . 'widgets.html', false, 5);
 	}
 	
 	/**
@@ -122,8 +116,6 @@ final class PC_site extends PC_base {
 	* @see PC_site::Get_page_path()
 	*/
 	public function Load_page($route) {
-		$this->debug("Load_page(", 2);
-		$this->debug($route, 2);
 		$this->core->Init_hooks('before_load_page', array(
 			'page'=> &$route
 		));
@@ -139,11 +131,9 @@ final class PC_site extends PC_base {
 				}
 				else {
 					if ($nearest_published) {
-						$this->debug('Redirecting to nearest published', 4);
 						$this->core->Redirect_local($this->Get_link($nearest_published['route']));
 					}
 					else {
-						$this->debug('Redirecting to home', 4);
 						$this->core->Redirect_local($this->Get_home_link());
 					}
 				}
@@ -161,7 +151,6 @@ final class PC_site extends PC_base {
 		//$this->loaded_page['path'] = array_merge($path_part_1, (count($this->loaded_page['path'])>1?array_slice($path_part_2, 1,
 		//count($path_part_2)-1):$path_part_2));
 		if (isset($route['path'])) $this->loaded_page['path'] = v($this->loaded_page['route_path']);
-		$this->debug('Init hook (after_load_page)', 2);
 		$this->core->Init_hooks('after_load_page', array(
 			'page'=> &$route
 		));
@@ -185,11 +174,8 @@ final class PC_site extends PC_base {
 	* @see PC_site::Load_page_by_route()
 	*/
 	public function Load_page_by_path() {
-		$this->debug('Load_page_by_path(' . $this->routes->Get_request() . ')');
 		$permalink_request = false;
 		$hook_object = false;
-		
-		$this->page->absorb_debug_settings($this, 5);
 		
 		$request_trimmed = trim($this->routes->Get_request(), '/');
 		
@@ -197,14 +183,10 @@ final class PC_site extends PC_base {
 			$ln = null;
 			$permalink_page_id = $this->page->Get_id_by_content('permalink', $request_trimmed, $ln);
 			if ($permalink_page_id) {
-				$this->debug('Permalink page was found: ' . $permalink_page_id, 2);
 				if (!is_null($ln)) {
 					$this->ln = $ln;
 				}
 				$permalink_request = $this->page->Get_content_by_id($permalink_page_id, 'route', $this->ln);
-				if ($permalink_request) {
-					$this->debug('Page route was found: ' . $permalink_request, 3);
-				}
 			}
 		}
 		
@@ -214,13 +196,8 @@ final class PC_site extends PC_base {
 			$this->core->Init_hooks('core/site/request-from-permalink', array(
 				'request'=> $this->routes->Get_request(),
 				'permalink_request'=> &$permalink_request,
-				'logger' => &$this,
 				'ln' => &$ln
 			));
-			if ($hook_object) {
-				$this->debug('Debug from hook [core/route/load-page-by-path] object');
-				$this->debug($hook_object->get_debug_string(), 1);
-			}
 		}
 		
 
@@ -229,15 +206,8 @@ final class PC_site extends PC_base {
 			if (!is_null($ln)) {
 				$this->ln = $ln;
 			}
-			$this->debug("Parsing new request (ln is $ln): " . $permalink_request, 1);
 			$this->routes->Parse_request($permalink_request);
 		}
-		
-		$this->debug('Debug from page:', 6);
-		$this->debug($this->page->get_debug_string(), 7);
-		
-		$this->debug('$this->routes->list:', 6);
-		$this->debug($this->routes->list, 7);
 		
 		if ($this->routes->Exists(1)) {
 			if ($this->routes->Exists(2)) {
@@ -273,9 +243,6 @@ final class PC_site extends PC_base {
 	public function Load_page_by_route() {
 		//get route data
 		$args = func_get_args();
-		$this->debug('Load_page_by_route(', 1);
-		$this->debug($this->get_callstack(debug_backtrace()));
-		$this->debug($args, 1);
 		$route = call_user_func_array(array($this->page, 'Get_route_data'), $args);
 		if ($route['controller'] == 'core' and $route['data'] == 404) {
 			$route = array(
@@ -295,8 +262,6 @@ final class PC_site extends PC_base {
 		//analyze route data
 		//core controller shouldnt be loaded
 		if ($route['controller'] == 'core') {
-			$this->debug($route, 2);
-			$this->debug('Will do action', 2);
 			$this->core->Do_action(v($route['action']), v($route['data']));
 			
 		}
@@ -348,7 +313,6 @@ final class PC_site extends PC_base {
 	* @todo edit: function now checks if site is active, otherwise it shows default under construction template from formatted text.
 	*/
 	public function Load_site_data($site, $forceActive=false) {
-		$this->debug("Load_site_data()");
 		$this->data = $site;
 		//if domain default language is not set then use sites first set language
 		if (!empty($this->data['ln'])) {
@@ -369,13 +333,10 @@ final class PC_site extends PC_base {
 		preg_match("#^".$pattern."$#i", $_SERVER['REQUEST_URI'], $m);*/
 		$site_mask_pos = strpos($site['mask'], '/');
 		if ($forceActive and $site_mask_pos) {
-			$this->debug("Site has mask", 5);
 			//define request
 			$new_request = $request =& $_SERVER['REQUEST_URI'];
-			$this->debug("new request is: " . $new_request, 5);
 			$pos = strpos($request, '?');
 			if ($pos) $new_request = $request = substr($request, 0, $pos);
-			$this->debug("new request is: " . $new_request, 5);
 			//define entry request
 			$pattern = str_replace('%', '', substr($site['mask'], $site_mask_pos));
 			$pattern = stripslashes($pattern);
@@ -384,20 +345,14 @@ final class PC_site extends PC_base {
 			
 			$pre_request = '';
 			$mask_pos = strpos($request, $pattern);
-			$this->debug("Mask pos:" . $mask_pos . "(strpos($request, $pattern))" , 4);
 			if ($mask_pos) {
 				$pre_request = mb_substr($request, 0, $mask_pos);
-				$this->debug("pre_request: " . $pre_request , 4);
 				//$pre_request = ltrim($pre_request, '/');
 			}
 			
 			$this->link_prefix = substr($pre_request . $pattern, mb_strlen($old_base_url));
-			$this->debug("link_prefix = substr($pre_request . $pattern, mb_strlen($old_base_url));", 4);
-			$this->debug("Link prefix: " . $this->link_prefix, 5);
-			
+
 			$new_request = mb_substr($request, mb_strlen($pattern) + $mask_pos);
-			$this->debug("mb_substr($request, mb_strlen($pattern) + $mask_pos)", 5);
-			$this->debug("So, new request will be: " . $new_request, 6);
 			$this->routes->Parse_request($new_request);
 		}
 		//check if site theme exists
@@ -556,17 +511,14 @@ final class PC_site extends PC_base {
 	* @return mixed array containing data about site.
 	*/
 	public function Get_by_domain($entry_address=null) {
-		$this->debug("Get_by_domain($entry_address)");
 		global $cfg;
 		if (is_null($entry_address)) {
 			$request =& $_SERVER['REQUEST_URI'];
-			$this->debug("Request is: " . $request, 1);
 			$pos = strpos($request, '?');
 			//$entry_address = rtrim($_SERVER['HTTP_HOST'].($pos?substr($request, 0, $pos):$request), '/');
 			$entry_address = $_SERVER['HTTP_HOST'].($pos?substr($request, 0, $pos):$request);
 			//$entry_address = preg_replace("#^http://(.+)$#", "$1", $cfg['url']['base']);
 		}
-		$this->debug("Entry address is: " . $entry_address, 1);
 		$query = "SELECT s.id,s.name,s.theme,d.ln,".$this->sql_parser->group_concat($this->sql_parser->concat_ws("░", 'l.nr', 'l.ln', 'l.name', 'l.disabled', 'l.name'), array('order'=>array('by'=>'l.nr'),'separator'=>'▓'))." languages, mask, active"
 			." FROM {$this->db_prefix}domains d"
 			." LEFT JOIN {$this->db_prefix}sites s ON id=d.site"
@@ -574,7 +526,6 @@ final class PC_site extends PC_base {
 			." WHERE ? LIKE mask GROUP BY s.id,s.name,s.theme,d.ln,d.nr,d.mask ORDER BY d.nr,length(mask) desc LIMIT 1";
 		$r = $this->prepare($query);
 		$query_params = array($entry_address);
-		$this->debug_query($query, $query_params, 2);
 		$s = $r->execute($query_params);
 		if (!$s) die('Get_site_by_domain error.');
 		if ($r->rowCount() < 1) return false;
@@ -598,7 +549,6 @@ final class PC_site extends PC_base {
 	* @see PC_site::Get_all()
 	*/
 	public function &Get($id, $cache=true, $get_all_simultaneously=false) {
-		$this->debug("Get()");
 		if ($cache) {
 			$cached =& $this->memstore->Get('sites', $id);
 			if ($cached) return $cached;
@@ -637,7 +587,6 @@ final class PC_site extends PC_base {
 	* @see PC_memstore::Get()
 	*/
 	public function Get_all($cache=true) {
-		$this->debug("Get_all()");
 		if ($cache && $this->memstore->Is_cached('sites')) {
 			return $this->memstore->Get('sites');
 		}
@@ -710,21 +659,14 @@ final class PC_site extends PC_base {
 	}
 	
 	public function Get_widget_text($widget_name) {
-		$this->widget_logger->debug("Get_widget_text($widget_name)");
 		$args = func_get_args();
 		array_shift($args);
 		$info = '';
-		$widget = $this->core->Get_object($widget_name, $args, null, $this->widget_logger);
-		if (!$widget) {
-			$this->widget_logger->debug(":( no widget object", 1);
+		$widget = $this->core->Get_object($widget_name, $args, null);
+		if (!$widget)
 			throw new Exception('Widget "' . $widget_name . '" not found.');
-		}
-		$this->widget_logger->debug(":)  widget object got", 1);
-		$widget->absorb_debug_settings($this->widget_logger, 4);
-		$widget->set_instant_debug_to_file($this->cfg['path']['logs'] . 'widgets/' . get_class($widget) . '.html', false, 5);
-		
+
 		$text = $widget->get_text();
-		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
 		return $text;
 	}
 	
@@ -736,34 +678,24 @@ final class PC_site extends PC_base {
 	 * @throws Exception
  	 */
 	public function Get_widget_text_from_data($widget_name, $data) {
-		$this->widget_logger->debug("Get_widget_text_from_data($widget_name)");
 		$args = func_get_args();
 		array_shift($args);
 		$data = array_shift($args);
 		$widget = $this->core->Get_object($widget_name, $args, null);
-		if (!$widget) {
-			$this->widget_logger->debug(":( no widget object", 1);
+		if (!$widget)
 			throw new Exception('Widget "' . $widget_name . '" not found.');
-		}
-		$widget->set_instant_debug_to_file($this->cfg['path']['logs'] . 'widgets/' . get_class($widget) . '.html', false, 5);
 		$text = $widget->get_text($data);
-		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
 		return $text;
 	}
 	
 	public function Get_widget_data($widget_name) {
-		$this->widget_logger->debug("Get_widget_data($widget_name)");
 		$args = func_get_args();
 		array_shift($args);
 		$widget = $this->core->Get_object($widget_name, $args, null);
 		if (!$widget) {
-			$this->widget_logger->debug(":( no widget object", 1);
 			throw new Exception('Widget "' . $widget_name . '" not found.');
 		}
 		$data = $widget->get_data();
-		$this->widget_logger->debug("widget log file: " . $widget->file, 1);
-		$this->debug('get_data was called, data keys:', 3);
-		$this->debug(array_keys($data), 4);
 		return $data;
 	}
 	
@@ -1206,7 +1138,6 @@ final class PC_site extends PC_base {
 	
 	public function Get_all_languages() {
 		$lang_model = $this->core->Get_object('PC_language_model');
-		$lang_model->absorb_debug_settings($this);
 		return $lang_model->get_all(array(
 			'where' => array('NOT disabled'),
 			'key' => 'ln',
@@ -1221,7 +1152,6 @@ final class PC_site extends PC_base {
 	* @see PC_site::Get_link()
 	*/
 	public function Get_html_languages($params = array()) {
-		$this->debug("Get_html_languages()");
 		$lns = $this->Get_languages();
 		if (!$lns) return false;
 		$ul_class_full = '';
@@ -1304,17 +1234,14 @@ final class PC_site extends PC_base {
 	* @see PC_site::Is_front_page()
 	*/
 	public function Get_link($route=null, $ln=null, $prepend_prefix=true, $suffix='') {
-		$this->debug("Get_link($route, $ln)");
 		if (empty($ln)) $ln = $this->ln;
 		//get language prefix
 		$ln_domain = '';
 		if (false and is_null($route) and $this->ln != $ln) {
-			$this->debug('ln differs!', 1);
 			$cache_key = 'ln_domain_' . $ln;
 			$ln_domain = $this->memstore->Get($cache_key);
 			if ($ln_domain === false) {
 				$domain_model = $this->core->Get_object('PC_domain_model');
-				$domain_model->absorb_debug_settings($this, 1);
 				$ln_domain_data = $domain_model->get_all(array(
 					'select' => 'mask',
 					'where' => array(
@@ -1332,7 +1259,6 @@ final class PC_site extends PC_base {
 				}
 				$this->memstore->Cache($cache_key, $ln_domain);
 			}
-			$this->debug($ln_domain, 2);
 		}
 		$pre_ln = $ln;
 		if (!empty($ln_domain)) {
@@ -1340,7 +1266,6 @@ final class PC_site extends PC_base {
 			$ln_domain = 'http://' . $ln_domain;
 		}
 		$link = $this->Get_link_prefix($pre_ln, true, $prepend_prefix);
-		$this->debug('link after prefix: ' . $link, 1);
 		//append route
 		if (!empty($route)) {
 			$link .= $route;
@@ -1352,11 +1277,9 @@ final class PC_site extends PC_base {
 				$link_to_append = $this->loaded_page['permalinks'][$ln];
 			}
 			$link .= $link_to_append;
-			$this->debug('link after routes+permalinks: ' . $link, 1);
 		}
 		elseif (empty($link)) {
 			$link = $this->cfg['url']['base'].$this->link_prefix;
-			$this->debug('link after base: ' . $link, 1);
 		}
 		if (strrpos($link, '?')) {
 			if (substr($link, (strrpos($link, '?')-1), 1) != '/') {
@@ -1365,8 +1288,6 @@ final class PC_site extends PC_base {
 		}
 		else if (substr($link, -1) != '/') $link .= $this->cfg['trailing_slash'];
 		
-		$this->debug('link after ?: ' . $link, 1);
-		
 		if (is_null($route) ) {
 			if (isset($this->url_suffix_callback_object) and is_object($this->url_suffix_callback_object) and method_exists($this->url_suffix_callback_object, $this->url_suffix_callback_method)) {
 				$args = $this->url_suffix_callback_args;
@@ -1374,11 +1295,9 @@ final class PC_site extends PC_base {
 				//echo '<hr />';
 				$suffix_from_callback = call_user_func_array(array($this->url_suffix_callback_object, $this->url_suffix_callback_method), $args);
 				$link = pc_append_route($link, $suffix_from_callback);
-				$this->debug('link after suffix callback: ' . $link, 1);
 			}
 		}
 		$link = $ln_domain . pc_append_route($link, $suffix);
-		$this->debug($link, 5);
 		return $link;
 	}
 	

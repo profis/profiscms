@@ -22,8 +22,6 @@ new saving system (future):
 error_reporting(0); //ensure PHP won't output any error data and won't destroy JSON structure
 $cfg['core']['no_login_form'] = true; //don't output login form if there's no active session
 require_once('admin.php'); //ensure the user is authorized, otherwise stop executing this script
-$auth->debug = true;
-$auth->set_instant_debug_to_file($cfg['path']['logs'] . 'auth/auth_for_ajax_page_php.html', false, 5);
 if (!$auth->Authorize_access_to_pages()) die('No access');
 //header('Content-Type: application/json');
 header('Cache-Control: no-cache');
@@ -33,15 +31,8 @@ $action = isset($_GET['action'])? $_GET['action'] : v($_POST['action']);
 $out = array(); //otherwise, if no response data for request found, JSON will return nothing
 //get page in all languages
 
-$logger = new PC_debug();
-$logger->debug = true;
-
-$logger->debug("Action: " . $action);
-
 require_once 'classes/Page_manager.php';
 $page_manager = new Page_manager();
-
-$page_manager->absorb_debug_settings($auth, 5);
 
 $page_id = v($_POST['id']);
 
@@ -55,9 +46,7 @@ if ($action == "get") {
 		echo json_encode($out);
 		exit;
 	}
-	$logger->debug('get');
 	if (isset($_POST['id'])) if (is_numeric($_POST['id'])) {
-		$logger->debug('id is numeric - load page');
 		$r = $db->prepare("SELECT p.*,"
 		.$sql_parser->group_concat($sql_parser->concat_ws("░", 'rc.pid', 'rc.ln', 'rc.name'), array('distinct'=>true, 'separator'=>'▓'))." redirects_from"
 		." FROM {$cfg['db']['prefix']}pages p"
@@ -113,7 +102,6 @@ if ($action == "get") {
 		}
 	}
 	else {
-		$logger->debug('id is not numeric - load plugin page');
 		$id =& $_POST['id'];
 		$pos = strpos($_POST['id'], '/');
 		if ($pos) {
@@ -133,7 +121,6 @@ if ($action == "get") {
 }
 //update page (in every language)
 elseif ($action == "update") {
-	$logger->debug('Update action');
 	$data = json_decode($_POST['data'], true);
 	$rename_only = v($_POST['rename_only'], false);
 	//print_pre($data);return;
@@ -254,7 +241,6 @@ elseif ($action == "update") {
 								$query = "SELECT count(id) FROM {$cfg['db']['prefix']}content_archive WHERE tree_id=? AND ln=? ORDER BY time DESC";
 								$r = $db->prepare($query);
 								$query_params = array($_page['id'], $language);
-								//echo $logger->get_debug_query_string($query, $query_params);
 								$success = $r->execute($query_params);
 								if ($success) {
 									$count = $r->fetchColumn()-15;
@@ -411,9 +397,7 @@ elseif ($action == "update") {
 								$shared_sets .= "$key=null";
 								//$shared_queryParams[] = $key;
 							} else {
-								$logger->debug('string date: ' . $value, 4);
 								if (preg_match("#^[0-9]{4}-[0-9]{2}-[0-9]{2}$#", $value)) $value = strtotime($value);
-								$logger->debug('strtotime: ' . $value, 4);
 								if ($value > 2147483647) $value = 2147483647;
 								$shared_sets .= "$key=?";
 								//$shared_queryParams[] = $key;
@@ -669,8 +653,3 @@ elseif ($action == 'empty_trash') {
 else $out['errors'][] = 'unknown_action';
 //echo '<pre>'.htmlspecialchars(print_r($out, true)).'</pre>';
 echo json_encode($out);
-
-$logger->debug('Ajax output:');
-$logger->debug($out);
-$logger->file_put_debug($cfg['path']['base'] . 'logs/ajax/page.html');
-//echo $logger->get_debug_string();

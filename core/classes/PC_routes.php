@@ -17,7 +17,7 @@
 /**
 * Class represents website routes maps, URIs, etc.
 */
-final class PC_routes extends PC_debug{
+final class PC_routes {
 	/**
 	* Instance variable used to store in-memory routes information.
 	*/
@@ -45,9 +45,6 @@ final class PC_routes extends PC_debug{
 	*/
 	public function __construct($request=null) {
 		global $cfg;
-		$this->debug = true;
-		$this->set_instant_debug_to_file($cfg['path']['logs'] . 'router/routes.html', false, 5);
-		$this->debug("__construct($request)");
 		$this->Parse_request($request);
 		
 	}
@@ -58,7 +55,6 @@ final class PC_routes extends PC_debug{
 	* @return mixed TRUE if param $request was given and nothing otherwise.
 	*/
 	public function Set_request($request=null) {
-		$this->debug('Set_request()', 2);
 		global $cfg, $core;
 		if (is_null($request)) {
 			$request_uri = explode('?', $_SERVER['REQUEST_URI']);
@@ -69,8 +65,6 @@ final class PC_routes extends PC_debug{
 		
 		//echo $this->request . '<hr />';
 			
-		$this->debug($request, 2);
-		
 		$get_vars = array(
 			'ppage_get_var' => $cfg['get_vars']['ppage_get_var'],
 			'page_get_var' => $cfg['get_vars']['page_get_var']
@@ -82,9 +76,6 @@ final class PC_routes extends PC_debug{
 			}
 			$page_match = preg_match('/'.$cfg['patterns'][$pattern].'/ui', $this->request, $matches);
 		
-			$this->debug('preg_match( /'.$cfg['patterns'][$pattern].'/ui, ' . $this->request, 3);
-			$this->debug($matches, 4);
-			
 			if ($page_match and $matches[2]) {
 				//print_r($matches);
 				if (v($cfg['router']['no_trailing_slash']) and !empty($this->request) and substr($this->request, -1) == '/') {
@@ -114,13 +105,10 @@ final class PC_routes extends PC_debug{
 	*/
 	public function Parse_request($request=null) {
 		global $core, $cfg;
-		$this->debug("Parse_request($request)");
 		$this->Set_request($request);
-		$this->debug("So, request is: " . $this->request);
 		if (is_string($this->request)) {
 			$this->list = explode('/', '/'.$this->request);
 		}
-		$this->debug($this->list, 1);
 		if (!is_array($this->list)) {
 			$this->list = array();
 		}
@@ -129,7 +117,6 @@ final class PC_routes extends PC_debug{
 			for ($a=0; isset($this->list[$a]); $a++) {
 				//allowed formats: any number or route i.e. 29, about-us, about_us, 871, hi, 4 etc
 				if (!preg_match("#^(\pL+|\pN+|[\pL\pN][\pL\pN-_\s]{0,253}[\pL\pN])$#u", $this->list[$a])) {
-					$this->debug("Unsetting $a: {$this->list[$a]} because allowed format was not satisfied", 2);
 					if (defined('CMF_FRONTEND') and !empty($this->list[$a])) {
 						//$core->Redirect_local('', 301);
 					}
@@ -143,9 +130,7 @@ final class PC_routes extends PC_debug{
 				if (!empty($new_request)) {
 					$new_request .= $cfg['trailing_slash'];
 				}
-				$this->debug("New request: " . $new_request, 2);
 				if ($new_request != $this->request) {
-					$this->debug("Redirecting to new request: " . $new_request, 3);
 					$core->Redirect_local($new_request, 301);
 				}
 			}
@@ -154,8 +139,6 @@ final class PC_routes extends PC_debug{
 				
 			}
 		}
-		$this->debug("So, route list is:", 1);
-		$this->debug($this->list, 2);
 	}
 	/**
 	* Method used to get variable value $request of the instance.

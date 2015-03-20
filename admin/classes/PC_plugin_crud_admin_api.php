@@ -53,7 +53,6 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 	}
 	
 	protected function _adjust_search(&$params) {
-		$this->debug('_adjust_search()');
 		$available_filters = $this->_get_available_filters();
 		if (!isset($_POST['filters']) or !is_array($_POST['filters'])) {
 			return;
@@ -81,13 +80,9 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 				}
 			}
 		}
-		$this->debug('_adjust_search end:', 1);
-		$this->debug($params, 2);
-		
 	}
 	
 	public function get() {
-		$this->debug('get()');
 		$g_p = array_merge($_GET, $_POST);
 		$start = (int) v($g_p['start']);
 		$limit = (int) v($g_p['limit']);
@@ -127,7 +122,6 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		
 		$this->_adjust_search($params);
 		
-		$this->_model->absorb_debug_settings($this);
 		$this->_adjust_order_params($params);
 		$this->_out['list'] = $this->_model->get_all($params);
 		
@@ -146,14 +140,10 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 	}
 	
 	public function create() {
-		$this->debug('create()');
 		$this->_model = $this->_get_model();
-		$this->_model->absorb_debug_settings($this);
-		
+
 		$data = json_decode(v($_POST['data'], '{}'), true);
-		
-		$this->debug($data);
-		
+
 		$content = array();
 		
 		foreach ($data['names'] as $ln => $name) {
@@ -166,15 +156,9 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		if (!empty($this->_valid_fields)) {
 			$data['other'] = PC_utils::filterArray($this->_valid_fields, $data['other']);
 		}
-		$this->debug('After filter valid fields:', 2);
-		$this->debug($data, 3);
-		
-			
+
 		$this->_model->filter($data['other']);
-		$this->debug('After filter:', 2);
-		$this->debug($data['other'], 3);
-		
-		
+
 		$validation_data = array();
 		$valid = $this->_model->validate($data['other'], $validation_data);
 		if (!$valid) {
@@ -214,8 +198,6 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 	}
 	
 	public function edit() {
-		$this->debug('edit()');
-		
 		$id = intval(v($_POST['id']));
 		if ($id == 0) {
 			$this->create();
@@ -223,9 +205,7 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		}
 		
 		$data = json_decode(v($_POST['data'], '{}'), true);
-		
-		$this->debug($data);
-		
+
 		$content = array();
 		
 		if (isset($data['names'])) {
@@ -242,14 +222,10 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		if (!empty($this->_valid_fields)) {
 			$new_data = PC_utils::filterArray($this->_valid_fields, $new_data);
 		}
-		$this->debug('After filter valid fields:', 2);
-		$this->debug($new_data, 3);
-		
 		$new_data['_content'] = $content;
 		
 		$this->_model = $this->_get_model();
-		$this->_model->absorb_debug_settings($this);
-		
+
 		$this->_model->set_id(intval($_POST['id']));
 		
 		$params = array(
@@ -259,8 +235,6 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		);
 		
 		$this->_model->filter($new_data);
-		$this->debug('After filter:', 2);
-		$this->debug($new_data, 3);
 		$validation_data = array();
 		$valid = $this->_model->validate($new_data, $validation_data);
 		if ($valid) {
@@ -278,13 +252,9 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 	
 	
 	public function delete() {
-		$this->debug('delete()');
-		$this->debug($_POST);
 		$ids = json_decode(v($_POST['ids'], '{}'), true);
-		$this->debug($ids);
-		
+
 		$this->_model = $this->_get_model();
-		$this->_model->absorb_debug_settings($this);
 		foreach ($ids as  $id) {
 			$this->_model->delete($id);
 		}
@@ -297,8 +267,7 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 	
 	public function sync() {
 		$this->_model = $this->_get_model();
-		$this->_model->absorb_debug_settings($this);
-		
+
 		$data = v($_POST['data'], '[]');
 		$delete_missing = v($_POST['delete_missing']);
 		$base_params = v($_POST['base_params'], '[]');
@@ -308,12 +277,7 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 		if (!is_array($base_params)) {
 			$base_params = json_decode($base_params, true);
 		}
-		$this->debug('data:');
-		$this->debug($data);
-		
-		$this->debug('base_params:');
-		$this->debug($base_params);
-		
+
 		$sync_fields = $this->_get_sync_fields();
 		$sync_fields_flipped = array_flip($sync_fields);
 		$all_ids = array();
@@ -324,7 +288,6 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 				$id = $this->_model->get_one($id, array(
 					'value' => $id_field
 				));
-				$this->debug('real id from db is: ' . $id);
 			}
 			if (true) {
 				$updated = false;
@@ -346,7 +309,6 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 				if ($id) {
 					$all_ids[] = $id;
 					$updated = $this->_model->update($update_data, $id);
-					$this->debug('update result: ' . $updated, 5);
 				}
 				else {
 					unset($update_data['_content']);
@@ -376,8 +338,7 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 	
 	public function get_for_combo() {
 		$this->_model = $this->_get_model();
-		$this->_model->absorb_debug_settings($this);
-		
+
 		$params = array(
 			'select' => 't.id',
 			'content' => array(
@@ -401,15 +362,11 @@ abstract class PC_plugin_crud_admin_api extends PC_plugin_admin_api {
 	}
 	
 	public function set_positions() {
-		$this->debug('set_positions()');
-		$this->debug($_POST);
 		$ids = json_decode(v($_POST['positions'], '{}'), true);
-		$this->debug($ids);
-		
+
 		if (is_array($ids)) {
 			$position = 0;
 			$this->_model = $this->_get_model();
-			$this->_model->absorb_debug_settings($this);
 			foreach ($ids as $id) {
 				$this->_model->update(array($this->_model->get_table_position_col() => $position), $id);
 				$position++;

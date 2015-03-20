@@ -13,9 +13,6 @@ require('admin.php');
 	<a href="?action=debug_tree">Debug tree structure</a> &nbsp;|&nbsp; <a href="?action=find_missing">Find missing files</a><br /><br />
 	<?php
 	switch(v($_GET['action'])) {
-		case 'debug_tree':
-			$gallery->Debug_tree();
-			break;
 		case 'find_missing':
 			$r = $db->query("SELECT
 			file.*,

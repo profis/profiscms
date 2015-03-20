@@ -1,6 +1,6 @@
 <?php
 
-class PC_recaptcha_validator extends PC_debug{
+class PC_recaptcha_validator {
 	
 	private $_private_key;
 	
@@ -8,9 +8,6 @@ class PC_recaptcha_validator extends PC_debug{
 		global $cfg;
 		require_once($cfg['path']['core_plugins'] . 'forms/libs/recaptchalib.php');
 		$this->_private_key = $cfg['forms']['recaptcha_private_key'];
-		$this->debug = true;
-		$this->debug_forced = true;
-		$this->set_instant_debug_to_file($cfg['path']['logs'] . 'recpt.html', true);
 	}
 
 	public function validate() {
@@ -26,12 +23,6 @@ class PC_recaptcha_validator extends PC_debug{
 			$_SERVER["REMOTE_ADDR"],
 			v($_POST["recaptcha_challenge_field"]),
 			v($_POST["recaptcha_response_field"]));
-		
-		$this->debug_time_and_ip();
-		$this->debug('Validating ' . v($_POST["recaptcha_challenge_field"]));
-		$this->debug('and ' . v($_POST["recaptcha_response_field"]));
-		$this->debug('Validation result:  ', 2);
-		$this->debug($resp->is_valid, 2);
 		
 		if ($resp->is_valid) {
 			$_SESSION['recaptcha'] = array(

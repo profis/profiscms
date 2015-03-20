@@ -120,17 +120,6 @@ function js_escape($str) {
 function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=false, $additional = array(), $page_tree_params = array(), Page_manager $page_manager = null) {
 	global $core, $cfg, $db, $plugins, $sql_parser, $auth;
 	
-	$logger = new PC_debug();
-	//$logger->file = $cfg['path']['logs'] . 'tree/get_tree_childs.html';
-	$logger->debug = true;
-	
-	$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'tree/get_tree_childs_instant.html', null, 5);
-	
-	$logger->debug("Get_tree_childs($id, $site_id, $deleted, $search, $date)", 1);
-	$logger->debug($additional, 1);
-	$logger->debug($page_tree_params, 1);
-	
-	
 	$where = array();
 	$additional_where = '';
 	if (v($additional['plugin_only'])) {
@@ -164,8 +153,6 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 			}
 		}
 		
-		$logger->debug($page_tree_params, 1);
-		
 		$access_cond = '';
 		if (!empty($access_conds)) {
 			$access_cond = implode (' OR ', $access_conds);
@@ -193,8 +180,6 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 		$page_ids_query_params[] =  '%'.$search.'%';
 		
 		$r = $db->prepare($page_ids_query);
-		$logger->debug('Search page ids query:', 2);
-		$logger->debug_query($page_ids_query, $page_ids_query_params, 2);
 		$success = $r->execute($page_ids_query_params);
 		if ($success) {
 			$ids = $r->fetchColumn();
@@ -209,8 +194,6 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 				." ORDER BY p.front desc,p.nr";
 				$r = $db->prepare($q);
 				$query_params = array($site_id);
-				$logger->debug('Search page query:', 2);
-				$logger->debug_query($q, $query_params, 2);
 				$success = $r->execute($query_params);
 			}
 		}
@@ -242,8 +225,6 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 			." ORDER BY p.front desc,p.nr";
 			$r = $db->prepare($q);
 			$query_params = array_merge(array($site_id), array_values($where));
-			$logger->debug('Page tree query:', 2);
-			$logger->debug_query($q, $query_params, 2);
 			$success = $r->execute($query_params);
 		}
 		else {
@@ -263,8 +244,6 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 				$params['date_to'] = $params['date_from']+86400;
 			}
 			$query_params = array_merge($params, array_values($where));
-			$logger->debug('Page tree query:', 2);
-			$logger->debug_query($q, $query_params, 2);
 			$success = $r->execute($query_params);
 		}
 	}
@@ -339,7 +318,6 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 
 					
 					if (!is_null($page_manager)) {
-						$page_manager->debug_level_offset += 4;
 						$node['children'] = $page_manager->get_accessible_children(
 							$site_id, 
 							$node['id'], 
@@ -405,17 +383,10 @@ function Get_tree_childs($id, $site_id, $deleted=false, $search=null, $date=fals
 			'accessible_page_sets' => v($page_tree_params['accessible_page_sets'], false),
 			'accessible_pages_concat_query' => $accessible_pages_concat_query_for_search_hook,
 			'accessible_pages_concat_query_params' => $accessible_pages_concat_query_params_for_search_hook,
-			'logger' => & $logger,
 			'hook_object' => &$hook_object
 		));
-		if ($hook_object) {
-			$logger->debug('Debug from hook object:', 1);
-			$logger->debug($hook_object->get_debug_string(), 2);
-		}
 	}
-	
-	//$logger->file_put_debug();
-	
+
 	return $nodes;
 }
 
@@ -1272,8 +1243,8 @@ function pc_sanitize_value($sanitized_value, $filters=array()) {
 
 /**
  * Method for preparing html output from database
- * @param type $value
- * @return type
+ * @param mixed $value
+ * @return mixed
  */
 function pc_e($value) {
 	return pc_sanitize_value($value, array('htmlspecialchars'));
@@ -1281,7 +1252,7 @@ function pc_e($value) {
 
 function pc_utf8_urldecode($str) {
 	$str = preg_replace("/%u([0-9a-f]{3,4})/i","&#x\\1;",urldecode($str));
-	return html_entity_decode($str,null,'UTF-8');;
+	return html_entity_decode($str,null,'UTF-8');
 }
 
 function pc_add_trailing_slash(&$url) {

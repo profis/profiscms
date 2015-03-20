@@ -1,13 +1,20 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<?php
+/**
+ * @var PC_core $core
+ * @var PC_site $site
+ * @var PC_page $page
+ * @var PC_gallery $gallery
+ * @var PC_cache $cache
+ * @var PC_plugins $plugins
+ * @var array $cfg
+ */
+?>
+<!DOCTYPE html>
+<html>
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title><?php echo $site->Get_title(); ?></title>
-	<base href="<?php echo htmlspecialchars($cfg['url']['base']); ?>" />
 	<?php
-	$site->Add_stylesheet($core->Get_theme_path() . 'css/bootstrap.css');
-	$site->Add_stylesheet($core->Get_theme_path() . 'css/style.css');
-	echo $site->Get_head();
+		$site->Add_stylesheet($core->Get_theme_path() . 'css/bootstrap.css');
+		$site->Add_stylesheet($core->Get_theme_path() . 'css/style.css');
 	?>
 	<script type="text/javascript">
 	</script>
@@ -103,7 +110,7 @@
 		<div style="padding:10px;" class="pc_content">
 			<?php 
 			
-			echo $site->get_text();
+			echo $site->Get_text();
 			
 			?>
 			<div style="clear:both"></div>

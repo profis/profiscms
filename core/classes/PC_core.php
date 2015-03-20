@@ -156,22 +156,6 @@ final class PC_core extends PC_base {
 	* @param string $location given URI where user will be redirected.
 	*/
 	public function Redirect($location, $type=null) {
-		$this->debug = true;
-		$this->clear_debug_string();
-		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'router/redirect.html', false, 5);
-		
-		//$this->debug("Current url: " . PC_utils::getCurrUrl(), 2);
-		//$this->debug("Get_current_page_link: " . $this->page->Get_current_page_link(), 2);
-		if ($this->routes and is_object($this->routes) and method_exists($this->routes, 'Get_request')) {
-			$this->debug($this->routes->Get_request());
-		}
-		//$this->debug($this->routes->Get_request());
-		$this->debug($_GET);
-		$this->debug("Redirect($location $type)", 2);
-		
-		$call_stack = debug_backtrace();
-		$this->debug($this->get_callstack($call_stack), 3);
-		
 		switch ($type) {
 			case 301: header("HTTP/1.1 301 Moved Permanently", true, 301); break;
 			case 307: header("HTTP/1.1 307 Moved Temporarily", true, 307); break;
@@ -735,13 +719,12 @@ final class PC_core extends PC_base {
 	}
 	
 	/**
-	 * objects
 	 * @param string $className
 	 * @param array $args
 	 * @param int $idIndex
-	 * @return type
+	 * @return object
 	 */
-	public function Get_object($className, $args=array(), $idIndex=0, $logger = null) {
+	public function Get_object($className, $args=array(), $idIndex=0) {
 		if (!is_array($args)) $args = array($args);
 		$path = array('core', 'objects', $className);
 		if (is_null($idIndex)) {
@@ -750,35 +733,16 @@ final class PC_core extends PC_base {
 			else $idIndex = count($objects);
 		}
 		elseif ($idIndex < 0) $idIndex = 0;
-		if (!is_null($logger)) {
-			$logger->debug('$idIndex: ' . $idIndex);
-		}
 		$path[] = $idIndex;
 		//return already created instance
 		$object = $this->memstore->Get($path);
-		if (!is_null($logger)) {
-			$logger->debug('after memstore get');
-		}
 		if ($object) {
-			if (!is_null($logger)) {
-				$logger->debug('returning object');
-			}
 			return $object;
-		}
-		if (!is_null($logger)) {
-			$logger->debug('will create new instance');
 		}
 		//create new instance
 		//error_reporting(E_ALL);
 		if (!class_exists($className, true)) {
-			if (!is_null($logger)) {
-				$logger->debug(' :( no class name');
-			}
 			return false;
-		}
-			
-		if (!is_null($logger)) {
-			$logger->debug('creating object ' . $className);
 		}
 		$reflectionCls = new ReflectionClass($className);
 		return $this->memstore->Cache($path, $reflectionCls->newInstanceArgs($args));

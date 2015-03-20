@@ -11,23 +11,6 @@ abstract class PC_widget extends PC_base {
 	
 	public function Init($config = array()) {
 		$this->_config = array_merge($this->_get_default_config(), $config);
-		
-		if (v($this->_config['debug'])) {
-			$this->debug = true;
-		}
-		
-		if (v($this->_config['debug_forced'])) {
-			$this->debug_forced = true;
-		}
-		
-		if (isset($this->_config['debug_file'])) {
-			$file = $this->_config['debug_file'];
-			if (empty($file)) {
-				$file = $this->cfg['path']['logs'] . 'widgets/' . get_class($this) . '.html';
-			}
-			$this->set_instant_debug_to_file($file, false, 5);
-		}
-			
 	}
 	
 	protected function _get_default_config() {
@@ -51,8 +34,6 @@ abstract class PC_widget extends PC_base {
 	public function get_text($data = false) {
 		if (!$data) {
 			$data = $this->get_data();
-			$this->debug('get_data was called, data keys:', 1);
-			$this->debug(array_keys($data), 2);
 		}
 		$data['tpl_group'] = $this->get_template_group();
 		///*
@@ -61,9 +42,6 @@ abstract class PC_widget extends PC_base {
 		}
 		
 		$file = $this->core->Get_tpl_path($this->get_template_group(), $this->get_template());
-		
-		$this->debug('File to be included:', 1);
-		$this->debug($file, 2);
 		
 		$s = '';
 		$this->Output_start();

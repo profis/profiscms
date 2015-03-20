@@ -19,13 +19,6 @@ $cfg['core']['no_login_form'] = true;
 
 require_once '../../../admin/admin.php';
 
-if (!isset($logger)) {
-	$logger = new PC_debug();
-	$logger->debug = true;
-	$logger->set_instant_debug_to_file($cfg['path']['logs'] . 'plugins/config.html', false, 5);
-}
-$logger->debug('Starting plugin dialog', 3);
-
 if (isset($_POST['ajax'])) {
 	header('Content-Type: application/json');
 	header('Cache-Control: no-cache');
@@ -37,7 +30,6 @@ if (isset($_POST['ajax'])) {
 				$delete_query = "DELETE FROM {$cfg['db']['prefix']}config WHERE ckey=? and plugin=? and site=?";
 				$r = $db->prepare($delete_query);
 				$params = array($k['key'], $k['plugin'], $k['site']);
-				$logger->debug_query($delete_query, $params, 2);
 				$r->execute($params);
 			}
 		}
@@ -65,12 +57,10 @@ if (isset($_POST['ajax'])) {
 					$k[1],
 					intval($k[2]),
 				);
-				$logger->debug_query($delete_query, $params, 2);
 				$r->execute($params);
 				$insert_query = "INSERT INTO {$cfg['db']['prefix']}config (ckey, plugin, site, value) VALUES(?,?,?,?)";
 				$r = $db->prepare($insert_query);
 				$params[] = $k[3];
-				$logger->debug_query($insert_query, $params, 2);
 				$r->execute($params);
 			}
 			echo '[]';
@@ -79,9 +69,6 @@ if (isset($_POST['ajax'])) {
 	}
 	
 	$sites = $site->Get_all();
-	
-	$logger->debug('$sites:', 1);
-	$logger->debug($sites, 1);
 	
 	$out = array();
 	$r = $db->query("SELECT * FROM {$cfg['db']['prefix']}config");
@@ -103,8 +90,6 @@ if (isset($_POST['ajax'])) {
 			
 	}
 	$output = array_values($out);
-	$logger->debug('<hr />', 1);
-	$logger->debug($output, 1);
 	echo json_encode($output);
 	return;
 }
@@ -143,7 +128,6 @@ function mod_config_click() {
 	function ed_sk(fld, e) {
 		// copied from Editor::onSpecialKey()
 		if (e.getKey() == e.ENTER) {
-			//debugger;
 			//e.stopEvent(); // wtf doesn't work, grid still gets it
 			fld.gridEditor.completeEdit();
 			//if (fld.gridEditor.triggerBlur) fld.gridEditor.triggerBlur();

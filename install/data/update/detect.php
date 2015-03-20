@@ -6,6 +6,9 @@
  * @var PC_database $db
  * @var PC_core $core
  */
+
+use \Profis\Db\DbException;
+
 if( $db->getTableInfo('site_users_external') ) {
 	return '4.4.17';
 }

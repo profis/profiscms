@@ -43,17 +43,11 @@ function PC_clear_cache() {
 
 function get_plugin_icon($fn=false) {
 	global $cfg;
-	//global $logger;
-	//$logger->debug('get_plugin_icon()');
 	if (!$fn) {
 		$dbt = debug_backtrace();
-		//$logger->debug($dbt[0]['file'], 1);
 		$dn = dirname(dirname($dbt[0]['file']));
 		$dn_rel = str_replace(CMS_ROOT, '', $dn);
 		$fn = basename(dirname($dbt[0]['file']));
-		
-		//$logger->debug("dn: $dn", 1);
-		//$logger->debug("fn: $fn", 1);
 		
 		//file_put_contents('debug_backtrace.dump.txt', print_r($dbt, true));
 		//$fn = preg_replace('#^.*[\\\\/]#', '', $dbt[0]['file']);

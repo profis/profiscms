@@ -1570,7 +1570,6 @@ function mod_auth_click() {
 			callback: function(options, success, response){
 				if (success && response.responseText) {
 					try {
-						//debugger;
 						var data = Ext.decode(response.responseText);
 						dialog.config = data;
 						dialog.permissions.store.loadData(dialog.config.perms);

@@ -61,10 +61,6 @@ $query_params = array(
 	'id'=> $id,
 	'ln'=> $ln
 );
-if (isset($_GET['debug'])) {
-	echo $core->get_debug_query_string($query, $query_params);
-	echo '<hr />';
-}
 $success = $r->execute($query_params);
 if (!$success) {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");

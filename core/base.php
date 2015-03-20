@@ -143,26 +143,10 @@ if (!function_exists('PC_autoload_classmap')) {
 		return false;
 	}
 
-	function PC_autoload_exceptions($cls) {
-		if (preg_match("#^[^\\\\]+Exception$#", $cls)) {
-			$path = PC_app::$cfg['path']['classes'].'exceptions/'.$cls.'.php';
-			if( is_file($path) ) {
-				require_once $path;
-				return true;
-			}
-		}
-		return false;
-	}
-
 	spl_autoload_register('PC_autoload_classmap');
 	spl_autoload_register('PC_autoload_namespaces');
 	spl_autoload_register('PC_autoload_core');
-	spl_autoload_register('PC_autoload_exceptions'); // this will be removed once exceptions move out to namespaces area
 }
-
-
-
-
 
 include 'base_session.php';
 

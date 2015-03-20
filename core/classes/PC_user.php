@@ -37,9 +37,6 @@ class PC_user extends PC_base {
 	public $just_logged_in = false;
 	
 	public function Init() {
-		$this->debug = true;
-		$this->set_instant_debug_to_file($this->cfg['path']['logs'] . 'pc_user.html', null, 7);
-
 		$this->Refresh();
 		if (v($_REQUEST['user_logout'])) {
 			$this->Logout();
@@ -50,13 +47,9 @@ class PC_user extends PC_base {
 		else $this->Login();
 	}
 	public function Refresh() {
-		$this->debug("Refresh()");
 		$this->Current_secure = md5($_SERVER['REMOTE_ADDR'].v($_SERVER['HTTP_USER_AGENT']));
 		$this->Post_login = v($_POST['user_login']);
 		$this->Post_password = $this->Sanitize('password', v($_POST['user_password']));
-		if (empty($this->Post_password)) {
-			$this->debug(':( Post_password after sanitizing is empty', 1);
-		}
 		$this->Session_login = v($_SESSION['user_login']);
 		$this->externalProvider = v($_SESSION['user_ext_provider']);
 		$this->externalUID = v($_SESSION['user_ext_uid']);
@@ -90,7 +83,6 @@ class PC_user extends PC_base {
 		return true;
 	}
 	public function Login($externalAuthData = null) {
-		$this->debug("Login()");
 		if( $this->Logged_in )
 			return true;
 
@@ -101,7 +93,6 @@ class PC_user extends PC_base {
 			$login_field_in_clause = 'email';
 		}
 		if ($this->Session_secure == $this->Current_secure) {
-			$this->debug('session', 1);
 			$s = $r = null;
 			if( isset($this->externalProvider, $this->externalUID) ) {
 				//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
@@ -124,7 +115,6 @@ class PC_user extends PC_base {
 			$this->LoginName = $data['name'];
 			$this->Logged_in = true;
 			$this->Get_data();
-			$this->debug(':) From session');
 			return true;
 		}
 		else if( is_array($externalAuthData) && isset($externalAuthData['provider'], $externalAuthData['uid']) ) {
@@ -168,12 +158,10 @@ class PC_user extends PC_base {
 			}
 
 			$this->Get_data();
-			$this->debug(':) From externalAuthData');
 			$this->core->Init_hooks('PC_user/afterLogin', array('user' => $this));
 			return true;
 		}
 		else {
-			$this->debug('not session', 1);
 			$using_cookie = false;
 			$cookie_code = $this->GetCookie();
 			if( $cookie_code !== null ) {
@@ -189,7 +177,6 @@ class PC_user extends PC_base {
 						if( $data["banned"] || ($data["flags"] & PC_UF_MUST_ACTIVATE) != 0 )
 							$using_cookie = false; // in case not activated yet we should just ignore login using cookies
 						else {
-							$this->debug('Setting Post_login from data', 1);
 							$this->Post_login = $data["login"];
 							$this->Post_password = $data["password"];
 						}						
@@ -198,30 +185,25 @@ class PC_user extends PC_base {
 			}
 			
 			if (!empty($this->Post_login) && !empty($this->Post_password)) {
-				$this->debug('Post_login', 1);
 				$this->core->Init_hooks('PC_user/beforeLogin', array('user' => $this));
 				$this->login_attempt = true;
 				$query = "SELECT id,name,password FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password IS NOT NULL AND (flags & ?)=0 and banned=0 LIMIT 1";
 				$query_params = array($this->Post_login, PC_UF_MUST_ACTIVATE);
 				$r = $this->prepare($query);
-				//echo $this->get_debug_query_string($query, $query_params);
 				$s = $r->execute($query_params);
 				if (!$s) {
 					if( $using_cookie ) $this->DelCookie();
 					$this->login_error = 'login';
-					$this->debug(':( User not found');
 					return false;
 				}
 				if ($r->rowCount() != 1) {
 					if( $using_cookie ) $this->DelCookie();
 					$this->login_error = 'login';
-					$this->debug(':( Not one user');
 					return false;
 				}
 				$data = $r->fetch();
 				if ($data['password'] != $this->Post_password) {
 					$this->login_error = 'password';
-					$this->debug(':( Wrong password');
 					return false;
 				}
 				$_SESSION['user_login'] = $this->Post_login;
@@ -252,7 +234,6 @@ class PC_user extends PC_base {
 					$this->login_error = 'password';
 					return false;
 				}
-				$this->debug(':( Post_login is empty: ' . $this->Post_login, 1);
 			}
 			// used cookie, but not logged in ... remove the cookie
 			if( $using_cookie ) $this->DelCookie();
@@ -260,7 +241,6 @@ class PC_user extends PC_base {
 		}
 	}
 	public function Logout() {
-		$this->debug('Logout()');
 		$this->core->Init_hooks('PC_user/beforeLogout', array('user' => $this));
 		unset($_SESSION['user_login'], $_SESSION['user_password'], $_SESSION['user_secure']);
 		$this->LoginName = '';
@@ -275,7 +255,6 @@ class PC_user extends PC_base {
 	}
 	public function Is_logged_in() {
 		$return = (bool)$this->Logged_in;
-		$this->debug('Is_logged_in: ' . $return);
 		return $return;
 	}
 	public function GetID() {
@@ -391,8 +370,6 @@ class PC_user extends PC_base {
 		return md5(sha1($pass));
 	}
 	public function Create($email, $password = '', $retyped_password = '', $name = '', $terms_and_conditions = 0, $captcha=NULL, $login = '', $meta=array()) {
-		$this->debug("Create()");
-		$this->debug($this->get_callstack(), 3);
 		//validate input
 		$login_after_create = false;
 		$user_model = false;
@@ -424,7 +401,6 @@ class PC_user extends PC_base {
 			$user_model->validate($data, $validation_data);
 			$r['errors'] = $validation_data;
 			if (count(v($r['errors']))) {
-				$this->debug(":( Model not validated", 1);
 				return $r;
 			}
 		}
@@ -437,7 +413,6 @@ class PC_user extends PC_base {
 			if (!$terms_and_conditions) $r['errors'][] = 'terms_and_conditions';
 			if ($captcha !== NULL && v($_SESSION["captcha_code"], microtime()) != $captcha) $r['errors'][] = 'captcha';
 			if (count(v($r['errors']))) {
-				$this->debug(":( Captha problems", 1);
 				return $r;
 			}
 			//prepare
@@ -449,14 +424,12 @@ class PC_user extends PC_base {
 			$s = $r->execute(array($email, $login));
 			if (!$s) {
 				$res['errors'][] = 'database';
-				$this->debug($res,1);
 				return $r;
 			}
 			if ($r->rowCount() == 1) {
 				$d = $r->fetch();
 				if ($d['email'] == $email) $res['errors'][] = 'account_exists';
 				if ($d['login'] == $login) $res['errors'][] = 'login_exists';
-				$this->debug($res, 1);
 				return $res;
 			}
 		}
@@ -477,8 +450,6 @@ class PC_user extends PC_base {
 		$s = $r->execute($insert_query_params);
 		if (!$s) {
 			$res['errors'][] = 'create_account';
-			$res['errors'][] = $this->get_debug_query_string($insert_query, $insert_query_params);
-			$this->debug($res, 1);
 			return $res;
 		}
 		$account_id = $this->db->lastInsertId($this->sql_parser->Get_sequence('site_users'));
@@ -507,8 +478,7 @@ class PC_user extends PC_base {
 				$this->Refresh()->Login();
 			}
 		}
-		$this->debug('User has been created', 1);
-		
+
 		return array(
 			'success'=> true,
 			'id'=> $account_id,
