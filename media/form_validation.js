@@ -9,10 +9,22 @@ function PC_add_validation(form_selector, validation, config) {
 		$.extend(validation_config, config);
 	}
 	
-	$(form_selector).submit(function(){
+	PC_remove_validation(form_selector);
+
+	var $form = $(form_selector);
+
+	// set new validation handler
+	$form.data('pc_validation_data', [validation_config, $.extend({}, validation)]);
+	$form.on('submit.pc_validator', function(){
 		var valid = true;
 		var first_input_field = false;
-		$.each(validation, function(input_name, validation_rules) {
+		var validation_data = $(this).data('pc_validation_data');
+		console.log(validation_data);
+		if( !validation_data ) {
+			$(this).off('submit.pc_validation');
+			return;
+		}
+		$.each(validation_data[1], function(input_name, validation_rules) {
 			var valid_input = true;
 			var input_name_parts = input_name.split(':');
 			var input_field = false;
@@ -21,7 +33,6 @@ function PC_add_validation(form_selector, validation, config) {
 			}
 			else {
 				input_field =$(form_selector + " input[name="+input_name+"]" + ', ' + form_selector + " select[name="+input_name+"]" + ', ' + form_selector + " textarea[name="+input_name+"]");
-			
 			}
 			if (!input_field || !input_field.length) {
 				return 'continue';	
@@ -65,25 +76,53 @@ function PC_add_validation(form_selector, validation, config) {
 					first_input_field = input_field;
 				}
 				valid = false;
-				if (validation_config.error_background_color) {
-					input_field.css("background-color", validation_config.error_background_color);
+				if (validation_data[0].error_background_color) {
+					input_field.css("background-color", validation_data[0].error_background_color);
 				}
-				if (validation_config.error_parent_class) {
-					input_field.parent().addClass(validation_config.error_parent_class);
+				if (validation_data[0].error_parent_class) {
+					input_field.parent().addClass(validation_data[0].error_parent_class);
 				}
 			}
 			else {
-				if (validation_config.ok_background_color) {
-					input_field.css("background-color", validation_config.ok_background_color);
+				if (validation_data[0].ok_background_color) {
+					input_field.css("background-color", validation_data[0].ok_background_color);
 				}
-				if (validation_config.error_parent_class) {
-					input_field.parent().removeClass(validation_config.error_parent_class);
+				if (validation_data[0].error_parent_class) {
+					input_field.parent().removeClass(validation_data[0].error_parent_class);
 				}
 			}
 		});
-		if (!valid && first_input_field && validation_config.scroll_to_invalid_field) {
+		if (!valid && first_input_field && validation_data[0].scroll_to_invalid_field) {
 			$(window).scrollTop(first_input_field.offset().top);
 		}
 		return valid;
-	})
+	});
+}
+
+function PC_remove_validation(form_selector) {
+	var $form = $(form_selector);
+
+	// remove previous validation handler and error marks from the form
+	$form.off('submit.pc_validator');
+	var validation_data = $form.data('pc_validation_data');
+	if( validation_data ) {
+		$.each(validation_data[1], function(input_name, validation_rules) {
+			var input_name_parts = input_name.split(':');
+			var input_field = false;
+			if (input_name_parts.length == 2 && input_name_parts[0] == 'id') {
+				input_field = $('#' + input_name_parts[1]);
+			}
+			else {
+				input_field =$(form_selector + " input[name="+input_name+"]" + ', ' + form_selector + " select[name="+input_name+"]" + ', ' + form_selector + " textarea[name="+input_name+"]");
+			}
+			if( input_field ) {
+				if (validation_data[0].ok_background_color) {
+					input_field.css("background-color", validation_data[0].ok_background_color);
+				}
+				if (validation_data[0].error_parent_class) {
+					input_field.parent().removeClass(validation_data[0].error_parent_class);
+				}
+			}
+		});
+	}
 }
