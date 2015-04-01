@@ -53,7 +53,7 @@ if ($action == "get") {
 		." LEFT JOIN {$cfg['db']['prefix']}pages rp ON rp.redirect=".$sql_parser->cast('p.id', 'text')
 		." LEFT JOIN {$cfg['db']['prefix']}content rc ON rc.pid=rp.id"
 		." WHERE p.id=?"
-		." GROUP BY p.id,p.site,p.idp,p.nr,p.controller,p.front,p.route_lock,p.published,p.hot,p.nomenu,p.date_from,p.date_to,p.deleted,p.redirect,p.date,p.reference_id");
+		." GROUP BY p.id,p.site,p.idp,p.nr,p.controller,p.front,p.route_lock,p.published,p.hot,p.nomenu,p.nositemap,p.date_from,p.date_to,p.deleted,p.redirect,p.date,p.reference_id");
 		$r_content = $db->prepare("SELECT c.*,username FROM {$cfg['db']['prefix']}content c"
 		." LEFT JOIN {$cfg['db']['prefix']}auth_users u ON u.id=update_by"
 		." WHERE pid=?");

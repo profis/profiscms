@@ -78,7 +78,7 @@ $cfg['valid_page_fields'] = array(
 	'name', 'custom_name', 'info', 'info2', 'info3', 'info_mobile', 'title', 'keywords', 
 	'description', 'route', 'permalink', 'ln_redirect', 'text',
 	'redirect', 'controller', 'route_lock', 'published', 'hot', 
-	'nomenu', 'date_from', 'date_to', 'date', 'reference_id', 
+	'nomenu', 'nositemap', 'date_from', 'date_to', 'date', 'reference_id', 
 	'source_id', 'target'
 );
 

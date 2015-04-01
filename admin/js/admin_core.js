@@ -724,6 +724,11 @@ Ext.onReady(function(){
 										ref: '../../../../../../../_fld_nomenu',
 										id: 'db_fld_nomenu'
 									},
+									{	fieldLabel: PC.i18n.page.nositemap,
+										xtype: 'checkbox',
+										ref: '../../../../../../../_fld_nositemap',
+										id: 'db_fld_nositemap'
+									},
 									{	fieldLabel: PC.i18n.page.published,
 										xtype: 'checkbox',
 										ref: '../../../../../../../_fld_published',
@@ -1073,6 +1078,7 @@ Ext.onReady(function(){
 							node.attributes.published = data.published;
 							node.attributes.hot = data.hot;
 							node.attributes.nomenu = data.nomenu;
+							node.attributes.nositemap = data.nositemap;
 							node.attributes._redir = (data.redirect!=null?(data.redirect.length?true:false):false);
 							node.attributes.controller = data.controller;
 							if (node.attributes._names == undefined) node.attributes._routes = {};
@@ -1610,7 +1616,7 @@ function Load_to_editor(ln, original) {
 			value = Page_datetime_convert(value, null);
 			field.setValue(value.date);
 			Ext.getCmp('db_fld_time').setValue(value.time);
-		} else if (/^(id|controller|published|route_lock|hot|nomenu|redirect|source_id|target|reference_id)$/.test(i)) {
+		} else if (/^(id|controller|published|route_lock|hot|nomenu|nositemap|redirect|source_id|target|reference_id)$/.test(i)) {
 			var source = PC.global.page[i];
 			if (original) field.setValue(source.originalValue);
 			else field.setValue(source.value);
@@ -1823,7 +1829,7 @@ function Content_dirty() {
 		if (/^(name|custom_name|title|keywords|description|route|permalink|ln_redirect)$/.test(i)) {
 			var store = content_store[i];
 			
-		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|source_id|target|date|reference_id)$/.test(i)) {
+		} else if (/^(controller|published|route_lock|hot|nomenu|nositemap|date_from|date_to|redirect|source_id|target|date|reference_id)$/.test(i)) {
 			var store = PC.global.page[i];
 		}
 		if (/^(date_from|date_to)$/.test(i)) {
@@ -1849,7 +1855,7 @@ function Content_dirty() {
 				time: time_value
 			}, null);
 		}
-		else if(/^(route_lock|published|hot|nomenu)$/.test(i)) {
+		else if(/^(route_lock|published|hot|nomenu|nositemap)$/.test(i)) {
 			var fieldValue = (field.getValue()?'1':'0');
 		}
 		else {
@@ -1882,7 +1888,7 @@ function Save_content_to_store(ln_change_to) {
 		if (/^(name|custom_name|text|info|info2|info3|info_mobile|title|keywords|description|route|permalink|ln_redirect)$/.test(i)) {
 			var store = content_store[i];
 			
-		} else if (/^(controller|published|route_lock|hot|nomenu|date_from|date_to|redirect|source_id|target|date|reference_id)$/.test(i)) {
+		} else if (/^(controller|published|route_lock|hot|nomenu|nositemap|date_from|date_to|redirect|source_id|target|date|reference_id)$/.test(i)) {
 			var store = PC.global.page[i];
 		}
 		//use solid date format
@@ -1909,7 +1915,7 @@ function Save_content_to_store(ln_change_to) {
 				time: time_value
 			}, null);
 			store.value = value;
-		} else if (/^(route_lock|published|hot|nomenu)$/.test(i)) {
+		} else if (/^(route_lock|published|hot|nomenu|nositemap)$/.test(i)) {
 			store.value = (field.getValue()?'1':'0');
 		//get raw editor values
 		} else if (/^(text|info|info2|info3|info_mobile)$/.test(i)) {
@@ -2422,7 +2428,7 @@ function Render_page_actions(controller) {
 	if (controller == undefined) var controller = PC.global.page.controller.value;
 	var front = 0;
 	if (PC.global.page.front != undefined) front = PC.global.page.front.value;
-	var could_be_enabled_or_disabled = 'controller|name_container|custom_name_container|title_container|keywords_container|description_container|route_container|permalink_container|redirect_ln_container|redirect|redirect_container|source_id|source_id_container|target|target_container|published|route_lock_container|hot|nomenu|date_container|name_title|custom_name_title|route_title|permalink_title|redirect_ln_title|title_title|description_title|keywords_title|date|time|reference_id';
+	var could_be_enabled_or_disabled = 'controller|name_container|custom_name_container|title_container|keywords_container|description_container|route_container|permalink_container|redirect_ln_container|redirect|redirect_container|source_id|source_id_container|target|target_container|published|route_lock_container|hot|nomenu|nositemap|date_container|name_title|custom_name_title|route_title|permalink_title|redirect_ln_title|title_title|description_title|keywords_title|date|time|reference_id';
 	if (front > 0) {
 		var disabled = 'route_container|permalink_container|route_title|permalink_title|published|route_lock_container|hot|nomenu|date_container|date|time|reference_id';
 	}

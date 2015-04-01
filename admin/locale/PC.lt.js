@@ -141,6 +141,7 @@ PC.langs.lt = {
 		route_lock: 'Nuorodos automatiškai neatnaujinti',
 		hot: 'Karštas',
 		nomenu: 'Nerodyti meniu',
+		nositemap: "Nerodyti tinklapio žemėlapyje",
 		published: 'Paskelbtas',
 		show_period: 'Rodyti tik per šį laikotarpį',
 		shortcut_from: 'Nuoroda iš',

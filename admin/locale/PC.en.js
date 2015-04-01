@@ -143,6 +143,7 @@ PC.langs.en = {
 		route_lock: "Don't update URL automatically",
 		hot: 'Hot',
 		nomenu: "Don't show in menu",
+		nositemap: "Don't show in site map",
 		published: 'Published',
 		show_period: 'Show only during this period',
 		shortcut_from: 'Shortcut from',
