@@ -14,17 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
-namespace Profis\Web;
+namespace Profis\Db;
 
-class BadUrlException extends \Exception {
-	private $url;
+abstract class Command {
+	/** @var CommandBuilder */
+	protected $builder;
 
-	public function __construct($url, $message = "Bad URL", $previous = null) {
-		$this->url = $url;
-		parent::__construct($message, 0, $previous);
-	}
+	/** @var Schema */
+	protected $schema;
 
-	public function getUrl() {
-		return $this->url;
+	protected function __construct(CommandBuilder $builder, $schema) {
+		$this->builder = $builder;
+		$this->schema = $builder->getSchema($schema);
 	}
 }

@@ -14,17 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
-namespace Profis\Web;
+namespace Profis\Web\Components;
 
-class BadUrlException extends \Exception {
-	private $url;
+use \Profis\Component;
 
-	public function __construct($url, $message = "Bad URL", $previous = null) {
-		$this->url = $url;
-		parent::__construct($message, 0, $previous);
-	}
+class UrlManager extends Component {
+	public $defaultController = 'site';
+	public $defaultAction = 'index';
 
-	public function getUrl() {
-		return $this->url;
+	public function processRequest() {
+		// @todo: detect controller and action from the request
+
+		return array(
+			'controller' => $this->defaultController,
+			'action' => $this->defaultAction,
+		);
 	}
 }

@@ -14,17 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
-namespace Profis\Web;
+namespace Profis\CMS;
 
-class BadUrlException extends \Exception {
-	private $url;
+class App extends \Profis\Web\App {
 
-	public function __construct($url, $message = "Bad URL", $previous = null) {
-		$this->url = $url;
-		parent::__construct($message, 0, $previous);
-	}
 
-	public function getUrl() {
-		return $this->url;
+	public function getDefaultConfig() {
+		return array_replace_recursive(
+			parent::getDefaultConfig(),
+			array(
+				'components' => array(
+					'urlManager' => array(
+						'class' => '\\Profis\\CMS\\Components\\UrlManager',
+					),
+				),
+				'controllerMap' => array(
+					'site' => '\\Profis\\CMS\\Controllers\\Site',
+				),
+			)
+		);
 	}
 }

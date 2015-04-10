@@ -16,15 +16,19 @@
 
 namespace Profis\Web;
 
-class BadUrlException extends \Exception {
-	private $url;
+class Action {
+	/** @var string */
+	public $id;
 
-	public function __construct($url, $message = "Bad URL", $previous = null) {
-		$this->url = $url;
-		parent::__construct($message, 0, $previous);
+	/** @var array */
+	protected $callback;
+
+	public function __construct($id, $callback) {
+		$this->id = $id;
+		$this->callback = $callback;
 	}
 
-	public function getUrl() {
-		return $this->url;
+	function run() {
+		call_user_func_array($this->callback, func_get_args());
 	}
 }

@@ -14,17 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
-namespace Profis\Web;
+namespace Profis\Db\MySQL;
 
-class BadUrlException extends \Exception {
-	private $url;
+use \Profis\Db\DbException;
 
-	public function __construct($url, $message = "Bad URL", $previous = null) {
-		$this->url = $url;
-		parent::__construct($message, 0, $previous);
+class InsertCommand extends \Profis\Db\InsertCommand {
+	/**
+	 * @param array $params
+	 * @return InsertCommand
+	 * @throws DbException
+	 */
+	function insert($params = null) {
+		return $this;
 	}
 
-	public function getUrl() {
-		return $this->url;
+	/**
+	 * @return string
+	 * @throws DbException
+	 */
+	function getLastInsertId() {
 	}
 }

@@ -14,17 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http:#www.gnu.org/licenses/>.
 
-namespace Profis\Web;
+namespace Profis;
 
-class BadUrlException extends \Exception {
-	private $url;
+abstract class Component {
+	/** @var bool */
+	public $initialized = false;
 
-	public function __construct($url, $message = "Bad URL", $previous = null) {
-		$this->url = $url;
-		parent::__construct($message, 0, $previous);
-	}
-
-	public function getUrl() {
-		return $this->url;
+	public function init() {
 	}
 }
