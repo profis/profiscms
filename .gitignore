@@ -53,3 +53,13 @@ cache/*
 # Documentation
 cms_docs/cache/
 cms_docs/html/
+
+# ignore everything in app directory
+/app/**/*
+# don't ignore subdirectories of app
+!/app/**/*/
+# don't ignore .gitignore, .gitkeep, .htaccess and .sample files in app and it's subdirectories
+!/app/**/.gitignore
+!/app/**/.gitkeep
+!/app/**/.htaccess
+!/app/**/*.sample

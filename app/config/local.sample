@@ -1,0 +1,11 @@
+<?php
+return array(
+	'components' => array(
+		'db' => array(
+			'dsn' => 'mysql:host=localhost;dbname=mysite',
+			'user' => '',
+			'pass' => '',
+			'prefix' => 'pc5_',
+		),
+	),
+);
