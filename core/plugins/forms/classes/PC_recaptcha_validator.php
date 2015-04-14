@@ -6,36 +6,48 @@ class PC_recaptcha_validator {
 	
 	function __construct() {
 		global $cfg;
-		require_once($cfg['path']['core_plugins'] . 'forms/libs/recaptchalib.php');
 		$this->_private_key = $cfg['forms']['recaptcha_private_key'];
 	}
 
 	public function validate() {
-		if (isset($_SESSION['recaptcha']) and 
-				$_SESSION['recaptcha'] and 
-				$_SESSION['recaptcha']['recaptcha_challenge_field'] == $_POST["recaptcha_challenge_field"] and 
-				$_SESSION['recaptcha']['recaptcha_response_field'] == $_POST["recaptcha_response_field"] and 
-				$_SESSION['recaptcha']['validated']) {
-			$_SESSION['recaptcha'] = false;
-			return true;
-		}
-		$resp = recaptcha_check_answer ($this->_private_key,
-			$_SERVER["REMOTE_ADDR"],
-			v($_POST["recaptcha_challenge_field"]),
-			v($_POST["recaptcha_response_field"]));
+		global $cfg;
 		
-		if ($resp->is_valid) {
-			$_SESSION['recaptcha'] = array(
-				'recaptcha_challenge_field' => $_POST["recaptcha_challenge_field"],
-				'recaptcha_response_field' => $_POST["recaptcha_response_field"],
-				'validated' => true
-			);
+		if( !isset($_REQUEST['g-recaptcha-response']) )
+			return false;
+		
+		$post = 'secret=' . urlencode($this->_private_key) . '&response=' . urlencode($_REQUEST['g-recaptcha-response']) . '&remoteip=' . urlencode($_SERVER["REMOTE_ADDR"]);
+		
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+		curl_setopt($ch, CURLOPT_URL, 'https://www.google.com/recaptcha/api/siteverify');
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			'POST /recaptcha/api/siteverify HTTP/1.1',
+			'Host: www.google.com',
+			'Content-Type: application/x-www-form-urlencoded',
+			'Content-Length: ' . strlen($post),
+			'Connection: close',
+			'User-Agent: cURL/1.0'
+		));
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+
+		$response = curl_exec($ch);
+
+		if( curl_errno($ch) ) {
+			curl_close($ch);
+			return false;
 		}
-		else {
-			$_SESSION['recaptcha'] = false;
-		}
-		return $resp->is_valid;
+		
+		curl_close($ch);
+		
+		$response = json_decode($response, true);
+		
+		if( !is_array($response) || !isset($response['success']) )
+			return false;
+		
+		return $response['success'];
 	}
-	
-	
 }

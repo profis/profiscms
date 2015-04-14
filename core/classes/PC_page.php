@@ -474,32 +474,17 @@ final class PC_page extends PC_base {
 						if ($tagName == 'input' and $field->getAttribute('type') == 'captcha') {
 							try {
 								$template = $dom->createDocumentFragment();
-								$template->appendXML('<script type="text/javascript"
-									src="http://www.google.com/recaptcha/api/challenge?k='.$this->cfg['forms']['recaptcha_public_key'].'">
-								 </script>
-								 <noscript>
-									<iframe src="http://www.google.com/recaptcha/api/noscript?k='.$this->cfg['forms']['recaptcha_public_key'].'"
-										height="300" width="500" frameborder="0"></iframe><br />
-									<textarea name="recaptcha_challenge_field" rows="3" cols="40">
-									</textarea>
-									<input type="hidden" name="recaptcha_response_field"
-										value="manual_challenge" />
-								 </noscript>');
-
+								$this->site->Add_script('https://www.google.com/recaptcha/api.js?hl=' . $this->site->ln);
+								$template->appendXML('<div class="g-recaptcha" data-sitekey="'.htmlspecialchars($this->cfg['forms']['recaptcha_public_key']).'"></div>');
 								$field->parentNode->replaceChild($template, $field);
-
 								$pageForm['fields']['captcha'] = array(
 									'type' => 'captcha'
 								);
-
 							}
 							catch(Exception $e) {
-
 							}
-
-
 						}
-						elseif ($fieldName != '' and $fieldName != 'recaptcha_challenge_field') {
+						elseif ($fieldName != '' and $fieldName != 'g-recaptcha-response') {
 							$type = ($tagName == 'input') ? $field->getAttribute('type') : $tagName;
 							$multiple = $multiple || $field->hasAttribute('multiple') || ($type == 'checkbox');
 							$nameAttribute = 'pc_' . md5($fieldName);
