@@ -54,7 +54,7 @@ class Site_users_users_admin_api extends PC_plugin_crud_admin_api {
 
 	protected function getMetaFields() {
 		global $cfg;
-		return isset($cfg['site_users']['admin_editable_meta']) ? (is_array($cfg['site_users']['admin_editable_meta']) ? $cfg['site_users']['admin_editable_meta'] : array_map('trim', explode(',', $cfg['site_users']['admin_editable_meta']))) : array();
+		return isset($cfg['site_users']['admin_editable_meta']) ? (is_array($cfg['site_users']['admin_editable_meta']) ? $cfg['site_users']['admin_editable_meta'] : array_filter(array_map('trim', explode(',', $cfg['site_users']['admin_editable_meta'])))) : array();
 	}
 	
 	public function create() {
