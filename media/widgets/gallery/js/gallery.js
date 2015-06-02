@@ -165,7 +165,8 @@
 							pos.left = min;
 						data.$thumbs.css({left: pos.left + 'px'});
 					}
-				}).on('click', '.pcgw-thumb', function(e) {
+				})
+				.on('click', '.pcgw-thumb', function(e) {
 					e.preventDefault();
 					e.stopPropagation();
 					e.returnValue = false;
@@ -173,11 +174,76 @@
 					var $widget = $thumb.closest('.pc_gallery');
 					selectImage($widget, $thumb.index());
 					return false;
-				}).on('click', '.pcgw-zoom', function(e) {
+				})
+				.on('click', '.pcgw-zoom', function(e) {
 					e.preventDefault();
 					e.stopPropagation();
 					var $widget = $(this).closest('.pc_gallery');
 					zoomImageIn($widget);
+				})
+				.on('touchstart', '.pcgw-thumbs', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					e.returnValue = false;
+					var touches = e.originalEvent.changedTouches;
+					var $this = $(this);
+					$this.data('touchOffset', touches[0].pageX);
+					$this.data('touchOriginalPos', $this.position().left);
+					$this.css({
+						'transition': 'none',
+						'-o-transition': 'none',
+						'-ms-transition': 'none',
+						'-moz-transition': 'none',
+						'-webkit-transition': 'none'
+					});
+				})
+				.on('touchmove', '.pcgw-thumbs', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					e.returnValue = false;
+					var touches = e.originalEvent.changedTouches;
+					var $this = $(this);
+					var offs = $this.data('touchOffset');
+					if( offs ) {
+						var delta = touches[0].pageX - offs;
+						var pos = $this.data('touchOriginalPos') + delta;
+						var min = $this.closest('.pcgw-thumbs-wrap2').width() - $this.width();
+						if( pos < min )
+							pos = min;
+						if( pos > 0 )
+							pos = 0;
+
+						$this.css({left: pos + 'px'});
+					}
+				})
+				.on('touchend', '.pcgw-thumbs', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					e.returnValue = false;
+					var touches = e.originalEvent.changedTouches;
+					var $this = $(this);
+					var offs = $this.data('touchOffset');
+					$this.data('touchOffset', null);
+					$this.data('touchOriginalPos', null);
+					$this.css({
+						'transition': '',
+						'-o-transition': '',
+						'-ms-transition': '',
+						'-moz-transition': '',
+						'-webkit-transition': ''
+					});
+					if( Math.abs(touches[0].pageX - offs) < 8 ) {
+						var pos = touches[0].pageX - $this.offset().left;
+						$this.find('.pcgw-thumb').each(function() {
+							var $thumb = $(this);
+							var x = $thumb.position().left;
+							var w = $thumb.width();
+							if( pos >= x && pos < x + w ) {
+								$thumb.trigger('click');
+								return false;
+							}
+						});
+					}
 				});
 		}
 		return this;
