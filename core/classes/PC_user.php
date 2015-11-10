@@ -138,7 +138,7 @@ class PC_user extends PC_base {
 			}
 			else if( isset($this->Session_login, $this->Session_password) ) {
 				//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
-				$r = $this->prepare("SELECT u.id,u.name,u.login,u.email FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password=? AND (flags & ?)=0 AND banned=0 LIMIT 1");
+				$r = $this->prepare("SELECT id,name,login,email FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password=? AND (flags & ?)=0 AND banned=0 LIMIT 1");
 				$s = $r->execute(array($this->Session_login, $this->Session_password, PC_UF_MUST_ACTIVATE));
 			}
 
@@ -308,7 +308,7 @@ class PC_user extends PC_base {
 		if( $args->isDefaultPrevented() )
 			return !$this->Is_logged_in();
 
-		unset($_SESSION['user_login'], $_SESSION['user_password'], $_SESSION['user_secure']);
+		unset($_SESSION['user_login'], $_SESSION['user_password'], $_SESSION['user_secure'], $_SESSION['user_ext_provider'], $_SESSION['user_ext_uid']);
 		$this->LoginName = '';
 		$this->externalProvider = null;
 		$this->externalUID = null;
