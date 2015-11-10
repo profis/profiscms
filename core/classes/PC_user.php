@@ -65,6 +65,7 @@ class PC_user extends PC_base {
 		}
 		else $this->Login();
 	}
+
 	public function Refresh() {
 		$this->Current_secure = md5($_SERVER['REMOTE_ADDR'].v($_SERVER['HTTP_USER_AGENT']));
 		$this->Post_login = v($_POST['user_login']);
@@ -76,6 +77,18 @@ class PC_user extends PC_base {
 		$this->Session_secure = Sanitize('md5', v($_SESSION['user_secure']));
 		return $this;
 	}
+
+	public function hasPassword($userId = null) {
+		if( !$userId )
+			$userId = $this->GetID();
+		if( !$userId )
+			return false;
+		$r = $this->prepare($q = "SELECT password IS NOT NULL FROM {$this->db_prefix}site_users WHERE id=?");
+		if( !$r->execute($p = array($userId)) )
+			throw new DbException($r->errorInfo(), $q, $p);
+		return $r->fetchColumn();
+	}
+
 	public function CheckPassword($pass, $user_id=0) {
 		if ($user_id == 0) $user_id = $this->ID;
 		$r = $this->prepare("SELECT id FROM {$this->db_prefix}site_users WHERE password=? AND id=? LIMIT 1");
@@ -86,6 +99,7 @@ class PC_user extends PC_base {
 			return true;
 		return false;
 	}
+
 	public function ChangePassword($pass, $user_id=0) {
 		if ($user_id == 0) $user_id = $this->ID;
 		$pass_code = $this->Sanitize('password', $pass);
@@ -101,6 +115,7 @@ class PC_user extends PC_base {
 		}
 		return true;
 	}
+
 	public function Login($externalAuthData = null) {
 		if( $this->Logged_in ) {
 			if( is_array($externalAuthData) && isset($externalAuthData['provider'], $externalAuthData['uid']) )
@@ -118,12 +133,12 @@ class PC_user extends PC_base {
 			$s = $r = null;
 			if( isset($this->externalProvider, $this->externalUID) ) {
 				//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
-				$r = $this->prepare("SELECT id,name,login,email FROM {$this->db_prefix}site_users_external e INNER JOIN {$this->db_prefix}site_users u ON u.id=e.user_id WHERE e.provider=? AND e.uid=? AND banned=0 LIMIT 1");
+				$r = $this->prepare("SELECT u.id,u.name,u.login,u.email FROM {$this->db_prefix}site_users_external e INNER JOIN {$this->db_prefix}site_users u ON u.id=e.user_id WHERE e.provider=? AND e.uid=? AND banned=0 LIMIT 1");
 				$s = $r->execute(array($this->externalProvider, $this->externalUID));
 			}
 			else if( isset($this->Session_login, $this->Session_password) ) {
 				//throw error after trying to login when already logged in: if (isset($this->Post_login, $this->Post_password)) {/*throw error*/}
-				$r = $this->prepare("SELECT id,name,login,email FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password=? AND (flags & ?)=0 AND banned=0 LIMIT 1");
+				$r = $this->prepare("SELECT u.id,u.name,u.login,u.email FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password=? AND (flags & ?)=0 AND banned=0 LIMIT 1");
 				$s = $r->execute(array($this->Session_login, $this->Session_password, PC_UF_MUST_ACTIVATE));
 			}
 
@@ -147,10 +162,11 @@ class PC_user extends PC_base {
 			if( $args->isDefaultPrevented() )
 				return $this->Is_logged_in();
 
-			$r = $this->prepare("SELECT id,name,login,email,banned FROM {$this->db_prefix}site_users_external e INNER JOIN {$this->db_prefix}site_users u ON u.id=e.user_id WHERE e.provider=? AND e.uid=? LIMIT 1");
-			$s = $r->execute(array($externalAuthData['provider'], $externalAuthData['uid']));
+			$r = $this->prepare($q = "SELECT u.id,u.name,u.login,u.email,u.banned FROM {$this->db_prefix}site_users_external e INNER JOIN {$this->db_prefix}site_users u ON u.id=e.user_id WHERE e.provider=? AND e.uid=? LIMIT 1");
+			if( !$r->execute($p = array($externalAuthData['provider'], $externalAuthData['uid'])) )
+				throw new DbException($r->errorInfo(), $q, $p);
 
-			if (!$s || $r->rowCount() != 1) {
+			if ($r->rowCount() != 1) {
 				$data = $this->createFromExternal($externalAuthData);
 				if( !$data ) {
 					$this->Logout();
