@@ -419,6 +419,8 @@ CREATE TABLE IF NOT EXISTS `{prefix}site_users_external` (
   `user_id` int(10) unsigned NOT NULL,
   `provider` varchar(32) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `uid` varchar(64) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `name` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
+  `image` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
   PRIMARY KEY (`provider`,`uid`),
   KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -523,4 +525,4 @@ INSERT INTO `{prefix}variables` (`vkey`, `controller`, `site`, `ln`, `value`) VA
 ('form_file_upload_error', 'forms', 0, 'lt', 'Failo įkelti nepavyko. Pabandykite dar kartą arba susisiekite su svetainės administratoriumi.'),
 ('form_file_upload_error', 'forms', 0, 'ru', 'Файл незагружен. Попробуйте еще раз или свяжитесь с администратором сайта.');
 
-INSERT INTO `{prefix}db_version` (`plugin`, `version`) VALUES('', '4.5.2');
+INSERT INTO `{prefix}db_version` (`plugin`, `version`) VALUES('', '4.8.3');

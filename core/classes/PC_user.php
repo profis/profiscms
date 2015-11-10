@@ -1,13 +1,9 @@
 <?php
-/*final class PC_user extends PC_base {
-	public function 
-	public function Get($id=null) {}
-	public function Create($user, $pass, $data=array()) {}
-	public function Delete($id_list) {}
-	public function Activate() {}
-	public function Deactivate() {}
-	public function Edit() {}
-}*/
+use \Profis\Event;
+use \Profis\Auth\LoginEventArgs;
+use \Profis\Auth\LogoutEventArgs;
+use \Profis\Db\DbException;
+
 define("PC_UF_DEFAULT",			0x00000000);
 define("PC_UF_MUST_ACTIVATE",			0x00000001);
 define("PC_UF_CONFIRM_PASS_CHANGE",		0x00000002);
@@ -35,7 +31,30 @@ class PC_user extends PC_base {
 	public $Current_secure = null;
 
 	public $just_logged_in = false;
-	
+
+	/** @var Event Invoked before the user tries to log in. */
+	public static $onBeforeLogin = null;
+
+	/** @var Event Invoked when user successfully logs in. */
+	public static $onAfterLogin = null;
+
+	/** @var Event Invoked when user successfully authenticates himself via external authenticator (social network and others). */
+	public static $onExternalAuth = null;
+
+	/** @var Event Invoked before user login information is cleaned up from the session. */
+	public static $onBeforeLogout = null;
+
+	/** @var Event Invoked after user login information is cleaned up from session. */
+	public static $onAfterLogout = null;
+
+	public static function __static_construct() {
+		self::$onBeforeLogin = new Event();
+		self::$onAfterLogin = new Event();
+		self::$onExternalAuth = new Event();
+		self::$onBeforeLogout = new Event();
+		self::$onAfterLogout = new Event();
+	}
+
 	public function Init() {
 		$this->Refresh();
 		if (v($_REQUEST['user_logout'])) {
@@ -83,8 +102,11 @@ class PC_user extends PC_base {
 		return true;
 	}
 	public function Login($externalAuthData = null) {
-		if( $this->Logged_in )
-			return true;
+		if( $this->Logged_in ) {
+			if( is_array($externalAuthData) && isset($externalAuthData['provider'], $externalAuthData['uid']) )
+				self::$onExternalAuth->invoke(new LoginEventArgs($this, $externalAuthData));
+			return $this->Is_logged_in();
+		}
 
 		$login_field_in_select = 'login';
 		$login_field_in_clause = 'login';
@@ -118,7 +140,12 @@ class PC_user extends PC_base {
 			return true;
 		}
 		else if( is_array($externalAuthData) && isset($externalAuthData['provider'], $externalAuthData['uid']) ) {
-			$this->core->Init_hooks('PC_user/beforeLogin', array('user' => $this, 'externalAuthData' => $externalAuthData));
+			$args = new LoginEventArgs($this, $externalAuthData);
+			self::$onBeforeLogin->invoke($args);
+			if( !$args->isPropagationStopped() )
+				$this->core->Init_hooks('PC_user/beforeLogin', array('user' => $this, 'externalAuthData' => $externalAuthData, 'eventArgs' => $args));
+			if( $args->isDefaultPrevented() )
+				return $this->Is_logged_in();
 
 			$r = $this->prepare("SELECT id,name,login,email,banned FROM {$this->db_prefix}site_users_external e INNER JOIN {$this->db_prefix}site_users u ON u.id=e.user_id WHERE e.provider=? AND e.uid=? LIMIT 1");
 			$s = $r->execute(array($externalAuthData['provider'], $externalAuthData['uid']));
@@ -158,8 +185,14 @@ class PC_user extends PC_base {
 			}
 
 			$this->Get_data();
-			$this->core->Init_hooks('PC_user/afterLogin', array('user' => $this));
-			return true;
+			$args = new LoginEventArgs($this, $externalAuthData);
+			self::$onAfterLogin->invoke($args);
+			if( !$args->isPropagationStopped() )
+				$this->core->Init_hooks('PC_user/afterLogin', array('user' => $this));
+
+			self::$onExternalAuth->invoke(new LoginEventArgs($this, $externalAuthData));
+
+			return $this->Is_logged_in();
 		}
 		else {
 			$using_cookie = false;
@@ -183,9 +216,15 @@ class PC_user extends PC_base {
 					}
 				}
 			}
-			
+
 			if (!empty($this->Post_login) && !empty($this->Post_password)) {
-				$this->core->Init_hooks('PC_user/beforeLogin', array('user' => $this));
+				$args = new LoginEventArgs($this, $externalAuthData);
+				self::$onBeforeLogin->invoke($args);
+				if( !$args->isPropagationStopped() )
+					$this->core->Init_hooks('PC_user/beforeLogin', array('user' => $this, 'eventArgs' => $args));
+				if( $args->isDefaultPrevented() )
+					return $this->Is_logged_in();
+
 				$this->login_attempt = true;
 				$query = "SELECT id,name,password FROM {$this->db_prefix}site_users WHERE $login_field_in_clause=? AND password IS NOT NULL AND (flags & ?)=0 and banned=0 LIMIT 1";
 				$query_params = array($this->Post_login, PC_UF_MUST_ACTIVATE);
@@ -216,14 +255,18 @@ class PC_user extends PC_base {
                 $this->Get_data();
 				if( isset($_REQUEST["remember"]) && $_REQUEST["remember"] )
 					$this->SetCookie();
-				$this->core->Init_hooks('PC_user/afterLogin', array('user' => $this));
-				if( isset($_REQUEST["redirect"]) && $_REQUEST["redirect"] ) {
+
+				$args = new LoginEventArgs($this, $externalAuthData);
+				self::$onAfterLogin->invoke($args);
+				if( !$args->isPropagationStopped() )
+					$this->core->Init_hooks('PC_user/afterLogin', array('user' => $this));
+				if( !$args->isDefaultPrevented() && isset($_REQUEST["redirect"]) && $_REQUEST["redirect"] ) {
 					@header('307 Temporary Redirect', true, 307);
 					@header('Location: ' . $_REQUEST["redirect"]);
 					@session_write_close();
 					exit();
 				}
-				return true;
+				return $this->Is_logged_in();
 			}
 			else {
 				if( isset($_POST['user_login']) && empty($this->Post_login) ) {
@@ -237,11 +280,18 @@ class PC_user extends PC_base {
 			}
 			// used cookie, but not logged in ... remove the cookie
 			if( $using_cookie ) $this->DelCookie();
-			return true;
 		}
+		return false;
 	}
+
 	public function Logout() {
-		$this->core->Init_hooks('PC_user/beforeLogout', array('user' => $this));
+		$args = new LogoutEventArgs($this);
+		self::$onBeforeLogout->invoke($args);
+		if( !$args->isPropagationStopped() )
+			$this->core->Init_hooks('PC_user/beforeLogout', array('user' => $this));
+		if( $args->isDefaultPrevented() )
+			return !$this->Is_logged_in();
+
 		unset($_SESSION['user_login'], $_SESSION['user_password'], $_SESSION['user_secure']);
 		$this->LoginName = '';
 		$this->externalProvider = null;
@@ -250,20 +300,28 @@ class PC_user extends PC_base {
 		$this->Logged_in = false;
 		if( $this->GetCookie() != null )
 			$this->DelCookie();
-		$this->core->Init_hooks('PC_user/afterLogout', array('user' => $this));
-		return true;
+
+		$args = new LogoutEventArgs($this);
+		self::$onAfterLogout->invoke($args);
+		if( !$args->isPropagationStopped() )
+			$this->core->Init_hooks('PC_user/afterLogout', array('user' => $this));
+		return !$this->Is_logged_in();
 	}
+
 	public function Is_logged_in() {
 		$return = (bool)$this->Logged_in;
 		return $return;
 	}
+
 	public function GetID() {
 		if (!$this->Is_logged_in()) return null;
 		return $this->ID;
 	}
+
 	public function GetCookieId() {
 		return "profiscms4_" . substr(md5($this->core->cfg['salt']), 5, 5);
 	}
+
 	public function GetCookie() {
 		$cookie_id = $this->GetCookieId();
 		if( !isset($_COOKIE[$cookie_id]) )
@@ -271,6 +329,7 @@ class PC_user extends PC_base {
 		$code = base64_decode($_COOKIE[$cookie_id]);
 		return preg_match('#^[0-9a-f]{32}$#', $code) ? $code : false;
 	}
+
 	public function SetCookie($id = null, $login = null, $pass = null) {
 		if( $id === null || $login === null || $pass === null ) {
 			$data = $this->Get_data();
@@ -280,6 +339,7 @@ class PC_user extends PC_base {
 			$remember_code = rtrim(base64_encode(md5($login . $id. $pass)), "=");
 		setcookie($this->GetCookieId(), $remember_code, time() + 86400*365, "/", $_SERVER["HTTP_HOST"]);
 	}
+
 	public function DelCookie() {
 		setcookie($this->GetCookieId(), "", time() - 3600, "/", $_SERVER["HTTP_HOST"]);
 	}
@@ -294,6 +354,7 @@ class PC_user extends PC_base {
 		}
 		return '';
 	}
+
 	public function Get_data($user_id=0, $refresh=false, $keys=null) {
 		if (!$user_id) {
 			if (!$this->Logged_in)
@@ -311,6 +372,7 @@ class PC_user extends PC_base {
 		if ($user_id == $this->ID) $this->Data = $data;
 		return $data;
 	}
+
 	public function Set_data($data, $user_id=0) {
 		if ($user_id == 0) $user_id = $this->ID;
 		$r = $this->prepare("UPDATE {$this->db_prefix}site_users SET name=?, email=? WHERE id=? LIMIT 1");
@@ -319,6 +381,7 @@ class PC_user extends PC_base {
 		}
 		return true;
 	}
+
 	public function Get_meta_data($keys=null, $user_id=0) {
 		if (!is_null($keys) && !is_array($keys)) $keys = Array($keys);
 		if ($user_id == 0) $user_id = $this->ID;
@@ -334,6 +397,7 @@ class PC_user extends PC_base {
 					$data[$k] = null;
 		return $data;
 	}
+
 	public function Set_meta_data($data, $user_id=0) {
 		if ($user_id == 0) $user_id = $this->ID;
 		if( !is_numeric($user_id) ) return false;
@@ -365,10 +429,12 @@ class PC_user extends PC_base {
 			$this->db->setAttribute(PDO::ATTR_ERRMODE, $mode);
 		}
 		return true;
-	}	
+	}
+
 	public function Encode_password($pass) {
 		return md5(sha1($pass));
 	}
+
 	public function Create($email, $password = '', $retyped_password = '', $name = '', $terms_and_conditions = 0, $captcha=NULL, $login = '', $meta=array()) {
 		//validate input
 		$login_after_create = false;
@@ -485,6 +551,7 @@ class PC_user extends PC_base {
 			'activationCode'=> $activation_code
 		);
 	}
+
 	public function createFromExternal($externalAuthData) {
 		$time = time();
 		$name = isset($externalAuthData['info']['name']) ? $externalAuthData['info']['name'] : '';
@@ -530,11 +597,30 @@ class PC_user extends PC_base {
 			'banned' => 0,
 		);
 	}
+
 	public function updateMetaDataFromExternal($externalAuthData, $justRegistered = false, $userId = null) {
 		if( !$userId )
 			$userId = $this->ID;
 		if( !$userId )
 			return false;
+
+		if( isset($externalAuthData['provider'], $externalAuthData['uid']) ) {
+			$params = array(
+				'provider' => $externalAuthData['provider'],
+				'uid' => $externalAuthData['uid'],
+				'name' => null,
+				'image' => null
+			);
+			if( isset($externalAuthData['info']['name']) && $externalAuthData['info']['name'] != '' )
+				$params['name'] = trim($externalAuthData['info']['name']);
+			else if( (isset($externalAuthData['info']['first_name']) && $externalAuthData['info']['first_name'] != '') || (isset($externalAuthData['info']['last_name']) && $externalAuthData['info']['last_name'] != '') )
+				$params['name'] = trim($externalAuthData['info']['first_name'] . ' ' . $externalAuthData['info']['last_name']);
+			if( isset($externalAuthData['info']['image']) && $externalAuthData['info']['image'] != '' )
+				$params['image'] = trim($externalAuthData['info']['image']);
+			$this
+				->prepare("UPDATE {$this->db_prefix}site_users_external SET name=:name, image=:image WHERE provider=:provider AND uid=:uid")
+				->execute($params);
+		}
 
 		$data = array();
 		if( $justRegistered )
@@ -551,6 +637,7 @@ class PC_user extends PC_base {
 			return $this->Set_meta_data($data, $userId);
 		return true;
 	}
+
 	public function addExternalAuth($externalAuthData, $userId = null) {
 		if( !$userId )
 			$userId = $this->GetID();
@@ -559,6 +646,28 @@ class PC_user extends PC_base {
 		return $this
 			->prepare("INSERT INTO {$this->db_prefix}site_users_external (user_id,provider,uid) VALUES(?,?,?)")
 			->execute(array($userId, $externalAuthData['provider'], $externalAuthData['uid']));
+	}
+
+	public function getLinkedExternalAuthData($userId = null) {
+		if( !$userId )
+			$userId = $this->GetID();
+		if( !$userId )
+			return array();
+		$r = $this->prepare($q = "SELECT * FROM {$this->db_prefix}site_users_external WHERE user_id=?");
+		if( !$r->execute($p = array($userId)) )
+			throw new DbException($r->errorInfo(), $q, $p);
+		return $r->fetchAll();
+	}
+
+	public function removeExternalAuth($externalAuthData, $userId = null) {
+		if( !$userId )
+			$userId = $this->GetID();
+		if( !$userId || !is_array($externalAuthData) || !isset($externalAuthData['provider'], $externalAuthData['uid']) )
+			return false;
+		$r = $this->prepare($q = "DELETE FROM {$this->db_prefix}site_users_external WHERE user_id=? AND provider=? AND uid=?");
+		if( !$r->execute($p = array($userId, $externalAuthData['provider'], $externalAuthData['uid'])) )
+			throw new DbException($r->errorInfo(), $q, $p);
+		return $r->rowCount() > 0;
 	}
 
 	public function Send_activation_code($email, $code) {
@@ -719,6 +828,7 @@ class PC_user extends PC_base {
 		}
 		return $res;
 	}
+
 	public function Activate($code, $login=true) {
 		if (!Validate('md5', $code)) return false;
 		$r = $this->prepare("SELECT id,email,login,password FROM {$this->db_prefix}site_users WHERE confirmation=? AND (flags & ?)<>0 LIMIT 1");
@@ -742,6 +852,7 @@ class PC_user extends PC_base {
 			$this->Login(); // just in case user does not get himself redirected anywhere*/
 		return $data;
 	}
+
 	public function Delete_not_activated_accounts($ttl=33200) {
 		$r = $this->prepare("DELETE FROM {$this->db_prefix}site_users WHERE (flags & ?)<>0 AND date_registered<?");
 		$s = $r->execute(array(PC_UF_MUST_ACTIVATE, time()-$ttl));
@@ -790,3 +901,5 @@ class PC_user extends PC_base {
 		return $list;
 	}
 }
+
+PC_user::__static_construct();

@@ -17,8 +17,7 @@
 //init sql parser
 global $sql_parser;
 $sql_parser = new PC_sql_parser;
-//pdo fallback class if native extension is not enabled
-if (!class_exists('PDO')) require_once(CORE_ROOT . "classes/pdo/PDO.class.php");
+
 //connect to the database
 try {
 	$port = '';
