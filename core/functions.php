@@ -787,9 +787,7 @@ function Validate($type, $input, $extra=false, $options=array()) {
 function PC_translit($input) {
 	//translit cyrillic chars
 	$input = remove_utf8_accents($input);
-	$cyrillic = array('а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я','А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я');
-	$latin = array('a','b','v','g','d','e','yo','j','z','i','i','k','l','m','n','o','p','r','s','t','u','f','h','c','ch','sh','shch','','y','','eh','yu','ya','A','B','V','G','D','E','Yo','J','Z','I','I','K','L','M','N','O','P','R','S','T','U','F','H','C','Ch','Sh','Shch','','Y','','Eh','Yu','Ya');
-	$input = str_replace($cyrillic, $latin, $input);
+
 	//translit lithuanian chars
 	$lithuanian = array('č', 'Č', 'ę','Ę','ė','Ė','į','Į','š','Š','ų','Ų','ū','Ū','ž','Ž');
 	$latin = array('c','C','e','E','e','E','i','I','s','S','u','U','u','U','z','Z');
@@ -1103,6 +1101,12 @@ function Multilang_explode($str) {
 
 function remove_utf8_accents($string) {
 	$accents = array(
+		// 'яя' and 'юю' at the end of a word in russian language have a bit
+		// different pronounciation and there should not be such combination in
+		// the beginning of the word.
+		'ЯЯ' => 'IAYA','яЯ' => 'iaYa','Яя' => 'Iaya','яя' => 'iaya',
+		'ЮЮ' => 'IUYU','юЮ' => 'iuYu','Юю' => 'Iuyu','юю' => 'iuyu',
+	
 		'à' => 'a', 'ô' => 'o', 'ď' => 'd', 'ë' => 'e', 'š' => 's', 'ơ' => 'o',
 		'ß' => 'ss', 'ă' => 'a', 'ř' => 'r', 'ț' => 't', 'ň' => 'n', 'ā' => 'a', 'ķ' => 'k',
 		'ŝ' => 's', 'ỳ' => 'y', 'ņ' => 'n', 'ĺ' => 'l', 'ħ' => 'h', 'ó' => 'o',
@@ -1132,7 +1136,7 @@ function remove_utf8_accents($string) {
 		'Ғ' => 'G','ғ' => 'g',    
 		'Д' => 'D','д' => 'd',   
 		'Е' => 'E','е' => 'e',    
-		'Ё' => 'Yo','ё' => 'yo', 
+		'Ё' => 'E','ё' => 'e', 
 		'Ж' => 'J','ж' => 'j',    
 		'З' => 'Z','з' => 'z',   
 		'И' => 'I','и' => 'i',   
@@ -1162,7 +1166,7 @@ function remove_utf8_accents($string) {
 		'Ы' => 'Y','ы' => 'y',  
 		'І' => 'Y','і' => 'y',  
 		'Ь' => '','ь' => '',  
-		'Э' => 'Eh','э' => 'eh', 
+		'Э' => 'E','э' => 'e', 
 		'Ю' => 'Yu','ю' => 'yu',  
 		'Я' => 'Ya','я' => 'ya',
 		'Һ' => 'H','һ' => 'h', 
