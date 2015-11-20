@@ -88,10 +88,11 @@
 
 	$.fn.pc_gallery_widget = function() {
 		if( typeof(arguments[0]) == 'string' ) {
-			switch(arguments[0]) {
+			var args = arguments;
+			switch(args[0]) {
 				case 'selectImage':
 					$(this).each(function() {
-						selectImage($(this).closest('.pc_gallery'), arguments[1], arguments[2]);
+						selectImage($(this).closest('.pc_gallery'), args[1], args[2]);
 					});
 					break;
 				case 'nextImage':
